@@ -1,0 +1,40 @@
+@use '../types-vehicules/types-vehicules.component.scss';
+
+.modes-reglement-container {
+    .frais-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        background: var(--surface-100);
+        font-size: 0.85rem;
+
+        &.gratuit {
+            background: var(--green-50);
+            color: var(--green-600);
+        }
+    }
+
+    .code-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+}
+
+.mode-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface-100);
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+
+    i {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+    }
+
+    span {
+        font-weight: 600;
+    }
+}

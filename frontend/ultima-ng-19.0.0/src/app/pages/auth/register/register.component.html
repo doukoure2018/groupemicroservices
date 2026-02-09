@@ -1,0 +1,123 @@
+<div class="h-screen flex w-full bg-surface-50 dark:bg-surface-950">
+    <div class="flex flex-1 flex-col bg-surface-50 dark:bg-surface-950 items-center justify-center">
+        <div class="w-11/12 sm:w-[30rem]">
+            <div class="flex flex-col">
+                <div style="height: 56px; width: 56px" class="bg-primary rounded-full flex items-center justify-center">
+                    <i class="pi pi-users text-surface-0 dark:text-surface-900 !text-4xl"></i>
+                </div>
+                <div class="mt-6">
+                    <h1 class="m-0 text-primary font-semibold text-4xl">Join us!</h1>
+                    <span class="block text-surface-700 dark:text-surface-100 mt-2">Please fill the fields to
+                        sign-up
+                        Ultima network</span>
+                </div>
+            </div>
+            @if (state().message){
+            <div class="flex flex-col gap-4 mb-4">
+                <p-message severity="success">{{ state().message }}</p-message>
+            </div>
+            }
+            @if (state().error){
+            <div class="flex flex-col gap-4 mb-4">
+                <p-message severity="error"> {{ state().error }}</p-message>
+            </div>
+            }
+
+            <form #form="ngForm" (ngSubmit)="register(form)" class="flex flex-col gap-4 mt-6">
+                <div class="flex flex-col gap-4 mt-12">
+                    <p-input-group>
+                        <p-inputgroup-addon>
+                            <i class="pi pi-user"></i>
+                        </p-inputgroup-addon>
+                        <input pInputText name="firstName" ngModel #firstName="ngModel" placeholder="First Name"
+                            required />
+                        @if(firstName.invalid && firstName.touched && firstName.invalid) {
+                        <p-message severity="error" size="small" styleClass="h-full w-full ">
+                            First name is required
+                        </p-message>
+                        }
+                    </p-input-group>
+                    <p-input-group>
+                        <p-inputgroup-addon>
+                            <i class="pi pi-user"></i>
+                        </p-inputgroup-addon>
+                        <input pInputText name="lastName" ngModel #lastName="ngModel" placeholder="Last Name"
+                            required />
+                        @if(lastName.invalid && lastName.touched && lastName.invalid) {
+                        <p-message severity="error" size="small" styleClass="h-full w-full ">
+                            Last name is required
+                        </p-message>
+                        }
+                    </p-input-group>
+                    <p-input-group>
+                        <p-inputgroup-addon>
+                            <i class="pi pi-at"></i>
+                        </p-inputgroup-addon>
+                        <input pInputText name="email" ngModel #email="ngModel" placeholder="Email" required email />
+                        @if(email.invalid && email.touched && email.invalid && email.errors?.['required']) {
+                        <p-message severity="error" size="small" styleClass="h-full w-full ">
+                            Email is required
+                        </p-message>
+                        }
+                        @if(email.invalid && email.touched && email.invalid && email.errors?.['email']) {
+                        <p-message severity="error" size="small" styleClass="h-full w-full ">
+                            Email format is invalid
+                        </p-message>
+                        }
+                    </p-input-group>
+                    <p-inputGroup>
+                        <p-inputGroupAddon>
+                            <i class="pi pi-user"></i>
+                        </p-inputGroupAddon>
+                        <input pInputText name="username" ngModel #username="ngModel" placeholder="Username" required
+                            pattern="^[a-zA-Z0-9]+$" minlength="4" />
+                        @if(username.invalid && username.touched && username.errors?.['pattern']) {
+                        <p-message severity="error" size="small" styleClass="h-full w-full">
+                            Username must be alphanumeric
+                        </p-message>
+                        }
+                        @if(username.invalid && username.touched && username.errors?.['required']) {
+                        <p-message severity="error" size="small" styleClass="h-full w-full">
+                            User name is required
+                        </p-message>
+                        }
+                    </p-inputGroup>
+                    <p-input-group>
+                        <p-inputgroup-addon>
+                            <i class="pi pi-key"></i>
+                        </p-inputgroup-addon>
+                        <input pInputText id="password" type="password" name="password" ngModel #password="ngModel"
+                            placeholder="Password" required minlength="6" />
+
+                        @if(password.invalid && password.touched && password.errors?.['required']) {
+                        <p-message severity="error" size="small" styleClass="h-full w-full">
+                            Password is required
+                        </p-message>
+                        }
+                        @if(password.invalid && password.touched && password.errors?.['minlength']) {
+                        <p-message severity="error" size="small" styleClass="h-full w-full">
+                            this password is too short
+                        </p-message>
+                        }
+                    </p-input-group>
+
+                    <div>
+                        <button [disabled]="form.invalid || state().loading" type="submit" pButton pRipple
+                            class="w-full" label="Souscrire "></button>
+                    </div>
+                    <div>
+                        <a href="http://localhost:8080/oauth2/authorize?response_type=code&client_id=client&scope=openid&redirect_uri=http://localhost:4200&code_challenge_method=S256&code_challenge=vesLhZA4cwKsKZAR7zvEJ9q3uI6dRM8nwna-IpuKkkk"
+                            pButton pRipple class="w-full text-primary-500" text label="BACK TO LOGIN">
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div [style]="{ backgroundImage: 'url(/images/pages/accessDenied-bg.jpg)' }"
+        class="hidden lg:flex flex-1 items-center justify-center bg-cover">
+        <img src="/layout/images/logo/vector_logo.png" alt="" />
+    </div>
+</div>
+<p-toast />
+<app-configurator simple />

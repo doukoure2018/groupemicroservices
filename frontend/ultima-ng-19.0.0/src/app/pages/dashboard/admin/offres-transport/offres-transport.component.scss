@@ -1,0 +1,1247 @@
+@use '../types-vehicules/types-vehicules.component.scss' as *;
+
+// ========== ANIMATIONS ==========
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+// ========== MAIN CONTAINER ==========
+.offres-container {
+    animation: fadeIn 0.3s ease-out;
+
+    // ========== HEADER SECTION ==========
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+
+        .title-area {
+            h2 {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                margin: 0 0 0.5rem 0;
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--text-color);
+
+                i {
+                    color: var(--primary-color);
+                    font-size: 1.3rem;
+                }
+            }
+
+            .subtitle {
+                margin: 0;
+                color: var(--text-color-secondary);
+                font-size: 0.9rem;
+            }
+        }
+
+        .stats-cards {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+
+            :host ::ng-deep .p-card {
+                margin: 0;
+                min-width: 120px;
+
+                .p-card-body {
+                    padding: 1rem 1.25rem;
+                }
+            }
+
+            .stat-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.25rem;
+            }
+        }
+    }
+
+    // ========== TOOLBAR ==========
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+    }
+
+    // ========== ACTION BUTTONS IN TABLE ==========
+    .action-buttons {
+        display: flex;
+        gap: 0.25rem;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    // Frozen column styling
+    :host ::ng-deep {
+        .p-datatable-frozen-column {
+            background: var(--surface-ground);
+            border-left: 1px solid var(--surface-200);
+            box-shadow: -2px 0 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .p-datatable-tbody > tr:hover .p-datatable-frozen-column {
+            background: var(--surface-50);
+        }
+    }
+
+    // ========== SEARCH & FILTERS ==========
+    .search-filters {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+
+        .filter-dropdown {
+            min-width: 180px;
+            transition: all 0.2s ease;
+
+            &:hover {
+                transform: translateY(-1px);
+            }
+        }
+    }
+
+    // ========== TABLE CELLS ==========
+    .trajet-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        .trajet-route {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0;
+
+            .ville-depart,
+            .ville-arrivee {
+                font-weight: 600;
+                transition: color 0.2s ease;
+            }
+
+            .ville-depart {
+                color: var(--primary-color);
+            }
+
+            .ville-arrivee {
+                color: var(--green-600);
+            }
+
+            i {
+                color: var(--primary-color);
+                font-size: 0.85rem;
+                animation: pulse 2s infinite;
+            }
+        }
+
+        .trajet-sites {
+            font-size: 0.8rem;
+            color: var(--text-color-secondary);
+            padding-left: 0.25rem;
+            border-left: 2px solid var(--surface-200);
+        }
+    }
+
+    .vehicule-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        .vehicule-info {
+            font-weight: 500;
+        }
+
+        .vehicule-details {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-color-secondary);
+        }
+
+        .chauffeur {
+            display: flex;
+            align-items: center;
+            color: var(--text-color-secondary);
+            font-size: 0.85rem;
+            padding: 0.25rem 0.5rem;
+            background: var(--surface-50);
+            border-radius: 4px;
+            margin-top: 0.25rem;
+
+            i {
+                font-size: 0.75rem;
+                margin-right: 0.375rem;
+                color: var(--primary-color);
+            }
+        }
+    }
+
+    .horaires-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+
+        .horaire-item {
+            display: flex;
+            align-items: center;
+            padding: 0.125rem 0;
+
+            i {
+                font-size: 0.85rem;
+                margin-right: 0.375rem;
+                color: var(--primary-color);
+                width: 16px;
+                text-align: center;
+            }
+
+            &.depart i {
+                color: var(--blue-500);
+            }
+
+            &.arrivee i {
+                color: var(--green-500);
+            }
+        }
+    }
+
+    .places-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        min-width: 90px;
+
+        .places-info {
+            display: flex;
+            align-items: baseline;
+            gap: 0.25rem;
+
+            .places-dispo {
+                font-weight: 700;
+                font-size: 1.25rem;
+                color: var(--primary-color);
+                line-height: 1;
+            }
+
+            .places-total {
+                font-size: 0.85rem;
+                color: var(--text-color-secondary);
+            }
+        }
+
+        :host ::ng-deep .places-progress {
+            border-radius: 6px;
+            height: 6px;
+            background: var(--surface-200);
+
+            .p-progressbar-value {
+                border-radius: 6px;
+                transition: width 0.5s ease;
+            }
+        }
+
+        // Remplissage colors
+        &.low :host ::ng-deep .p-progressbar-value {
+            background: var(--green-500);
+        }
+
+        &.medium :host ::ng-deep .p-progressbar-value {
+            background: var(--yellow-500);
+        }
+
+        &.high :host ::ng-deep .p-progressbar-value {
+            background: var(--orange-500);
+        }
+
+        &.full :host ::ng-deep .p-progressbar-value {
+            background: var(--red-500);
+        }
+    }
+
+    .prix-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+        align-items: flex-start;
+
+        .prix-normal {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-color);
+        }
+
+        .prix-promo {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--green-600);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+
+            &::before {
+                content: '';
+                display: inline-block;
+                width: 8px;
+                height: 8px;
+                background: var(--green-500);
+                border-radius: 50%;
+                animation: pulse 1.5s infinite;
+            }
+        }
+
+        .prix-barre {
+            text-decoration: line-through;
+            color: var(--text-color-secondary);
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        .promo-tag {
+            font-size: 0.7rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--green-500), var(--green-600));
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    }
+
+    .date-cell {
+        white-space: nowrap;
+        font-weight: 500;
+
+        .date-value {
+            display: block;
+            font-size: 0.95rem;
+        }
+
+        .date-relative {
+            font-size: 0.75rem;
+            color: var(--text-color-secondary);
+            margin-top: 0.125rem;
+        }
+    }
+
+    .text-secondary {
+        color: var(--text-color-secondary);
+        font-size: 0.85rem;
+    }
+
+    small {
+        font-size: 0.8rem;
+    }
+
+    // ========== TABLE ENHANCEMENTS ==========
+    :host ::ng-deep {
+        .p-datatable {
+            .p-datatable-thead > tr > th {
+                background: var(--surface-50);
+                font-weight: 600;
+                text-transform: uppercase;
+                font-size: 0.75rem;
+                letter-spacing: 0.5px;
+                color: var(--text-color-secondary);
+                border-bottom: 2px solid var(--primary-color);
+            }
+
+            .p-datatable-tbody > tr {
+                transition: all 0.2s ease;
+
+                &:hover {
+                    background: var(--surface-50);
+                    transform: scale(1.002);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                }
+
+                > td {
+                    border-bottom: 1px solid var(--surface-100);
+                    vertical-align: middle;
+                }
+            }
+        }
+
+        // Status badges
+        .p-tag {
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+
+            &.p-tag-success {
+                background: linear-gradient(135deg, var(--green-500), var(--green-600));
+            }
+
+            &.p-tag-warning {
+                background: linear-gradient(135deg, var(--yellow-500), var(--orange-500));
+            }
+
+            &.p-tag-danger {
+                background: linear-gradient(135deg, var(--red-500), var(--red-600));
+            }
+
+            &.p-tag-info {
+                background: linear-gradient(135deg, var(--blue-500), var(--blue-600));
+            }
+
+            &.p-tag-secondary {
+                background: linear-gradient(135deg, var(--surface-400), var(--surface-500));
+            }
+        }
+
+        // Action buttons
+        .p-button-rounded {
+            transition: all 0.2s ease;
+
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+            &:active {
+                transform: translateY(0);
+            }
+        }
+    }
+}
+
+// ========== OFFRE HEADER IN DIALOGS ==========
+.offre-header {
+    padding: 1.25rem;
+    background: linear-gradient(135deg, var(--surface-50) 0%, var(--surface-100) 100%);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--surface-200);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    animation: slideInRight 0.3s ease-out;
+
+    .offre-route {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: var(--text-color);
+
+        .ville-name {
+            transition: color 0.2s ease;
+
+            &:first-of-type {
+                color: var(--primary-color);
+            }
+
+            &:last-of-type {
+                color: var(--green-600);
+            }
+        }
+
+        i {
+            color: var(--primary-color);
+            font-size: 1rem;
+            animation: pulse 2s infinite;
+        }
+    }
+
+    .offre-date {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-color-secondary);
+        margin-bottom: 0.75rem;
+        font-size: 0.9rem;
+
+        i {
+            color: var(--blue-500);
+        }
+    }
+
+    .offre-prix-actuel {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+
+        strong {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        .prix-original {
+            text-decoration: line-through;
+            color: var(--text-color-secondary);
+            font-size: 0.85rem;
+        }
+    }
+}
+
+// ========== DETAIL DIALOG STYLES ==========
+.detail-content {
+    animation: fadeIn 0.3s ease-out;
+
+    .detail-section {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--surface-100);
+
+        &:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        h4 {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            margin: 0 0 1.25rem 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+            width: fit-content;
+
+            i {
+                color: var(--primary-color);
+                font-size: 1.1rem;
+            }
+        }
+    }
+
+    .detail-route {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem;
+        background: linear-gradient(135deg, var(--surface-50) 0%, var(--surface-100) 100%);
+        border-radius: 12px;
+        border: 1px solid var(--surface-200);
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--green-500));
+        }
+
+        .route-point {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+            flex: 1;
+            z-index: 1;
+
+            &.arrivee {
+                text-align: right;
+            }
+
+            .point-label {
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                color: var(--text-color-secondary);
+                letter-spacing: 1px;
+                font-weight: 600;
+            }
+
+            .point-ville {
+                font-size: 1.2rem;
+                font-weight: 700;
+                color: var(--text-color);
+            }
+
+            .point-site {
+                font-size: 0.85rem;
+                color: var(--text-color-secondary);
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+
+                i {
+                    font-size: 0.75rem;
+                    color: var(--primary-color);
+                }
+            }
+
+            &.depart .point-ville {
+                color: var(--primary-color);
+            }
+
+            &.arrivee .point-ville {
+                color: var(--green-600);
+            }
+        }
+
+        .route-arrow {
+            padding: 0 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+
+            i {
+                font-size: 1.75rem;
+                color: var(--primary-color);
+                animation: pulse 2s infinite;
+            }
+
+            .route-distance {
+                font-size: 0.75rem;
+                color: var(--text-color-secondary);
+                white-space: nowrap;
+            }
+        }
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+        padding: 0.75rem;
+        background: var(--surface-50);
+        border-radius: 8px;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background: var(--surface-100);
+            transform: translateY(-1px);
+        }
+
+        &.full {
+            grid-column: 1 / -1;
+        }
+
+        .detail-label {
+            font-size: 0.7rem;
+            color: var(--text-color-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .detail-value {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text-color);
+
+            &.highlight {
+                color: var(--primary-color);
+                font-weight: 700;
+                font-size: 1.1rem;
+            }
+
+            &.success {
+                color: var(--green-600);
+            }
+
+            &.warning {
+                color: var(--orange-500);
+            }
+
+            &.danger {
+                color: var(--red-500);
+            }
+        }
+    }
+
+    // Conditions and notes
+    .detail-conditions {
+        background: var(--yellow-50);
+        border: 1px solid var(--yellow-200);
+        border-radius: 8px;
+        padding: 1rem;
+
+        .detail-label {
+            color: var(--yellow-700);
+        }
+
+        .detail-value {
+            color: var(--yellow-900);
+            line-height: 1.5;
+        }
+    }
+}
+
+// ========== STATS CARDS ==========
+:host ::ng-deep {
+    .stat-card {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--surface-200);
+
+        &:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        &.info {
+            border-left: 4px solid var(--blue-500);
+
+            .stat-value {
+                color: var(--blue-500);
+            }
+        }
+
+        &.success {
+            border-left: 4px solid var(--green-500);
+
+            .stat-value {
+                color: var(--green-500);
+            }
+        }
+
+        &.warning,
+        &.warn {
+            border-left: 4px solid var(--orange-500);
+
+            .stat-value {
+                color: var(--orange-500);
+            }
+        }
+
+        &.danger {
+            border-left: 4px solid var(--red-500);
+
+            .stat-value {
+                color: var(--red-500);
+            }
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-color-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+    }
+
+    // Dialog improvements
+    .p-dialog {
+        .p-dialog-header {
+            border-bottom: 1px solid var(--surface-200);
+            padding: 1.25rem 1.5rem;
+
+            .p-dialog-title {
+                font-weight: 600;
+            }
+        }
+
+        .p-dialog-content {
+            padding: 1.5rem;
+        }
+
+        .p-dialog-footer {
+            border-top: 1px solid var(--surface-200);
+            padding: 1rem 1.5rem;
+            gap: 0.75rem;
+        }
+    }
+
+    // Form improvements
+    .p-inputtext,
+    .p-dropdown,
+    .p-calendar,
+    .p-inputnumber {
+        transition: all 0.2s ease;
+
+        &:hover:not(:disabled) {
+            border-color: var(--primary-color);
+        }
+
+        &:focus {
+            box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+        }
+    }
+
+    // Divider
+    .p-divider {
+        &.p-divider-horizontal {
+            margin: 1.5rem 0;
+
+            &::before {
+                border-color: var(--surface-200);
+            }
+        }
+    }
+
+    // Action menu styling
+    .p-menu {
+        min-width: 200px;
+
+        .p-menuitem-link {
+            padding: 0.75rem 1rem;
+            transition: all 0.2s ease;
+
+            &:hover {
+                background: var(--surface-100);
+            }
+
+            .p-menuitem-icon {
+                margin-right: 0.75rem;
+            }
+        }
+
+        .p-menuitem.text-red-500 .p-menuitem-link,
+        .p-menuitem-link.text-red-500 {
+            color: var(--red-500);
+
+            &:hover {
+                background: var(--red-50);
+            }
+
+            .p-menuitem-icon {
+                color: var(--red-500);
+            }
+        }
+    }
+}
+
+// ========== FORM STYLES ==========
+.form-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-section {
+    margin-bottom: 1rem;
+    padding: 1.25rem;
+    background: var(--surface-50);
+    border-radius: 12px;
+    border: 1px solid var(--surface-100);
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    h4 {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0 0 1.25rem 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--surface-200);
+
+        i {
+            font-size: 1rem;
+        }
+    }
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+// Selection info display (trajet price and vehicule capacity)
+.selection-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--blue-50) 0%, var(--green-50) 100%);
+    border-radius: 8px;
+    border: 1px solid var(--surface-200);
+    animation: fadeIn 0.3s ease-out;
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        background: white;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        color: var(--text-color);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+        i {
+            font-size: 1.1rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        strong {
+            font-weight: 700;
+        }
+
+        &.trajet-info {
+            border-left: 3px solid var(--blue-500);
+
+            i {
+                color: var(--blue-500);
+            }
+
+            strong {
+                color: var(--blue-600);
+            }
+        }
+
+        &.vehicule-info {
+            border-left: 3px solid var(--green-500);
+
+            i {
+                color: var(--green-500);
+            }
+
+            strong {
+                color: var(--green-600);
+            }
+        }
+    }
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-color);
+    }
+
+    &.checkbox-field {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.75rem;
+        padding-top: 1.5rem;
+
+        label {
+            margin: 0;
+            cursor: pointer;
+        }
+    }
+
+    :host ::ng-deep {
+        .p-inputtext,
+        .p-dropdown,
+        .p-calendar,
+        .p-inputnumber,
+        .p-inputtextarea {
+            width: 100%;
+        }
+    }
+}
+
+// ========== LOADING STATE ==========
+.loading-overlay {
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+}
+
+// ========== EMPTY STATE ==========
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    text-align: center;
+
+    i {
+        font-size: 4rem;
+        color: var(--surface-300);
+        margin-bottom: 1rem;
+    }
+
+    h3 {
+        margin: 0 0 0.5rem 0;
+        color: var(--text-color);
+    }
+
+    p {
+        color: var(--text-color-secondary);
+        margin: 0;
+    }
+}
+
+// ========== RESPONSIVE ==========
+@media screen and (max-width: 992px) {
+    .offres-container {
+        :host ::ng-deep {
+            .p-datatable {
+                .p-datatable-thead > tr > th,
+                .p-datatable-tbody > tr > td {
+                    padding: 0.75rem 0.5rem;
+                }
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .offres-container {
+        .header-section {
+            flex-direction: column;
+            gap: 1.5rem;
+
+            .stats-cards {
+                width: 100%;
+                justify-content: space-between;
+
+                :host ::ng-deep .p-card {
+                    flex: 1;
+                    min-width: calc(50% - 0.5rem);
+                }
+            }
+        }
+
+        .toolbar {
+            flex-direction: column;
+            align-items: stretch;
+
+            .actions {
+                justify-content: flex-end;
+            }
+        }
+
+        .search-filters {
+            flex-direction: column;
+            width: 100%;
+
+            .filter-dropdown {
+                width: 100%;
+            }
+        }
+
+        :host ::ng-deep {
+            .stat-card {
+                .stat-value {
+                    font-size: 1.5rem;
+                }
+            }
+        }
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .form-field.checkbox-field {
+        padding-top: 0;
+    }
+
+    .selection-info {
+        padding: 0.75rem;
+
+        .info-item {
+            font-size: 0.85rem;
+            padding: 0.5rem;
+        }
+    }
+
+    .detail-content {
+        .detail-route {
+            flex-direction: column;
+            gap: 1.5rem;
+            padding: 1.5rem 1rem;
+
+            &::before {
+                height: 100%;
+                width: 3px;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+            .route-point {
+                text-align: center !important;
+                width: 100%;
+
+                .point-site {
+                    justify-content: center;
+                }
+            }
+
+            .route-arrow {
+                transform: rotate(90deg);
+                padding: 0.5rem 0;
+
+                i {
+                    font-size: 1.5rem;
+                }
+            }
+        }
+
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .detail-item {
+            padding: 1rem;
+        }
+    }
+
+    .offre-header {
+        .offre-route {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+    .form-section {
+        padding: 1rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .offres-container {
+        .header-section {
+            .title-area h2 {
+                font-size: 1.25rem;
+            }
+
+            .stats-cards {
+                :host ::ng-deep .p-card {
+                    min-width: calc(50% - 0.5rem);
+
+                    .p-card-body {
+                        padding: 0.75rem;
+                    }
+                }
+
+                .stat-content .stat-value {
+                    font-size: 1.25rem;
+                }
+            }
+        }
+
+        .toolbar .actions {
+            flex-direction: column;
+            width: 100%;
+
+            :host ::ng-deep .p-button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        .trajet-cell .trajet-route {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+
+            i {
+                transform: rotate(90deg);
+                margin: 0.25rem 0;
+            }
+        }
+
+        .prix-cell {
+            .prix-promo {
+                font-size: 1rem;
+            }
+        }
+    }
+}
+
+:host ::ng-deep {
+    .p-dialog {
+        .p-dialog-content {
+            padding: 1rem;
+        }
+
+        .p-dialog-footer {
+            flex-direction: column;
+            gap: 0.5rem;
+
+            .p-button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    }
+}
+
+.form-section {
+    padding: 1rem;
+}

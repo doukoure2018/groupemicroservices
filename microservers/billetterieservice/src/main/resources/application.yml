@@ -1,0 +1,115 @@
+server:
+  port: 8097
+
+spring:
+  application:
+    name: billetterieservice
+  profiles:
+    active: default
+  main:
+    allow-bean-definition-overriding: true
+
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/innodb
+    username: inno2711
+    password: manager2711
+    hikari:
+      connection-test-query: SELECT 1
+
+  jpa:
+    database: POSTGRESQL
+    open-in-view: false
+    generate-ddl: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: innodb
+
+  cloud:
+    discovery:
+      client:
+        composite-indicator:
+          enabled: true
+
+  kafka:
+    bootstrap-servers:
+      - localhost:9092
+    template:
+      default-topic: NOTIFICATION_TOPIC
+    producer:
+      group-id: topicgroupid
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        max.request.size: 1300000000
+    properties:
+      spring:
+        json:
+          type:
+            mapping: Notification:io.multi.userservice.domain.Notification
+      message.max.bytes: 1300000000
+      max.request.size: 1300000000
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://manager:manager2711@localhost:5003/eureka/
+
+ui:
+  app:
+    url: http://localhost:4202
+
+key:
+  private: private.key
+  public: public.key
+
+jwks:
+  uri: http://localhost:8090/oauth2/jwks
+
+orange:
+  api:
+    oauth:
+      url: https://api.orange.com/oauth/v3/token
+    sms:
+      url: https://api.orange.com/smsmessaging/v1/outbound/tel:+224622459305/requests
+      balance:
+        url: https://api.orange.com/sms/admin/v1/contracts
+    client:
+      credentials: Basic VExqQ1BlQ1ZDdUxTRURLUjc2Z0RZcXo5QWw4a3h5M3A6bVV6Y0tsTHhRdkp1Z1lpTWN2UFdjT2lMN3ppc3RSdDFCRjVvajIxNEwxRGs=
+    sender:
+      address: tel:+224622459305
+
+sms:
+  code:
+    length: 6
+  expiry:
+    minutes: 10
+  max:
+    attempts: 3
+  rate:
+    limit:
+      per:
+        hour: 3
+  sender:
+    name: SMS 335524
+  primary:
+    provider: orange
+  fallback:
+    enabled: true
+  send:
+    timeout:
+      seconds: 30
+  retry:
+    attempts: 2

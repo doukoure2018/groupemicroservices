@@ -1,0 +1,256 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="communes-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Gestion des Communes</h1>
+            <p class="subtitle">Gérez les communes du système de billetterie</p>
+        </div>
+        <p-button label="Nouvelle Commune" icon="pi pi-plus" (onClick)="openCreateModal()" [raised]="true">
+        </p-button>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="stats-grid">
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon total">
+                    <i class="pi pi-map"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ totalCommunes() }}</span>
+                    <span class="stat-label">Total Communes</span>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon active">
+                    <i class="pi pi-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ activeCommunes() }}</span>
+                    <span class="stat-label">Communes Actives</span>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon inactive">
+                    <i class="pi pi-ban"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ inactiveCommunes() }}</span>
+                    <span class="stat-label">Communes Inactives</span>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon villes">
+                    <i class="pi pi-building"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ villes().length }}</span>
+                    <span class="stat-label">Villes</span>
+                </div>
+            </div>
+        </p-card>
+    </div>
+
+    <!-- Barre de recherche et filtres -->
+    <div class="toolbar">
+        <p-iconField iconPosition="left" class="search-field">
+            <p-inputIcon styleClass="pi pi-search"></p-inputIcon>
+            <input type="text" pInputText placeholder="Rechercher une commune..." [value]="searchTerm()"
+                (input)="onSearchChange($event)" />
+        </p-iconField>
+
+        <p-dropdown [options]="activeVilles()" [(ngModel)]="state().selectedVilleFilter"
+            (onChange)="onVilleFilterChange($event.value)" optionLabel="libelle" placeholder="Filtrer par ville"
+            [showClear]="true" [filter]="true" filterPlaceholder="Rechercher..." styleClass="ville-filter">
+            <ng-template pTemplate="selectedItem" let-selected>
+                <div class="dropdown-item" *ngIf="selected">
+                    <i class="pi pi-building"></i>
+                    <span>{{ selected.libelle }}</span>
+                    <small class="region-tag">{{ selected.regionLibelle }}</small>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="item" let-ville>
+                <div class="dropdown-item">
+                    <i class="pi pi-building"></i>
+                    <span>{{ ville.libelle }}</span>
+                    <small class="region-tag">{{ ville.regionLibelle }}</small>
+                </div>
+            </ng-template>
+        </p-dropdown>
+
+        <p-button icon="pi pi-refresh" [outlined]="true" [loading]="loading()" (onClick)="loadCommunes()"
+            pTooltip="Actualiser" tooltipPosition="top">
+        </p-button>
+    </div>
+
+    <!-- Indicateur de filtre actif -->
+    @if (selectedVilleFilter()) {
+    <div class="active-filter">
+        <span>Filtre actif: <strong>{{ selectedVilleFilter()?.libelle }}</strong> ({{
+            selectedVilleFilter()?.regionLibelle }})</span>
+        <p-button icon="pi pi-times" [text]="true" severity="secondary" (onClick)="clearVilleFilter()"
+            pTooltip="Effacer le filtre">
+        </p-button>
+    </div>
+    }
+
+    <!-- Table des communes -->
+    <p-card>
+        @if (loading()) {
+        <div class="loading-container">
+            <p-progressSpinner strokeWidth="4" ariaLabel="Chargement"></p-progressSpinner>
+            <span>Chargement des communes...</span>
+        </div>
+        } @else {
+        <p-table [value]="filteredCommunes()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25, 50]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} communes"
+            [tableStyle]="{ 'min-width': '60rem' }" [globalFilterFields]="['libelle', 'villeLibelle', 'regionLibelle']"
+            styleClass="p-datatable-sm p-datatable-striped">
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="libelle">
+                        Libellé <p-sortIcon field="libelle"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="villeLibelle">
+                        Ville <p-sortIcon field="villeLibelle"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="regionLibelle">
+                        Région <p-sortIcon field="regionLibelle"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="actif">
+                        Statut <p-sortIcon field="actif"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="createdAt">
+                        Date de création <p-sortIcon field="createdAt"></p-sortIcon>
+                    </th>
+                    <th style="width: 150px">Actions</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-commune>
+                <tr [class.inactive-row]="!commune.actif">
+                    <td>
+                        <div class="commune-name">
+                            <i class="pi pi-map"></i>
+                            <span>{{ commune.libelle }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="ville-cell">
+                            <i class="pi pi-building"></i>
+                            <span>{{ commune.villeLibelle }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="region-cell">
+                            <i class="pi pi-map-marker"></i>
+                            <span>{{ commune.regionLibelle }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <p-tag [value]="commune.actif ? 'Actif' : 'Inactif'"
+                            [severity]="getStatusSeverity(commune.actif)">
+                        </p-tag>
+                    </td>
+                    <td>{{ commune.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>
+                        <div class="actions-cell">
+                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                (onClick)="openEditModal(commune)" pTooltip="Modifier" tooltipPosition="top">
+                            </p-button>
+                            <p-button [icon]="commune.actif ? 'pi pi-lock' : 'pi pi-lock-open'" [rounded]="true"
+                                [text]="true" [severity]="commune.actif ? 'danger' : 'success'"
+                                (onClick)="confirmToggleStatus(commune)"
+                                [pTooltip]="commune.actif ? 'Désactiver' : 'Activer'" tooltipPosition="top">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="pi pi-inbox"></i>
+                            <p>Aucune commune trouvée</p>
+                            @if (selectedVilleFilter()) {
+                            <p-button label="Effacer le filtre" [text]="true" (onClick)="clearVilleFilter()">
+                            </p-button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+        }
+    </p-card>
+</div>
+
+<!-- Modal Création/Édition -->
+<p-dialog [header]="modalTitle" [(visible)]="state().isModalOpen" [modal]="true" [style]="{ width: '500px' }"
+    [draggable]="false" [resizable]="false" (onHide)="closeModal()">
+
+    <form [formGroup]="communeForm" (ngSubmit)="onSubmit()">
+        <div class="form-content">
+            <!-- Sélection de la ville -->
+            <div class="form-field">
+                <label for="villeUuid">Ville *</label>
+                <p-dropdown id="villeUuid" formControlName="villeUuid" [options]="activeVilles()" optionLabel="libelle"
+                    optionValue="villeUuid" placeholder="Sélectionner une ville" [filter]="true"
+                    filterPlaceholder="Rechercher..." [class.ng-invalid]="isFieldInvalid('villeUuid')"
+                    [class.ng-dirty]="isFieldInvalid('villeUuid')" styleClass="w-full">
+                    <ng-template pTemplate="selectedItem" let-selected>
+                        <div class="dropdown-item" *ngIf="selected">
+                            <i class="pi pi-building"></i>
+                            <span>{{ selected.libelle }}</span>
+                            <small class="region-tag">{{ selected.regionLibelle }}</small>
+                        </div>
+                    </ng-template>
+                    <ng-template pTemplate="item" let-ville>
+                        <div class="dropdown-item">
+                            <i class="pi pi-building"></i>
+                            <span>{{ ville.libelle }}</span>
+                            <small class="region-tag">{{ ville.regionLibelle }}</small>
+                        </div>
+                    </ng-template>
+                </p-dropdown>
+                @if (isFieldInvalid('villeUuid')) {
+                <small class="p-error">{{ getFieldError('villeUuid') }}</small>
+                }
+            </div>
+
+            <!-- Libellé -->
+            <div class="form-field">
+                <label for="libelle">Libellé *</label>
+                <input pInputText id="libelle" formControlName="libelle" placeholder="Ex: Matam"
+                    [class.ng-invalid]="isFieldInvalid('libelle')" [class.ng-dirty]="isFieldInvalid('libelle')" />
+                @if (isFieldInvalid('libelle')) {
+                <small class="p-error">{{ getFieldError('libelle') }}</small>
+                }
+            </div>
+        </div>
+
+        <div class="dialog-footer">
+            <p-button label="Annuler" [outlined]="true" severity="secondary" (onClick)="closeModal()">
+            </p-button>
+            <p-button [label]="isEditMode() ? 'Modifier' : 'Créer'" type="submit" [loading]="loading()"
+                icon="pi pi-check">
+            </p-button>
+        </div>
+    </form>
+</p-dialog>

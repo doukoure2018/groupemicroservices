@@ -1,0 +1,244 @@
+<p>vehicules works!</p>
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="vehicules-container">
+    <!-- Header -->
+    <div class="header-section">
+        <div class="title-area">
+            <h2><i class="pi pi-car"></i> Gestion des Véhicules</h2>
+            <p class="subtitle">Gérez votre flotte de véhicules</p>
+        </div>
+        <div class="stats-cards">
+            <p-card styleClass="stat-card">
+                <div class="stat-content">
+                    <span class="stat-value">{{ totalVehicules() }}</span>
+                    <span class="stat-label">Total</span>
+                </div>
+            </p-card>
+            <p-card styleClass="stat-card success">
+                <div class="stat-content">
+                    <span class="stat-value">{{ vehiculesActifs() }}</span>
+                    <span class="stat-label">Actifs</span>
+                </div>
+            </p-card>
+            <p-card styleClass="stat-card warn">
+                <div class="stat-content">
+                    <span class="stat-value">{{ vehiculesEnMaintenance() }}</span>
+                    <span class="stat-label">Maintenance</span>
+                </div>
+            </p-card>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <p-iconfield iconPosition="left">
+            <p-inputicon styleClass="pi pi-search"></p-inputicon>
+            <input pInputText type="text" placeholder="Rechercher..." (input)="onSearch($event)" />
+        </p-iconfield>
+        <div class="actions">
+            <p-button label="Actualiser" icon="pi pi-refresh" severity="secondary" [outlined]="true"
+                (onClick)="loadVehicules()" [loading]="loading()"></p-button>
+            <p-button label="Nouveau Véhicule" icon="pi pi-plus" (onClick)="openNewDialog()"></p-button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <p-card>
+        <p-table [value]="filteredVehicules()" [paginator]="true" [rows]="10" [loading]="loading()"
+            styleClass="p-datatable-sm p-datatable-striped" [tableStyle]="{ 'min-width': '70rem' }">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="immatriculation">Immatriculation <p-sortIcon
+                            field="immatriculation"></p-sortIcon></th>
+                    <th>Véhicule</th>
+                    <th>Type</th>
+                    <th pSortableColumn="nombrePlaces">Places <p-sortIcon field="nombrePlaces"></p-sortIcon></th>
+                    <th>Chauffeur</th>
+                    <th>Propriétaire</th>
+                    <th style="width: 100px">Statut</th>
+                    <th style="width: 180px">Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-v>
+                <tr>
+                    <td>
+                        <strong>{{ v.immatriculation }}</strong>
+                        @if (v.climatise) {
+                        <i class="pi pi-snowflake text-blue-500 ml-2" pTooltip="Climatisé"></i>
+                        }
+                    </td>
+                    <td>
+                        <div class="vehicule-info">
+                            <span>{{ getVehiculeDescription(v) }}</span>
+                            @if (v.couleur) {
+                            <small class="text-secondary">{{ v.couleur }}</small>
+                            }
+                        </div>
+                    </td>
+                    <td>{{ v.typeVehiculeLibelle || '-' }}</td>
+                    <td class="text-center">{{ v.nombrePlaces }}</td>
+                    <td>
+                        <div class="chauffeur-info">
+                            <span>{{ v.nomChauffeur }}</span>
+                            <small class="text-secondary">{{ v.contactChauffeur }}</small>
+                        </div>
+                    </td>
+                    <td>{{ v.userFullName || v.userUsername || '-' }}</td>
+                    <td>
+                        <p-tag [value]="getStatutLabel(v.statut)" [severity]="getStatutSeverity(v.statut)"></p-tag>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                pTooltip="Modifier" (onClick)="openEditDialog(v)"></p-button>
+                            @if (v.statut !== 'ACTIF') {
+                            <p-button icon="pi pi-check" [rounded]="true" [text]="true" severity="success"
+                                pTooltip="Activer" (onClick)="changeStatut(v, 'ACTIF')"></p-button>
+                            }
+                            @if (v.statut === 'ACTIF') {
+                            <p-button icon="pi pi-wrench" [rounded]="true" [text]="true" severity="warn"
+                                pTooltip="Maintenance" (onClick)="changeStatut(v, 'EN_MAINTENANCE')"></p-button>
+                            }
+                            @if (v.statut !== 'SUSPENDU') {
+                            <p-button icon="pi pi-ban" [rounded]="true" [text]="true" severity="danger"
+                                pTooltip="Suspendre" (onClick)="changeStatut(v, 'SUSPENDU')"></p-button>
+                            }
+                            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                pTooltip="Supprimer" (onClick)="confirmDelete(v)"></p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="8" class="text-center p-4">Aucun véhicule trouvé</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
+</div>
+
+<!-- Dialog -->
+<p-dialog [(visible)]="dialogVisible" [header]="isEditMode() ? 'Modifier le véhicule' : 'Nouveau véhicule'"
+    [modal]="true" [style]="{ width: '700px' }" (onHide)="closeDialog()">
+    <form [formGroup]="vehiculeForm" class="form-content">
+        <!-- Section Identification -->
+        <div class="form-section">
+            <h4><i class="pi pi-id-card"></i> Identification</h4>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="immatriculation">Immatriculation *</label>
+                    <input pInputText id="immatriculation" formControlName="immatriculation" placeholder="Ex: RC 1234 A"
+                        class="w-full" />
+                </div>
+                <div class="form-field">
+                    <label for="typeVehiculeUuid">Type de véhicule</label>
+                    <p-dropdown id="typeVehiculeUuid" formControlName="typeVehiculeUuid" [options]="typesOptions()"
+                        optionLabel="label" optionValue="value" placeholder="Sélectionner" [showClear]="true"
+                        styleClass="w-full"></p-dropdown>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="marque">Marque</label>
+                    <input pInputText id="marque" formControlName="marque" placeholder="Ex: Toyota" class="w-full" />
+                </div>
+                <div class="form-field">
+                    <label for="modele">Modèle</label>
+                    <input pInputText id="modele" formControlName="modele" placeholder="Ex: Hiace" class="w-full" />
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="anneeFabrication">Année</label>
+                    <p-inputNumber id="anneeFabrication" formControlName="anneeFabrication" [min]="1990" [max]="2026"
+                        [useGrouping]="false" styleClass="w-full"></p-inputNumber>
+                </div>
+                <div class="form-field">
+                    <label for="nombrePlaces">Nombre de places *</label>
+                    <p-inputNumber id="nombrePlaces" formControlName="nombrePlaces" [min]="1" [max]="100"
+                        styleClass="w-full"></p-inputNumber>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="couleur">Couleur</label>
+                    <p-dropdown id="couleur" formControlName="couleur" [options]="couleursVehicule" optionLabel="label"
+                        optionValue="value" placeholder="Sélectionner" [showClear]="true"
+                        styleClass="w-full"></p-dropdown>
+                </div>
+                <div class="form-field checkbox-field" style="align-self: end;">
+                    <p-checkbox formControlName="climatise" [binary]="true" inputId="climatise"></p-checkbox>
+                    <label for="climatise">Véhicule climatisé</label>
+                </div>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Section Chauffeur -->
+        <!-- Section Chauffeur -->
+        <div class="form-section">
+            <h4><i class="pi pi-user"></i> Chauffeur</h4>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="nomChauffeur">Nom du chauffeur *</label>
+                    <input pInputText id="nomChauffeur" formControlName="nomChauffeur" class="w-full" />
+                </div>
+                <div class="form-field">
+                    <label for="contactChauffeur">Contact chauffeur *</label>
+                    <input pInputText id="contactChauffeur" formControlName="contactChauffeur"
+                        placeholder="00224 6XX XXX XXX" class="w-full" />
+                    @if (vehiculeForm.get('contactChauffeur')?.invalid && vehiculeForm.get('contactChauffeur')?.touched)
+                    {
+                    <small class="p-error">Format: 00224 suivi de 9 chiffres</small>
+                    }
+                </div>
+            </div>
+            <div class="form-field">
+                <label for="contactProprietaire">Contact propriétaire</label>
+                <input pInputText id="contactProprietaire" formControlName="contactProprietaire"
+                    placeholder="00224 6XX XXX XXX" class="w-full" />
+                @if (vehiculeForm.get('contactProprietaire')?.invalid &&
+                vehiculeForm.get('contactProprietaire')?.touched) {
+                <small class="p-error">Format: 00224 suivi de 9 chiffres</small>
+                }
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Section Documents -->
+        <div class="form-section">
+            <h4><i class="pi pi-file"></i> Documents</h4>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="dateExpirationAssurance">Expiration assurance</label>
+                    <input pInputText type="date" id="dateExpirationAssurance" formControlName="dateExpirationAssurance"
+                        class="w-full" />
+                </div>
+                <div class="form-field">
+                    <label for="dateExpirationVisite">Expiration visite technique</label>
+                    <input pInputText type="date" id="dateExpirationVisite" formControlName="dateExpirationVisite"
+                        class="w-full" />
+                </div>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Description -->
+        <div class="form-field">
+            <label for="description">Description</label>
+            <textarea pTextarea id="description" formControlName="description" rows="2" class="w-full"></textarea>
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Annuler" icon="pi pi-times" [text]="true" (onClick)="closeDialog()"></p-button>
+        <p-button [label]="isEditMode() ? 'Mettre à jour' : 'Créer'" icon="pi pi-check" (onClick)="saveVehicule()"
+            [loading]="loading()"></p-button>
+    </ng-template>
+</p-dialog>

@@ -1,0 +1,274 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="partenaires-container">
+    <!-- Header -->
+    <div class="header-section">
+        <div class="title-area">
+            <h2><i class="pi pi-building"></i> Gestion des Partenaires</h2>
+            <p class="subtitle">Gérez vos partenaires commerciaux et distributeurs</p>
+        </div>
+        <div class="stats-cards">
+            <p-card styleClass="stat-card">
+                <div class="stat-content">
+                    <span class="stat-value">{{ totalPartenaires() }}</span>
+                    <span class="stat-label">Total</span>
+                </div>
+            </p-card>
+            <p-card styleClass="stat-card success">
+                <div class="stat-content">
+                    <span class="stat-value">{{ partenairesActifs() }}</span>
+                    <span class="stat-label">Actifs</span>
+                </div>
+            </p-card>
+            <p-card styleClass="stat-card warn">
+                <div class="stat-content">
+                    <span class="stat-value">{{ partenairesEnAttente() }}</span>
+                    <span class="stat-label">En attente</span>
+                </div>
+            </p-card>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <p-iconfield iconPosition="left">
+            <p-inputicon styleClass="pi pi-search"></p-inputicon>
+            <input pInputText type="text" placeholder="Rechercher..." (input)="onSearch($event)" />
+        </p-iconfield>
+        <div class="actions">
+            <p-button label="Actualiser" icon="pi pi-refresh" severity="secondary" [outlined]="true"
+                (onClick)="loadPartenaires()" [loading]="loading()"></p-button>
+            <p-button label="Nouveau Partenaire" icon="pi pi-plus" (onClick)="openNewDialog()"></p-button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <p-card>
+        <p-table [value]="filteredPartenaires()" [paginator]="true" [rows]="10" [loading]="loading()"
+            styleClass="p-datatable-sm p-datatable-striped" [tableStyle]="{ 'min-width': '70rem' }">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="nom">Nom <p-sortIcon field="nom"></p-sortIcon></th>
+                    <th>Type</th>
+                    <th>Contact</th>
+                    <th>Localisation</th>
+                    <th>Responsable</th>
+                    <th>Commission</th>
+                    <th style="width: 100px">Statut</th>
+                    <th style="width: 180px">Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-p>
+                <tr>
+                    <td>
+                        <div class="partenaire-nom">
+                            <strong>{{ p.nom }}</strong>
+                            @if (p.raisonSociale) {
+                            <small class="text-secondary">{{ p.raisonSociale }}</small>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <p-tag [value]="getTypeLabel(p.typePartenaire)" severity="info"></p-tag>
+                    </td>
+                    <td>
+                        <div class="contact-info">
+                            @if (p.telephone) {
+                            <span><i class="pi pi-phone"></i> {{ p.telephone }}</span>
+                            }
+                            @if (p.email) {
+                            <small class="text-secondary">{{ p.email }}</small>
+                            }
+                        </div>
+                    </td>
+                    <td>{{ p.villeLibelle || p.adresse || '-' }}</td>
+                    <td>
+                        @if (p.responsableNom) {
+                        <div class="responsable-info">
+                            <span>{{ p.responsableNom }}</span>
+                            @if (p.responsableTelephone) {
+                            <small class="text-secondary">{{ p.responsableTelephone }}</small>
+                            }
+                        </div>
+                        } @else {
+                        -
+                        }
+                    </td>
+                    <td>
+                        <span class="commission-badge">{{ formatCommission(p.commissionPourcentage, p.commissionFixe)
+                            }}</span>
+                    </td>
+                    <td>
+                        <p-tag [value]="p.statut" [severity]="getStatutSeverity(p.statut)"></p-tag>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                pTooltip="Modifier" (onClick)="openEditDialog(p)"></p-button>
+                            <p-button icon="pi pi-percentage" [rounded]="true" [text]="true" severity="success"
+                                pTooltip="Commissions" (onClick)="openCommissionsDialog(p)"></p-button>
+                            @if (p.statut !== 'ACTIF') {
+                            <p-button icon="pi pi-check" [rounded]="true" [text]="true" severity="success"
+                                pTooltip="Activer" (onClick)="changeStatut(p, 'ACTIF')"></p-button>
+                            }
+                            @if (p.statut !== 'SUSPENDU') {
+                            <p-button icon="pi pi-ban" [rounded]="true" [text]="true" severity="danger"
+                                pTooltip="Suspendre" (onClick)="changeStatut(p, 'SUSPENDU')"></p-button>
+                            }
+                            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                pTooltip="Supprimer" (onClick)="confirmDelete(p)"></p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="8" class="text-center p-4">Aucun partenaire trouvé</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
+</div>
+
+<!-- Dialog Principal -->
+<p-dialog [(visible)]="dialogVisible" [header]="isEditMode() ? 'Modifier le partenaire' : 'Nouveau partenaire'"
+    [modal]="true" [style]="{ width: '750px' }" (onHide)="closeDialog()">
+    <form [formGroup]="partenaireForm" class="form-content">
+        <!-- Section Informations -->
+        <div class="form-section">
+            <h4><i class="pi pi-building"></i> Informations générales</h4>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="nom">Nom *</label>
+                    <input pInputText id="nom" formControlName="nom" class="w-full" />
+                </div>
+                <div class="form-field">
+                    <label for="typePartenaire">Type</label>
+                    <p-dropdown id="typePartenaire" formControlName="typePartenaire" [options]="typesPartenaire"
+                        optionLabel="label" optionValue="value" styleClass="w-full"></p-dropdown>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="raisonSociale">Raison sociale</label>
+                    <input pInputText id="raisonSociale" formControlName="raisonSociale" class="w-full" />
+                </div>
+                <div class="form-field">
+                    <label for="numeroRegistre">N° Registre</label>
+                    <input pInputText id="numeroRegistre" formControlName="numeroRegistre" class="w-full" />
+                </div>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Section Contact -->
+        <div class="form-section">
+            <h4><i class="pi pi-phone"></i> Contact</h4>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="telephone">Téléphone</label>
+                    <input pInputText id="telephone" formControlName="telephone" class="w-full" />
+                </div>
+                <div class="form-field">
+                    <label for="email">Email</label>
+                    <input pInputText id="email" formControlName="email" type="email" class="w-full" />
+                </div>
+            </div>
+            <div class="form-field">
+                <label for="adresse">Adresse</label>
+                <textarea pTextarea id="adresse" formControlName="adresse" rows="2" class="w-full"></textarea>
+            </div>
+            <div class="form-field">
+                <label for="localisationUuid">Localisation</label>
+                <p-dropdown id="localisationUuid" formControlName="localisationUuid" [options]="localisationsOptions()"
+                    optionLabel="label" optionValue="value" placeholder="Sélectionner" [filter]="true" filterBy="label"
+                    [showClear]="true" styleClass="w-full"></p-dropdown>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Section Responsable -->
+        <div class="form-section">
+            <h4><i class="pi pi-user"></i> Responsable</h4>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="responsableNom">Nom du responsable</label>
+                    <input pInputText id="responsableNom" formControlName="responsableNom" class="w-full" />
+                </div>
+                <div class="form-field">
+                    <label for="responsableTelephone">Téléphone responsable</label>
+                    <input pInputText id="responsableTelephone" formControlName="responsableTelephone" class="w-full" />
+                </div>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Section Partenariat -->
+        <div class="form-section">
+            <h4><i class="pi pi-calendar"></i> Partenariat</h4>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="dateDebutPartenariat">Date début</label>
+                    <p-calendar id="dateDebutPartenariat" formControlName="dateDebutPartenariat" dateFormat="dd/mm/yy"
+                        [showIcon]="true" styleClass="w-full"></p-calendar>
+                </div>
+                <div class="form-field">
+                    <label for="dateFinPartenariat">Date fin</label>
+                    <p-calendar id="dateFinPartenariat" formControlName="dateFinPartenariat" dateFormat="dd/mm/yy"
+                        [showIcon]="true" styleClass="w-full"></p-calendar>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="commissionPourcentage">Commission %</label>
+                    <p-inputNumber id="commissionPourcentage" formControlName="commissionPourcentage" [min]="0"
+                        [max]="100" suffix=" %" styleClass="w-full"></p-inputNumber>
+                </div>
+                <div class="form-field">
+                    <label for="commissionFixe">Commission fixe (GNF)</label>
+                    <p-inputNumber id="commissionFixe" formControlName="commissionFixe" [min]="0" mode="currency"
+                        currency="GNF" locale="fr-GN" styleClass="w-full"></p-inputNumber>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Annuler" icon="pi pi-times" [text]="true" (onClick)="closeDialog()"></p-button>
+        <p-button [label]="isEditMode() ? 'Mettre à jour' : 'Créer'" icon="pi pi-check" (onClick)="savePartenaire()"
+            [loading]="loading()"></p-button>
+    </ng-template>
+</p-dialog>
+
+<!-- Dialog Commissions -->
+<p-dialog [(visible)]="commissionsDialogVisible" header="Modifier les commissions" [modal]="true"
+    [style]="{ width: '400px' }" (onHide)="closeCommissionsDialog()">
+    @if (selectedPartenaire()) {
+    <div class="partenaire-header">
+        <i class="pi pi-building"></i>
+        <span>{{ selectedPartenaire()!.nom }}</span>
+    </div>
+    }
+
+    <form [formGroup]="commissionsForm" class="form-content">
+        <div class="form-field">
+            <label for="commissionPourcentageEdit">Commission en %</label>
+            <p-inputNumber id="commissionPourcentageEdit" formControlName="commissionPourcentage" [min]="0" [max]="100"
+                suffix=" %" styleClass="w-full"></p-inputNumber>
+        </div>
+        <div class="form-field">
+            <label for="commissionFixeEdit">Commission fixe (GNF)</label>
+            <p-inputNumber id="commissionFixeEdit" formControlName="commissionFixe" [min]="0" mode="currency"
+                currency="GNF" locale="fr-GN" styleClass="w-full"></p-inputNumber>
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Annuler" icon="pi pi-times" [text]="true" (onClick)="closeCommissionsDialog()"></p-button>
+        <p-button label="Enregistrer" icon="pi pi-check" (onClick)="saveCommissions()" [loading]="loading()"></p-button>
+    </ng-template>
+</p-dialog>

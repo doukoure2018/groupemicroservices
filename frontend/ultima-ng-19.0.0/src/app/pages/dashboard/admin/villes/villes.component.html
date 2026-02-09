@@ -1,0 +1,257 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="villes-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Gestion des Villes</h1>
+            <p class="subtitle">Gérez les villes et préfectures du système de billetterie</p>
+        </div>
+        <p-button label="Nouvelle Ville" icon="pi pi-plus" (onClick)="openCreateModal()" [raised]="true">
+        </p-button>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="stats-grid">
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon total">
+                    <i class="pi pi-building"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ totalVilles() }}</span>
+                    <span class="stat-label">Total Villes</span>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon active">
+                    <i class="pi pi-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ activeVilles() }}</span>
+                    <span class="stat-label">Villes Actives</span>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon inactive">
+                    <i class="pi pi-ban"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ inactiveVilles() }}</span>
+                    <span class="stat-label">Villes Inactives</span>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon regions">
+                    <i class="pi pi-map"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ regions().length }}</span>
+                    <span class="stat-label">Régions</span>
+                </div>
+            </div>
+        </p-card>
+    </div>
+
+    <!-- Barre de recherche et filtres -->
+    <div class="toolbar">
+        <p-iconField iconPosition="left" class="search-field">
+            <p-inputIcon styleClass="pi pi-search"></p-inputIcon>
+            <input type="text" pInputText placeholder="Rechercher une ville..." [value]="searchTerm()"
+                (input)="onSearchChange($event)" />
+        </p-iconField>
+
+        <p-dropdown [options]="activeRegions()" [(ngModel)]="state().selectedRegionFilter"
+            (onChange)="onRegionFilterChange($event.value)" optionLabel="libelle" placeholder="Filtrer par région"
+            [showClear]="true" styleClass="region-filter">
+            <ng-template pTemplate="selectedItem" let-selected>
+                <div class="region-item" *ngIf="selected">
+                    <i class="pi pi-map-marker"></i>
+                    <span>{{ selected.libelle }}</span>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="item" let-region>
+                <div class="region-item">
+                    <i class="pi pi-map-marker"></i>
+                    <span>{{ region.libelle }}</span>
+                </div>
+            </ng-template>
+        </p-dropdown>
+
+        <p-button icon="pi pi-refresh" [outlined]="true" [loading]="loading()" (onClick)="loadVilles()"
+            pTooltip="Actualiser" tooltipPosition="top">
+        </p-button>
+    </div>
+
+    <!-- Indicateur de filtre actif -->
+    @if (selectedRegionFilter()) {
+    <div class="active-filter">
+        <span>Filtre actif: <strong>{{ selectedRegionFilter()?.libelle }}</strong></span>
+        <p-button icon="pi pi-times" [text]="true" severity="secondary" (onClick)="clearRegionFilter()"
+            pTooltip="Effacer le filtre">
+        </p-button>
+    </div>
+    }
+
+    <!-- Table des villes -->
+    <p-card>
+        @if (loading()) {
+        <div class="loading-container">
+            <p-progressSpinner strokeWidth="4" ariaLabel="Chargement"></p-progressSpinner>
+            <span>Chargement des villes...</span>
+        </div>
+        } @else {
+        <p-table [value]="filteredVilles()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25, 50]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} villes"
+            [tableStyle]="{ 'min-width': '60rem' }" [globalFilterFields]="['libelle', 'codePostal', 'regionLibelle']"
+            styleClass="p-datatable-sm p-datatable-striped">
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="libelle">
+                        Libellé <p-sortIcon field="libelle"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="codePostal">
+                        Code Postal <p-sortIcon field="codePostal"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="regionLibelle">
+                        Région <p-sortIcon field="regionLibelle"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="actif">
+                        Statut <p-sortIcon field="actif"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="createdAt">
+                        Date de création <p-sortIcon field="createdAt"></p-sortIcon>
+                    </th>
+                    <th style="width: 150px">Actions</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-ville>
+                <tr [class.inactive-row]="!ville.actif">
+                    <td>
+                        <div class="ville-name">
+                            <i class="pi pi-building"></i>
+                            <span>{{ ville.libelle }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="code-badge">{{ ville.codePostal || '-' }}</span>
+                    </td>
+                    <td>
+                        <div class="region-cell">
+                            <i class="pi pi-map-marker"></i>
+                            <span>{{ ville.regionLibelle }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <p-tag [value]="ville.actif ? 'Actif' : 'Inactif'" [severity]="getStatusSeverity(ville.actif)">
+                        </p-tag>
+                    </td>
+                    <td>{{ ville.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>
+                        <div class="actions-cell">
+                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                (onClick)="openEditModal(ville)" pTooltip="Modifier" tooltipPosition="top">
+                            </p-button>
+                            <p-button [icon]="ville.actif ? 'pi pi-lock' : 'pi pi-lock-open'" [rounded]="true"
+                                [text]="true" [severity]="ville.actif ? 'danger' : 'success'"
+                                (onClick)="confirmToggleStatus(ville)"
+                                [pTooltip]="ville.actif ? 'Désactiver' : 'Activer'" tooltipPosition="top">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="pi pi-inbox"></i>
+                            <p>Aucune ville trouvée</p>
+                            @if (selectedRegionFilter()) {
+                            <p-button label="Effacer le filtre" [text]="true" (onClick)="clearRegionFilter()">
+                            </p-button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+        }
+    </p-card>
+</div>
+
+<!-- Modal Création/Édition -->
+<p-dialog [header]="modalTitle" [(visible)]="state().isModalOpen" [modal]="true" [style]="{ width: '500px' }"
+    [draggable]="false" [resizable]="false" (onHide)="closeModal()">
+
+    <form [formGroup]="villeForm" (ngSubmit)="onSubmit()">
+        <div class="form-content">
+            <!-- Sélection de la région -->
+            <div class="form-field">
+                <label for="regionUuid">Région *</label>
+                <p-dropdown id="regionUuid" formControlName="regionUuid" [options]="activeRegions()"
+                    optionLabel="libelle" optionValue="regionUuid" placeholder="Sélectionner une région" [filter]="true"
+                    filterPlaceholder="Rechercher..." [class.ng-invalid]="isFieldInvalid('regionUuid')"
+                    [class.ng-dirty]="isFieldInvalid('regionUuid')" styleClass="w-full">
+                    <ng-template pTemplate="selectedItem" let-selected>
+                        <div class="region-item" *ngIf="selected">
+                            <i class="pi pi-map-marker"></i>
+                            <span>{{ selected.libelle }}</span>
+                        </div>
+                    </ng-template>
+                    <ng-template pTemplate="item" let-region>
+                        <div class="region-item">
+                            <i class="pi pi-map-marker"></i>
+                            <span>{{ region.libelle }}</span>
+                        </div>
+                    </ng-template>
+                </p-dropdown>
+                @if (isFieldInvalid('regionUuid')) {
+                <small class="p-error">{{ getFieldError('regionUuid') }}</small>
+                }
+            </div>
+
+            <!-- Libellé de la ville -->
+            <div class="form-field">
+                <label for="libelle">Libellé *</label>
+                <input pInputText id="libelle" formControlName="libelle" placeholder="Ex: Ratoma"
+                    [class.ng-invalid]="isFieldInvalid('libelle')" [class.ng-dirty]="isFieldInvalid('libelle')" />
+                @if (isFieldInvalid('libelle')) {
+                <small class="p-error">{{ getFieldError('libelle') }}</small>
+                }
+            </div>
+
+            <!-- Code postal -->
+            <div class="form-field">
+                <label for="codePostal">Code Postal</label>
+                <input pInputText id="codePostal" formControlName="codePostal" placeholder="Ex: 001"
+                    [class.ng-invalid]="isFieldInvalid('codePostal')" [class.ng-dirty]="isFieldInvalid('codePostal')" />
+                @if (isFieldInvalid('codePostal')) {
+                <small class="p-error">{{ getFieldError('codePostal') }}</small>
+                }
+            </div>
+        </div>
+
+        <div class="dialog-footer">
+            <p-button label="Annuler" [outlined]="true" severity="secondary" (onClick)="closeModal()">
+            </p-button>
+            <p-button [label]="isEditMode() ? 'Modifier' : 'Créer'" type="submit" [loading]="loading()"
+                icon="pi pi-check">
+            </p-button>
+        </div>
+    </form>
+</p-dialog>

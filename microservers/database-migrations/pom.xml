@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.multi</groupId>
+        <artifactId>microservers</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>database-migrations</artifactId>
+    <name>database-migrations</name>
+
+    <properties>
+        <flyway.version>11.3.0</flyway.version>
+        <!-- Default database configuration -->
+        <db.url>jdbc:postgresql://localhost:5433/innodb</db.url>
+        <db.username>postgres</db.username>
+        <db.password>password</db.password>
+        <flyway.cleanDisabled>true</flyway.cleanDisabled>
+    </properties>
+
+    <dependencies>
+        <!-- Flyway Core -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>${flyway.version}</version>
+        </dependency>
+
+        <!-- Flyway PostgreSQL -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+            <version>${flyway.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- PostgreSQL Driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <!-- Local Development Profile (Default) -->
+        <profile>
+            <id>local</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <db.url>jdbc:postgresql://localhost:5433/innodb</db.url>
+                <db.username>inno2711</db.username>
+                <db.password>manager2711</db.password>
+                <flyway.cleanDisabled>false</flyway.cleanDisabled>
+            </properties>
+        </profile>
+
+        <!-- Docker Development Profile -->
+        <profile>
+            <id>docker</id>
+            <properties>
+                <db.url>jdbc:postgresql://localhost:5433/innodb</db.url>
+                <db.username>inno2711</db.username>
+                <db.password>manager2711</db.password>
+                <flyway.cleanDisabled>false</flyway.cleanDisabled>
+            </properties>
+        </profile>
+
+        <!-- Production Profile -->
+        <profile>
+            <id>prod</id>
+            <properties>
+                <db.url>jdbc:postgresql://51.91.254.218:5433/innodb</db.url>
+                <db.username>inno2711</db.username>
+                <db.password>manager2711</db.password>
+                <flyway.cleanDisabled>true</flyway.cleanDisabled>
+            </properties>
+        </profile>
+    </profiles>
+
+    <build>
+        <plugins>
+            <!-- Flyway Maven Plugin -->
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>${flyway.version}</version>
+                <configuration>
+                    <url>${db.url}</url>
+                    <user>${db.username}</user>
+                    <password>${db.password}</password>
+                    <locations>
+                        <location>classpath:db/migration</location>
+                    </locations>
+                    <schemas>
+                        <schema>public</schema>
+                    </schemas>
+                    <table>flyway_schema_history</table>
+                    <validateOnMigrate>true</validateOnMigrate>
+                    <outOfOrder>false</outOfOrder>
+                    <cleanDisabled>${flyway.cleanDisabled}</cleanDisabled>
+                    <baselineOnMigrate>true</baselineOnMigrate>
+
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

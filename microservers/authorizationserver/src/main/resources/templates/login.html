@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" class="bg-gray-100">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="theme-color" content="#2563eb">
+    <title>DIGI CRG | Se Connecter</title>
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/9732/9732800.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen">
+
+<div class="min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+    <div class="w-full max-w-md">
+        <div class="flex flex-col items-center">
+            <img class="w-16 h-16 sm:w-20 sm:h-20 rounded-md bg-gray-400 p-2 sm:p-3" src="https://cdn-icons-png.flaticon.com/512/9732/9732800.png" alt="DIGI CRG" width="80" height="80">
+            <h2 class="mt-4 sm:mt-5 text-xl font-semibold text-gray-800">Se Connecter</h2>
+        </div>
+        <div class="mt-6 sm:mt-8">
+            <div class="w-full p-4 sm:p-6 rounded-lg border border-gray-200 bg-white shadow-sm">
+                <!-- Success Alert (e.g., after registration) -->
+                <div th:if="${successMessage != null}" class="flex items-center p-3 sm:p-4 mb-4 text-green-800 rounded-lg bg-green-50" role="alert">
+                    <svg class="flex-shrink-0 w-4 h-4 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                    </svg>
+                    <div class="flex-1 text-sm font-medium" th:text="${successMessage}">Operation successful.</div>
+                </div>
+                <!-- Error Alert -->
+                <div th:if="${param.error != null and param.error[0] == 'oauth2'}" class="flex items-center p-3 sm:p-4 mb-4 text-red-800 rounded-lg bg-red-50" role="alert">
+                    <svg class="flex-shrink-0 w-4 h-4 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                    </svg>
+                    <div class="flex-1 text-sm font-medium">Echec de la connexion avec Google. Veuillez réessayer.</div>
+                    <button type="button" class="ms-auto -mx-1.5 -my-1.5 bg-red-50 text-red-500 rounded-lg focus:ring-2 focus:ring-red-400 p-1.5 hover:bg-red-200 inline-flex items-center justify-center h-8 w-8" onclick="this.parentElement.style.display='none'" aria-label="Close">
+                        <span class="sr-only">Fermer</span>
+                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                        </svg>
+                    </button>
+                </div>
+                <div th:if="${errorMessage != null}" class="flex items-center p-3 sm:p-4 mb-4 text-red-800 rounded-lg bg-red-50" id="alert" role="alert">
+                    <svg class="flex-shrink-0 w-4 h-4 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                    </svg>
+                    <div class="flex-1 text-sm font-medium" th:text="${errorMessage}">An error occurred. Please try again.</div>
+                    <button type="button" class="ms-auto -mx-1.5 -my-1.5 bg-red-50 text-red-500 rounded-lg focus:ring-2 focus:ring-red-400 p-1.5 hover:bg-red-200 inline-flex items-center justify-center h-8 w-8" onclick="this.parentElement.style.display='none'" aria-label="Close">
+                        <span class="sr-only">Fermer</span>
+                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                        </svg>
+                    </button>
+                </div>
+                <form method="post" th:action="@{/login}">
+                    <!-- Champ caché pour le token d'authentification mobile -->
+                    <input type="hidden" name="mobile_auth_token" th:value="${param.mobile_auth_token != null ? param.mobile_auth_token[0] : ''}" />
+                    <div class="space-y-5 sm:space-y-6">
+                        <div>
+                            <label for="username" class="block mb-2 text-sm font-medium text-gray-800">Email Addresse</label>
+                            <input type="email" name="username" id="username" class="border border-gray-200 text-gray-900 text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 sm:p-2.5" placeholder="name@email.com" autocomplete="email" inputmode="email" required />
+                        </div>
+                        <div>
+                            <label for="password" class="block mb-2 text-sm font-medium text-gray-800">Mot de passe</label>
+                            <input type="password" name="password" id="password" placeholder="••••••••" class="border border-gray-200 text-gray-800 text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 sm:p-2.5" autocomplete="current-password" required />
+                        </div>
+                        <button type="submit" class="w-full text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-3 sm:py-2.5 text-center">Se Connecter à son Compte</button>
+
+                        <!-- Divider -->
+                        <div class="flex items-center my-4">
+                            <div class="flex-grow border-t border-gray-300"></div>
+                            <span class="px-3 text-sm text-gray-500">ou</span>
+                            <div class="flex-grow border-t border-gray-300"></div>
+                        </div>
+
+                        <!-- Google Sign-In Button -->
+                        <a th:href="@{/oauth2/authorization/google(mobile_auth_token=${param.mobile_auth_token != null ? param.mobile_auth_token[0] : ''})}" class="w-full flex items-center justify-center gap-3 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 active:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-3 sm:py-2.5">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                            </svg>
+                            Continuer avec Google
+                        </a>
+                    </div>
+                </form>
+                <!-- Register link -->
+                <div class="mt-5 sm:mt-6 pt-4 border-t border-gray-200">
+                    <p class="text-sm text-center text-gray-600">
+                        Vous n'avez pas de compte?
+                        <a th:href="@{/register}" class="text-blue-600 hover:underline font-medium">Créer un compte</a>
+                    </p>
+                </div>
+
+                <div class="mt-4">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-2">
+                        <a th:href="@{${@environment.getProperty('ui.app.url')} + '/auth/forgotpassword'}" class="text-sm sm:text-base text-blue-600 hover:underline">Mot de passe Oublié?</a>
+
+                        <a th:href="@{${@environment.getProperty('ui.app.url')}}" class="inline-flex justify-center items-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800 px-3 py-2 rounded-md text-white text-sm">
+                            Retour à la page d'acceuil
+                            <svg xmlns="http://www.w3.org/2000/svg" stroke-linejoin="round" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke="currentColor" class="shrink-0 w-4 h-4 ml-1">
+                                <path d="m15 4.5 7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+</body>
+</html>

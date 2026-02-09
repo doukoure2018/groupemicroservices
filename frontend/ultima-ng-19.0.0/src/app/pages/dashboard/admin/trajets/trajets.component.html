@@ -1,0 +1,332 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="trajets-container">
+    <!-- Header avec statistiques -->
+    <div class="header-section">
+        <div class="title-area">
+            <h2><i class="pi pi-map"></i> Gestion des Trajets</h2>
+            <p class="subtitle">Configurez les trajets entre les points de départ et d'arrivée</p>
+        </div>
+        <div class="stats-cards">
+            <p-card styleClass="stat-card">
+                <div class="stat-content">
+                    <span class="stat-value">{{ totalTrajets() }}</span>
+                    <span class="stat-label">Total</span>
+                </div>
+                <i class="pi pi-map stat-icon"></i>
+            </p-card>
+            <p-card styleClass="stat-card success">
+                <div class="stat-content">
+                    <span class="stat-value">{{ trajetsActifs() }}</span>
+                    <span class="stat-label">Actifs</span>
+                </div>
+                <i class="pi pi-check-circle stat-icon"></i>
+            </p-card>
+            <p-card styleClass="stat-card danger">
+                <div class="stat-content">
+                    <span class="stat-value">{{ trajetsInactifs() }}</span>
+                    <span class="stat-label">Inactifs</span>
+                </div>
+                <i class="pi pi-times-circle stat-icon"></i>
+            </p-card>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="search-area">
+            <p-iconfield iconPosition="left">
+                <p-inputicon styleClass="pi pi-search"></p-inputicon>
+                <input pInputText type="text" placeholder="Rechercher un trajet..." (input)="onSearch($event)"
+                    class="search-input" />
+            </p-iconfield>
+        </div>
+        <div class="actions-area">
+            <p-button label="Actualiser" icon="pi pi-refresh" severity="secondary" [outlined]="true"
+                (onClick)="loadTrajets()" [loading]="loading()"></p-button>
+            <p-button label="Nouveau Trajet" icon="pi pi-plus" (onClick)="openNewDialog()"></p-button>
+        </div>
+    </div>
+
+    <!-- Table des trajets -->
+    <p-card>
+        <p-table [value]="filteredTrajets()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25, 50]"
+            [loading]="loading()"
+            [globalFilterFields]="['libelleTrajet', 'departVilleLibelle', 'arriveeVilleLibelle', 'departSiteNom', 'arriveeSiteNom']"
+            styleClass="p-datatable-sm p-datatable-striped" [tableStyle]="{ 'min-width': '75rem' }"
+            responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 3rem">#</th>
+                    <th pSortableColumn="libelleTrajet">
+                        Trajet <p-sortIcon field="libelleTrajet"></p-sortIcon>
+                    </th>
+                    <th>Départ</th>
+                    <th>Arrivée</th>
+                    <th pSortableColumn="distanceKm" style="width: 100px">
+                        Distance <p-sortIcon field="distanceKm"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="dureeEstimeeMinutes" style="width: 100px">
+                        Durée <p-sortIcon field="dureeEstimeeMinutes"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="montantBase" style="width: 120px">
+                        Montant <p-sortIcon field="montantBase"></p-sortIcon>
+                    </th>
+                    <th style="width: 80px">Statut</th>
+                    <th style="width: 150px">Actions</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-trajet let-i="rowIndex">
+                <tr>
+                    <td>{{ i + 1 }}</td>
+                    <td>
+                        <div class="trajet-cell">
+                            <span class="trajet-libelle">{{ getTrajetLibelle(trajet) }}</span>
+                            @if (trajet.description) {
+                            <span class="trajet-description">{{ trajet.description }}</span>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <div class="location-cell">
+                            <i class="pi pi-map-marker depart-icon"></i>
+                            <div class="location-info">
+                                <span class="location-site">{{ trajet.departSiteNom || 'N/A' }}</span>
+                                <span class="location-ville">{{ trajet.departVilleLibelle }} - {{
+                                    trajet.departRegionLibelle }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="location-cell">
+                            <i class="pi pi-flag arrivee-icon"></i>
+                            <div class="location-info">
+                                <span class="location-site">{{ trajet.arriveeSiteNom || 'N/A' }}</span>
+                                <span class="location-ville">{{ trajet.arriveeVilleLibelle }} - {{
+                                    trajet.arriveeRegionLibelle }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="distance-badge">
+                            <i class="pi pi-arrows-h"></i>
+                            {{ formatDistance(trajet.distanceKm) }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span class="duree-badge">
+                            <i class="pi pi-clock"></i>
+                            {{ formatDuree(trajet.dureeEstimeeMinutes) }}
+                        </span>
+                    </td>
+                    <td class="text-right">
+                        <div class="montant-cell">
+                            <span class="montant-base">{{ formatMontant(trajet.montantBase, trajet.devise) }}</span>
+                            @if (trajet.montantBagages && trajet.montantBagages > 0) {
+                            <span class="montant-bagages">+{{ formatMontant(trajet.montantBagages, trajet.devise) }}
+                                bagages</span>
+                            }
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <p-tag [value]="getStatutLabel(trajet.actif)"
+                            [severity]="getStatutSeverity(trajet.actif)"></p-tag>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                pTooltip="Modifier" (onClick)="openEditDialog(trajet)"></p-button>
+                            <p-button icon="pi pi-dollar" [rounded]="true" [text]="true" severity="success"
+                                pTooltip="Modifier les montants" (onClick)="openMontantsDialog(trajet)"></p-button>
+                            <p-button [icon]="trajet.actif ? 'pi pi-eye-slash' : 'pi pi-eye'" [rounded]="true"
+                                [text]="true" [severity]="trajet.actif ? 'warn' : 'success'"
+                                [pTooltip]="trajet.actif ? 'Désactiver' : 'Activer'"
+                                (onClick)="toggleActif(trajet)"></p-button>
+                            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                pTooltip="Supprimer" (onClick)="confirmDelete(trajet)"></p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="9" class="text-center p-4">
+                        <div class="empty-state">
+                            <i class="pi pi-map" style="font-size: 3rem; color: var(--text-color-secondary)"></i>
+                            <p>Aucun trajet trouvé</p>
+                            <p-button label="Créer un trajet" icon="pi pi-plus" (onClick)="openNewDialog()"></p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
+</div>
+
+<!-- Dialog Création/Modification -->
+<p-dialog [(visible)]="dialogVisible" [header]="isEditMode() ? 'Modifier le trajet' : 'Nouveau trajet'" [modal]="true"
+    [style]="{ width: '700px' }" [draggable]="false" [resizable]="false" (onHide)="closeDialog()">
+    <form [formGroup]="trajetForm" class="trajet-form">
+        <!-- Section Itinéraire -->
+        <div class="form-section">
+            <h4><i class="pi pi-compass"></i> Itinéraire</h4>
+            <div class="form-grid">
+                <div class="form-field">
+                    <label for="departUuid">Point de départ *</label>
+                    <p-dropdown id="departUuid" formControlName="departUuid" [options]="departsOptions()"
+                        optionLabel="label" optionValue="value" placeholder="Sélectionner un départ" [filter]="true"
+                        filterBy="label" [showClear]="true" styleClass="w-full">
+                        <ng-template let-option pTemplate="item">
+                            <div class="dropdown-item">
+                                <i class="pi pi-map-marker text-green-500"></i>
+                                <div>
+                                    <span class="font-semibold">{{ option.depart.libelle || option.depart.siteNom
+                                        }}</span>
+                                    <span class="text-sm text-gray-500"> - {{ option.depart.villeLibelle }}</span>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </p-dropdown>
+                    @if (trajetForm.get('departUuid')?.invalid && trajetForm.get('departUuid')?.touched) {
+                    <small class="p-error">Le point de départ est obligatoire</small>
+                    }
+                </div>
+
+                <div class="form-field">
+                    <label for="arriveeUuid">Point d'arrivée *</label>
+                    <p-dropdown id="arriveeUuid" formControlName="arriveeUuid" [options]="arriveesOptions()"
+                        optionLabel="label" optionValue="value" placeholder="Sélectionner une arrivée" [filter]="true"
+                        filterBy="label" [showClear]="true" styleClass="w-full">
+                        <ng-template let-option pTemplate="item">
+                            <div class="dropdown-item">
+                                <i class="pi pi-flag text-red-500"></i>
+                                <div>
+                                    <span class="font-semibold">{{ option.arrivee.libelle || option.arrivee.siteNom
+                                        }}</span>
+                                    <span class="text-sm text-gray-500"> - {{ option.arrivee.villeLibelle }}</span>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </p-dropdown>
+                    @if (trajetForm.get('arriveeUuid')?.invalid && trajetForm.get('arriveeUuid')?.touched) {
+                    <small class="p-error">Le point d'arrivée est obligatoire</small>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Section Informations -->
+        <div class="form-section">
+            <h4><i class="pi pi-info-circle"></i> Informations</h4>
+            <div class="form-grid">
+                <div class="form-field full-width">
+                    <label for="libelleTrajet">Libellé du trajet</label>
+                    <input pInputText id="libelleTrajet" formControlName="libelleTrajet"
+                        placeholder="Ex: Conakry - Kindia Express" class="w-full" />
+                    <small class="hint">Laissez vide pour générer automatiquement</small>
+                </div>
+
+                <div class="form-field full-width">
+                    <label for="description">Description</label>
+                    <textarea pTextarea id="description" formControlName="description" rows="2"
+                        placeholder="Description optionnelle du trajet" class="w-full"></textarea>
+                </div>
+
+                <div class="form-field">
+                    <label for="distanceKm">Distance (km)</label>
+                    <p-inputNumber id="distanceKm" formControlName="distanceKm" [min]="0" [max]="10000"
+                        [minFractionDigits]="0" [maxFractionDigits]="1" suffix=" km" placeholder="Ex: 135"
+                        styleClass="w-full"></p-inputNumber>
+                </div>
+
+                <div class="form-field">
+                    <label for="dureeEstimeeMinutes">Durée estimée (min)</label>
+                    <p-inputNumber id="dureeEstimeeMinutes" formControlName="dureeEstimeeMinutes" [min]="0"
+                        [max]="10000" suffix=" min" placeholder="Ex: 180" styleClass="w-full"></p-inputNumber>
+                </div>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Section Tarification -->
+        <div class="form-section">
+            <h4><i class="pi pi-wallet"></i> Tarification</h4>
+            <div class="form-grid three-cols">
+                <div class="form-field">
+                    <label for="montantBase">Montant de base</label>
+                    <p-inputNumber id="montantBase" formControlName="montantBase" [min]="0" mode="currency"
+                        currency="GNF" locale="fr-GN" placeholder="Ex: 50000" styleClass="w-full"></p-inputNumber>
+                </div>
+
+                <div class="form-field">
+                    <label for="montantBagages">Supplément bagages</label>
+                    <p-inputNumber id="montantBagages" formControlName="montantBagages" [min]="0" mode="currency"
+                        currency="GNF" locale="fr-GN" placeholder="Ex: 10000" styleClass="w-full"></p-inputNumber>
+                </div>
+
+                <div class="form-field">
+                    <label for="devise">Devise</label>
+                    <p-dropdown id="devise" formControlName="devise" [options]="devises" optionLabel="label"
+                        optionValue="value" styleClass="w-full"></p-dropdown>
+                </div>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Statut -->
+        <div class="form-section">
+            <div class="form-field checkbox-field">
+                <p-checkbox formControlName="actif" [binary]="true" inputId="actif"></p-checkbox>
+                <label for="actif">Trajet actif</label>
+            </div>
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Annuler" icon="pi pi-times" [text]="true" (onClick)="closeDialog()"></p-button>
+        <p-button [label]="isEditMode() ? 'Mettre à jour' : 'Créer'" icon="pi pi-check" (onClick)="saveTrajet()"
+            [loading]="loading()"></p-button>
+    </ng-template>
+</p-dialog>
+
+<!-- Dialog Modification Montants -->
+<p-dialog [(visible)]="montantsDialogVisible" header="Modifier les montants" [modal]="true" [style]="{ width: '450px' }"
+    [draggable]="false" [resizable]="false" (onHide)="closeMontantsDialog()">
+    <div class="montants-dialog-content">
+        @if (selectedTrajet()) {
+        <div class="trajet-info-header">
+            <i class="pi pi-map"></i>
+            <span>{{ getTrajetLibelle(selectedTrajet()!) }}</span>
+        </div>
+        }
+
+        <form [formGroup]="montantsForm" class="montants-form">
+            <div class="form-field">
+                <label for="montantBaseEdit">Montant de base *</label>
+                <p-inputNumber id="montantBaseEdit" formControlName="montantBase" [min]="0" mode="currency"
+                    currency="GNF" locale="fr-GN" styleClass="w-full"></p-inputNumber>
+                @if (montantsForm.get('montantBase')?.invalid && montantsForm.get('montantBase')?.touched) {
+                <small class="p-error">Le montant de base est obligatoire</small>
+                }
+            </div>
+
+            <div class="form-field">
+                <label for="montantBagagesEdit">Supplément bagages</label>
+                <p-inputNumber id="montantBagagesEdit" formControlName="montantBagages" [min]="0" mode="currency"
+                    currency="GNF" locale="fr-GN" styleClass="w-full"></p-inputNumber>
+            </div>
+        </form>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Annuler" icon="pi pi-times" [text]="true" (onClick)="closeMontantsDialog()"></p-button>
+        <p-button label="Enregistrer" icon="pi pi-check" (onClick)="saveMontants()" [loading]="loading()"></p-button>
+    </ng-template>
+</p-dialog>

@@ -1,0 +1,497 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="offres-container">
+    <!-- Header -->
+    <div class="header-section">
+        <div class="title-area">
+            <h2><i class="pi pi-car"></i> Gestion des Offres de Transport</h2>
+            <p class="subtitle">Gérez vos offres de voyage et réservations</p>
+        </div>
+        <div class="stats-cards">
+            <p-card styleClass="stat-card">
+                <div class="stat-content">
+                    <span class="stat-value">{{ totalOffres() }}</span>
+                    <span class="stat-label">Total</span>
+                </div>
+            </p-card>
+            <p-card styleClass="stat-card success">
+                <div class="stat-content">
+                    <span class="stat-value">{{ offresOuvertes() }}</span>
+                    <span class="stat-label">Ouvertes</span>
+                </div>
+            </p-card>
+            <p-card styleClass="stat-card info">
+                <div class="stat-content">
+                    <span class="stat-value">{{ offresEnCours() }}</span>
+                    <span class="stat-label">En cours</span>
+                </div>
+            </p-card>
+            <p-card styleClass="stat-card warn">
+                <div class="stat-content">
+                    <span class="stat-value">{{ offresAujourdHui() }}</span>
+                    <span class="stat-label">Aujourd'hui</span>
+                </div>
+            </p-card>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="search-filters">
+            <p-iconfield iconPosition="left">
+                <p-inputicon styleClass="pi pi-search"></p-inputicon>
+                <input pInputText type="text" placeholder="Rechercher..." (input)="onSearch($event)" />
+            </p-iconfield>
+            <p-dropdown [options]="statutsOffre" [(ngModel)]="filterStatut" placeholder="Filtrer par statut"
+                optionLabel="label" optionValue="value" [showClear]="true" styleClass="filter-dropdown"
+                (onChange)="onFilterStatut($event.value)"></p-dropdown>
+        </div>
+        <div class="actions">
+            <p-button label="Actualiser" icon="pi pi-refresh" severity="secondary" [outlined]="true"
+                (onClick)="loadOffres()" [loading]="loading()"></p-button>
+            <p-button label="Nouvelle Offre" icon="pi pi-plus" (onClick)="openNewDialog()"></p-button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <p-card>
+        <p-table [value]="filteredOffres()" [paginator]="true" [rows]="10" [loading]="loading()"
+            styleClass="p-datatable-sm p-datatable-striped" [tableStyle]="{ 'min-width': '70rem' }"
+            [rowsPerPageOptions]="[10, 25, 50]" [scrollable]="true" scrollHeight="flex">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="dateDepart" style="min-width: 100px">Date <p-sortIcon
+                            field="dateDepart"></p-sortIcon></th>
+                    <th style="min-width: 180px">Trajet</th>
+                    <th style="min-width: 150px">Véhicule</th>
+                    <th style="min-width: 100px">Horaires</th>
+                    <th style="min-width: 100px">Places</th>
+                    <th style="min-width: 120px">Prix</th>
+                    <th style="min-width: 100px">Statut</th>
+                    <th style="min-width: 150px" alignFrozen="right" pFrozenColumn>Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-offre>
+                <tr>
+                    <td>
+                        <div class="date-cell">
+                            <strong>{{ formatDate(offre.dateDepart) }}</strong>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="trajet-cell">
+                            <div class="trajet-route">
+                                <span class="ville-depart">{{ offre.villeDepartLibelle }}</span>
+                                <i class="pi pi-arrow-right"></i>
+                                <span class="ville-arrivee">{{ offre.villeArriveeLibelle }}</span>
+                            </div>
+                            @if (offre.trajetLibelle) {
+                            <small class="text-secondary">{{ offre.trajetLibelle }}</small>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <div class="vehicule-cell">
+                            <strong>{{ offre.vehiculeImmatriculation }}</strong>
+                            <small class="text-secondary">{{ offre.vehiculeMarque }} {{ offre.vehiculeModele }}</small>
+                            @if (offre.nomChauffeur) {
+                            <small class="chauffeur"><i class="pi pi-user"></i> {{ offre.nomChauffeur }}</small>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <div class="horaires-cell">
+                            <span><i class="pi pi-clock"></i> {{ formatHeure(offre.heureDepart) }}</span>
+                            @if (offre.heureArriveeEstimee) {
+                            <small class="text-secondary">→ {{ formatHeure(offre.heureArriveeEstimee) }}</small>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <div class="places-cell">
+                            <div class="places-info">
+                                <span class="places-dispo">{{ offre.nombrePlacesDisponibles || offre.nombrePlacesTotal
+                                    }}</span>
+                                <span class="places-total">/ {{ offre.nombrePlacesTotal }}</span>
+                            </div>
+                            <p-progressBar [value]="getTaux(offre)" [showValue]="false" styleClass="places-progress"
+                                [style]="{ height: '6px' }"></p-progressBar>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="prix-cell">
+                            @if (hasPromo(offre)) {
+                            <span class="prix-promo">{{ formatMontant(offre.montantPromotion, offre.devise) }}</span>
+                            <span class="prix-barre">{{ formatMontant(offre.montant, offre.devise) }}</span>
+                            <p-tag value="-{{ getReduction(offre) }}%" severity="success"
+                                styleClass="promo-tag"></p-tag>
+                            } @else {
+                            <span class="prix-normal">{{ formatMontant(offre.montant, offre.devise) }}</span>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <p-tag [value]="getStatutLabel(offre.statut)"
+                            [severity]="getStatutSeverity(offre.statut)"></p-tag>
+                    </td>
+                    <td alignFrozen="right" pFrozenColumn>
+                        <div class="action-buttons">
+                            <!-- Actions principales toujours visibles -->
+                            <p-button icon="pi pi-eye" [rounded]="true" [text]="true" severity="info" pTooltip="Détails"
+                                tooltipPosition="left" (onClick)="openDetailDialog(offre)"></p-button>
+
+                            @if (canEdit(offre)) {
+                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                pTooltip="Modifier" tooltipPosition="left" (onClick)="openEditDialog(offre)"></p-button>
+                            }
+
+                            <!-- Menu pour les autres actions -->
+                            <p-button icon="pi pi-ellipsis-v" [rounded]="true" [text]="true" pTooltip="Plus d'actions"
+                                tooltipPosition="left" (onClick)="actionsMenu.toggle($event)"></p-button>
+                            <p-menu #actionsMenu [popup]="true" [model]="getActionsMenu(offre)"
+                                appendTo="body"></p-menu>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="8" class="text-center p-4">Aucune offre trouvée</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
+</div>
+
+<!-- Dialog Création/Modification -->
+<p-dialog [(visible)]="dialogVisible" [header]="isEditMode() ? 'Modifier l\'offre' : 'Nouvelle offre'" [modal]="true"
+    [style]="{ width: '800px' }" (onHide)="closeDialog()">
+    <form [formGroup]="offreForm" class="form-content">
+        <!-- Section Trajet -->
+        <div class="form-section">
+            <h4><i class="pi pi-map"></i> Trajet et Véhicule</h4>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="trajetUuid">Trajet *</label>
+                    <p-dropdown id="trajetUuid" formControlName="trajetUuid" [options]="trajetsOptions()"
+                        optionLabel="label" optionValue="value" placeholder="Sélectionner un trajet" [filter]="true"
+                        filterBy="label" styleClass="w-full" (onChange)="onTrajetChange($event)"></p-dropdown>
+                </div>
+                <div class="form-field">
+                    <label for="vehiculeUuid">Véhicule *</label>
+                    <p-dropdown id="vehiculeUuid" formControlName="vehiculeUuid" [options]="vehiculesOptions()"
+                        optionLabel="label" optionValue="value" placeholder="Sélectionner un véhicule" [filter]="true"
+                        filterBy="label" styleClass="w-full" (onChange)="onVehiculeChange($event)"></p-dropdown>
+                </div>
+            </div>
+
+            <!-- Info display for selected trajet and vehicule -->
+            @if (selectedTrajetInfo() || selectedVehiculeInfo()) {
+            <div class="selection-info">
+                @if (selectedTrajetInfo(); as trajet) {
+                <div class="info-item trajet-info">
+                    <i class="pi pi-money-bill"></i>
+                    <span>Prix suggéré pour ce trajet : <strong>{{ formatMontant(trajet.montantBase, trajet.devise ||
+                            'GNF') }}</strong></span>
+                </div>
+                }
+                @if (selectedVehiculeInfo(); as vehicule) {
+                <div class="info-item vehicule-info">
+                    <i class="pi pi-users"></i>
+                    <span>Capacité maximale du véhicule : <strong>{{ vehicule.nombrePlaces }} places</strong></span>
+                </div>
+                }
+            </div>
+            }
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Section Date et Horaires -->
+        <div class="form-section">
+            <h4><i class="pi pi-calendar"></i> Date et Horaires</h4>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="dateDepart">Date de départ *</label>
+                    <p-calendar id="dateDepart" formControlName="dateDepart" dateFormat="dd/mm/yy" [showIcon]="true"
+                        [minDate]="today" styleClass="w-full"></p-calendar>
+                </div>
+                <div class="form-field">
+                    <label for="heureDepart">Heure de départ *</label>
+                    <p-calendar id="heureDepart" formControlName="heureDepart" [timeOnly]="true" [showIcon]="true"
+                        icon="pi pi-clock" styleClass="w-full"></p-calendar>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="heureArriveeEstimee">Heure d'arrivée estimée</label>
+                    <p-calendar id="heureArriveeEstimee" formControlName="heureArriveeEstimee" [timeOnly]="true"
+                        [showIcon]="true" icon="pi pi-clock" styleClass="w-full"></p-calendar>
+                </div>
+                <div class="form-field">
+                    <label for="nombrePlacesTotal">Nombre de places *</label>
+                    <p-inputNumber id="nombrePlacesTotal" formControlName="nombrePlacesTotal" [min]="1" [max]="100"
+                        styleClass="w-full"></p-inputNumber>
+                </div>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Section Tarification -->
+        <div class="form-section">
+            <h4><i class="pi pi-dollar"></i> Tarification</h4>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="montant">Prix par place *</label>
+                    <p-inputNumber id="montant" formControlName="montant" [min]="0" mode="currency" currency="GNF"
+                        locale="fr-GN" styleClass="w-full"></p-inputNumber>
+                </div>
+                <div class="form-field">
+                    <label for="montantPromotion">Prix promo</label>
+                    <p-inputNumber id="montantPromotion" formControlName="montantPromotion" [min]="0" mode="currency"
+                        currency="GNF" locale="fr-GN" styleClass="w-full"></p-inputNumber>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="devise">Devise</label>
+                    <p-dropdown id="devise" formControlName="devise" [options]="devisesOffre" optionLabel="label"
+                        optionValue="value" styleClass="w-full"></p-dropdown>
+                </div>
+                <div class="form-field"></div>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Section Options -->
+        <div class="form-section">
+            <h4><i class="pi pi-cog"></i> Options</h4>
+            <div class="form-field">
+                <label for="pointRendezvous">Point de rendez-vous</label>
+                <input pInputText id="pointRendezvous" formControlName="pointRendezvous" class="w-full" />
+            </div>
+            <div class="form-field">
+                <label for="conditions">Conditions particulières</label>
+                <textarea pTextarea id="conditions" formControlName="conditions" rows="2" class="w-full"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-field checkbox-field">
+                    <p-checkbox id="annulationAutorisee" formControlName="annulationAutorisee"
+                        [binary]="true"></p-checkbox>
+                    <label for="annulationAutorisee">Annulation autorisée</label>
+                </div>
+                <div class="form-field">
+                    <label for="delaiAnnulationHeures">Délai d'annulation (heures)</label>
+                    <p-inputNumber id="delaiAnnulationHeures" formControlName="delaiAnnulationHeures" [min]="0"
+                        suffix=" h" styleClass="w-full"></p-inputNumber>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Annuler" icon="pi pi-times" [text]="true" (onClick)="closeDialog()"></p-button>
+        <p-button [label]="isEditMode() ? 'Mettre à jour' : 'Créer'" icon="pi pi-check" (onClick)="saveOffre()"
+            [loading]="loading()"></p-button>
+    </ng-template>
+</p-dialog>
+
+<!-- Dialog Promotion -->
+<p-dialog [(visible)]="promotionDialogVisible" header="Gérer la promotion" [modal]="true" [style]="{ width: '450px' }"
+    (onHide)="closePromotionDialog()">
+    @if (selectedOffre()) {
+    <div class="offre-header">
+        <div class="offre-route">
+            <span>{{ selectedOffre()!.villeDepartLibelle }}</span>
+            <i class="pi pi-arrow-right"></i>
+            <span>{{ selectedOffre()!.villeArriveeLibelle }}</span>
+        </div>
+        <div class="offre-date">{{ formatDate(selectedOffre()!.dateDepart) }}</div>
+        <div class="offre-prix-actuel">
+            Prix actuel: <strong>{{ formatMontant(selectedOffre()!.montant, selectedOffre()!.devise) }}</strong>
+        </div>
+    </div>
+    }
+
+    <form [formGroup]="promotionForm" class="form-content">
+        <div class="form-field">
+            <label for="montantPromotionEdit">Prix promotionnel</label>
+            <p-inputNumber id="montantPromotionEdit" formControlName="montantPromotion" [min]="1" mode="currency"
+                currency="GNF" locale="fr-GN" styleClass="w-full"></p-inputNumber>
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        @if (selectedOffre() && hasPromo(selectedOffre()!)) {
+        <p-button label="Retirer la promo" icon="pi pi-times" severity="danger" [text]="true"
+            (onClick)="retirerPromotion(selectedOffre()!)"></p-button>
+        }
+        <p-button label="Annuler" icon="pi pi-times" [text]="true" (onClick)="closePromotionDialog()"></p-button>
+        <p-button label="Appliquer" icon="pi pi-check" (onClick)="savePromotion()" [loading]="loading()"></p-button>
+    </ng-template>
+</p-dialog>
+
+<!-- Dialog Détails -->
+<p-dialog [(visible)]="detailDialogVisible" header="Détails de l'offre" [modal]="true" [style]="{ width: '650px' }"
+    (onHide)="closeDetailDialog()">
+    @if (selectedOffre(); as offre) {
+    <div class="detail-content">
+        <!-- Trajet -->
+        <div class="detail-section">
+            <h4><i class="pi pi-map"></i> Trajet</h4>
+            <div class="detail-route">
+                <div class="route-point depart">
+                    <span class="point-label">Départ</span>
+                    <span class="point-ville">{{ offre.villeDepartLibelle }}</span>
+                    @if (offre.siteDepart) {
+                    <span class="point-site">{{ offre.siteDepart }}</span>
+                    }
+                </div>
+                <div class="route-arrow">
+                    <i class="pi pi-arrow-right"></i>
+                </div>
+                <div class="route-point arrivee">
+                    <span class="point-label">Arrivée</span>
+                    <span class="point-ville">{{ offre.villeArriveeLibelle }}</span>
+                    @if (offre.siteArrivee) {
+                    <span class="point-site">{{ offre.siteArrivee }}</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Date et horaires -->
+        <div class="detail-section">
+            <h4><i class="pi pi-calendar"></i> Date et Horaires</h4>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Date de départ</span>
+                    <span class="detail-value">{{ formatDate(offre.dateDepart) }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Heure de départ</span>
+                    <span class="detail-value">{{ formatHeure(offre.heureDepart) }}</span>
+                </div>
+                @if (offre.heureArriveeEstimee) {
+                <div class="detail-item">
+                    <span class="detail-label">Arrivée estimée</span>
+                    <span class="detail-value">{{ formatHeure(offre.heureArriveeEstimee) }}</span>
+                </div>
+                }
+                <div class="detail-item">
+                    <span class="detail-label">Statut</span>
+                    <p-tag [value]="getStatutLabel(offre.statut)" [severity]="getStatutSeverity(offre.statut)"></p-tag>
+                </div>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Véhicule -->
+        <div class="detail-section">
+            <h4><i class="pi pi-car"></i> Véhicule</h4>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Immatriculation</span>
+                    <span class="detail-value">{{ offre.vehiculeImmatriculation }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Modèle</span>
+                    <span class="detail-value">{{ offre.vehiculeMarque }} {{ offre.vehiculeModele }}</span>
+                </div>
+                @if (offre.nomChauffeur) {
+                <div class="detail-item">
+                    <span class="detail-label">Chauffeur</span>
+                    <span class="detail-value">{{ offre.nomChauffeur }}</span>
+                </div>
+                }
+                @if (offre.contactChauffeur) {
+                <div class="detail-item">
+                    <span class="detail-label">Contact</span>
+                    <span class="detail-value">{{ offre.contactChauffeur }}</span>
+                </div>
+                }
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Places et tarifs -->
+        <div class="detail-section">
+            <h4><i class="pi pi-users"></i> Places et Tarifs</h4>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Places totales</span>
+                    <span class="detail-value">{{ offre.nombrePlacesTotal }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Places disponibles</span>
+                    <span class="detail-value highlight">{{ offre.nombrePlacesDisponibles }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Places réservées</span>
+                    <span class="detail-value">{{ offre.nombrePlacesReservees || 0 }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Taux de remplissage</span>
+                    <span class="detail-value">{{ getTaux(offre) }}%</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Prix normal</span>
+                    <span class="detail-value">{{ formatMontant(offre.montant, offre.devise) }}</span>
+                </div>
+                @if (hasPromo(offre)) {
+                <div class="detail-item">
+                    <span class="detail-label">Prix promo</span>
+                    <span class="detail-value highlight">{{ formatMontant(offre.montantPromotion, offre.devise) }}
+                        <p-tag value="-{{ getReduction(offre) }}%" severity="success" styleClass="ml-2"></p-tag>
+                    </span>
+                </div>
+                }
+            </div>
+        </div>
+
+        @if (offre.pointRendezvous || offre.conditions) {
+        <p-divider></p-divider>
+
+        <!-- Informations supplémentaires -->
+        <div class="detail-section">
+            <h4><i class="pi pi-info-circle"></i> Informations supplémentaires</h4>
+            @if (offre.pointRendezvous) {
+            <div class="detail-item full">
+                <span class="detail-label">Point de rendez-vous</span>
+                <span class="detail-value">{{ offre.pointRendezvous }}</span>
+            </div>
+            }
+            @if (offre.conditions) {
+            <div class="detail-item full">
+                <span class="detail-label">Conditions</span>
+                <span class="detail-value">{{ offre.conditions }}</span>
+            </div>
+            }
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Annulation</span>
+                    <span class="detail-value">{{ offre.annulationAutorisee ? 'Autorisée' : 'Non autorisée' }}</span>
+                </div>
+                @if (offre.annulationAutorisee && offre.delaiAnnulationHeures) {
+                <div class="detail-item">
+                    <span class="detail-label">Délai d'annulation</span>
+                    <span class="detail-value">{{ offre.delaiAnnulationHeures }}h avant départ</span>
+                </div>
+                }
+            </div>
+        </div>
+        }
+    </div>
+    }
+
+    <ng-template pTemplate="footer">
+        <p-button label="Fermer" icon="pi pi-times" [text]="true" (onClick)="closeDetailDialog()"></p-button>
+    </ng-template>
+</p-dialog>

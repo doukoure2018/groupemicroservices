@@ -1,0 +1,299 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="sites-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-left">
+            <h2><i class="pi pi-building"></i> Sites & Gares</h2>
+            <p class="subtitle">Gestion des sites, gares routières et points de transport</p>
+        </div>
+        <div class="header-right">
+            <p-button label="Nouveau Site" icon="pi pi-plus" (onClick)="openNewDialog()" [raised]="true">
+            </p-button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-row">
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon bg-primary">
+                    <i class="pi pi-building"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ totalSites() }}</span>
+                    <span class="stat-label">Total Sites</span>
+                </div>
+            </div>
+        </p-card>
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon bg-success">
+                    <i class="pi pi-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ sitesActifs() }}</span>
+                    <span class="stat-label">Sites Actifs</span>
+                </div>
+            </div>
+        </p-card>
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon bg-warning">
+                    <i class="pi pi-ban"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ totalSites() - sitesActifs() }}</span>
+                    <span class="stat-label">Sites Inactifs</span>
+                </div>
+            </div>
+        </p-card>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-section">
+        <p-iconfield iconPosition="left">
+            <p-inputicon styleClass="pi pi-search"></p-inputicon>
+            <input type="text" pInputText placeholder="Rechercher par nom, ville, type..." (input)="onSearch($event)"
+                class="search-input" />
+        </p-iconfield>
+        <p-button icon="pi pi-refresh" [outlined]="true" pTooltip="Actualiser" (onClick)="loadSites()">
+        </p-button>
+    </div>
+
+    <!-- Data Table -->
+    <p-card>
+        @if (loading()) {
+        <div class="loading-container">
+            <p-progressSpinner strokeWidth="4"></p-progressSpinner>
+            <span>Chargement des sites...</span>
+        </div>
+        } @else {
+        <p-table [value]="filteredSites()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25, 50]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Affichage {first} à {last} sur {totalRecords} sites"
+            [globalFilterFields]="['nom', 'villeLibelle', 'typeSite', 'adresseComplete']"
+            styleClass="p-datatable-striped p-datatable-gridlines" responsiveLayout="scroll">
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="nom" style="min-width: 200px">
+                        Nom <p-sortIcon field="nom"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="typeSite" style="min-width: 140px">
+                        Type <p-sortIcon field="typeSite"></p-sortIcon>
+                    </th>
+                    <th style="min-width: 200px">Localisation</th>
+                    <th pSortableColumn="villeLibelle" style="min-width: 140px">
+                        Ville <p-sortIcon field="villeLibelle"></p-sortIcon>
+                    </th>
+                    <th style="min-width: 120px">Horaires</th>
+                    <th style="min-width: 100px">Capacité</th>
+                    <th pSortableColumn="actif" style="min-width: 100px">
+                        Statut <p-sortIcon field="actif"></p-sortIcon>
+                    </th>
+                    <th style="min-width: 150px; text-align: center">Actions</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-site>
+                <tr>
+                    <td>
+                        <div class="site-name">
+                            <strong>{{ site.nom }}</strong>
+                            @if (site.telephone) {
+                            <small class="text-muted"><i class="pi pi-phone"></i> {{ site.telephone }}</small>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <p-tag [value]="getTypeSiteLabel(site.typeSite)"
+                            [severity]="getTypeSiteSeverity(site.typeSite)">
+                        </p-tag>
+                    </td>
+                    <td>
+                        <div class="location-cell">
+                            @if (site.adresseComplete) {
+                            <span pTooltip="{{ site.adresseComplete }}">
+                                {{ site.adresseComplete | slice:0:40 }}{{ site.adresseComplete.length > 40 ? '...' : ''
+                                }}
+                            </span>
+                            } @else {
+                            <span class="text-muted">-</span>
+                            }
+                            @if (site.latitude && site.longitude) {
+                            <small class="coords">
+                                <i class="pi pi-map-marker"></i>
+                                {{ site.latitude | number:'1.4-4' }}, {{ site.longitude | number:'1.4-4' }}
+                            </small>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <div class="ville-cell">
+                            <span>{{ site.villeLibelle || '-' }}</span>
+                            @if (site.regionLibelle) {
+                            <small class="text-muted">{{ site.regionLibelle }}</small>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        @if (site.horaireOuverture || site.horaireFermeture) {
+                        <div class="horaires">
+                            <span><i class="pi pi-clock"></i> {{ site.horaireOuverture || '--:--' }} - {{
+                                site.horaireFermeture || '--:--' }}</span>
+                        </div>
+                        } @else {
+                        <span class="text-muted">-</span>
+                        }
+                    </td>
+                    <td>
+                        @if (site.capaciteVehicules) {
+                        <span><i class="pi pi-car"></i> {{ site.capaciteVehicules }}</span>
+                        } @else {
+                        <span class="text-muted">-</span>
+                        }
+                    </td>
+                    <td>
+                        <p-tag [value]="site.actif ? 'Actif' : 'Inactif'" [severity]="site.actif ? 'success' : 'danger'"
+                            [rounded]="true">
+                        </p-tag>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                pTooltip="Modifier" (onClick)="openEditDialog(site)">
+                            </p-button>
+                            <p-button [icon]="site.actif ? 'pi pi-eye-slash' : 'pi pi-eye'" [rounded]="true"
+                                [text]="true" [severity]="site.actif ? 'warn' : 'success'"
+                                [pTooltip]="site.actif ? 'Désactiver' : 'Activer'" (onClick)="toggleActif(site)">
+                            </p-button>
+                            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                pTooltip="Supprimer" (onClick)="confirmDelete(site)">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="8" class="empty-message">
+                        <i class="pi pi-inbox"></i>
+                        <span>Aucun site trouvé</span>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+        }
+    </p-card>
+</div>
+
+<!-- Dialog Ajout/Modification -->
+<p-dialog [header]="isEditMode() ? 'Modifier le Site' : 'Nouveau Site'" [(visible)]="dialogVisible" [modal]="true"
+    [style]="{ width: '700px' }" [draggable]="false" [resizable]="false" (onHide)="closeDialog()">
+
+    <form [formGroup]="siteForm" class="site-form">
+        <div class="form-grid">
+            <!-- Localisation -->
+            <div class="form-field full-width">
+                <label for="localisationUuid">Localisation <span class="required">*</span></label>
+                <p-dropdown id="localisationUuid" formControlName="localisationUuid" [options]="localisations()"
+                    optionLabel="adresseComplete" optionValue="localisationUuid"
+                    placeholder="Sélectionner une localisation" [filter]="true"
+                    filterBy="adresseComplete,villeLibelle,communeLibelle" [showClear]="true" styleClass="w-full">
+                    <ng-template let-loc pTemplate="item">
+                        <div class="localisation-option">
+                            <span>{{ getLocalisationLabel(loc) }}</span>
+                            @if (loc.villeLibelle) {
+                            <small class="text-muted">{{ loc.villeLibelle }}</small>
+                            }
+                        </div>
+                    </ng-template>
+                </p-dropdown>
+                @if (siteForm.get('localisationUuid')?.invalid && siteForm.get('localisationUuid')?.touched) {
+                <small class="p-error">La localisation est obligatoire</small>
+                }
+            </div>
+
+            <!-- Nom -->
+            <div class="form-field">
+                <label for="nom">Nom du site <span class="required">*</span></label>
+                <input id="nom" type="text" pInputText formControlName="nom"
+                    placeholder="Ex: Gare Routière de Madina" />
+                @if (siteForm.get('nom')?.invalid && siteForm.get('nom')?.touched) {
+                <small class="p-error">Le nom est obligatoire (2-100 caractères)</small>
+                }
+            </div>
+
+            <!-- Type Site -->
+            <div class="form-field">
+                <label for="typeSite">Type de site</label>
+                <p-dropdown id="typeSite" formControlName="typeSite" [options]="typeSites" optionLabel="label"
+                    optionValue="value" placeholder="Sélectionner un type" styleClass="w-full">
+                </p-dropdown>
+            </div>
+
+            <!-- Description -->
+            <div class="form-field full-width">
+                <label for="description">Description</label>
+                <textarea id="description" pInputTextarea formControlName="description" rows="3"
+                    placeholder="Description du site...">
+        </textarea>
+            </div>
+
+            <!-- Téléphone -->
+            <div class="form-field">
+                <label for="telephone">Téléphone</label>
+                <input id="telephone" type="tel" pInputText formControlName="telephone"
+                    placeholder="+224 XXX XXX XXX" />
+            </div>
+
+            <!-- Email -->
+            <div class="form-field">
+                <label for="email">Email</label>
+                <input id="email" type="email" pInputText formControlName="email" placeholder="contact@site.com" />
+                @if (siteForm.get('email')?.errors?.['email']) {
+                <small class="p-error">Email invalide</small>
+                }
+            </div>
+
+            <!-- Horaire Ouverture -->
+            <div class="form-field">
+                <label for="horaireOuverture">Horaire d'ouverture</label>
+                <input id="horaireOuverture" type="time" pInputText formControlName="horaireOuverture" />
+            </div>
+
+            <!-- Horaire Fermeture -->
+            <div class="form-field">
+                <label for="horaireFermeture">Horaire de fermeture</label>
+                <input id="horaireFermeture" type="time" pInputText formControlName="horaireFermeture" />
+            </div>
+
+            <!-- Capacité Véhicules -->
+            <div class="form-field">
+                <label for="capaciteVehicules">Capacité (véhicules)</label>
+                <p-inputNumber id="capaciteVehicules" formControlName="capaciteVehicules" [min]="0" placeholder="0"
+                    styleClass="w-full">
+                </p-inputNumber>
+            </div>
+
+            <!-- Image URL -->
+            <div class="form-field">
+                <label for="imageUrl">URL de l'image</label>
+                <input id="imageUrl" type="url" pInputText formControlName="imageUrl" placeholder="https://..." />
+            </div>
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <div class="dialog-footer">
+            <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="closeDialog()">
+            </p-button>
+            <p-button [label]="isEditMode() ? 'Mettre à jour' : 'Créer'" icon="pi pi-check" (onClick)="saveSite()"
+                [loading]="loading()">
+            </p-button>
+        </div>
+    </ng-template>
+</p-dialog>

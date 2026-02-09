@@ -1,0 +1,312 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="arrivees-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-left">
+            <h2><i class="pi pi-sign-in"></i> Points d'Arrivée</h2>
+            <p class="subtitle">Gestion des destinations pour chaque point de départ</p>
+        </div>
+        <div class="header-right">
+            <p-button label="Nouvelle Arrivée" icon="pi pi-plus" (onClick)="openNewDialog()" [raised]="true">
+            </p-button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-row">
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon bg-primary">
+                    <i class="pi pi-sign-in"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ totalArrivees() }}</span>
+                    <span class="stat-label">Total Arrivées</span>
+                </div>
+            </div>
+        </p-card>
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon bg-success">
+                    <i class="pi pi-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ arriveesActifs() }}</span>
+                    <span class="stat-label">Arrivées Actives</span>
+                </div>
+            </div>
+        </p-card>
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon bg-info">
+                    <i class="pi pi-sign-out"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ departs().length }}</span>
+                    <span class="stat-label">Départs Disponibles</span>
+                </div>
+            </div>
+        </p-card>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+        <div class="filter-group">
+            <p-iconfield iconPosition="left">
+                <p-inputicon styleClass="pi pi-search"></p-inputicon>
+                <input type="text" pInputText placeholder="Rechercher..." [value]="searchQuery()"
+                    (input)="onSearch($event)" class="search-input" />
+            </p-iconfield>
+
+            <p-dropdown [options]="departs()" optionValue="departUuid" placeholder="Filtrer par départ"
+                [showClear]="true" [filter]="true" filterBy="libelle,siteNom,villeLibelle"
+                (onChange)="onDepartFilterChange($event.value)" styleClass="filter-dropdown">
+                <ng-template let-depart pTemplate="selectedItem">
+                    <span>{{ depart.libelle }} ({{ depart.villeLibelle }})</span>
+                </ng-template>
+                <ng-template let-depart pTemplate="item">
+                    <div class="dropdown-option">
+                        <span>{{ depart.libelle }}</span>
+                        <small class="text-muted">{{ depart.siteNom }} - {{ depart.villeLibelle }}</small>
+                    </div>
+                </ng-template>
+            </p-dropdown>
+
+            <p-dropdown [options]="sites()" optionLabel="nom" optionValue="siteUuid"
+                placeholder="Filtrer par site d'arrivée" [showClear]="true" [filter]="true" filterBy="nom,villeLibelle"
+                (onChange)="onSiteFilterChange($event.value)" styleClass="filter-dropdown">
+                <ng-template let-site pTemplate="item">
+                    <div class="dropdown-option">
+                        <span>{{ site.nom }}</span>
+                        <small class="text-muted">{{ site.villeLibelle }}</small>
+                    </div>
+                </ng-template>
+            </p-dropdown>
+        </div>
+
+        <div class="filter-actions">
+            @if (hasActiveFilters()) {
+            <p-button label="Effacer filtres" icon="pi pi-filter-slash" [outlined]="true" severity="secondary"
+                (onClick)="clearFilters()">
+            </p-button>
+            }
+            <p-button icon="pi pi-refresh" [outlined]="true" pTooltip="Actualiser" (onClick)="loadArrivees()">
+            </p-button>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <p-card>
+        @if (loading()) {
+        <div class="loading-container">
+            <p-progressSpinner strokeWidth="4"></p-progressSpinner>
+            <span>Chargement des points d'arrivée...</span>
+        </div>
+        } @else {
+        <p-table [value]="filteredArrivees()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25, 50]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Affichage {first} à {last} sur {totalRecords} arrivées"
+            styleClass="p-datatable-striped p-datatable-gridlines" responsiveLayout="scroll">
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="libelle" style="min-width: 180px">
+                        Libellé <p-sortIcon field="libelle"></p-sortIcon>
+                    </th>
+                    <th style="min-width: 200px">Départ (Origine)</th>
+                    <th style="min-width: 200px">Arrivée (Destination)</th>
+                    <th pSortableColumn="ordreAffichage" style="min-width: 80px">
+                        Ordre <p-sortIcon field="ordreAffichage"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="actif" style="min-width: 90px">
+                        Statut <p-sortIcon field="actif"></p-sortIcon>
+                    </th>
+                    <th style="min-width: 140px; text-align: center">Actions</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-arrivee>
+                <tr>
+                    <td>
+                        <div class="arrivee-info">
+                            <strong>{{ arrivee.libelle }}</strong>
+                            @if (arrivee.description) {
+                            <small class="text-muted" pTooltip="{{ arrivee.description }}">
+                                {{ arrivee.description | slice:0:40 }}{{ arrivee.description.length > 40 ? '...' : '' }}
+                            </small>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <div class="trajet-cell depart-cell">
+                            <div class="trajet-icon">
+                                <i class="pi pi-sign-out"></i>
+                            </div>
+                            <div class="trajet-info">
+                                <span class="trajet-site">{{ arrivee.departSiteNom || '-' }}</span>
+                                <span class="trajet-ville">{{ arrivee.departVilleLibelle || '-' }}</span>
+                                @if (arrivee.libelleDepart) {
+                                <small class="trajet-detail">{{ arrivee.libelleDepart }}</small>
+                                }
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="trajet-cell arrivee-cell">
+                            <div class="trajet-icon">
+                                <i class="pi pi-sign-in"></i>
+                            </div>
+                            <div class="trajet-info">
+                                <span class="trajet-site">{{ arrivee.siteNom || '-' }}</span>
+                                <span class="trajet-ville">{{ arrivee.villeLibelle || '-' }}</span>
+                                @if (arrivee.adresseComplete) {
+                                <small class="trajet-detail" pTooltip="{{ arrivee.adresseComplete }}">
+                                    {{ arrivee.adresseComplete | slice:0:30 }}...
+                                </small>
+                                }
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <p-badge [value]="arrivee.ordreAffichage?.toString() || '0'" severity="info"></p-badge>
+                    </td>
+                    <td>
+                        <p-tag [value]="arrivee.actif ? 'Actif' : 'Inactif'"
+                            [severity]="arrivee.actif ? 'success' : 'danger'" [rounded]="true">
+                        </p-tag>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                pTooltip="Modifier" (onClick)="openEditDialog(arrivee)">
+                            </p-button>
+                            <p-button [icon]="arrivee.actif ? 'pi pi-eye-slash' : 'pi pi-eye'" [rounded]="true"
+                                [text]="true" [severity]="arrivee.actif ? 'warn' : 'success'"
+                                [pTooltip]="arrivee.actif ? 'Désactiver' : 'Activer'" (onClick)="toggleActif(arrivee)">
+                            </p-button>
+                            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                pTooltip="Supprimer" (onClick)="confirmDelete(arrivee)">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="6" class="empty-message">
+                        <i class="pi pi-inbox"></i>
+                        <span>Aucun point d'arrivée trouvé</span>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+        }
+    </p-card>
+</div>
+
+<!-- Dialog Ajout/Modification -->
+<p-dialog [header]="isEditMode() ? 'Modifier le Point d\'Arrivée' : 'Nouveau Point d\'Arrivée'"
+    [(visible)]="dialogVisible" [modal]="true" [style]="{ width: '600px' }" [draggable]="false" [resizable]="false"
+    (onHide)="closeDialog()">
+
+    <form [formGroup]="arriveeForm" class="arrivee-form">
+        <!-- Section Départ -->
+        <div class="form-section">
+            <h4><i class="pi pi-sign-out"></i> Point de Départ (Origine)</h4>
+            <div class="form-field">
+                <label for="departUuid">Départ <span class="required">*</span></label>
+                <p-dropdown id="departUuid" formControlName="departUuid" [options]="departs()" optionValue="departUuid"
+                    placeholder="Sélectionner un point de départ" [filter]="true"
+                    filterBy="libelle,siteNom,villeLibelle" [showClear]="true" styleClass="w-full">
+                    <ng-template let-depart pTemplate="selectedItem">
+                        <span>{{ depart.libelle }} - {{ depart.siteNom }} ({{ depart.villeLibelle }})</span>
+                    </ng-template>
+                    <ng-template let-depart pTemplate="item">
+                        <div class="dropdown-option">
+                            <div class="option-main">
+                                <strong>{{ depart.libelle }}</strong>
+                                <p-tag [value]="depart.siteTypeSite || 'SITE'" size="small"
+                                    severity="secondary"></p-tag>
+                            </div>
+                            <small class="text-muted">{{ depart.siteNom }} - {{ depart.villeLibelle }}</small>
+                        </div>
+                    </ng-template>
+                </p-dropdown>
+                @if (arriveeForm.get('departUuid')?.invalid && arriveeForm.get('departUuid')?.touched) {
+                <small class="p-error">Le point de départ est obligatoire</small>
+                }
+            </div>
+
+            <div class="form-field">
+                <label for="libelleDepart">Libellé du départ (affiché)</label>
+                <input id="libelleDepart" type="text" pInputText formControlName="libelleDepart"
+                    placeholder="Ex: Depuis Gare de Madina" />
+                <small class="hint">Ce libellé sera affiché comme origine du trajet</small>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Section Arrivée -->
+        <div class="form-section">
+            <h4><i class="pi pi-sign-in"></i> Point d'Arrivée (Destination)</h4>
+            <div class="form-field">
+                <label for="siteUuid">Site d'arrivée <span class="required">*</span></label>
+                <p-dropdown id="siteUuid" formControlName="siteUuid" [options]="getAvailableSitesForArrivee()"
+                    optionLabel="nom" optionValue="siteUuid" placeholder="Sélectionner un site de destination"
+                    [filter]="true" filterBy="nom,villeLibelle" [showClear]="true" styleClass="w-full">
+                    <ng-template let-site pTemplate="item">
+                        <div class="dropdown-option">
+                            <span>{{ site.nom }}</span>
+                            <small class="text-muted">{{ site.villeLibelle }} - {{ site.typeSite }}</small>
+                        </div>
+                    </ng-template>
+                </p-dropdown>
+                @if (arriveeForm.get('siteUuid')?.invalid && arriveeForm.get('siteUuid')?.touched) {
+                <small class="p-error">Le site d'arrivée est obligatoire</small>
+                }
+            </div>
+
+            <div class="form-field">
+                <label for="libelle">Libellé <span class="required">*</span></label>
+                <input id="libelle" type="text" pInputText formControlName="libelle"
+                    placeholder="Ex: Arrivée Quai B, Terminal Nord..." />
+                @if (arriveeForm.get('libelle')?.invalid && arriveeForm.get('libelle')?.touched) {
+                <small class="p-error">Le libellé est obligatoire (2-100 caractères)</small>
+                }
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Autres champs -->
+        <div class="form-section">
+            <div class="form-field">
+                <label for="description">Description</label>
+                <textarea id="description" pInputTextarea formControlName="description" rows="2"
+                    placeholder="Description optionnelle...">
+        </textarea>
+            </div>
+
+            <div class="form-field">
+                <label for="ordreAffichage">Ordre d'affichage</label>
+                <p-inputNumber id="ordreAffichage" formControlName="ordreAffichage" [min]="0" placeholder="0"
+                    styleClass="w-full" [showButtons]="true">
+                </p-inputNumber>
+            </div>
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <div class="dialog-footer">
+            <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="closeDialog()">
+            </p-button>
+            <p-button [label]="isEditMode() ? 'Mettre à jour' : 'Créer'" icon="pi pi-check" (onClick)="saveArrivee()"
+                [loading]="loading()">
+            </p-button>
+        </div>
+    </ng-template>
+</p-dialog>

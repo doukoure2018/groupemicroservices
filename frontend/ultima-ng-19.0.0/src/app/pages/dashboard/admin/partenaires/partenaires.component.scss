@@ -1,0 +1,50 @@
+@use '../types-vehicules/types-vehicules.component.scss' as *;
+
+.partenaires-container {
+    .partenaire-nom,
+    .contact-info,
+    .responsable-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+
+        small {
+            font-size: 0.75rem;
+        }
+
+        i {
+            font-size: 0.85rem;
+            margin-right: 0.25rem;
+        }
+    }
+
+    .text-secondary {
+        color: var(--text-color-secondary);
+    }
+
+    .commission-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        background: var(--surface-100);
+        font-size: 0.85rem;
+    }
+}
+
+.partenaire-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface-100);
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+
+    i {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+    }
+
+    span {
+        font-weight: 600;
+    }
+}

@@ -1,0 +1,300 @@
+.sites-container {
+    padding: 1.5rem;
+}
+
+// Header
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    .header-left {
+        h2 {
+            margin: 0;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+
+            i {
+                color: var(--primary-color);
+            }
+        }
+
+        .subtitle {
+            margin: 0.25rem 0 0;
+            color: var(--text-color-secondary);
+            font-size: 0.9rem;
+        }
+    }
+}
+
+// Stats Row
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+
+    :host ::ng-deep .stat-card {
+        .p-card-body {
+            padding: 1rem;
+        }
+    }
+
+    .stat-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        i {
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        &.bg-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-600));
+        }
+
+        &.bg-success {
+            background: linear-gradient(135deg, var(--green-500), var(--green-600));
+        }
+
+        &.bg-warning {
+            background: linear-gradient(135deg, var(--orange-500), var(--orange-600));
+        }
+    }
+
+    .stat-info {
+        display: flex;
+        flex-direction: column;
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-color-secondary);
+        }
+    }
+}
+
+// Search Section
+.search-section {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    align-items: center;
+
+    p-iconfield {
+        flex: 1;
+        max-width: 400px;
+    }
+
+    .search-input {
+        width: 100%;
+    }
+}
+
+// Loading Container
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    gap: 1rem;
+    color: var(--text-color-secondary);
+}
+
+// Table Styles
+.site-name {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    strong {
+        color: var(--text-color);
+    }
+
+    small {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.8rem;
+    }
+}
+
+.location-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    .coords {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        color: var(--text-color-secondary);
+
+        i {
+            color: var(--red-500);
+        }
+    }
+}
+
+.ville-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+
+    small {
+        font-size: 0.8rem;
+    }
+}
+
+.horaires {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+
+    i {
+        color: var(--primary-color);
+    }
+}
+
+.text-muted {
+    color: var(--text-color-secondary);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+}
+
+.empty-message {
+    text-align: center;
+    padding: 3rem !important;
+    color: var(--text-color-secondary);
+
+    i {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+}
+
+// Dialog Form
+.site-form {
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+
+            &.full-width {
+                grid-column: span 2;
+            }
+
+            label {
+                font-weight: 500;
+                color: var(--text-color);
+                font-size: 0.9rem;
+
+                .required {
+                    color: var(--red-500);
+                }
+            }
+
+            input,
+            textarea {
+                width: 100%;
+            }
+
+            :host ::ng-deep {
+                .p-dropdown,
+                .p-inputnumber {
+                    width: 100%;
+                }
+            }
+
+            .p-error {
+                color: var(--red-500);
+                font-size: 0.8rem;
+            }
+        }
+    }
+}
+
+.localisation-option {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+
+    small {
+        font-size: 0.8rem;
+    }
+}
+
+.dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .sites-container {
+        padding: 1rem;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+
+        .header-right {
+            display: flex;
+            justify-content: flex-end;
+        }
+    }
+
+    .site-form .form-grid {
+        grid-template-columns: 1fr;
+
+        .form-field.full-width {
+            grid-column: span 1;
+        }
+    }
+
+    .search-section {
+        flex-direction: column;
+
+        p-iconfield {
+            max-width: 100%;
+        }
+    }
+}

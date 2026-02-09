@@ -1,0 +1,459 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="localisations-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Gestion des Localisations</h1>
+            <p class="subtitle">Gérez les adresses et points GPS - Propulsé par OpenStreetMap 🗺️</p>
+        </div>
+        <p-button label="Nouvelle Localisation" icon="pi pi-plus" (onClick)="openCreateModal()" [raised]="true">
+        </p-button>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="stats-grid">
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon total">
+                    <i class="pi pi-map-marker"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ totalLocalisations() }}</span>
+                    <span class="stat-label">Total Localisations</span>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon with-quartier">
+                    <i class="pi pi-home"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ localisationsWithQuartier() }}</span>
+                    <span class="stat-label">Avec Quartier</span>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon with-coords">
+                    <i class="pi pi-compass"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ localisationsWithCoords() }}</span>
+                    <span class="stat-label">Avec GPS</span>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon quartiers">
+                    <i class="pi pi-th-large"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ quartiers().length }}</span>
+                    <span class="stat-label">Quartiers</span>
+                </div>
+            </div>
+        </p-card>
+    </div>
+
+    <!-- Barre de recherche et filtres -->
+    <div class="toolbar">
+        <p-iconField iconPosition="left" class="search-field">
+            <p-inputIcon styleClass="pi pi-search"></p-inputIcon>
+            <input type="text" pInputText placeholder="Rechercher une localisation..." [value]="searchTerm()"
+                (input)="onSearchChange($event)" />
+        </p-iconField>
+
+        <p-dropdown [options]="activeVilles()" [(ngModel)]="state().selectedVilleFilter"
+            (onChange)="onVilleFilterChange($event.value)" optionLabel="libelle" placeholder="Filtrer par ville"
+            [showClear]="true" [filter]="true" filterPlaceholder="Rechercher..." styleClass="filter-dropdown">
+        </p-dropdown>
+
+        <p-dropdown [options]="filteredCommunesForFilter()" [(ngModel)]="state().selectedCommuneFilter"
+            (onChange)="onCommuneFilterChange($event.value)" optionLabel="libelle" placeholder="Filtrer par commune"
+            [showClear]="true" [filter]="true" filterPlaceholder="Rechercher..." styleClass="filter-dropdown">
+        </p-dropdown>
+
+        <p-dropdown [options]="filteredQuartiersForFilter()" [(ngModel)]="state().selectedQuartierFilter"
+            (onChange)="onQuartierFilterChange($event.value)" optionLabel="libelle" placeholder="Filtrer par quartier"
+            [showClear]="true" [filter]="true" filterPlaceholder="Rechercher..." styleClass="filter-dropdown">
+        </p-dropdown>
+
+        <p-button icon="pi pi-refresh" [outlined]="true" [loading]="loading()" (onClick)="loadLocalisations()"
+            pTooltip="Actualiser" tooltipPosition="top">
+        </p-button>
+    </div>
+
+    <!-- Indicateur de filtres actifs -->
+    @if (hasActiveFilters()) {
+    <div class="active-filter">
+        <span>Filtres actifs:
+            @if (selectedVilleFilter()) {
+            <strong>{{ selectedVilleFilter()?.libelle }}</strong>
+            }
+            @if (selectedCommuneFilter()) {
+            <span> → </span><strong>{{ selectedCommuneFilter()?.libelle }}</strong>
+            }
+            @if (selectedQuartierFilter()) {
+            <span> → </span><strong>{{ selectedQuartierFilter()?.libelle }}</strong>
+            }
+        </span>
+        <p-button icon="pi pi-times" [text]="true" severity="secondary" (onClick)="clearFilters()"
+            pTooltip="Effacer les filtres">
+        </p-button>
+    </div>
+    }
+
+    <!-- Table des localisations -->
+    <p-card>
+        @if (loading()) {
+        <div class="loading-container">
+            <p-progressSpinner strokeWidth="4" ariaLabel="Chargement"></p-progressSpinner>
+            <span>Chargement des localisations...</span>
+        </div>
+        } @else {
+        <p-table [value]="filteredLocalisations()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25, 50]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} localisations"
+            [tableStyle]="{ 'min-width': '80rem' }" styleClass="p-datatable-sm p-datatable-striped">
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="adresseComplete" style="width: 25%">
+                        Adresse <p-sortIcon field="adresseComplete"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="quartierLibelle">
+                        Quartier <p-sortIcon field="quartierLibelle"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="communeLibelle">
+                        Commune <p-sortIcon field="communeLibelle"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="villeLibelle">
+                        Ville <p-sortIcon field="villeLibelle"></p-sortIcon>
+                    </th>
+                    <th style="width: 100px">GPS</th>
+                    <th pSortableColumn="createdAt">
+                        Créée le <p-sortIcon field="createdAt"></p-sortIcon>
+                    </th>
+                    <th style="width: 150px">Actions</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-localisation>
+                <tr>
+                    <td>
+                        <div class="address-cell">
+                            <i class="pi pi-map-marker"></i>
+                            <div class="address-content">
+                                <span class="address-text">{{ localisation.adresseComplete }}</span>
+                                @if (localisation.description) {
+                                <small class="description-text">{{ localisation.description }}</small>
+                                }
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        @if (localisation.quartierLibelle) {
+                        <div class="hierarchy-cell">
+                            <i class="pi pi-home"></i>
+                            <span>{{ localisation.quartierLibelle }}</span>
+                        </div>
+                        } @else {
+                        <span class="no-data">-</span>
+                        }
+                    </td>
+                    <td>
+                        @if (localisation.communeLibelle) {
+                        <div class="hierarchy-cell">
+                            <i class="pi pi-map"></i>
+                            <span>{{ localisation.communeLibelle }}</span>
+                        </div>
+                        } @else {
+                        <span class="no-data">-</span>
+                        }
+                    </td>
+                    <td>
+                        @if (localisation.villeLibelle) {
+                        <div class="hierarchy-cell">
+                            <i class="pi pi-building"></i>
+                            <span>{{ localisation.villeLibelle }}</span>
+                        </div>
+                        } @else {
+                        <span class="no-data">-</span>
+                        }
+                    </td>
+                    <td>
+                        @if (hasCoordinates(localisation)) {
+                        <p-button icon="pi pi-map" [rounded]="true" [text]="true" severity="success"
+                            (onClick)="openMapModal(localisation)" pTooltip="Voir sur la carte" tooltipPosition="top">
+                        </p-button>
+                        } @else {
+                        <p-tag value="Non" severity="secondary" [rounded]="true"></p-tag>
+                        }
+                    </td>
+                    <td>{{ localisation.createdAt | date:'dd/MM/yyyy' }}</td>
+                    <td>
+                        <div class="actions-cell">
+                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                (onClick)="openEditModal(localisation)" pTooltip="Modifier" tooltipPosition="top">
+                            </p-button>
+                            @if (hasCoordinates(localisation)) {
+                            <p-button icon="pi pi-external-link" [rounded]="true" [text]="true" severity="secondary"
+                                (onClick)="openInOpenStreetMap(localisation)" pTooltip="Ouvrir dans OpenStreetMap"
+                                tooltipPosition="top">
+                            </p-button>
+                            }
+                            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                (onClick)="confirmDelete(localisation)" pTooltip="Supprimer" tooltipPosition="top">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <i class="pi pi-inbox"></i>
+                            <p>Aucune localisation trouvée</p>
+                            @if (hasActiveFilters()) {
+                            <p-button label="Effacer les filtres" [text]="true" (onClick)="clearFilters()">
+                            </p-button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+        }
+    </p-card>
+</div>
+
+<!-- Modal Création/Édition -->
+<p-dialog [header]="modalTitle" [(visible)]="state().isModalOpen" [modal]="true" [style]="{ width: '750px' }"
+    [draggable]="false" [resizable]="false" (onHide)="closeModal()">
+
+    <form [formGroup]="localisationForm" (ngSubmit)="onSubmit()">
+        <div class="form-content">
+            <!-- Section Hiérarchie (optionnel) -->
+            <div class="form-section">
+                <h4><i class="pi pi-sitemap"></i> Hiérarchie géographique (optionnel)</h4>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="villeUuid">Ville</label>
+                        <p-dropdown id="villeUuid" formControlName="villeUuid" [options]="activeVilles()"
+                            optionLabel="libelle" optionValue="villeUuid" placeholder="Sélectionner une ville"
+                            [showClear]="true" [filter]="true" filterPlaceholder="Rechercher..." styleClass="w-full">
+                        </p-dropdown>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="communeUuid">Commune</label>
+                        <p-dropdown id="communeUuid" formControlName="communeUuid"
+                            [options]="filteredCommunesForModal()" optionLabel="libelle" optionValue="communeUuid"
+                            placeholder="Sélectionner une commune" [showClear]="true" [filter]="true"
+                            filterPlaceholder="Rechercher..." styleClass="w-full">
+                        </p-dropdown>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label for="quartierUuid">Quartier</label>
+                    <p-dropdown id="quartierUuid" formControlName="quartierUuid" [options]="filteredQuartiersForModal()"
+                        optionLabel="libelle" optionValue="quartierUuid" placeholder="Sélectionner un quartier"
+                        [showClear]="true" [filter]="true" filterPlaceholder="Rechercher..." styleClass="w-full">
+                    </p-dropdown>
+                </div>
+
+                @if (isEditMode() && selectedLocalisation()?.quartierId) {
+                <div class="form-field checkbox-field">
+                    <p-button label="Retirer le quartier" icon="pi pi-times" [text]="true" severity="secondary"
+                        (onClick)="localisationForm.patchValue({ quartierUuid: '', removeQuartier: true })">
+                    </p-button>
+                </div>
+                }
+            </div>
+
+            <!-- Section Adresse avec recherche -->
+            <div class="form-section">
+                <h4><i class="pi pi-map-marker"></i> Adresse (OpenStreetMap)</h4>
+
+                <!-- Champ de recherche séparé -->
+                <div class="form-field">
+                    <label for="searchQuery">Rechercher une adresse</label>
+                    <div class="search-input-group">
+                        <input type="text" pInputText id="searchQuery" [(ngModel)]="searchQuery"
+                            [ngModelOptions]="{standalone: true}"
+                            placeholder="Tapez une adresse (ex: Nongo, Banque Islamique, Marché Madina...)"
+                            (keyup.enter)="forceSearchAddress()" class="search-input" />
+                        <p-button icon="pi pi-search" [loading]="loadingAddress()" (onClick)="forceSearchAddress()"
+                            pTooltip="Rechercher" tooltipPosition="top">
+                        </p-button>
+                    </div>
+
+                    @if (loadingAddress()) {
+                    <small class="loading-hint">
+                        <i class="pi pi-spin pi-spinner"></i> Recherche OpenStreetMap en cours...
+                    </small>
+                    }
+                </div>
+
+                <!-- Liste des résultats -->
+                @if (addressSuggestions().length > 0) {
+                <div class="form-field">
+                    <label>Résultats ({{ addressSuggestions().length }}) - Cliquez pour sélectionner</label>
+                    <div class="suggestions-list">
+                        @for (place of addressSuggestions(); track place.placeId) {
+                        <div class="suggestion-item" (click)="selectAddress(place)">
+                            <i class="pi pi-map-marker"></i>
+                            <div class="suggestion-content">
+                                <span class="suggestion-text">{{ place.description }}</span>
+                                @if (place.latitude && place.longitude) {
+                                <small class="suggestion-coords">
+                                    📍 {{ place.latitude | number:'1.4-4' }}, {{ place.longitude | number:'1.4-4' }}
+                                </small>
+                                }
+                            </div>
+                            <i class="pi pi-check select-icon"></i>
+                        </div>
+                        }
+                    </div>
+                </div>
+                }
+
+                @if (searchPerformed() && addressSuggestions().length === 0 && !loadingAddress()) {
+                <div class="no-results">
+                    <i class="pi pi-info-circle"></i>
+                    <span>Aucun résultat trouvé. Essayez un autre terme ou
+                        <a href="https://www.openstreetmap.org" target="_blank">ajoutez le lieu sur OpenStreetMap</a>
+                    </span>
+                </div>
+                }
+
+                <!-- Adresse sélectionnée -->
+                <div class="form-field">
+                    <label for="adresseComplete">Adresse sélectionnée *</label>
+                    <textarea pInputTextarea id="adresseComplete" formControlName="adresseComplete" rows="2"
+                        placeholder="L'adresse apparaîtra ici après sélection..."
+                        [class.ng-invalid]="isFieldInvalid('adresseComplete')"
+                        [class.ng-dirty]="isFieldInvalid('adresseComplete')">
+                    </textarea>
+                    @if (isFieldInvalid('adresseComplete')) {
+                    <small class="p-error">{{ getFieldError('adresseComplete') }}</small>
+                    }
+                </div>
+            </div>
+
+            <!-- Section Coordonnées GPS -->
+            <div class="form-section">
+                <h4>
+                    <i class="pi pi-compass"></i> Coordonnées GPS
+                    @if (hasFormCoordinates()) {
+                    <p-tag value="✓ Récupérées" severity="success" [rounded]="true" styleClass="coords-tag"></p-tag>
+                    } @else {
+                    <p-tag value="Non définies" severity="secondary" [rounded]="true" styleClass="coords-tag"></p-tag>
+                    }
+                </h4>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="latitude">Latitude</label>
+                        <p-inputNumber id="latitude" formControlName="latitude" [minFractionDigits]="4"
+                            [maxFractionDigits]="8" [min]="-90" [max]="90" placeholder="Ex: 9.6412" styleClass="w-full"
+                            mode="decimal">
+                        </p-inputNumber>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="longitude">Longitude</label>
+                        <p-inputNumber id="longitude" formControlName="longitude" [minFractionDigits]="4"
+                            [maxFractionDigits]="8" [min]="-180" [max]="180" placeholder="Ex: -13.5784"
+                            styleClass="w-full" mode="decimal">
+                        </p-inputNumber>
+                    </div>
+                </div>
+                <small class="coords-hint">
+                    <i class="pi pi-info-circle"></i>
+                    Les coordonnées sont auto-remplies lors de la sélection, ou saisissez-les manuellement.
+                </small>
+            </div>
+
+            <!-- Section Description -->
+            <div class="form-section">
+                <h4><i class="pi pi-info-circle"></i> Informations complémentaires</h4>
+
+                <div class="form-field">
+                    <label for="description">Description</label>
+                    <textarea pInputTextarea id="description" formControlName="description" rows="2"
+                        placeholder="Description ou repère (ex: En face du marché, près de la mosquée...)">
+                    </textarea>
+                    @if (isFieldInvalid('description')) {
+                    <small class="p-error">{{ getFieldError('description') }}</small>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="dialog-footer">
+            <p-button label="Annuler" [outlined]="true" severity="secondary" (onClick)="closeModal()">
+            </p-button>
+            <p-button [label]="isEditMode() ? 'Modifier' : 'Créer'" type="submit" [loading]="loading()"
+                icon="pi pi-check">
+            </p-button>
+        </div>
+    </form>
+</p-dialog>
+
+<!-- Modal Carte -->
+<p-dialog header="Localisation sur la carte" [(visible)]="state().isMapModalOpen" [modal]="true"
+    [style]="{ width: '700px' }" [draggable]="false" [resizable]="false" (onHide)="closeMapModal()">
+
+    @if (mapLocalisation()) {
+    <div class="map-modal-content">
+        <div class="map-info">
+            <h3>{{ mapLocalisation()?.adresseComplete }}</h3>
+            @if (mapLocalisation()?.description) {
+            <p>{{ mapLocalisation()?.description }}</p>
+            }
+            <div class="coordinates">
+                <span><strong>Latitude:</strong> {{ mapLocalisation()?.latitude }}</span>
+                <span><strong>Longitude:</strong> {{ mapLocalisation()?.longitude }}</span>
+            </div>
+            @if (mapLocalisation()?.quartierLibelle) {
+            <div class="hierarchy-info">
+                <span>{{ mapLocalisation()?.quartierLibelle }}</span>
+                <span>→ {{ mapLocalisation()?.communeLibelle }}</span>
+                <span>→ {{ mapLocalisation()?.villeLibelle }}</span>
+                <span>→ {{ mapLocalisation()?.regionLibelle }}</span>
+            </div>
+            }
+        </div>
+
+        <div class="map-container">
+            <iframe [src]="getMapUrl(mapLocalisation()!)" width="100%" height="350" style="border:0;" allowfullscreen=""
+                loading="lazy">
+            </iframe>
+        </div>
+
+        <div class="map-actions">
+            <p-button label="Ouvrir dans OpenStreetMap" icon="pi pi-external-link"
+                (onClick)="openInOpenStreetMap(mapLocalisation()!)">
+            </p-button>
+        </div>
+
+        <div class="map-credit">
+            <small>© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>
+                contributors</small>
+        </div>
+    </div>
+    }
+</p-dialog>

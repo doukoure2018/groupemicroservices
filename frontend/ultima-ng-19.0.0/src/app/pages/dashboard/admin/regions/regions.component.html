@@ -1,0 +1,182 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="regions-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Gestion des Régions</h1>
+            <p class="subtitle">Gérez les régions administratives du système de billetterie</p>
+        </div>
+        <p-button label="Nouvelle Région" icon="pi pi-plus" (onClick)="openCreateModal()" [raised]="true">
+        </p-button>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="stats-grid">
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon total">
+                    <i class="pi pi-map-marker"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ totalRegions() }}</span>
+                    <span class="stat-label">Total Régions</span>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon active">
+                    <i class="pi pi-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ activeRegions() }}</span>
+                    <span class="stat-label">Régions Actives</span>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon inactive">
+                    <i class="pi pi-ban"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ inactiveRegions() }}</span>
+                    <span class="stat-label">Régions Inactives</span>
+                </div>
+            </div>
+        </p-card>
+    </div>
+
+    <!-- Barre de recherche et actions -->
+    <div class="toolbar">
+        <p-iconField iconPosition="left" class="search-field">
+            <p-inputIcon styleClass="pi pi-search"></p-inputIcon>
+            <input type="text" pInputText placeholder="Rechercher une région..." [value]="searchTerm()"
+                (input)="onSearchChange($event)" />
+        </p-iconField>
+
+        <p-button icon="pi pi-refresh" [outlined]="true" [loading]="loading()" (onClick)="loadRegions()"
+            pTooltip="Actualiser" tooltipPosition="top">
+        </p-button>
+    </div>
+
+    <!-- Table des régions -->
+    <p-card>
+        @if (loading()) {
+        <div class="loading-container">
+            <p-progressSpinner strokeWidth="4" ariaLabel="Chargement"></p-progressSpinner>
+            <span>Chargement des régions...</span>
+        </div>
+        } @else {
+        <p-table [value]="filteredRegions()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25, 50]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} régions"
+            [tableStyle]="{ 'min-width': '50rem' }" styleClass="p-datatable-sm p-datatable-striped">
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="libelle">
+                        Libellé <p-sortIcon field="libelle"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="code">
+                        Code <p-sortIcon field="code"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="actif">
+                        Statut <p-sortIcon field="actif"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="createdAt">
+                        Date de création <p-sortIcon field="createdAt"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="updatedAt">
+                        Dernière modification <p-sortIcon field="updatedAt"></p-sortIcon>
+                    </th>
+                    <th style="width: 150px">Actions</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-region>
+                <tr [class.inactive-row]="!region.actif">
+                    <td>
+                        <div class="region-name">
+                            <i class="pi pi-map-marker"></i>
+                            <span>{{ region.libelle }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="code-badge">{{ region.code || '-' }}</span>
+                    </td>
+                    <td>
+                        <p-tag [value]="region.actif ? 'Actif' : 'Inactif'"
+                            [severity]="getStatusSeverity(region.actif)">
+                        </p-tag>
+                    </td>
+                    <td>{{ region.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>{{ region.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>
+                        <div class="actions-cell">
+                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                (onClick)="openEditModal(region)" pTooltip="Modifier" tooltipPosition="top">
+                            </p-button>
+                            <p-button [icon]="region.actif ? 'pi pi-lock' : 'pi pi-lock-open'" [rounded]="true"
+                                [text]="true" [severity]="region.actif ? 'danger' : 'success'"
+                                (onClick)="confirmToggleStatus(region)"
+                                [pTooltip]="region.actif ? 'Désactiver' : 'Activer'" tooltipPosition="top">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="pi pi-inbox"></i>
+                            <p>Aucune région trouvée</p>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+        }
+    </p-card>
+</div>
+
+<!-- Modal Création/Édition -->
+<p-dialog [header]="modalTitle" [(visible)]="state().isModalOpen" [modal]="true" [style]="{ width: '450px' }"
+    [draggable]="false" [resizable]="false" (onHide)="closeModal()">
+
+    <form [formGroup]="regionForm" (ngSubmit)="onSubmit()">
+        <div class="form-content">
+            <div class="form-field">
+                <label for="libelle">Libellé *</label>
+                <input pInputText id="libelle" formControlName="libelle" placeholder="Ex: Conakry"
+                    [class.ng-invalid]="isFieldInvalid('libelle')" [class.ng-dirty]="isFieldInvalid('libelle')" />
+                @if (isFieldInvalid('libelle')) {
+                <small class="p-error">{{ getFieldError('libelle') }}</small>
+                }
+            </div>
+
+            <div class="form-field">
+                <label for="code">Code</label>
+                <input pInputText id="code" formControlName="code" placeholder="Ex: CKY"
+                    [class.ng-invalid]="isFieldInvalid('code')" [class.ng-dirty]="isFieldInvalid('code')" />
+                @if (isFieldInvalid('code')) {
+                <small class="p-error">{{ getFieldError('code') }}</small>
+                }
+            </div>
+        </div>
+
+        <div class="dialog-footer">
+            <p-button label="Annuler" [outlined]="true" severity="secondary" (onClick)="closeModal()">
+            </p-button>
+            <p-button [label]="isEditMode() ? 'Modifier' : 'Créer'" type="submit" [loading]="loading()"
+                icon="pi pi-check">
+            </p-button>
+        </div>
+    </form>
+</p-dialog>

@@ -1,0 +1,42 @@
+<div class="flex flex-col items-center justify-center gap-6 py-8">
+    @if (state().loading) {
+    <div class="relative">
+        <p-progress-spinner ariaLabel="Verifying account" [style]="{'width': '5rem', 'height': '5rem'}" strokeWidth="4"
+            animationDuration=".5s" class="text-primary" />
+        <div class="absolute inset-0 flex items-center justify-center">
+            <i class="pi pi-lock text-lg text-primary"></i>
+        </div>
+    </div>
+    <div class="text-center">
+        <h2 class="text-2xl font-semibold mb-2">Verifying account...</h2>
+        <p class="text-surface-600 dark:text-surface-300">Please wait while we validate your credentials</p>
+    </div>
+    } @else {
+    <div class="bg-surface-0 dark:bg-surface-900 p-6 shadow rounded w-full lg:w-6/12">
+        <div>
+            <div class="flex flex-col gap-4 mb-4">
+                @if(state().message) {
+                <p-message severity="success" :closable="true" [@close]="closeMessage">{{ state().message }}</p-message>
+                }
+
+                @if(state().error) {
+                <p-message severity="error" :closable="true" [@close]="closeMessage">{{ state().error }}</p-message>
+                }
+            </div>
+            <div class="flex items-center justify-between mb-12">
+                <a class="font-medium no-underline ml-2 text-primary text-right cursor-pointer">Forgot password?</a>
+            </div>
+            <div class="mt-4">
+                <a href="http://localhost:8080/oauth2/authorize?response_type=code&client_id=client&scope=openid&redirect_uri=http://localhost:4200&code_challenge_method=S256&code_challenge=vesLhZA4cwKsKZAR7zvEJ9q3uI6dRM8nwna-IpuKkkk"
+                    pButton pRipple class="w-full" label="Log in"></a>
+            </div>
+            <div class="mt-4">
+                <a [routerLink]="['/']" pButton pRipple class="w-full text-primary-500" text label="Back Home"></a>
+            </div>
+        </div>
+        <p-toast />
+        <app-configurator simple />
+    </div>
+    }
+    <p-toast />
+</div>

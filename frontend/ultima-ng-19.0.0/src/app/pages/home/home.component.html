@@ -1,0 +1,39 @@
+@if(loading()){
+<div class="text-center">
+    <div class="relative">
+        <p-progress-spinner ariaLabel="Verifying account" [style]="{'width': '5rem', 'height': '5rem'}" strokeWidth="4"
+            animationDuration=".5s" class="text-primary" />
+    </div>
+    <h2 class="text-2xl font-semibold mb-2">Verifying account...</h2>
+    <p class="text-surface-600 dark:text-surface-300">Please wait while we validate your credentials</p>
+</div>
+} @else {
+<div class="bg-surface-50 dark:bg-surface-950">
+    <topbar />
+    <div class="h-screen">
+        <div style="perspective: 101px"
+            class="h-screen overflow-x-hidden overflow-y-auto absolute top-0 left-0 right-0 bottom-0">
+            <div id="parallaxBody" class="lg:top-0 block absolute left-0 right-0 h-full z-20">
+                <div class="card">
+                    <br><br><br>
+                    <div
+                        class="relative overflow-hidden h-80 bg-primary text-primary-contrast flex flex-col items-center justify-center rounded mb-8">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"
+                            class="absolute w-full top-0 left-0">
+                            <path fill="var(--p-primary-600)" fillOpacity="1"
+                                d="M0,64L48,90.7C96,117,92,171,288,208C384,245,480,267,576,256C672,245,768,203,864,165.3C960,128,1056,96,1152,74.7C1248,53,1344,43,1392,37.3L1440,32L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z">
+                            </path>
+                        </svg>
+                        <div class="font-bold mb-8 text-4xl z-10">MANIFESTE APPLICATION </div>
+                        <p-icon-field class="w-9/12 md:w-6/12">
+                            <p-inputicon class="pi pi-search" />
+                            <input pInputText id="name" type="text" placeholder="Search"
+                                [style]="{ borderRadius: '2rem' }" class="w-full" />
+                        </p-icon-field>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+}

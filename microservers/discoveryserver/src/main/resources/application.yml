@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: discoveryserver
+  datasource:
+    url: jdbc:postgresql://localhost:5433/innodb
+    username: inno2711
+    password: manager2711
+    hikari:
+      connection-test-query: SELECT 1
+  profiles:
+    active: default
+  jpa:
+    database: POSTGRESQL
+    open-in-view: false
+    generate-ddl: false
+    database-platform: org.hibernate.dialect.PostgreSQL82Dialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQL82Dialect
+        default_schema: innodb
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+  client:
+    fetch-registry: false
+    register-with-eureka: false
+    service-url:
+      defaultZone: http://manager:manager2711@localhost:5003/eureka/
+  server:
+    expected-client-renewal-interval-seconds: 10
+    enable-self-preservation: false
+    renewal-percent-threshold: 0.33
+    wait-time-in-ms-when-sync-empty: 0
+    peer-node-read-timeout-ms: 30000
+
+server:
+  port: 5003

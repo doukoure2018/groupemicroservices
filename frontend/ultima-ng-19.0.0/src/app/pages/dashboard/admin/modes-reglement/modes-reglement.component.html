@@ -1,0 +1,186 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="modes-reglement-container">
+    <!-- Header -->
+    <div class="header-section">
+        <div class="title-area">
+            <h2><i class="pi pi-wallet"></i> Modes de Règlement</h2>
+            <p class="subtitle">Gérez les méthodes de paiement acceptées</p>
+        </div>
+        <div class="stats-cards">
+            <p-card styleClass="stat-card">
+                <div class="stat-content">
+                    <span class="stat-value">{{ totalModes() }}</span>
+                    <span class="stat-label">Total</span>
+                </div>
+            </p-card>
+            <p-card styleClass="stat-card success">
+                <div class="stat-content">
+                    <span class="stat-value">{{ modesActifs() }}</span>
+                    <span class="stat-label">Actifs</span>
+                </div>
+            </p-card>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <p-iconfield iconPosition="left">
+            <p-inputicon styleClass="pi pi-search"></p-inputicon>
+            <input pInputText type="text" placeholder="Rechercher..." (input)="onSearch($event)" />
+        </p-iconfield>
+        <div class="actions">
+            <p-button label="Actualiser" icon="pi pi-refresh" severity="secondary" [outlined]="true"
+                (onClick)="loadModes()" [loading]="loading()"></p-button>
+            <p-button label="Nouveau Mode" icon="pi pi-plus" (onClick)="openNewDialog()"></p-button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <p-card>
+        <p-table [value]="filteredModes()" [paginator]="true" [rows]="10" [loading]="loading()"
+            styleClass="p-datatable-sm p-datatable-striped">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 60px"></th>
+                    <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
+                    <th pSortableColumn="code">Code <p-sortIcon field="code"></p-sortIcon></th>
+                    <th>Description</th>
+                    <th>Frais</th>
+                    <th style="width: 100px">Statut</th>
+                    <th style="width: 150px">Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-mode>
+                <tr>
+                    <td class="text-center">
+                        <i [class]="getModeIcon(mode.code)" style="font-size: 1.5rem; color: var(--primary-color)"></i>
+                    </td>
+                    <td><strong>{{ mode.libelle }}</strong></td>
+                    <td>
+                        <p-tag [value]="mode.code" severity="info"></p-tag>
+                    </td>
+                    <td>{{ mode.description || '-' }}</td>
+                    <td>
+                        <span class="frais-badge" [class.gratuit]="!mode.fraisPourcentage && !mode.fraisFixe">
+                            {{ formatFrais(mode.fraisPourcentage, mode.fraisFixe) }}
+                        </span>
+                    </td>
+                    <td>
+                        <p-tag [value]="mode.actif ? 'Actif' : 'Inactif'"
+                            [severity]="mode.actif ? 'success' : 'danger'"></p-tag>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                pTooltip="Modifier" (onClick)="openEditDialog(mode)"></p-button>
+                            <p-button icon="pi pi-percentage" [rounded]="true" [text]="true" severity="success"
+                                pTooltip="Modifier les frais" (onClick)="openFraisDialog(mode)"></p-button>
+                            <p-button [icon]="mode.actif ? 'pi pi-eye-slash' : 'pi pi-eye'" [rounded]="true"
+                                [text]="true" [severity]="mode.actif ? 'warn' : 'success'"
+                                [pTooltip]="mode.actif ? 'Désactiver' : 'Activer'"
+                                (onClick)="toggleActif(mode)"></p-button>
+                            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                pTooltip="Supprimer" (onClick)="confirmDelete(mode)"></p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="7" class="text-center p-4">Aucun mode de règlement trouvé</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
+</div>
+
+<!-- Dialog Principal -->
+<p-dialog [(visible)]="dialogVisible" [header]="isEditMode() ? 'Modifier le mode' : 'Nouveau mode'" [modal]="true"
+    [style]="{ width: '550px' }" (onHide)="closeDialog()">
+    <form [formGroup]="modeForm" class="form-content">
+        <div class="form-row">
+            <div class="form-field">
+                <label for="code">Code *</label>
+                <p-dropdown id="code" formControlName="code" [options]="codesOptions" optionLabel="label"
+                    optionValue="value" placeholder="Sélectionner" [editable]="true" styleClass="w-full"
+                    (onChange)="onCodeSelect($event)">
+                    <ng-template let-option pTemplate="item">
+                        <div class="code-option">
+                            <i [class]="option.icon"></i>
+                            <span>{{ option.label }} ({{ option.value }})</span>
+                        </div>
+                    </ng-template>
+                </p-dropdown>
+            </div>
+            <div class="form-field">
+                <label for="libelle">Libellé *</label>
+                <input pInputText id="libelle" formControlName="libelle" class="w-full" />
+            </div>
+        </div>
+
+        <div class="form-field">
+            <label for="description">Description</label>
+            <textarea pTextarea id="description" formControlName="description" rows="2" class="w-full"></textarea>
+        </div>
+
+        <p-divider></p-divider>
+
+        <div class="form-section">
+            <h4><i class="pi pi-percentage"></i> Frais de transaction</h4>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="fraisPourcentage">Frais en %</label>
+                    <p-inputNumber id="fraisPourcentage" formControlName="fraisPourcentage" [min]="0" [max]="100"
+                        [minFractionDigits]="0" [maxFractionDigits]="2" suffix=" %" styleClass="w-full"></p-inputNumber>
+                </div>
+                <div class="form-field">
+                    <label for="fraisFixe">Frais fixes (GNF)</label>
+                    <p-inputNumber id="fraisFixe" formControlName="fraisFixe" [min]="0" mode="currency" currency="GNF"
+                        locale="fr-GN" styleClass="w-full"></p-inputNumber>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-field checkbox-field">
+            <p-checkbox formControlName="actif" [binary]="true" inputId="actif"></p-checkbox>
+            <label for="actif">Actif</label>
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Annuler" icon="pi pi-times" [text]="true" (onClick)="closeDialog()"></p-button>
+        <p-button [label]="isEditMode() ? 'Mettre à jour' : 'Créer'" icon="pi pi-check" (onClick)="saveMode()"
+            [loading]="loading()"></p-button>
+    </ng-template>
+</p-dialog>
+
+<!-- Dialog Frais -->
+<p-dialog [(visible)]="fraisDialogVisible" header="Modifier les frais" [modal]="true" [style]="{ width: '400px' }"
+    (onHide)="closeFraisDialog()">
+    @if (selectedMode()) {
+    <div class="mode-header">
+        <i [class]="getModeIcon(selectedMode()!.code)"></i>
+        <span>{{ selectedMode()!.libelle }}</span>
+    </div>
+    }
+
+    <form [formGroup]="fraisForm" class="form-content">
+        <div class="form-field">
+            <label for="fraisPourcentageEdit">Frais en %</label>
+            <p-inputNumber id="fraisPourcentageEdit" formControlName="fraisPourcentage" [min]="0" [max]="100"
+                [minFractionDigits]="0" [maxFractionDigits]="2" suffix=" %" styleClass="w-full"></p-inputNumber>
+        </div>
+        <div class="form-field">
+            <label for="fraisFixeEdit">Frais fixes (GNF)</label>
+            <p-inputNumber id="fraisFixeEdit" formControlName="fraisFixe" [min]="0" mode="currency" currency="GNF"
+                locale="fr-GN" styleClass="w-full"></p-inputNumber>
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Annuler" icon="pi pi-times" [text]="true" (onClick)="closeFraisDialog()"></p-button>
+        <p-button label="Enregistrer" icon="pi pi-check" (onClick)="saveFrais()" [loading]="loading()"></p-button>
+    </ng-template>
+</p-dialog>
