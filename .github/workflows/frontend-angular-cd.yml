@@ -68,10 +68,13 @@ jobs:
             # Remove old frontend container
             sudo docker rm -f billetterie-frontend || true
 
+            # Ensure network exists
+            sudo docker network create billetterie-network 2>/dev/null || true
+
             # Pull new image
             sudo docker pull doukoure93/billetterie-frontend:latest
 
-            # Start frontend container directly (no .env.prod needed, URLs baked in image)
+            # Start frontend container
             sudo docker run -d \
               --name billetterie-frontend \
               --network billetterie-network \
@@ -81,7 +84,16 @@ jobs:
               doukoure93/billetterie-frontend:latest
 
             sleep 5
-            sudo docker logs billetterie-frontend --tail=30
+
+            # Check if container is running
+            if sudo docker ps | grep -q billetterie-frontend; then
+              echo "Container is running"
+              sudo docker logs billetterie-frontend --tail=30
+            else
+              echo "Container failed to start!"
+              sudo docker logs billetterie-frontend --tail=50
+              exit 1
+            fi
 
       - name: Verify deployment health
         uses: appleboy/ssh-action@v1.0.3
