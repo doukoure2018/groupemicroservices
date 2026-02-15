@@ -19,6 +19,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Notify deployment start
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":":angular: Guidipress Frontend deployment started\nCommit: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }} || true
+
       - name: Docker Hub login
         uses: docker/login-action@v3
         with:
@@ -45,6 +51,12 @@ jobs:
           # Push images
           docker push doukoure93/billetterie-frontend:${{ steps.build-number.outputs.BUILD_NUMBER }}
           docker push doukoure93/billetterie-frontend:latest
+
+      - name: Notify image pushed
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":":whale: Guidipress Frontend image pushed!\nTag: ${{ steps.build-number.outputs.BUILD_NUMBER }}"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }} || true
 
       - name: Deploy frontend to OVH server
         uses: appleboy/ssh-action@v1.0.3
@@ -96,3 +108,17 @@ jobs:
               sudo docker logs billetterie-frontend --tail=50
               exit 1
             fi
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":":white_check_mark: Guidipress Frontend deployed!\n:globe_with_meridians: https://guidipress-io.com\n:package: Version: ${{ steps.build-number.outputs.BUILD_NUMBER }}"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }} || true
+
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":":rotating_light: Guidipress Frontend deployment FAILED!\n:link: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }} || true

@@ -34,6 +34,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Notify deployment start
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":":rocket: Guidipress - Microservices deployment started\nCommit: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }} || true
+
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -125,6 +131,12 @@ jobs:
           docker push doukoure93/billetterie-notificationserver:${{ steps.build-number.outputs.BUILD_NUMBER }}
           docker push doukoure93/billetterie-notificationserver:latest
 
+      - name: Notify images pushed
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":":whale: All Guidipress images pushed to DockerHub!\nTag: ${{ steps.build-number.outputs.BUILD_NUMBER }}"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }} || true
+
       # Deploy to OVH server
       - name: Generate .env.prod and deploy
         uses: appleboy/ssh-action@v1.0.3
@@ -136,7 +148,8 @@ jobs:
           script: |
             set -e
 
-            cd ~/billetterie || { mkdir -p ~/billetterie && cd ~/billetterie; }
+            mkdir -p ~/billetterie
+            cd ~/billetterie
 
             # Sync repository
             if [ -d ".git" ]; then
@@ -146,8 +159,10 @@ jobs:
               git reset --hard origin/main
             else
               echo "Cloning repository..."
-              git clone https://github.com/${{ github.repository }} .
-              git checkout main
+              git init
+              git remote add origin https://github.com/${{ github.repository }}.git
+              git fetch origin main
+              git checkout -f main
             fi
 
             # Create directories
@@ -287,3 +302,17 @@ jobs:
           GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           ORANGE_API_CREDENTIALS: ${{ secrets.ORANGE_API_CREDENTIALS }}
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":":white_check_mark: Guidipress deployment complete!\n:globe_with_meridians: https://guidipress-io.com\n:rocket: Tag: ${{ steps.build-number.outputs.BUILD_NUMBER }}"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }} || true
+
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":":rotating_light: Guidipress deployment FAILED!\n:link: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }} || true
