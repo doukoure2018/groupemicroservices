@@ -251,7 +251,7 @@ jobs:
 
             # Run migrations using docker run (avoids compose profile networking issues)
             echo "Running database migrations..."
-            NETWORK_NAME=$(sudo docker network ls --filter "name=billetterie" --format '{{.Name}}' | head -1)
+            NETWORK_NAME=$(sudo docker network ls --filter "name=billetterie_" --format '{{.Name}}' | head -1)
             echo "Using network: $NETWORK_NAME"
             sudo docker run --rm \
               --network "$NETWORK_NAME" \
