@@ -3,6 +3,7 @@ server:
   port: 8090
   forward-headers-strategy: native
   servlet:
+    context-path: /authorization
     session:
       cookie:
         same-site: lax
@@ -73,6 +74,8 @@ eureka:
     hostname: authorizationserver
     prefer-ip-address: false
     instance-id: ${spring.application.name}:${random.uuid}
+    health-check-url-path: /authorization/actuator/health
+    status-page-url-path: /authorization/actuator/info
   client:
     service-url:
       defaultZone: http://${EUREKA_USER:manager}:${EUREKA_PASSWORD:manager2711}@discoveryserver:8761/eureka/

@@ -16,8 +16,6 @@ spring:
             uri: lb://AUTHORIZATIONSERVER
             predicates:
               - Path=/authorization/**
-            filters:
-              - StripPrefix=1
           - id: user-service
             uri: lb://USERSERVICE
             predicates:
@@ -44,7 +42,7 @@ eureka:
     instance-id: ${spring.application.name}:${random.uuid}
 
 jwks:
-  uri: ${JWKS_URI:http://authorizationserver:8090/oauth2/jwks}
+  uri: ${JWKS_URI:http://authorizationserver:8090/authorization/oauth2/jwks}
 
 logging:
   level:
