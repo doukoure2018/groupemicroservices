@@ -1,3 +1,6 @@
+# Guidipress - Production Docker Compose
+# Domain: guidipress-io.com
+
 services:
   # ==============================================
   # DATABASE SERVICES
