@@ -6,6 +6,7 @@ WORKDIR /app
 # Build arguments for API URLs
 ARG API_BASE_URL=https://api.guidipress-io.com
 ARG AUTH_SERVER_URL=https://api.guidipress-io.com/authorization
+ARG FRONTEND_URL=https://guidipress-io.com
 
 # Copy package files and install dependencies
 COPY package.json package-lock.json* ./
@@ -14,9 +15,14 @@ RUN npm ci --legacy-peer-deps
 # Copy source code
 COPY . .
 
-# Replace API URLs in fileutils.ts for production
-RUN sed -i "s|http://localhost:9000|${API_BASE_URL}|g" src/app/utils/fileutils.ts && \
-    sed -i "s|http://localhost:8090|${AUTH_SERVER_URL}|g" src/app/utils/fileutils.ts
+# Replace ALL localhost URLs across all source files for production
+RUN find src -type f \( -name "*.ts" -o -name "*.html" \) -exec sed -i \
+    -e "s|http://localhost:9000|${API_BASE_URL}|g" \
+    -e "s|http://localhost:8090|${AUTH_SERVER_URL}|g" \
+    -e "s|http://localhost:8080|${AUTH_SERVER_URL}|g" \
+    -e "s|http://localhost:4200|${FRONTEND_URL}|g" \
+    -e "s|http://localhost:4202|${FRONTEND_URL}|g" \
+    {} +
 
 # Build for production
 RUN npm run build

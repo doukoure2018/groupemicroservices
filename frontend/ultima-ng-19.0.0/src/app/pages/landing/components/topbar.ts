@@ -3,6 +3,7 @@ import { StyleClassModule } from 'primeng/styleclass';
 import { RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
+import { loginUrl } from '@/utils/fileutils';
 
 @Component({
     selector: 'topbar',
@@ -40,7 +41,7 @@ import { RippleModule } from 'primeng/ripple';
 
                 <li>
                     <a
-                        href="http://localhost:8090/oauth2/authorize?response_type=code&client_id=client&scope=openid&redirect_uri=http://localhost:4202&code_challenge_method=S256&code_challenge=vesLhZA4cwKsKZAR7zvEJ9q3uI6dRM8nwna-IpuKkkk"
+                        [href]="loginUrl"
                         pButton
                         pRipple
                         class="!bg-surface-900 !border-surface-900 m-0 mt-4 md:mt-0 md:ml-8 rounded-md px-3 py-2§"
@@ -52,6 +53,7 @@ import { RippleModule } from 'primeng/ripple';
     </div>`
 })
 export class Topbar {
+    loginUrl = loginUrl;
     handleScroll(id: string) {
         const element = document.getElementById(id);
         if (element) {

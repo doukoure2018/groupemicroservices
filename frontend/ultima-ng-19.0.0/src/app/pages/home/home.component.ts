@@ -4,7 +4,7 @@ import { IAuthentication } from '@/interface/IAuthentication';
 import { Topbar } from '@/pages/landing/components/topbar';
 import { StorageService } from '@/service/storage.service';
 import { UserService } from '@/service/user.service';
-import { getFormData } from '@/utils/fileutils';
+import { getFormData, redirectUri } from '@/utils/fileutils';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
@@ -130,7 +130,7 @@ export class HomeComponent {
             code,
             client_id: 'client',
             grant_type: 'authorization_code',
-            redirect_uri: 'http://localhost:4202',
+            redirect_uri: redirectUri,
             code_verifier: 'I9QaNEkHHKoTSHctlSPE8VEf2ccHL0AGWkLi41k5_JsX1ItWNT_DT3i8SPRfffzIk_Nm4kEnSjdLi_DNmWw3GgcUT11UHtYeGW2zgOmdGaaiCdSRt1tnJZ4qclFwvpt7'
         });
 

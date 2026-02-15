@@ -45,6 +45,7 @@ jobs:
             -t doukoure93/billetterie-frontend:latest \
             --build-arg API_BASE_URL=https://api.guidipress-io.com \
             --build-arg AUTH_SERVER_URL=https://api.guidipress-io.com/authorization \
+            --build-arg FRONTEND_URL=https://guidipress-io.com \
             --file Dockerfile \
             .
 
