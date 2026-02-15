@@ -249,9 +249,23 @@ jobs:
             sudo docker compose --env-file .env.prod up -d zookeeper kafka
             sleep 10
 
-            # Run migrations
+            # Run migrations using docker run (avoids compose profile networking issues)
             echo "Running database migrations..."
-            sudo docker compose --env-file .env.prod --profile migration up flyway-migrations || echo "Migration warnings"
+            NETWORK_NAME=$(sudo docker network ls --filter "name=billetterie" --format '{{.Name}}' | head -1)
+            echo "Using network: $NETWORK_NAME"
+            sudo docker run --rm \
+              --network "$NETWORK_NAME" \
+              -v $(pwd)/microservers/database-migrations/src/main/resources/db/migration:/flyway/sql \
+              -e FLYWAY_URL="jdbc:postgresql://billetterie-postgres:5433/billetteriedb" \
+              -e FLYWAY_USER="${POSTGRES_USER}" \
+              -e FLYWAY_PASSWORD="${POSTGRES_PASSWORD}" \
+              -e FLYWAY_SCHEMAS=public \
+              -e FLYWAY_TABLE=flyway_schema_history \
+              -e FLYWAY_BASELINE_ON_MIGRATE=true \
+              -e FLYWAY_VALIDATE_ON_MIGRATE=true \
+              -e FLYWAY_CLEAN_DISABLED=true \
+              -e FLYWAY_BASELINE_VERSION=1 \
+              flyway/flyway:11.3.0 migrate
 
             # Start services in order
             echo "Starting Discovery Server..."
@@ -261,6 +275,9 @@ jobs:
             echo "Starting Gateway and Authorization Server..."
             sudo docker compose --env-file .env.prod up -d gateway authorizationserver
             sleep 20
+
+            # Remove standalone frontend container if it exists (managed by frontend CD workflow)
+            sudo docker rm -f billetterie-frontend || true
 
             echo "Starting all services..."
             sudo docker compose --env-file .env.prod up -d
