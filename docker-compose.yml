@@ -153,7 +153,7 @@ services:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       EUREKA_USER: ${EUREKA_USER:-manager}
       EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
-      JWKS_URI: http://authorizationserver:8090/oauth2/jwks
+      JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
     volumes:
       - ./logs/gateway:/var/log/gateway
     networks:
@@ -209,7 +209,7 @@ services:
           memory: 1024M
           cpus: '1.0'
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8090/actuator/health || exit 0"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8090/authorization/actuator/health || exit 0"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -227,7 +227,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       EUREKA_USER: ${EUREKA_USER:-manager}
       EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
-      JWKS_URI: http://authorizationserver:8090/oauth2/jwks
+      JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
       ORANGE_API_CREDENTIALS: ${ORANGE_API_CREDENTIALS}
@@ -271,7 +271,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       EUREKA_USER: ${EUREKA_USER:-manager}
       EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
-      JWKS_URI: http://authorizationserver:8090/oauth2/jwks
+      JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
     volumes:
@@ -313,7 +313,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       EUREKA_USER: ${EUREKA_USER:-manager}
       EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
-      JWKS_URI: http://authorizationserver:8090/oauth2/jwks
+      JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       GMAIL_USERNAME: ${GMAIL_USERNAME}
       GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
