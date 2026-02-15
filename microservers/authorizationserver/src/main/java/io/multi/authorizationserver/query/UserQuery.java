@@ -174,8 +174,8 @@ public class UserQuery {
 
     public static final String INSERT_CREDENTIALS_QUERY =
             """
-            INSERT INTO credentials (user_id, password, created_at, updated_at)
-            VALUES (:userId, :password, NOW(), NOW())
+            INSERT INTO credentials (credential_uuid, user_id, password, created_at, updated_at)
+            VALUES (gen_random_uuid(), :userId, :password, NOW(), NOW())
             """;
 
     public static final String CHECK_EMAIL_EXISTS_QUERY =
