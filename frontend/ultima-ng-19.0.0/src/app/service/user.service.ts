@@ -3,7 +3,7 @@ import { StorageService } from './storage.service';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { catchError, Observable, tap, throwError } from 'rxjs';
-import { authorizationServer, server } from '@/utils/fileutils';
+import { tokenEndpoint, server } from '@/utils/fileutils';
 import { Key } from '@/enum/cache.key';
 import { IAuthentication } from '@/interface/IAuthentication';
 import { IResponse } from '@/interface/response';
@@ -26,7 +26,7 @@ export class UserService {
     createNewPassword$ = (request: { userUuid: string; token: string; password: string; confirmPassword: string }) =>
         <Observable<IResponse>>this.http.post<IResponse>(`${server}/user/resetpassword/reset`, request).pipe(tap(console.log), catchError(this.handleError));
 
-    validateCode$ = (form: FormData) => <Observable<IAuthentication>>this.http.post<IAuthentication>(`${authorizationServer}/oauth2/token`, form).pipe(tap(console.log), catchError(this.handleError));
+    validateCode$ = (form: FormData) => <Observable<IAuthentication>>this.http.post<IAuthentication>(tokenEndpoint, form).pipe(tap(console.log), catchError(this.handleError));
 
     getInstanceUser$ = () => <Observable<IResponse>>this.http.get<IResponse>(`${server}/user/instanceUser`).pipe(tap(console.log), catchError(this.handleError));
 

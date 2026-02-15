@@ -16,8 +16,10 @@ RUN npm ci --legacy-peer-deps
 COPY . .
 
 # Replace ALL localhost URLs across all source files for production
+# Token endpoint is replaced FIRST with same-origin proxy path (no CORS needed)
 RUN find src -type f \( -name "*.ts" -o -name "*.html" \) -exec sed -i \
-    -e "s|http://localhost:9000|${API_BASE_URL}|g" \
+    -e "s|http://localhost:8090/oauth2/token|/token-proxy/token|g" \
+    -e "s|http://localhost:9000|/api|g" \
     -e "s|http://localhost:8090|${AUTH_SERVER_URL}|g" \
     -e "s|http://localhost:8080|${AUTH_SERVER_URL}|g" \
     -e "s|http://localhost:4200|${FRONTEND_URL}|g" \

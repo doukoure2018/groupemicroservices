@@ -75,10 +75,11 @@ jobs:
             # Pull new image
             sudo docker pull doukoure93/billetterie-frontend:latest
 
-            # Start frontend container
+            # Start frontend container with host access for API proxy
             sudo docker run -d \
               --name billetterie-frontend \
               --network billetterie-network \
+              --add-host host.docker.internal:host-gateway \
               -p 4202:80 \
               --restart unless-stopped \
               --memory 256m \
