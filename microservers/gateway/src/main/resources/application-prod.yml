@@ -16,6 +16,8 @@ spring:
             uri: lb://AUTHORIZATIONSERVER
             predicates:
               - Path=/authorization/**
+            filters:
+              - StripPrefix=1
           - id: user-service
             uri: lb://USERSERVICE
             predicates:

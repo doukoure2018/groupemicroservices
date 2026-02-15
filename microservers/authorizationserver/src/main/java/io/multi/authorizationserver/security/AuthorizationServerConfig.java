@@ -83,7 +83,7 @@ public class AuthorizationServerConfig {
     private final JwtConfiguration jwtConfiguration;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${UI_APP_URL:https://digi-creditrural-io.com}")
+    @Value("${UI_APP_URL:https://guidipress-io.com}")
     private String uiAppUrl;
 
     @Value("${oauth.issuer:http://localhost:8080}")
@@ -492,11 +492,10 @@ public class AuthorizationServerConfig {
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setAllowedOrigins(List.of(
                 "http://localhost:4202",
-                "http://51.91.254.218:4202",
-                "http://digi-creditrural-io.com",
-                "https://digi-creditrural-io.com",
-                "http://www.digi-creditrural-io.com",
-                "https://www.digi-creditrural-io.com",
+                "https://guidipress-io.com",
+                "https://www.guidipress-io.com",
+                "http://guidipress-io.com",
+                "http://www.guidipress-io.com",
                 // Add mobile origins
                 "http://localhost", // For local mobile testing
                 "capacitor://localhost",
