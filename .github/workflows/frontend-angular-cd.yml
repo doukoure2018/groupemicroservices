@@ -65,21 +65,23 @@ jobs:
           username: ${{ secrets.OVH_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
           script: |
-            cd ~/billetterie
-
             # Remove old frontend container
             sudo docker rm -f billetterie-frontend || true
 
             # Pull new image
-            sudo docker compose --env-file .env.prod pull frontend
+            sudo docker pull doukoure93/billetterie-frontend:latest
 
-            # Start frontend
-            sudo docker compose --env-file .env.prod up -d frontend
+            # Start frontend container directly (no .env.prod needed, URLs baked in image)
+            sudo docker run -d \
+              --name billetterie-frontend \
+              --network billetterie-network \
+              -p 4202:80 \
+              --restart unless-stopped \
+              --memory 256m \
+              doukoure93/billetterie-frontend:latest
 
-            # Show status
-            sudo docker compose --env-file .env.prod ps
             sleep 5
-            sudo docker compose --env-file .env.prod logs --tail=30 frontend
+            sudo docker logs billetterie-frontend --tail=30
 
       - name: Verify deployment health
         uses: appleboy/ssh-action@v1.0.3
