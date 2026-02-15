@@ -1,0 +1,108 @@
+# Notification Server - Production Configuration
+server:
+  port: 8093
+
+spring:
+  application:
+    name: notificationserver
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: true
+  main:
+    allow-bean-definition-overriding: true
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${GMAIL_USERNAME}
+    password: ${GMAIL_APP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+  datasource:
+    url: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB:billetteriedb}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      connection-test-query: SELECT 1
+      maximum-pool-size: 10
+      minimum-idle: 3
+
+  jpa:
+    database: POSTGRESQL
+    open-in-view: false
+    generate-ddl: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: public
+
+  cloud:
+    discovery:
+      client:
+        composite-indicator:
+          enabled: true
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:29093}
+    template:
+      default-topic: NOTIFICATION_TOPIC
+    consumer:
+      group-id: topicgroupid
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        fetch.message.max.bytes: 1300000000
+        max.partition.fetch.bytes: 1300000000
+    properties:
+      spring:
+        json:
+          type:
+            mapping: Notification:io.multi.notificationserver.domain.Notification
+      fetch.message.max.bytes: 1300000000
+
+eureka:
+  instance:
+    hostname: notificationserver
+    prefer-ip-address: false
+    instance-id: ${spring.application.name}:${random.uuid}
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_USER:manager}:${EUREKA_PASSWORD:manager2711}@discoveryserver:8761/eureka/
+
+mail:
+  from:
+    email: ${GMAIL_USERNAME}
+    name: ${MAIL_FROM_NAME:Guidipress}
+
+ui:
+  app:
+    url: ${UI_APP_URL:https://guidipress-io.com}
+
+verify:
+  email:
+    host: ${UI_APP_URL:https://guidipress-io.com}
+
+key:
+  private: private.key
+  public: public.key
+
+jwks:
+  uri: ${JWKS_URI:http://authorizationserver:8090/oauth2/jwks}
+
+logging:
+  level:
+    root: INFO

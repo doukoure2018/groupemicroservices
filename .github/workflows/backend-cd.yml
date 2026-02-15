@@ -1,0 +1,289 @@
+name: CD - Deploy Microservices to OVH
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - microservers/**
+      - docker-compose.yml
+      - '!microservers/**/test/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_password
+          POSTGRES_DB: ci_db
+        ports:
+          - 5432:5432
+        options:
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Docker Hub login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+
+      - name: Configure Maven settings for Docker Hub
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml << EOF
+          <settings>
+            <servers>
+              <server>
+                <id>registry-1.docker.io</id>
+                <username>${{ secrets.DOCKERHUB_USERNAME }}</username>
+                <password>${{ secrets.DOCKERHUB_ACCESS_TOKEN }}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+
+      - name: Generate build tag
+        id: build-number
+        run: echo "BUILD_NUMBER=$(date '+%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+
+      # Build all modules
+      - name: Install all modules
+        working-directory: ./microservers
+        run: mvn -ntp -B install -DskipTests
+
+      # Build and push each microservice
+      - name: Build and push Discovery Server
+        working-directory: ./microservers/discoveryserver
+        run: |
+          mvn -ntp -B verify -DskipTests jib:dockerBuild
+          docker tag doukoure93/discoveryserver:0.0.1-SNAPSHOT doukoure93/billetterie-discoveryserver:${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker tag doukoure93/discoveryserver:0.0.1-SNAPSHOT doukoure93/billetterie-discoveryserver:latest
+          docker push doukoure93/billetterie-discoveryserver:${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker push doukoure93/billetterie-discoveryserver:latest
+
+      - name: Build and push Gateway
+        working-directory: ./microservers/gateway
+        run: |
+          mvn -ntp -B verify -DskipTests jib:dockerBuild
+          docker tag doukoure93/gateway:0.0.1-SNAPSHOT doukoure93/billetterie-gateway:${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker tag doukoure93/gateway:0.0.1-SNAPSHOT doukoure93/billetterie-gateway:latest
+          docker push doukoure93/billetterie-gateway:${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker push doukoure93/billetterie-gateway:latest
+
+      - name: Build and push Authorization Server
+        working-directory: ./microservers/authorizationserver
+        run: |
+          mvn -ntp -B verify -DskipTests jib:dockerBuild
+          docker tag doukoure93/authorizationserver:0.0.1-SNAPSHOT doukoure93/billetterie-authorizationserver:${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker tag doukoure93/authorizationserver:0.0.1-SNAPSHOT doukoure93/billetterie-authorizationserver:latest
+          docker push doukoure93/billetterie-authorizationserver:${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker push doukoure93/billetterie-authorizationserver:latest
+
+      - name: Build and push User Service
+        working-directory: ./microservers/userservice
+        run: |
+          mvn -ntp -B verify -DskipTests jib:dockerBuild
+          docker tag doukoure93/userservice:0.0.1-SNAPSHOT doukoure93/billetterie-userservice:${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker tag doukoure93/userservice:0.0.1-SNAPSHOT doukoure93/billetterie-userservice:latest
+          docker push doukoure93/billetterie-userservice:${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker push doukoure93/billetterie-userservice:latest
+
+      - name: Build and push Billetterie Service
+        working-directory: ./microservers/billetterieservice
+        run: |
+          mvn -ntp -B verify -DskipTests jib:dockerBuild
+          docker tag doukoure93/billetterieservice:0.0.1-SNAPSHOT doukoure93/billetterie-billetterieservice:${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker tag doukoure93/billetterieservice:0.0.1-SNAPSHOT doukoure93/billetterie-billetterieservice:latest
+          docker push doukoure93/billetterie-billetterieservice:${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker push doukoure93/billetterie-billetterieservice:latest
+
+      - name: Build and push Notification Server
+        working-directory: ./microservers/notificationserver
+        run: |
+          mvn -ntp -B verify -DskipTests jib:dockerBuild
+          docker tag doukoure93/notificationserver:0.0.1-SNAPSHOT doukoure93/billetterie-notificationserver:${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker tag doukoure93/notificationserver:0.0.1-SNAPSHOT doukoure93/billetterie-notificationserver:latest
+          docker push doukoure93/billetterie-notificationserver:${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker push doukoure93/billetterie-notificationserver:latest
+
+      # Deploy to OVH server
+      - name: Generate .env.prod and deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.OVH_HOST }}
+          username: ${{ secrets.OVH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          envs: POSTGRES_PASSWORD,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GMAIL_USERNAME,GMAIL_APP_PASSWORD,ORANGE_API_CREDENTIALS
+          script: |
+            set -e
+
+            cd ~/billetterie || { mkdir -p ~/billetterie && cd ~/billetterie; }
+
+            # Sync repository
+            if [ -d ".git" ]; then
+              echo "Syncing with repository..."
+              git stash save "Auto-stash before deployment $(date)" || true
+              git fetch origin main
+              git reset --hard origin/main
+            else
+              echo "Cloning repository..."
+              git clone https://github.com/${{ github.repository }} .
+              git checkout main
+            fi
+
+            # Create directories
+            mkdir -p logs/{discoveryserver,gateway,authorizationserver,userservice,billetterieservice,notificationserver,frontend}
+            mkdir -p keys
+
+            # Generate .env.prod from GitHub Secrets
+            echo "Generating .env.prod..."
+            cat > .env.prod << ENVEOF
+            SPRING_PROFILES_ACTIVE=prod
+            POSTGRES_USER=billetterie_user
+            POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            POSTGRES_DB=billetteriedb
+            DB_USERNAME=billetterie_user
+            DB_PASSWORD=${POSTGRES_PASSWORD}
+            PGADMIN_EMAIL=admin@guidipress-io.com
+            PGADMIN_PASSWORD=${POSTGRES_PASSWORD}
+            UI_APP_URL=https://guidipress-io.com
+            BACKEND_APP_URL=https://api.guidipress-io.com
+            OAUTH_ISSUER=https://api.guidipress-io.com/authorization
+            OAUTH2_CLIENT_ID=client
+            OAUTH2_SCOPE=openid
+            OAUTH2_RESPONSE_TYPE=code
+            OAUTH2_CODE_CHALLENGE_METHOD=S256
+            SESSION_COOKIE_SECURE=true
+            GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+            GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+            GMAIL_USERNAME=${GMAIL_USERNAME}
+            GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
+            MAIL_FROM_NAME=Guidipress
+            ORANGE_API_CREDENTIALS=${ORANGE_API_CREDENTIALS}
+            ORANGE_SENDER_ADDRESS=tel:+224XXXXXXXXX
+            KAFKA_BOOTSTRAP_SERVERS=kafka:29093
+            DOCKERHUB_USERNAME=doukoure93
+            EUREKA_USER=manager
+            EUREKA_PASSWORD=manager2711
+            ENVEOF
+
+            # Remove leading spaces from heredoc
+            sed -i 's/^[[:space:]]*//' .env.prod
+            chmod 600 .env.prod
+
+            # Load environment
+            export $(cat .env.prod | grep -v '^#' | xargs)
+
+            # Backup database
+            echo "Creating pre-deployment backup..."
+            if sudo docker ps | grep -q billetterie-postgres; then
+              sudo docker exec billetterie-postgres pg_dumpall -U ${POSTGRES_USER} > ~/backup_$(date +%Y%m%d_%H%M%S).sql || echo "Backup failed"
+            fi
+
+            # Stop services
+            echo "Stopping services..."
+            sudo docker compose --env-file .env.prod down --remove-orphans || true
+
+            # Pull new images
+            echo "Pulling latest images..."
+            sudo docker compose --env-file .env.prod pull
+
+            # Clean old images
+            sudo docker image prune -f
+
+            # Start PostgreSQL
+            echo "Starting PostgreSQL..."
+            sudo docker compose --env-file .env.prod up -d postgresdb
+            sleep 15
+
+            # Wait for PostgreSQL
+            echo "Waiting for PostgreSQL..."
+            count=0
+            until sudo docker exec billetterie-postgres pg_isready -U ${POSTGRES_USER} 2>/dev/null; do
+              if [ $count -eq 30 ]; then
+                echo "PostgreSQL failed to start!"
+                sudo docker logs billetterie-postgres --tail=30
+                exit 1
+              fi
+              sleep 3
+              count=$((count + 1))
+            done
+            echo "PostgreSQL is ready"
+
+            # Start Kafka
+            echo "Starting Kafka..."
+            sudo docker compose --env-file .env.prod up -d zookeeper kafka
+            sleep 10
+
+            # Run migrations
+            echo "Running database migrations..."
+            sudo docker compose --env-file .env.prod --profile migration up flyway-migrations || echo "Migration warnings"
+
+            # Start services in order
+            echo "Starting Discovery Server..."
+            sudo docker compose --env-file .env.prod up -d discoveryserver
+            sleep 30
+
+            echo "Starting Gateway and Authorization Server..."
+            sudo docker compose --env-file .env.prod up -d gateway authorizationserver
+            sleep 20
+
+            echo "Starting all services..."
+            sudo docker compose --env-file .env.prod up -d
+
+            echo "Waiting for services to stabilize..."
+            sleep 60
+
+            # Health check
+            echo "Checking services..."
+            services=("billetterie-postgres" "billetterie-kafka" "billetterie-discoveryserver" "billetterie-gateway" "billetterie-authorizationserver" "billetterie-userservice" "billetterie-billetterieservice" "billetterie-notificationserver" "billetterie-frontend")
+            all_healthy=true
+
+            for service in "${services[@]}"; do
+              if sudo docker ps | grep -q "$service"; then
+                echo "$service is running"
+              else
+                echo "$service is not running"
+                all_healthy=false
+              fi
+            done
+
+            if [ "$all_healthy" = false ]; then
+              echo "Some services failed!"
+              sudo docker compose --env-file .env.prod logs --tail=20
+              exit 1
+            fi
+
+            echo ""
+            echo "Deployment successful!"
+            echo "================================================"
+            echo "Services available at:"
+            echo "   Frontend: https://guidipress-io.com"
+            echo "   API: https://api.guidipress-io.com"
+            echo "================================================"
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ORANGE_API_CREDENTIALS: ${{ secrets.ORANGE_API_CREDENTIALS }}

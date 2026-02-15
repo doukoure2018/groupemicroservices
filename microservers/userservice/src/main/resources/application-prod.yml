@@ -1,0 +1,120 @@
+# User Service - Production Configuration
+server:
+  port: 8091
+
+spring:
+  application:
+    name: userservice
+  main:
+    allow-bean-definition-overriding: true
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: true
+
+  datasource:
+    url: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB:billetteriedb}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      connection-test-query: SELECT 1
+      maximum-pool-size: 20
+      minimum-idle: 5
+
+  jpa:
+    database: POSTGRESQL
+    open-in-view: false
+    generate-ddl: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: public
+
+  cloud:
+    discovery:
+      client:
+        composite-indicator:
+          enabled: true
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:29093}
+    template:
+      default-topic: NOTIFICATION_TOPIC
+    producer:
+      group-id: topicgroupid
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        max.request.size: 1300000000
+    properties:
+      spring:
+        json:
+          type:
+            mapping: Notification:io.multi.userservice.domain.Notification
+      message.max.bytes: 1300000000
+      max.request.size: 1300000000
+
+eureka:
+  instance:
+    hostname: userservice
+    prefer-ip-address: false
+    instance-id: ${spring.application.name}:${random.uuid}
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_USER:manager}:${EUREKA_PASSWORD:manager2711}@discoveryserver:8761/eureka/
+
+ui:
+  app:
+    url: ${UI_APP_URL:https://guidipress-io.com}
+
+key:
+  private: private.key
+  public: public.key
+
+jwks:
+  uri: ${JWKS_URI:http://authorizationserver:8090/oauth2/jwks}
+
+orange:
+  api:
+    oauth:
+      url: https://api.orange.com/oauth/v3/token
+    sms:
+      url: https://api.orange.com/smsmessaging/v1/outbound/${ORANGE_SENDER_ADDRESS}/requests
+      balance:
+        url: https://api.orange.com/sms/admin/v1/contracts
+    client:
+      credentials: ${ORANGE_API_CREDENTIALS}
+    sender:
+      address: ${ORANGE_SENDER_ADDRESS}
+
+sms:
+  code:
+    length: 6
+  expiry:
+    minutes: 10
+  max:
+    attempts: 3
+  rate:
+    limit:
+      per:
+        hour: 3
+  sender:
+    name: Guidipress
+  primary:
+    provider: orange
+  fallback:
+    enabled: true
+  send:
+    timeout:
+      seconds: 30
+  retry:
+    attempts: 2
+
+logging:
+  level:
+    root: INFO

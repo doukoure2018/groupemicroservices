@@ -1,23 +1,18 @@
 package io.multi.notificationserver.service.impl;
 
-import com.sendgrid.Method;
-import com.sendgrid.Request;
-import com.sendgrid.Response;
-import com.sendgrid.SendGrid;
-import com.sendgrid.helpers.mail.Mail;
-import com.sendgrid.helpers.mail.objects.Content;
-import com.sendgrid.helpers.mail.objects.Email;
 import io.multi.notificationserver.exception.ApiException;
 import io.multi.notificationserver.service.EmailService;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import java.io.IOException;
 import java.util.Map;
 
 import static io.multi.notificationserver.utils.EmailUtils.getResetPasswordUrl;
@@ -41,14 +36,12 @@ public class EmailServiceImpl implements EmailService {
     public static final String STOCK_REJECTION_TEMPLATE = "stock_rejection";
 
     private final TemplateEngine templateEngine;
+    private final JavaMailSender mailSender;
 
-    @Value("${spring.sendgrid.api.key}")
-    private String sendGridApiKey;
-
-    @Value("${spring.sendgrid.from.email}")
+    @Value("${mail.from.email}")
     private String fromEmail;
 
-    @Value("${spring.sendgrid.from.name}")
+    @Value("${mail.from.name}")
     private String fromName;
 
     @Value("${verify.email.host}")
@@ -94,7 +87,6 @@ public class EmailServiceImpl implements EmailService {
 
 
 
-
     @Override
     public void sendNewTicketHtmlEmail(String name, String email, String ticketTitle, String ticketNumber, String priority) {
         // TODO: Implement when needed
@@ -106,34 +98,23 @@ public class EmailServiceImpl implements EmailService {
     }
 
     /**
-     * Core method to send email using SendGrid
+     * Core method to send email using JavaMailSender (Gmail SMTP)
      */
     private void sendEmail(String toEmail, String subject, String htmlContent) {
-        Email from = new Email(fromEmail, fromName);
-        Email to = new Email(toEmail);
-        Content content = new Content("text/html", htmlContent);
-        Mail mail = new Mail(from, subject, to, content);
-
-        SendGrid sg = new SendGrid(sendGridApiKey);
-        Request request = new Request();
-
         try {
-            request.setMethod(Method.POST);
-            request.setEndpoint("mail/send");
-            request.setBody(mail.build());
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            Response response = sg.api(request);
+            helper.setFrom(fromEmail, fromName);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
 
-            if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
-                log.info("Email sent successfully to {}. Status: {}", toEmail, response.getStatusCode());
-            } else {
-                log.error("Failed to send email to {}. Status: {}, Body: {}",
-                        toEmail, response.getStatusCode(), response.getBody());
-                throw new ApiException("Failed to send email. Status: " + response.getStatusCode());
-            }
-        } catch (IOException ex) {
-            log.error("Error calling SendGrid API: {}", ex.getMessage(), ex);
-            throw new ApiException("Failed to send email via SendGrid");
+            mailSender.send(message);
+            log.info("Email sent successfully to {}", toEmail);
+        } catch (Exception ex) {
+            log.error("Error sending email to {}: {}", toEmail, ex.getMessage(), ex);
+            throw new ApiException("Failed to send email");
         }
     }
 }

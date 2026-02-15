@@ -1,0 +1,51 @@
+# Gateway - Production Configuration
+server:
+  port: 9000
+  forward-headers-strategy: native
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    discovery:
+      enabled: true
+    gateway:
+      mvc:
+        routes:
+          - id: authorization-server
+            uri: lb://AUTHORIZATIONSERVER
+            predicates:
+              - Path=/authorization/**
+          - id: user-service
+            uri: lb://USERSERVICE
+            predicates:
+              - Path=/user/**
+          - id: billetterie-service
+            uri: lb://BILLETTERIESERVICE
+            predicates:
+              - Path=/billetterie/**
+          - id: notification-service
+            uri: lb://NOTIFICATIONSERVER
+            predicates:
+              - Path=/notification/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_USER:manager}:${EUREKA_PASSWORD:manager2711}@discoveryserver:8761/eureka/
+    restclient:
+      enabled: true
+    registry-fetch-interval-seconds: 5
+  instance:
+    hostname: gateway
+    prefer-ip-address: false
+    instance-id: ${spring.application.name}:${random.uuid}
+
+jwks:
+  uri: ${JWKS_URI:http://authorizationserver:8090/oauth2/jwks}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: INFO
+    com.netflix.discovery: WARN

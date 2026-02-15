@@ -1,7 +1,9 @@
 services:
-  # Database Services
+  # ==============================================
+  # DATABASE SERVICES
+  # ==============================================
   postgresdb:
-    container_name: multi-postgrecontainer
+    container_name: billetterie-postgres
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -13,19 +15,20 @@ services:
     ports:
       - "5433:5433"
     volumes:
-      - multi_postgres_data_v16:/var/lib/postgresql/data
+      - billetterie_postgres_data:/var/lib/postgresql/data
     networks:
-      - multi-spring
+      - billetterie-network
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -p 5433" ]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 120s
+      start_period: 60s
+
   # Database Migration Service
   flyway-migrations:
     image: flyway/flyway:11.3.0
-    container_name: multi-flyway-migrations
+    container_name: billetterie-flyway
     environment:
       FLYWAY_URL: "jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}"
       FLYWAY_USER: ${POSTGRES_USER}
@@ -36,12 +39,12 @@ services:
       FLYWAY_VALIDATE_ON_MIGRATE: "true"
       FLYWAY_OUT_OF_ORDER: "false"
       FLYWAY_CLEAN_DISABLED: "true"
-      FLYWAY_BASELINE_VERSION: "7"
+      FLYWAY_BASELINE_VERSION: "1"
     volumes:
       - ./microservers/database-migrations/src/main/resources/db/migration:/flyway/sql
     command: migrate
     networks:
-      - multi-spring
+      - billetterie-network
     depends_on:
       postgresdb:
         condition: service_healthy
@@ -51,70 +54,77 @@ services:
       - full
 
   pgadmin:
-    container_name: multi-pgadmincontainer
+    container_name: billetterie-pgadmin
     image: dpage/pgadmin4:latest
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
-      PGADMIN_DEFAULT_ADDRESS: "7001"
-      PGADMIN_LISTEN_PORT: "7001"
+      PGADMIN_LISTEN_PORT: 7001
     depends_on:
       - postgresdb
-    expose:
-      - 7001
     ports:
       - "7001:7001"
     volumes:
-      - multi_pgadminvolume:/var/lib/pgadmin
+      - billetterie_pgadmin:/var/lib/pgadmin
     networks:
-      - multi-spring
+      - billetterie-network
+    profiles:
+      - tools
 
-  # Messaging Services
+  # ==============================================
+  # MESSAGING SERVICES
+  # ==============================================
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
-    container_name: multi-zookeeper
+    container_name: billetterie-zookeeper
     ports:
       - "2183:2183"
     environment:
-      ZOOKEEPER_CLIENT_PORT: "2183"
-      ZOOKEEPER_TICK_TIME: "2000"
+      ZOOKEEPER_CLIENT_PORT: 2183
+      ZOOKEEPER_TICK_TIME: 2000
     networks:
-      - multi-spring
+      - billetterie-network
+    restart: unless-stopped
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
-    container_name: multi-kafka
+    container_name: billetterie-kafka
     ports:
       - "9093:9093"
     environment:
-      KAFKA_BROKER_ID: "1"
-      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2183"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT"
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://localhost:9093,PLAINTEXT_INTERNAL://kafka:29093"
-      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9093,PLAINTEXT_INTERNAL://0.0.0.0:29093"
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2183
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9093,PLAINTEXT_INTERNAL://kafka:29093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9093,PLAINTEXT_INTERNAL://0.0.0.0:29093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
     networks:
-      - multi-spring
+      - billetterie-network
+    restart: unless-stopped
 
-  # Discovery and Gateway Services
+  # ==============================================
+  # MICROSERVICES
+  # ==============================================
   discoveryserver:
-    image: doukoure93/multi-discoveryserver:latest
-    container_name: multi-discoveryserver
+    image: doukoure93/billetterie-discoveryserver:latest
+    container_name: billetterie-discoveryserver
     ports:
-      - "5003:5003"
+      - "8761:8761"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      EUREKA_USER: ${EUREKA_USER:-manager}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
     volumes:
       - ./logs/discoveryserver:/var/log/discoveryserver
     networks:
-      - multi-spring
+      - billetterie-network
     depends_on:
       postgresdb:
         condition: service_healthy
@@ -124,40 +134,36 @@ services:
         limits:
           memory: 512M
           cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
     healthcheck:
-      test: ["CMD-SHELL", "exit 0"]
-      interval: 10s
-      timeout: 5s
-      retries: 1
+      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
       start_period: 120s
 
   gateway:
-    image: doukoure93/multi-gateway:latest
-    container_name: multi-gateway
+    image: doukoure93/billetterie-gateway:latest
+    container_name: billetterie-gateway
     ports:
       - "9000:9000"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://manager:manager2711@discoveryserver:5003/eureka/"
-      JWKS_URI: "http://authorizationserver:8090/oauth2/jwks"
+      EUREKA_USER: ${EUREKA_USER:-manager}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
+      JWKS_URI: http://authorizationserver:8090/oauth2/jwks
     volumes:
       - ./logs/gateway:/var/log/gateway
     networks:
-      - multi-spring
+      - billetterie-network
     depends_on:
-      - discoveryserver
+      discoveryserver:
+        condition: service_healthy
     restart: unless-stopped
     deploy:
       resources:
         limits:
           memory: 512M
           cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9000/actuator/health || exit 1"]
       interval: 30s
@@ -166,85 +172,75 @@ services:
       start_period: 120s
 
   authorizationserver:
-    image: doukoure93/multi-authorizationserver:latest
-    container_name: multi-authorizationserver
+    image: doukoure93/billetterie-authorizationserver:latest
+    container_name: billetterie-authorizationserver
     ports:
       - "8090:8090"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://manager:manager2711@discoveryserver:5003/eureka/"
+      EUREKA_USER: ${EUREKA_USER:-manager}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
       UI_APP_URL: ${UI_APP_URL}
-      BACKEND_APP_URL: ${BACKEND_APP_URL}
-      OAUTH2_CLIENT_ID: ${OAUTH2_CLIENT_ID:-client}
-      OAUTH2_SCOPE: ${OAUTH2_SCOPE:-openid}
-      OAUTH2_RESPONSE_TYPE: ${OAUTH2_RESPONSE_TYPE:-code}
-      OAUTH2_CODE_CHALLENGE_METHOD: ${OAUTH2_CODE_CHALLENGE_METHOD:-S256}
-      SERVER_SERVLET_SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
-      SERVER_SERVLET_SESSION_COOKIE_HTTP_ONLY: "true"
-      SERVER_SERVLET_SESSION_COOKIE_SAME_SITE: "strict"
-      SERVER_FORWARD_HEADERS_STRATEGY: "NATIVE"
-      SPRING_JPA_PROPERTIES_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE: "false"
-      SPRING_JPA_PROPERTIES_HIBERNATE_CACHE_USE_QUERY_CACHE: "false"
-      SPRING_JPA_PROPERTIES_HIBERNATE_CACHE_REGION_FACTORY_CLASS: "org.hibernate.cache.internal.NoCachingRegionFactory"
+      OAUTH_ISSUER: ${OAUTH_ISSUER}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
+      SERVER_FORWARD_HEADERS_STRATEGY: NATIVE
     volumes:
       - ./keys:/app/keys
       - ./logs/authorizationserver:/var/log/authorizationserver
     networks:
-      - multi-spring
+      - billetterie-network
     depends_on:
       postgresdb:
         condition: service_healthy
       discoveryserver:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
     deploy:
       resources:
         limits:
           memory: 1024M
           cpus: '1.0'
-        reservations:
-          memory: 512M
-          cpus: '0.5'
     healthcheck:
-      test: ["CMD-SHELL", "exit 0"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8090/actuator/health || exit 0"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 120s
 
   userservice:
-    image: doukoure93/multi-userservice:latest
-    container_name: multi-userservice
+    image: doukoure93/billetterie-userservice:latest
+    container_name: billetterie-userservice
     ports:
-      - "8095:8095"
+      - "8091:8091"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://manager:manager2711@discoveryserver:5003/eureka/"
-      JWKS_URI: "http://authorizationserver:8090/oauth2/jwks"
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:9093"
+      EUREKA_USER: ${EUREKA_USER:-manager}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
+      JWKS_URI: http://authorizationserver:8090/oauth2/jwks
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
-      BACKEND_APP_URL: ${BACKEND_APP_URL}
-      SPRING_JPA_PROPERTIES_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE: "false"
-      SPRING_JPA_PROPERTIES_HIBERNATE_CACHE_USE_QUERY_CACHE: "false"
-      SPRING_JPA_PROPERTIES_HIBERNATE_CACHE_REGION_FACTORY_CLASS: "org.hibernate.cache.internal.NoCachingRegionFactory"
+      ORANGE_API_CREDENTIALS: ${ORANGE_API_CREDENTIALS}
+      ORANGE_SENDER_ADDRESS: ${ORANGE_SENDER_ADDRESS}
     volumes:
       - ./keys:/app/keys
       - ./logs/userservice:/var/log/userservice
     networks:
-      - multi-spring
+      - billetterie-network
     depends_on:
       postgresdb:
         condition: service_healthy
       kafka:
         condition: service_started
       discoveryserver:
-        condition: service_started
+        condition: service_healthy
       authorizationserver:
         condition: service_started
     restart: unless-stopped
@@ -253,46 +249,40 @@ services:
         limits:
           memory: 1024M
           cpus: '1.0'
-        reservations:
-          memory: 512M
-          cpus: '0.5'
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8095/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8091/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 120s
 
   billetterieservice:
-    image: doukoure93/multi-billetterieservice:latest
-    container_name: multi-billetterieservice
+    image: doukoure93/billetterie-billetterieservice:latest
+    container_name: billetterie-billetterieservice
     ports:
-      - "8097:8097"
+      - "8092:8092"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://manager:manager2711@discoveryserver:5003/eureka/"
-      JWKS_URI: "http://authorizationserver:8090/oauth2/jwks"
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:9093"
+      EUREKA_USER: ${EUREKA_USER:-manager}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
+      JWKS_URI: http://authorizationserver:8090/oauth2/jwks
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
-      BACKEND_APP_URL: ${BACKEND_APP_URL}
-      SPRING_JPA_PROPERTIES_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE: "false"
-      SPRING_JPA_PROPERTIES_HIBERNATE_CACHE_USE_QUERY_CACHE: "false"
-      SPRING_JPA_PROPERTIES_HIBERNATE_CACHE_REGION_FACTORY_CLASS: "org.hibernate.cache.internal.NoCachingRegionFactory"
     volumes:
       - ./keys:/app/keys
       - ./logs/billetterieservice:/var/log/billetterieservice
     networks:
-      - multi-spring
+      - billetterie-network
     depends_on:
       postgresdb:
         condition: service_healthy
       kafka:
         condition: service_started
       discoveryserver:
-        condition: service_started
+        condition: service_healthy
       authorizationserver:
         condition: service_started
     restart: unless-stopped
@@ -301,48 +291,43 @@ services:
         limits:
           memory: 1024M
           cpus: '1.0'
-        reservations:
-          memory: 512M
-          cpus: '0.5'
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8097/actuator/health || exit 1" ]
+      test: ["CMD-SHELL", "curl -f http://localhost:8092/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 120s
 
-  notificationservice:
-    image: doukoure93/multi-notificationservice:latest
-    container_name: multi-notificationservice
+  notificationserver:
+    image: doukoure93/billetterie-notificationserver:latest
+    container_name: billetterie-notificationserver
     ports:
-      - "8096:8096"
+      - "8093:8093"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
-      SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL}
-      SENDGRID_FROM_NAME: ${SENDGRID_FROM_NAME}
-      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://manager:manager2711@discoveryserver:5003/eureka/"
-      JWKS_URI: "http://authorizationserver:8090/oauth2/jwks"
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:9093"
-      SPRING_MAIL_HOST: ${MAIL_HOST}
-      SPRING_MAIL_PORT: ${MAIL_PORT}
-      SPRING_MAIL_USERNAME: ${MAIL_USERNAME}
-      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD}
+      EUREKA_USER: ${EUREKA_USER:-manager}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
+      JWKS_URI: http://authorizationserver:8090/oauth2/jwks
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29093
+      GMAIL_USERNAME: ${GMAIL_USERNAME}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Guidipress}
       UI_APP_URL: ${UI_APP_URL}
-      BACKEND_APP_URL: ${BACKEND_APP_URL}
     volumes:
       - ./keys:/app/keys
-      - ./logs/notificationservice:/var/log/notificationservice
+      - ./logs/notificationserver:/var/log/notificationserver
     networks:
-      - multi-spring
+      - billetterie-network
     depends_on:
+      postgresdb:
+        condition: service_healthy
       kafka:
         condition: service_started
       discoveryserver:
-        condition: service_started
+        condition: service_healthy
       authorizationserver:
         condition: service_started
     restart: unless-stopped
@@ -351,20 +336,48 @@ services:
         limits:
           memory: 512M
           cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8096/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8093/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 120s
 
-volumes:
-  multi_postgres_data_v16:
-  multi_pgadminvolume:
+  # ==============================================
+  # FRONTEND
+  # ==============================================
+  frontend:
+    image: doukoure93/billetterie-frontend:latest
+    container_name: billetterie-frontend
+    ports:
+      - "4202:80"
+    networks:
+      - billetterie-network
+    depends_on:
+      - gateway
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
+# ==============================================
+# VOLUMES
+# ==============================================
+volumes:
+  billetterie_postgres_data:
+  billetterie_pgadmin:
+
+# ==============================================
+# NETWORKS
+# ==============================================
 networks:
-  multi-spring:
+  billetterie-network:
     driver: bridge
