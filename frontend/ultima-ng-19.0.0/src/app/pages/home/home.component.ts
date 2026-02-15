@@ -98,16 +98,11 @@ export class HomeComponent {
                                 this.saveToken(response);
                                 console.log('Authentication successful, tokens saved');
 
-                                // Keep loading true while we navigate
-                                const currentUrlWithoutParams = this.router.url.split('?')[0];
-
-                                // Use setTimeout to ensure proper change detection
+                                // Navigate to dashboard after successful authentication
+                                const redirectUrl = this.storage.getRedirectUrl() || '/dashboards';
                                 setTimeout(() => {
-                                    this.router.navigateByUrl(currentUrlWithoutParams).then(() => {
-                                        // Only set loading to false after navigation completes
-                                        setTimeout(() => {
-                                            this.loading.set(false);
-                                        }, 100);
+                                    this.router.navigateByUrl(redirectUrl).then(() => {
+                                        this.loading.set(false);
                                     });
                                 }, 0);
                             },

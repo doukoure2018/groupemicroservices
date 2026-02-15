@@ -11,6 +11,8 @@ spring:
       enabled: true
     gateway:
       mvc:
+        default-filters:
+          - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials Access-Control-Allow-Methods Access-Control-Allow-Headers, RETAIN_FIRST
         routes:
           - id: authorization-server
             uri: lb://AUTHORIZATIONSERVER
