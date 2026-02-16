@@ -71,7 +71,7 @@ spring:
       spring:
         json:
           type:
-            mapping: Notification:io.multi.notificationserver.domain.Notification
+            mapping: "Notification:io.multi.notificationserver.domain.Notification,io.multi.authorizationserver.event.Notification:io.multi.notificationserver.domain.Notification"
       fetch.message.max.bytes: 1300000000
 
 eureka:
