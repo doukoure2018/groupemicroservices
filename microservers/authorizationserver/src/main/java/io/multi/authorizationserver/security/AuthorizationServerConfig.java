@@ -149,8 +149,8 @@ public class AuthorizationServerConfig {
 
         http.securityMatcher("/**")
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login", "/register", "/oauth2/authorize/**", "/oauth2/authorize").permitAll()
-                        .requestMatchers(POST, "/register").permitAll()
+                        .requestMatchers("/login", "/register", "/forgot-password", "/oauth2/authorize/**", "/oauth2/authorize").permitAll()
+                        .requestMatchers(POST, "/register", "/forgot-password").permitAll()
                         .requestMatchers("/login/oauth2/code/**", "/oauth2/**").permitAll()
                         .requestMatchers(POST, "/logout").permitAll()
                         .requestMatchers("/mfa").hasAuthority("MFA_REQUIRED")

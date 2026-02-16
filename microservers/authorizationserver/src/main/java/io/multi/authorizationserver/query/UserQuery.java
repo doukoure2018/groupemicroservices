@@ -188,4 +188,30 @@ public class UserQuery {
             """
             SELECT COUNT(*) FROM users WHERE email = :email
             """;
+
+    // Password reset queries
+    public static final String SELECT_PASSWORD_TOKEN_BY_USER_ID_QUERY =
+            """
+            SELECT password_token_id, user_id, token,
+                   (created_at + INTERVAL '24 HOURS') < NOW() AS expired,
+                   created_at, updated_at
+            FROM password_tokens WHERE user_id = :userId
+            """;
+
+    public static final String CREATE_PASSWORD_TOKEN_QUERY =
+            """
+            INSERT INTO password_tokens (user_id, token, created_at, updated_at)
+            VALUES (:userId, :token, NOW(), NOW())
+            """;
+
+    public static final String DELETE_PASSWORD_TOKEN_BY_USER_ID_QUERY =
+            """
+            DELETE FROM password_tokens WHERE user_id = :userId
+            """;
+
+    public static final String SELECT_USER_BASIC_BY_EMAIL_QUERY =
+            """
+            SELECT u.user_id, u.user_uuid, u.first_name, u.last_name, u.email
+            FROM users u WHERE u.email = :email
+            """;
 }

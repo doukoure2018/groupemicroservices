@@ -251,4 +251,68 @@ public class UserRepositoryImpl implements UserRepository {
             throw new ApiException("Failed to create user: " + e.getMessage());
         }
     }
+
+    // Password reset methods
+    @Override
+    public Map<String, Object> findUserBasicByEmail(String email) {
+        try {
+            return jdbcClient.sql(SELECT_USER_BASIC_BY_EMAIL_QUERY)
+                    .param("email", email)
+                    .query((rs, rowNum) -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("user_id", rs.getLong("user_id"));
+                        map.put("user_uuid", rs.getString("user_uuid"));
+                        map.put("first_name", rs.getString("first_name"));
+                        map.put("last_name", rs.getString("last_name"));
+                        map.put("email", rs.getString("email"));
+                        return map;
+                    })
+                    .single();
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        } catch (Exception e) {
+            log.error("Error finding user by email: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    @Transactional
+    public String getOrCreatePasswordToken(Long userId) {
+        try {
+            // Check if a non-expired token already exists
+            var existingToken = jdbcClient.sql(SELECT_PASSWORD_TOKEN_BY_USER_ID_QUERY)
+                    .param("userId", userId)
+                    .query((rs, rowNum) -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("token", rs.getString("token"));
+                        map.put("expired", rs.getBoolean("expired"));
+                        return map;
+                    })
+                    .optional();
+
+            if (existingToken.isPresent()) {
+                boolean expired = (boolean) existingToken.get().get("expired");
+                if (!expired) {
+                    return (String) existingToken.get().get("token");
+                }
+                // Delete expired token
+                jdbcClient.sql(DELETE_PASSWORD_TOKEN_BY_USER_ID_QUERY)
+                        .param("userId", userId)
+                        .update();
+            }
+
+            // Create new token
+            String token = java.util.UUID.randomUUID().toString();
+            jdbcClient.sql(CREATE_PASSWORD_TOKEN_QUERY)
+                    .param("userId", userId)
+                    .param("token", token)
+                    .update();
+
+            return token;
+        } catch (Exception e) {
+            log.error("Error creating password token: {}", e.getMessage());
+            throw new ApiException("Failed to create password reset token");
+        }
+    }
 }

@@ -74,6 +74,50 @@ public class LoginController {
         return "login";
     }
 
+    @GetMapping("/forgot-password")
+    public String forgotPassword() {
+        return "forgot-password";
+    }
+
+    @PostMapping("/forgot-password")
+    public String processForgotPassword(@RequestParam("email") String email,
+                                        RedirectAttributes redirectAttributes) {
+        try {
+            var userData = userRepository.findUserBasicByEmail(email);
+            if (userData == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Aucun compte trouvé avec cette adresse email.");
+                return "redirect:/forgot-password";
+            }
+
+            Long userId = (Long) userData.get("user_id");
+            String firstName = (String) userData.get("first_name");
+            String token = userRepository.getOrCreatePasswordToken(userId);
+
+            // Send password reset email via Kafka
+            try {
+                var event = new Event(EventType.RESETPASSWORD, Map.of(
+                        "token", token,
+                        "name", firstName,
+                        "email", email
+                ));
+                var message = MessageBuilder.withPayload(new Notification(event))
+                        .setHeader(TOPIC, NOTIFICATION_TOPIC)
+                        .build();
+                kafkaTemplate.send(message);
+                log.info("Password reset email event sent for: {}", email);
+            } catch (Exception e) {
+                log.error("Failed to send password reset email event: {}", e.getMessage());
+            }
+
+            redirectAttributes.addFlashAttribute("successMessage", "Un lien de réinitialisation a été envoyé à votre adresse email.");
+            return "redirect:/forgot-password";
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Une erreur est survenue. Veuillez réessayer.");
+            return "redirect:/forgot-password";
+        }
+    }
+
     @GetMapping("/register")
     public String register(@RequestParam(value = "error", required = false) String error,
                           Model model) {
