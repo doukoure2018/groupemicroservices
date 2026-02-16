@@ -206,7 +206,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     @Transactional
-    public User createLocalUser(String email, String firstName, String lastName, String phone, String encodedPassword) {
+    public String createLocalUser(String email, String firstName, String lastName, String phone, String encodedPassword) {
         try {
             // Insert the user and get the generated user_id and user_uuid
             Map<String, Object> result = jdbcClient.sql(INSERT_LOCAL_USER_QUERY)
@@ -235,11 +235,16 @@ public class UserRepositoryImpl implements UserRepository {
                     .param("userId", userId)
                     .update();
 
-            log.info("Created local user with ID: {} and assigned USER role", userId);
+            // Generate verification token and insert into account_tokens
+            String token = java.util.UUID.randomUUID().toString();
+            jdbcClient.sql(INSERT_ACCOUNT_TOKEN_QUERY)
+                    .param("userId", userId)
+                    .param("token", token)
+                    .update();
 
-            // Return the created user
-            return findByEmail(email)
-                    .orElseThrow(() -> new ApiException("Failed to retrieve created user"));
+            log.info("Created local user with ID: {} and verification token", userId);
+
+            return token;
 
         } catch (Exception e) {
             log.error("Error creating local user: {}", e.getMessage());

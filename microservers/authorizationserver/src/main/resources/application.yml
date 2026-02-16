@@ -52,6 +52,15 @@ spring:
         composite-indicator:
           enabled: true
 
+  kafka:
+    bootstrap-servers:
+      - localhost:9093
+    template:
+      default-topic: NOTIFICATION_TOPIC
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
   # Spring Security OAuth2 Client Configuration for Google
   # Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables
   security:

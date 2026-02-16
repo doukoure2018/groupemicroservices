@@ -192,6 +192,7 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
       SERVER_FORWARD_HEADERS_STRATEGY: NATIVE
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29093
     volumes:
       - ./keys:/app/keys
       - ./logs/authorizationserver:/var/log/authorizationserver
@@ -200,6 +201,8 @@ services:
     depends_on:
       postgresdb:
         condition: service_healthy
+      kafka:
+        condition: service_started
       discoveryserver:
         condition: service_healthy
     restart: unless-stopped

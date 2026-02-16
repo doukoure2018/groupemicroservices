@@ -21,6 +21,6 @@ public interface UserRepository {
 
     // Local registration methods
     boolean emailExists(String email);
-    User createLocalUser(String email, String firstName, String lastName, String phone, String encodedPassword);
+    String createLocalUser(String email, String firstName, String lastName, String phone, String encodedPassword);
 }
 

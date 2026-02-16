@@ -77,7 +77,7 @@ key:
   public: public.key
 
 jwks:
-  uri: ${JWKS_URI:http://authorizationserver:8090/oauth2/jwks}
+  uri: ${JWKS_URI:http://authorizationserver:8090/authorization/oauth2/jwks}
 
 logging:
   level:

@@ -2,6 +2,9 @@ package io.multi.authorizationserver.controller;
 
 
 import io.multi.authorizationserver.dto.RegisterRequest;
+import io.multi.authorizationserver.event.Event;
+import io.multi.authorizationserver.event.EventType;
+import io.multi.authorizationserver.event.Notification;
 import io.multi.authorizationserver.exception.ApiException;
 import io.multi.authorizationserver.model.User;
 import io.multi.authorizationserver.repository.UserRepository;
@@ -13,6 +16,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
@@ -38,19 +44,24 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static io.multi.authorizationserver.utils.RequestUtils.getMessage;
 import static io.multi.authorizationserver.utils.UserUtils.getUser;
+import static org.springframework.kafka.support.KafkaHeaders.TOPIC;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class LoginController {
+    private static final String NOTIFICATION_TOPIC = "NOTIFICATION_TOPIC";
     private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
     private final AuthenticationFailureHandler authenticationFailureHandler = new SimpleUrlAuthenticationFailureHandler("/mfa?error");
     private final AuthenticationSuccessHandler authenticationSuccessHandler;
     private final UserService userService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final KafkaTemplate<String, Notification> kafkaTemplate;
 
     @GetMapping("/login")
     public String login(@RequestParam(value = "error", required = false) String error,
@@ -96,7 +107,7 @@ public class LoginController {
 
             // Encode password and create user
             String encodedPassword = passwordEncoder.encode(registerRequest.getPassword());
-            userRepository.createLocalUser(
+            String token = userRepository.createLocalUser(
                     registerRequest.getEmail(),
                     registerRequest.getFirstName(),
                     registerRequest.getLastName(),
@@ -104,7 +115,23 @@ public class LoginController {
                     encodedPassword
             );
 
-            redirectAttributes.addFlashAttribute("successMessage", "Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.");
+            // Send verification email via Kafka
+            try {
+                var event = new Event(EventType.USER_CREATED, Map.of(
+                        "token", token,
+                        "name", registerRequest.getFirstName(),
+                        "email", registerRequest.getEmail()
+                ));
+                var message = MessageBuilder.withPayload(new Notification(event))
+                        .setHeader(TOPIC, NOTIFICATION_TOPIC)
+                        .build();
+                kafkaTemplate.send(message);
+                log.info("Verification email event sent for: {}", registerRequest.getEmail());
+            } catch (Exception e) {
+                log.error("Failed to send verification email event: {}", e.getMessage());
+            }
+
+            redirectAttributes.addFlashAttribute("successMessage", "Votre compte a été créé. Veuillez vérifier votre email pour activer votre compte.");
             return "redirect:/login";
 
         } catch (Exception e) {

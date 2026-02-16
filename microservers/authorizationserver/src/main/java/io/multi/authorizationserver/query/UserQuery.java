@@ -168,8 +168,14 @@ public class UserQuery {
                                auth_provider, enabled, account_non_expired, account_non_locked,
                                login_attempts, created_at, updated_at)
             VALUES (gen_random_uuid(), :email, :email, :firstName, :lastName, :phone,
-                    'LOCAL', true, true, true, 0, NOW(), NOW())
+                    'LOCAL', false, false, false, 0, NOW(), NOW())
             RETURNING user_id, user_uuid
+            """;
+
+    public static final String INSERT_ACCOUNT_TOKEN_QUERY =
+            """
+            INSERT INTO account_tokens (user_id, token)
+            VALUES (:userId, :token)
             """;
 
     public static final String INSERT_CREDENTIALS_QUERY =
