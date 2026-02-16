@@ -4,7 +4,7 @@ import { IAuthentication } from '@/interface/IAuthentication';
 import { Topbar } from '@/pages/landing/components/topbar';
 import { StorageService } from '@/service/storage.service';
 import { UserService } from '@/service/user.service';
-import { getFormData, redirectUri } from '@/utils/fileutils';
+import { getFormData, loginUrl, redirectUri } from '@/utils/fileutils';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
@@ -13,20 +13,23 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ButtonModule } from 'primeng/button';
+import { RippleModule } from 'primeng/ripple';
 import { catchError, delay, take, tap, throwError } from 'rxjs';
 
 @Component({
     selector: 'app-home',
-    imports: [ProgressSpinnerModule, RouterModule, IconFieldModule, InputIconModule, InputTextModule, Topbar],
+    imports: [ProgressSpinnerModule, RouterModule, IconFieldModule, InputIconModule, InputTextModule, ButtonModule, RippleModule, Topbar],
     templateUrl: './home.component.html',
     styles: `
         ::placeholder {
-            color: #fff;
+            color: #9ca3af;
         }
     `,
     providers: [MessageService]
 })
 export class HomeComponent {
+    loginUrl = loginUrl;
     loading = signal<boolean>(true);
     private router = inject(Router);
     private destroyRef = inject(DestroyRef);

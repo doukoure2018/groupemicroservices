@@ -1,39 +1,181 @@
 @if(loading()){
-<div class="text-center">
-    <div class="relative">
-        <p-progress-spinner ariaLabel="Verifying account" [style]="{'width': '5rem', 'height': '5rem'}" strokeWidth="4"
+<div class="flex items-center justify-center min-h-screen bg-surface-50 dark:bg-surface-950">
+    <div class="text-center">
+        <p-progress-spinner ariaLabel="Verifying account" [style]="{'width': '4rem', 'height': '4rem'}" strokeWidth="4"
             animationDuration=".5s" class="text-primary" />
+        <h2 class="text-xl font-semibold mt-4 mb-2 text-surface-800 dark:text-surface-100">Verification en cours...</h2>
+        <p class="text-surface-500 dark:text-surface-400 text-sm">Veuillez patienter</p>
     </div>
-    <h2 class="text-2xl font-semibold mb-2">Verifying account...</h2>
-    <p class="text-surface-600 dark:text-surface-300">Please wait while we validate your credentials</p>
 </div>
 } @else {
-<div class="bg-surface-50 dark:bg-surface-950">
+<div class="bg-surface-50 dark:bg-surface-950 min-h-screen">
     <topbar />
-    <div class="h-screen">
-        <div style="perspective: 101px"
-            class="h-screen overflow-x-hidden overflow-y-auto absolute top-0 left-0 right-0 bottom-0">
-            <div id="parallaxBody" class="lg:top-0 block absolute left-0 right-0 h-full z-20">
-                <div class="card">
-                    <br><br><br>
-                    <div
-                        class="relative overflow-hidden h-80 bg-primary text-primary-contrast flex flex-col items-center justify-center rounded mb-8">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"
-                            class="absolute w-full top-0 left-0">
-                            <path fill="var(--p-primary-600)" fillOpacity="1"
-                                d="M0,64L48,90.7C96,117,92,171,288,208C384,245,480,267,576,256C672,245,768,203,864,165.3C960,128,1056,96,1152,74.7C1248,53,1344,43,1392,37.3L1440,32L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z">
-                            </path>
-                        </svg>
-                        <div class="font-bold mb-8 text-4xl z-10">MANIFESTE APPLICATION </div>
-                        <p-icon-field class="w-9/12 md:w-6/12">
-                            <p-inputicon class="pi pi-search" />
-                            <input pInputText id="name" type="text" placeholder="Search"
-                                [style]="{ borderRadius: '2rem' }" class="w-full" />
-                        </p-icon-field>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden pt-20" style="min-height: 520px;">
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900"></div>
+        <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%23ffffff&quot; fill-opacity=&quot;0.4&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+
+        <div class="relative z-10 flex flex-col items-center justify-center text-center px-4 py-16 lg:py-24">
+            <h1 class="text-white text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight max-w-3xl">
+                Votre plateforme de
+                <span class="text-yellow-400">reservation de transport</span>
+                en Guinee
+            </h1>
+            <p class="text-blue-100 mt-4 text-base sm:text-lg max-w-2xl leading-relaxed">
+                Recherchez, comparez et reservez vos billets de transport en toute simplicite.
+                Voyagez sereinement a travers la Guinee.
+            </p>
+
+            <!-- Search Card -->
+            <div class="mt-8 w-full max-w-3xl bg-white dark:bg-surface-800 rounded-xl shadow-2xl p-5 sm:p-6">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="flex flex-col">
+                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wide">Depart</label>
+                        <div class="flex items-center gap-2 border border-surface-200 dark:border-surface-600 rounded-lg px-3 py-2.5">
+                            <i class="pi pi-map-marker text-blue-600"></i>
+                            <input pInputText type="text" placeholder="Ville de depart" class="w-full border-none shadow-none p-0 text-sm focus:ring-0" />
+                        </div>
                     </div>
+                    <div class="flex flex-col">
+                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wide">Arrivee</label>
+                        <div class="flex items-center gap-2 border border-surface-200 dark:border-surface-600 rounded-lg px-3 py-2.5">
+                            <i class="pi pi-map-marker text-red-500"></i>
+                            <input pInputText type="text" placeholder="Ville d'arrivee" class="w-full border-none shadow-none p-0 text-sm focus:ring-0" />
+                        </div>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wide">Date</label>
+                        <div class="flex items-center gap-2 border border-surface-200 dark:border-surface-600 rounded-lg px-3 py-2.5">
+                            <i class="pi pi-calendar text-blue-600"></i>
+                            <input pInputText type="text" placeholder="Choisir une date" class="w-full border-none shadow-none p-0 text-sm focus:ring-0" />
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-center">
+                    <a [href]="loginUrl" pButton pRipple class="!bg-blue-600 hover:!bg-blue-700 !border-blue-600 hover:!border-blue-700 px-8 py-3 rounded-lg text-sm font-semibold">
+                        <i class="pi pi-search mr-2"></i>
+                        Rechercher un trajet
+                    </a>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-16 lg:py-20 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl sm:text-3xl font-bold text-surface-800 dark:text-surface-100">Pourquoi choisir Billetterie GN ?</h2>
+                <p class="text-surface-500 dark:text-surface-400 mt-3 max-w-xl mx-auto">Une plateforme concu pour simplifier vos deplacements a travers toute la Guinee.</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Feature 1 -->
+                <div class="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-100 dark:border-surface-700 hover:shadow-lg transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4">
+                        <i class="pi pi-search text-xl text-blue-600"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Recherche rapide</h3>
+                    <p class="text-surface-500 dark:text-surface-400 text-sm leading-relaxed">Trouvez votre trajet en quelques clics parmi des centaines d'offres de transport disponibles.</p>
+                </div>
+                <!-- Feature 2 -->
+                <div class="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-100 dark:border-surface-700 hover:shadow-lg transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mb-4">
+                        <i class="pi pi-shield text-xl text-green-600"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Paiement securise</h3>
+                    <p class="text-surface-500 dark:text-surface-400 text-sm leading-relaxed">Payez en toute confiance via mobile money, carte bancaire ou en especes au guichet.</p>
+                </div>
+                <!-- Feature 3 -->
+                <div class="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-100 dark:border-surface-700 hover:shadow-lg transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-4">
+                        <i class="pi pi-ticket text-xl text-purple-600"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Billet electronique</h3>
+                    <p class="text-surface-500 dark:text-surface-400 text-sm leading-relaxed">Recevez votre billet directement sur votre telephone. Plus besoin de faire la queue.</p>
+                </div>
+                <!-- Feature 4 -->
+                <div class="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-100 dark:border-surface-700 hover:shadow-lg transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mb-4">
+                        <i class="pi pi-map text-xl text-orange-600"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Couverture nationale</h3>
+                    <p class="text-surface-500 dark:text-surface-400 text-sm leading-relaxed">Des trajets couvrant toutes les regions de la Guinee : Conakry, Kindia, Labe, Kankan et plus.</p>
+                </div>
+                <!-- Feature 5 -->
+                <div class="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-100 dark:border-surface-700 hover:shadow-lg transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center mb-4">
+                        <i class="pi pi-clock text-xl text-red-600"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Horaires en temps reel</h3>
+                    <p class="text-surface-500 dark:text-surface-400 text-sm leading-relaxed">Consultez les departs et arrivees en temps reel pour planifier vos voyages efficacement.</p>
+                </div>
+                <!-- Feature 6 -->
+                <div class="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-100 dark:border-surface-700 hover:shadow-lg transition-shadow duration-300">
+                    <div class="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center mb-4">
+                        <i class="pi pi-users text-xl text-teal-600"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Partenaires de confiance</h3>
+                    <p class="text-surface-500 dark:text-surface-400 text-sm leading-relaxed">Nos partenaires transporteurs sont verifies et offrent un service de qualite.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works Section -->
+    <section class="py-16 lg:py-20 px-4 bg-white dark:bg-surface-900">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl sm:text-3xl font-bold text-surface-800 dark:text-surface-100">Comment ca marche ?</h2>
+                <p class="text-surface-500 dark:text-surface-400 mt-3">Reservez votre billet en 3 etapes simples.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl font-bold">1</span>
+                    </div>
+                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Recherchez</h3>
+                    <p class="text-surface-500 dark:text-surface-400 text-sm">Entrez votre ville de depart, destination et date de voyage.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl font-bold">2</span>
+                    </div>
+                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Choisissez</h3>
+                    <p class="text-surface-500 dark:text-surface-400 text-sm">Comparez les offres, horaires et prix. Selectionnez celle qui vous convient.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-white text-2xl font-bold">3</span>
+                    </div>
+                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Reservez</h3>
+                    <p class="text-surface-500 dark:text-surface-400 text-sm">Confirmez votre reservation et recevez votre billet electronique.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 px-4">
+        <div class="max-w-4xl mx-auto bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 sm:p-12 text-center">
+            <h2 class="text-2xl sm:text-3xl font-bold text-white mb-4">Pret a voyager ?</h2>
+            <p class="text-blue-100 mb-8 max-w-xl mx-auto">Creez votre compte gratuitement et commencez a reserver vos billets de transport a travers la Guinee.</p>
+            <a [href]="loginUrl" pButton pRipple class="!bg-white !text-blue-700 hover:!bg-blue-50 !border-white px-8 py-3 rounded-lg text-sm font-semibold">
+                Commencer maintenant
+                <i class="pi pi-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-surface-900 dark:bg-surface-950 text-surface-400 py-10 px-4">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <img src="/layout/images/logo/logo.png" alt="Billetterie GN" class="h-8" />
+                <span class="text-surface-300 font-medium">Billetterie GN</span>
+            </div>
+            <p class="text-sm text-surface-500">&copy; 2026 Billetterie GN. Tous droits reserves.</p>
+        </div>
+    </footer>
 </div>
 }
