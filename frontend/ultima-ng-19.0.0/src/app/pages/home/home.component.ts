@@ -123,6 +123,15 @@ export class HomeComponent {
             });
     }
 
+    handleScroll(id: string) {
+        const element = document.getElementById(id);
+        if (element) {
+            setTimeout(() => {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+            }, 200);
+        }
+    }
+
     private formData = (code: string) =>
         getFormData({
             code,

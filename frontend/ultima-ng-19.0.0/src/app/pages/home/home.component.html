@@ -1,180 +1,509 @@
 @if(loading()){
-<div class="flex items-center justify-center min-h-screen bg-surface-50 dark:bg-surface-950">
+<div class="flex items-center justify-center min-h-screen bg-surface-950">
     <div class="text-center">
-        <p-progress-spinner ariaLabel="Verifying account" [style]="{'width': '4rem', 'height': '4rem'}" strokeWidth="4"
-            animationDuration=".5s" class="text-primary" />
-        <h2 class="text-xl font-semibold mt-4 mb-2 text-surface-800 dark:text-surface-100">Verification en cours...</h2>
-        <p class="text-surface-500 dark:text-surface-400 text-sm">Veuillez patienter</p>
+        <p-progress-spinner ariaLabel="Chargement" [style]="{'width': '4rem', 'height': '4rem'}" strokeWidth="4"
+            animationDuration=".5s" />
+        <h2 class="text-xl font-semibold mt-4 mb-2 text-surface-100">Verification en cours...</h2>
+        <p class="text-surface-400 text-sm">Veuillez patienter</p>
     </div>
 </div>
 } @else {
-<div class="bg-surface-50 dark:bg-surface-950 min-h-screen">
+<div class="bg-surface-50 dark:bg-surface-950">
     <topbar />
 
-    <!-- Hero Section -->
-    <section class="relative overflow-hidden pt-20" style="min-height: 520px;">
-        <div class="absolute inset-0 bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900"></div>
-        <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%23ffffff&quot; fill-opacity=&quot;0.4&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+    <!-- ==================== HERO SECTION ==================== -->
+    <section class="relative overflow-hidden" style="min-height: 600px;">
+        <!-- Background with overlay -->
+        <div class="absolute inset-0 bg-gradient-to-br from-surface-950 via-blue-950 to-surface-900"></div>
+        <!-- Decorative elements -->
+        <div class="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div class="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
 
-        <div class="relative z-10 flex flex-col items-center justify-center text-center px-4 py-16 lg:py-24">
-            <h1 class="text-white text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight max-w-3xl">
-                Votre plateforme de
-                <span class="text-yellow-400">reservation de transport</span>
-                en Guinee
-            </h1>
-            <p class="text-blue-100 mt-4 text-base sm:text-lg max-w-2xl leading-relaxed">
-                Recherchez, comparez et reservez vos billets de transport en toute simplicite.
-                Voyagez sereinement a travers la Guinee.
-            </p>
-
-            <!-- Search Card -->
-            <div class="mt-8 w-full max-w-3xl bg-white dark:bg-surface-800 rounded-xl shadow-2xl p-5 sm:p-6">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="flex flex-col">
-                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wide">Depart</label>
-                        <div class="flex items-center gap-2 border border-surface-200 dark:border-surface-600 rounded-lg px-3 py-2.5">
-                            <i class="pi pi-map-marker text-blue-600"></i>
-                            <input pInputText type="text" placeholder="Ville de depart" class="w-full border-none shadow-none p-0 text-sm focus:ring-0" />
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12 lg:pt-36 lg:pb-20">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                <!-- Left: Text Content -->
+                <div>
+                    <span class="inline-flex items-center gap-2 bg-orange-500/20 text-orange-400 text-xs font-semibold px-4 py-1.5 rounded-full uppercase tracking-wider mb-6">
+                        <i class="pi pi-bolt text-xs"></i> Plateforme N&deg;1 en Guinee
+                    </span>
+                    <h1 class="text-white text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold leading-tight">
+                        Reservez votre
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400">voyage</span>
+                        en toute simplicite
+                    </h1>
+                    <p class="text-surface-300 mt-5 text-base sm:text-lg leading-relaxed max-w-lg">
+                        Trouvez les meilleurs trajets de transport a travers toute la Guinee. Comparez les prix, choisissez vos horaires et voyagez sereinement.
+                    </p>
+                    <div class="flex flex-wrap gap-6 mt-8">
+                        <div class="flex items-center gap-2">
+                            <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                                <i class="pi pi-map-marker text-orange-400"></i>
+                            </div>
+                            <div>
+                                <span class="text-white font-bold text-lg">50+</span>
+                                <p class="text-surface-400 text-xs">Destinations</p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex flex-col">
-                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wide">Arrivee</label>
-                        <div class="flex items-center gap-2 border border-surface-200 dark:border-surface-600 rounded-lg px-3 py-2.5">
-                            <i class="pi pi-map-marker text-red-500"></i>
-                            <input pInputText type="text" placeholder="Ville d'arrivee" class="w-full border-none shadow-none p-0 text-sm focus:ring-0" />
+                        <div class="flex items-center gap-2">
+                            <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                <i class="pi pi-car text-blue-400"></i>
+                            </div>
+                            <div>
+                                <span class="text-white font-bold text-lg">200+</span>
+                                <p class="text-surface-400 text-xs">Trajets / jour</p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex flex-col">
-                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wide">Date</label>
-                        <div class="flex items-center gap-2 border border-surface-200 dark:border-surface-600 rounded-lg px-3 py-2.5">
-                            <i class="pi pi-calendar text-blue-600"></i>
-                            <input pInputText type="text" placeholder="Choisir une date" class="w-full border-none shadow-none p-0 text-sm focus:ring-0" />
+                        <div class="flex items-center gap-2">
+                            <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                <i class="pi pi-users text-green-400"></i>
+                            </div>
+                            <div>
+                                <span class="text-white font-bold text-lg">10K+</span>
+                                <p class="text-surface-400 text-xs">Voyageurs</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="mt-4 flex justify-center">
-                    <a [href]="loginUrl" pButton pRipple class="!bg-blue-600 hover:!bg-blue-700 !border-blue-600 hover:!border-blue-700 px-8 py-3 rounded-lg text-sm font-semibold">
-                        <i class="pi pi-search mr-2"></i>
-                        Rechercher un trajet
+
+                <!-- Right: Search Card -->
+                <div class="bg-white dark:bg-surface-800 rounded-2xl shadow-2xl p-6 sm:p-8 border border-surface-100 dark:border-surface-700">
+                    <h3 class="text-surface-800 dark:text-surface-100 font-bold text-xl mb-1">Rechercher un trajet</h3>
+                    <p class="text-surface-400 text-sm mb-6">Trouvez votre prochain voyage</p>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wide">Ville de depart</label>
+                            <div class="flex items-center gap-3 bg-surface-50 dark:bg-surface-700 border border-surface-200 dark:border-surface-600 rounded-xl px-4 py-3 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-400/20 transition-all">
+                                <i class="pi pi-circle-fill text-xs text-green-500"></i>
+                                <input pInputText type="text" placeholder="Ex: Conakry" class="w-full bg-transparent border-none shadow-none p-0 text-sm focus:ring-0" />
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center">
+                            <div class="w-10 h-10 bg-orange-50 dark:bg-orange-900/20 border-2 border-dashed border-orange-300 dark:border-orange-600 rounded-full flex items-center justify-center">
+                                <i class="pi pi-arrows-v text-orange-500 text-sm"></i>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wide">Ville d'arrivee</label>
+                            <div class="flex items-center gap-3 bg-surface-50 dark:bg-surface-700 border border-surface-200 dark:border-surface-600 rounded-xl px-4 py-3 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-400/20 transition-all">
+                                <i class="pi pi-circle-fill text-xs text-red-500"></i>
+                                <input pInputText type="text" placeholder="Ex: Kankan" class="w-full bg-transparent border-none shadow-none p-0 text-sm focus:ring-0" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wide">Date</label>
+                                <div class="flex items-center gap-2 bg-surface-50 dark:bg-surface-700 border border-surface-200 dark:border-surface-600 rounded-xl px-4 py-3">
+                                    <i class="pi pi-calendar text-surface-400 text-sm"></i>
+                                    <input pInputText type="text" placeholder="jj/mm/aaaa" class="w-full bg-transparent border-none shadow-none p-0 text-sm focus:ring-0" />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wide">Passagers</label>
+                                <div class="flex items-center gap-2 bg-surface-50 dark:bg-surface-700 border border-surface-200 dark:border-surface-600 rounded-xl px-4 py-3">
+                                    <i class="pi pi-user text-surface-400 text-sm"></i>
+                                    <input pInputText type="text" placeholder="1 adulte" class="w-full bg-transparent border-none shadow-none p-0 text-sm focus:ring-0" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <a [href]="loginUrl" pButton pRipple class="w-full !bg-orange-500 hover:!bg-orange-600 !border-orange-500 hover:!border-orange-600 rounded-xl px-6 py-3.5 text-sm font-bold justify-center mt-2">
+                            <i class="pi pi-search mr-2"></i>
+                            Rechercher les trajets disponibles
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== POPULAR DESTINATIONS ==================== -->
+    <section id="destinations" class="py-16 lg:py-24 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-10">
+                <div>
+                    <span class="text-orange-500 font-semibold text-sm uppercase tracking-wider">Destinations populaires</span>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-surface-800 dark:text-surface-100 mt-2">Explorez la Guinee</h2>
+                </div>
+                <a [href]="loginUrl" class="text-orange-500 hover:text-orange-600 font-medium text-sm mt-4 sm:mt-0 flex items-center gap-1 transition-colors">
+                    Voir tout <i class="pi pi-arrow-right text-xs"></i>
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <!-- Destination Card: Conakry -->
+                <div class="group relative rounded-2xl overflow-hidden bg-white dark:bg-surface-800 border border-surface-100 dark:border-surface-700 hover:shadow-xl transition-all duration-300 cursor-pointer">
+                    <div class="h-44 bg-gradient-to-br from-blue-500 to-blue-700 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300"></div>
+                        <div class="absolute bottom-3 left-3 flex items-center gap-1.5 bg-white/20 backdrop-blur-md rounded-full px-3 py-1">
+                            <i class="pi pi-map-marker text-white text-xs"></i>
+                            <span class="text-white text-xs font-medium">Capitale</span>
+                        </div>
+                        <i class="pi pi-building absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/20 text-6xl"></i>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-surface-800 dark:text-surface-100">Conakry</h3>
+                        <p class="text-surface-400 text-xs mt-1">15+ trajets disponibles</p>
+                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-surface-100 dark:border-surface-700">
+                            <span class="text-xs text-surface-400">A partir de</span>
+                            <span class="text-orange-500 font-bold">150 000 GNF</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Destination Card: Kankan -->
+                <div class="group relative rounded-2xl overflow-hidden bg-white dark:bg-surface-800 border border-surface-100 dark:border-surface-700 hover:shadow-xl transition-all duration-300 cursor-pointer">
+                    <div class="h-44 bg-gradient-to-br from-emerald-500 to-emerald-700 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300"></div>
+                        <div class="absolute bottom-3 left-3 flex items-center gap-1.5 bg-white/20 backdrop-blur-md rounded-full px-3 py-1">
+                            <i class="pi pi-map-marker text-white text-xs"></i>
+                            <span class="text-white text-xs font-medium">Haute Guinee</span>
+                        </div>
+                        <i class="pi pi-sun absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/20 text-6xl"></i>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-surface-800 dark:text-surface-100">Kankan</h3>
+                        <p class="text-surface-400 text-xs mt-1">10+ trajets disponibles</p>
+                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-surface-100 dark:border-surface-700">
+                            <span class="text-xs text-surface-400">A partir de</span>
+                            <span class="text-orange-500 font-bold">250 000 GNF</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Destination Card: Labe -->
+                <div class="group relative rounded-2xl overflow-hidden bg-white dark:bg-surface-800 border border-surface-100 dark:border-surface-700 hover:shadow-xl transition-all duration-300 cursor-pointer">
+                    <div class="h-44 bg-gradient-to-br from-purple-500 to-purple-700 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300"></div>
+                        <div class="absolute bottom-3 left-3 flex items-center gap-1.5 bg-white/20 backdrop-blur-md rounded-full px-3 py-1">
+                            <i class="pi pi-map-marker text-white text-xs"></i>
+                            <span class="text-white text-xs font-medium">Moyenne Guinee</span>
+                        </div>
+                        <i class="pi pi-globe absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/20 text-6xl"></i>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-surface-800 dark:text-surface-100">Labe</h3>
+                        <p class="text-surface-400 text-xs mt-1">12+ trajets disponibles</p>
+                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-surface-100 dark:border-surface-700">
+                            <span class="text-xs text-surface-400">A partir de</span>
+                            <span class="text-orange-500 font-bold">200 000 GNF</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Destination Card: Nzerekore -->
+                <div class="group relative rounded-2xl overflow-hidden bg-white dark:bg-surface-800 border border-surface-100 dark:border-surface-700 hover:shadow-xl transition-all duration-300 cursor-pointer">
+                    <div class="h-44 bg-gradient-to-br from-amber-500 to-orange-600 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300"></div>
+                        <div class="absolute bottom-3 left-3 flex items-center gap-1.5 bg-white/20 backdrop-blur-md rounded-full px-3 py-1">
+                            <i class="pi pi-map-marker text-white text-xs"></i>
+                            <span class="text-white text-xs font-medium">Guinee Forestiere</span>
+                        </div>
+                        <i class="pi pi-flag absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/20 text-6xl"></i>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-surface-800 dark:text-surface-100">Nzerekore</h3>
+                        <p class="text-surface-400 text-xs mt-1">8+ trajets disponibles</p>
+                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-surface-100 dark:border-surface-700">
+                            <span class="text-xs text-surface-400">A partir de</span>
+                            <span class="text-orange-500 font-bold">300 000 GNF</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== SERVICES / FEATURES ==================== -->
+    <section id="services" class="py-16 lg:py-24 px-4 sm:px-6 lg:px-8 bg-white dark:bg-surface-900">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-14">
+                <span class="text-orange-500 font-semibold text-sm uppercase tracking-wider">Nos services</span>
+                <h2 class="text-2xl sm:text-3xl font-bold text-surface-800 dark:text-surface-100 mt-2">Tout ce dont vous avez besoin pour voyager</h2>
+                <p class="text-surface-400 mt-3 max-w-xl mx-auto text-sm">Une experience complete de reservation, du choix du trajet jusqu'a votre arrivee.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                <div class="group bg-surface-50 dark:bg-surface-800 rounded-2xl p-7 border border-surface-100 dark:border-surface-700 hover:border-orange-200 dark:hover:border-orange-800 hover:shadow-lg transition-all duration-300">
+                    <div class="w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                        <i class="pi pi-search text-xl text-white"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-surface-800 dark:text-surface-100 mb-2">Recherche intelligente</h3>
+                    <p class="text-surface-400 text-sm leading-relaxed">Trouvez le trajet ideal en filtrant par ville, date, prix et type de vehicule.</p>
+                </div>
+
+                <div class="group bg-surface-50 dark:bg-surface-800 rounded-2xl p-7 border border-surface-100 dark:border-surface-700 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-lg transition-all duration-300">
+                    <div class="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                        <i class="pi pi-shield text-xl text-white"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-surface-800 dark:text-surface-100 mb-2">Paiement securise</h3>
+                    <p class="text-surface-400 text-sm leading-relaxed">Mobile Money (Orange, MTN), carte bancaire ou paiement au guichet. Vous choisissez.</p>
+                </div>
+
+                <div class="group bg-surface-50 dark:bg-surface-800 rounded-2xl p-7 border border-surface-100 dark:border-surface-700 hover:border-green-200 dark:hover:border-green-800 hover:shadow-lg transition-all duration-300">
+                    <div class="w-14 h-14 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                        <i class="pi pi-ticket text-xl text-white"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-surface-800 dark:text-surface-100 mb-2">Billet electronique</h3>
+                    <p class="text-surface-400 text-sm leading-relaxed">Recevez votre billet par SMS ou email. Presentez-le directement depuis votre telephone.</p>
+                </div>
+
+                <div class="group bg-surface-50 dark:bg-surface-800 rounded-2xl p-7 border border-surface-100 dark:border-surface-700 hover:border-purple-200 dark:hover:border-purple-800 hover:shadow-lg transition-all duration-300">
+                    <div class="w-14 h-14 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                        <i class="pi pi-clock text-xl text-white"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-surface-800 dark:text-surface-100 mb-2">Horaires en temps reel</h3>
+                    <p class="text-surface-400 text-sm leading-relaxed">Suivez les departs et arrivees en direct. Plus d'attente inutile aux gares.</p>
+                </div>
+
+                <div class="group bg-surface-50 dark:bg-surface-800 rounded-2xl p-7 border border-surface-100 dark:border-surface-700 hover:border-red-200 dark:hover:border-red-800 hover:shadow-lg transition-all duration-300">
+                    <div class="w-14 h-14 bg-gradient-to-br from-red-400 to-red-600 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                        <i class="pi pi-percentage text-xl text-white"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-surface-800 dark:text-surface-100 mb-2">Promotions exclusives</h3>
+                    <p class="text-surface-400 text-sm leading-relaxed">Profitez de tarifs reduits et d'offres speciales sur les trajets populaires.</p>
+                </div>
+
+                <div class="group bg-surface-50 dark:bg-surface-800 rounded-2xl p-7 border border-surface-100 dark:border-surface-700 hover:border-teal-200 dark:hover:border-teal-800 hover:shadow-lg transition-all duration-300">
+                    <div class="w-14 h-14 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                        <i class="pi pi-headphones text-xl text-white"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-surface-800 dark:text-surface-100 mb-2">Support 24/7</h3>
+                    <p class="text-surface-400 text-sm leading-relaxed">Notre equipe est disponible a tout moment pour vous assister avant et pendant votre voyage.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== HOW IT WORKS ==================== -->
+    <section class="py-16 lg:py-24 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-14">
+                <span class="text-orange-500 font-semibold text-sm uppercase tracking-wider">Simple et rapide</span>
+                <h2 class="text-2xl sm:text-3xl font-bold text-surface-800 dark:text-surface-100 mt-2">Comment ca marche ?</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
+                <!-- Connector line (hidden on mobile) -->
+                <div class="hidden md:block absolute top-12 left-[18%] right-[18%] h-0.5 bg-gradient-to-r from-orange-300 via-blue-300 to-green-300 dark:from-orange-700 dark:via-blue-700 dark:to-green-700"></div>
+
+                <div class="text-center relative">
+                    <div class="w-24 h-24 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-orange-500/20 relative z-10">
+                        <i class="pi pi-search text-3xl text-white"></i>
+                    </div>
+                    <span class="inline-block bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs font-bold px-3 py-1 rounded-full mb-3">Etape 1</span>
+                    <h3 class="font-bold text-surface-800 dark:text-surface-100 text-lg">Recherchez</h3>
+                    <p class="text-surface-400 text-sm mt-2">Choisissez votre trajet, la date et le nombre de passagers.</p>
+                </div>
+
+                <div class="text-center relative">
+                    <div class="w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-blue-500/20 relative z-10">
+                        <i class="pi pi-list text-3xl text-white"></i>
+                    </div>
+                    <span class="inline-block bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold px-3 py-1 rounded-full mb-3">Etape 2</span>
+                    <h3 class="font-bold text-surface-800 dark:text-surface-100 text-lg">Comparez</h3>
+                    <p class="text-surface-400 text-sm mt-2">Consultez les offres, horaires, prix et selectionnez la meilleure.</p>
+                </div>
+
+                <div class="text-center relative">
+                    <div class="w-24 h-24 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-purple-500/20 relative z-10">
+                        <i class="pi pi-credit-card text-3xl text-white"></i>
+                    </div>
+                    <span class="inline-block bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-bold px-3 py-1 rounded-full mb-3">Etape 3</span>
+                    <h3 class="font-bold text-surface-800 dark:text-surface-100 text-lg">Payez</h3>
+                    <p class="text-surface-400 text-sm mt-2">Reglez en toute securite via mobile money ou carte bancaire.</p>
+                </div>
+
+                <div class="text-center relative">
+                    <div class="w-24 h-24 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-green-500/20 relative z-10">
+                        <i class="pi pi-check-circle text-3xl text-white"></i>
+                    </div>
+                    <span class="inline-block bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-bold px-3 py-1 rounded-full mb-3">Etape 4</span>
+                    <h3 class="font-bold text-surface-800 dark:text-surface-100 text-lg">Voyagez</h3>
+                    <p class="text-surface-400 text-sm mt-2">Recevez votre billet et profitez de votre voyage en toute tranquillite.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== ABOUT / WHY US ==================== -->
+    <section id="about" class="py-16 lg:py-24 px-4 sm:px-6 lg:px-8 bg-white dark:bg-surface-900">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- Left: Content -->
+                <div>
+                    <span class="text-orange-500 font-semibold text-sm uppercase tracking-wider">A propos de nous</span>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-surface-800 dark:text-surface-100 mt-2">La premiere plateforme de billetterie de transport en Guinee</h2>
+                    <p class="text-surface-400 mt-5 leading-relaxed">
+                        Billetterie GN est nee de la volonte de moderniser le transport en Guinee. Notre mission est de connecter les voyageurs aux meilleurs transporteurs du pays, en offrant une experience de reservation simple, fiable et accessible a tous.
+                    </p>
+                    <div class="space-y-4 mt-8">
+                        <div class="flex gap-4">
+                            <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="pi pi-check text-green-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-surface-800 dark:text-surface-100">Transporteurs verifies</h4>
+                                <p class="text-surface-400 text-sm mt-1">Tous nos partenaires sont selectionnes et verifies pour garantir votre securite.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="pi pi-check text-blue-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-surface-800 dark:text-surface-100">Couverture nationale</h4>
+                                <p class="text-surface-400 text-sm mt-1">Des trajets disponibles dans toutes les regions : Conakry, Kindia, Labe, Kankan, Nzerekore.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="pi pi-check text-orange-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-surface-800 dark:text-surface-100">Tarifs transparents</h4>
+                                <p class="text-surface-400 text-sm mt-1">Pas de frais caches. Le prix affiche est le prix que vous payez.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Stats Cards -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 text-white">
+                        <i class="pi pi-map-marker text-3xl opacity-80"></i>
+                        <div class="text-4xl font-extrabold mt-4">50+</div>
+                        <p class="text-orange-100 text-sm mt-1">Destinations</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
+                        <i class="pi pi-car text-3xl opacity-80"></i>
+                        <div class="text-4xl font-extrabold mt-4">200+</div>
+                        <p class="text-blue-100 text-sm mt-1">Trajets / jour</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white">
+                        <i class="pi pi-users text-3xl opacity-80"></i>
+                        <div class="text-4xl font-extrabold mt-4">10K+</div>
+                        <p class="text-green-100 text-sm mt-1">Voyageurs satisfaits</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
+                        <i class="pi pi-star text-3xl opacity-80"></i>
+                        <div class="text-4xl font-extrabold mt-4">4.8</div>
+                        <p class="text-purple-100 text-sm mt-1">Note moyenne</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== CTA SECTION ==================== -->
+    <section class="py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto relative overflow-hidden rounded-3xl">
+            <div class="absolute inset-0 bg-gradient-to-r from-surface-900 to-blue-950"></div>
+            <div class="absolute top-0 right-0 w-80 h-80 bg-orange-500/20 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-0 left-0 w-60 h-60 bg-blue-500/20 rounded-full blur-3xl"></div>
+
+            <div class="relative z-10 p-8 sm:p-12 lg:p-16 text-center">
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-4">Pret a commencer votre voyage ?</h2>
+                <p class="text-surface-300 mb-8 max-w-xl mx-auto">Rejoignez des milliers de voyageurs qui font confiance a Billetterie GN pour leurs deplacements en Guinee.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a [href]="loginUrl" pButton pRipple class="!bg-orange-500 hover:!bg-orange-600 !border-orange-500 hover:!border-orange-600 rounded-xl px-8 py-3.5 text-sm font-bold justify-center">
+                        <i class="pi pi-user-plus mr-2"></i>
+                        Creer un compte gratuit
+                    </a>
+                    <a (click)="handleScroll('services')" pButton pRipple class="!bg-white/10 hover:!bg-white/20 !border-white/20 hover:!border-white/30 !text-white rounded-xl px-8 py-3.5 text-sm font-bold justify-center cursor-pointer">
+                        <i class="pi pi-info-circle mr-2"></i>
+                        En savoir plus
                     </a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section class="py-16 lg:py-20 px-4">
-        <div class="max-w-6xl mx-auto">
-            <div class="text-center mb-12">
-                <h2 class="text-2xl sm:text-3xl font-bold text-surface-800 dark:text-surface-100">Pourquoi choisir Billetterie GN ?</h2>
-                <p class="text-surface-500 dark:text-surface-400 mt-3 max-w-xl mx-auto">Une plateforme concu pour simplifier vos deplacements a travers toute la Guinee.</p>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Feature 1 -->
-                <div class="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-100 dark:border-surface-700 hover:shadow-lg transition-shadow duration-300">
-                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4">
-                        <i class="pi pi-search text-xl text-blue-600"></i>
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="bg-surface-900 dark:bg-surface-950 pt-14 pb-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-surface-800">
+                <!-- Brand -->
+                <div class="lg:col-span-1">
+                    <div class="flex items-center gap-3 mb-4">
+                        <img src="/layout/images/logo/logo.png" alt="Billetterie GN" class="h-9" />
+                        <span class="text-white font-bold text-lg">Billetterie<span class="text-orange-400">GN</span></span>
                     </div>
-                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Recherche rapide</h3>
-                    <p class="text-surface-500 dark:text-surface-400 text-sm leading-relaxed">Trouvez votre trajet en quelques clics parmi des centaines d'offres de transport disponibles.</p>
-                </div>
-                <!-- Feature 2 -->
-                <div class="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-100 dark:border-surface-700 hover:shadow-lg transition-shadow duration-300">
-                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mb-4">
-                        <i class="pi pi-shield text-xl text-green-600"></i>
+                    <p class="text-surface-400 text-sm leading-relaxed">La plateforme de reservation de transport N&deg;1 en Guinee. Voyagez en toute confiance.</p>
+                    <div class="flex gap-3 mt-5">
+                        <a href="#" class="w-9 h-9 bg-surface-800 hover:bg-orange-500 rounded-lg flex items-center justify-center transition-colors duration-200">
+                            <i class="pi pi-facebook text-surface-400 hover:text-white text-sm"></i>
+                        </a>
+                        <a href="#" class="w-9 h-9 bg-surface-800 hover:bg-orange-500 rounded-lg flex items-center justify-center transition-colors duration-200">
+                            <i class="pi pi-twitter text-surface-400 hover:text-white text-sm"></i>
+                        </a>
+                        <a href="#" class="w-9 h-9 bg-surface-800 hover:bg-orange-500 rounded-lg flex items-center justify-center transition-colors duration-200">
+                            <i class="pi pi-instagram text-surface-400 hover:text-white text-sm"></i>
+                        </a>
+                        <a href="#" class="w-9 h-9 bg-surface-800 hover:bg-orange-500 rounded-lg flex items-center justify-center transition-colors duration-200">
+                            <i class="pi pi-whatsapp text-surface-400 hover:text-white text-sm"></i>
+                        </a>
                     </div>
-                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Paiement securise</h3>
-                    <p class="text-surface-500 dark:text-surface-400 text-sm leading-relaxed">Payez en toute confiance via mobile money, carte bancaire ou en especes au guichet.</p>
                 </div>
-                <!-- Feature 3 -->
-                <div class="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-100 dark:border-surface-700 hover:shadow-lg transition-shadow duration-300">
-                    <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-4">
-                        <i class="pi pi-ticket text-xl text-purple-600"></i>
-                    </div>
-                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Billet electronique</h3>
-                    <p class="text-surface-500 dark:text-surface-400 text-sm leading-relaxed">Recevez votre billet directement sur votre telephone. Plus besoin de faire la queue.</p>
-                </div>
-                <!-- Feature 4 -->
-                <div class="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-100 dark:border-surface-700 hover:shadow-lg transition-shadow duration-300">
-                    <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mb-4">
-                        <i class="pi pi-map text-xl text-orange-600"></i>
-                    </div>
-                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Couverture nationale</h3>
-                    <p class="text-surface-500 dark:text-surface-400 text-sm leading-relaxed">Des trajets couvrant toutes les regions de la Guinee : Conakry, Kindia, Labe, Kankan et plus.</p>
-                </div>
-                <!-- Feature 5 -->
-                <div class="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-100 dark:border-surface-700 hover:shadow-lg transition-shadow duration-300">
-                    <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center mb-4">
-                        <i class="pi pi-clock text-xl text-red-600"></i>
-                    </div>
-                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Horaires en temps reel</h3>
-                    <p class="text-surface-500 dark:text-surface-400 text-sm leading-relaxed">Consultez les departs et arrivees en temps reel pour planifier vos voyages efficacement.</p>
-                </div>
-                <!-- Feature 6 -->
-                <div class="bg-white dark:bg-surface-800 rounded-xl p-6 border border-surface-100 dark:border-surface-700 hover:shadow-lg transition-shadow duration-300">
-                    <div class="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center mb-4">
-                        <i class="pi pi-users text-xl text-teal-600"></i>
-                    </div>
-                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Partenaires de confiance</h3>
-                    <p class="text-surface-500 dark:text-surface-400 text-sm leading-relaxed">Nos partenaires transporteurs sont verifies et offrent un service de qualite.</p>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- How it works Section -->
-    <section class="py-16 lg:py-20 px-4 bg-white dark:bg-surface-900">
-        <div class="max-w-5xl mx-auto">
-            <div class="text-center mb-12">
-                <h2 class="text-2xl sm:text-3xl font-bold text-surface-800 dark:text-surface-100">Comment ca marche ?</h2>
-                <p class="text-surface-500 dark:text-surface-400 mt-3">Reservez votre billet en 3 etapes simples.</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span class="text-white text-2xl font-bold">1</span>
-                    </div>
-                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Recherchez</h3>
-                    <p class="text-surface-500 dark:text-surface-400 text-sm">Entrez votre ville de depart, destination et date de voyage.</p>
+                <!-- Destinations -->
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Destinations</h4>
+                    <ul class="space-y-2.5">
+                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Conakry</a></li>
+                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Kankan</a></li>
+                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Labe</a></li>
+                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Kindia</a></li>
+                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Nzerekore</a></li>
+                    </ul>
                 </div>
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span class="text-white text-2xl font-bold">2</span>
-                    </div>
-                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Choisissez</h3>
-                    <p class="text-surface-500 dark:text-surface-400 text-sm">Comparez les offres, horaires et prix. Selectionnez celle qui vous convient.</p>
-                </div>
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span class="text-white text-2xl font-bold">3</span>
-                    </div>
-                    <h3 class="font-semibold text-lg text-surface-800 dark:text-surface-100 mb-2">Reservez</h3>
-                    <p class="text-surface-500 dark:text-surface-400 text-sm">Confirmez votre reservation et recevez votre billet electronique.</p>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- CTA Section -->
-    <section class="py-16 px-4">
-        <div class="max-w-4xl mx-auto bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 sm:p-12 text-center">
-            <h2 class="text-2xl sm:text-3xl font-bold text-white mb-4">Pret a voyager ?</h2>
-            <p class="text-blue-100 mb-8 max-w-xl mx-auto">Creez votre compte gratuitement et commencez a reserver vos billets de transport a travers la Guinee.</p>
-            <a [href]="loginUrl" pButton pRipple class="!bg-white !text-blue-700 hover:!bg-blue-50 !border-white px-8 py-3 rounded-lg text-sm font-semibold">
-                Commencer maintenant
-                <i class="pi pi-arrow-right ml-2"></i>
-            </a>
-        </div>
-    </section>
+                <!-- Liens utiles -->
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Liens utiles</h4>
+                    <ul class="space-y-2.5">
+                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">A propos</a></li>
+                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Nos services</a></li>
+                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">FAQ</a></li>
+                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Conditions generales</a></li>
+                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Politique de confidentialite</a></li>
+                    </ul>
+                </div>
 
-    <!-- Footer -->
-    <footer class="bg-surface-900 dark:bg-surface-950 text-surface-400 py-10 px-4">
-        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <img src="/layout/images/logo/logo.png" alt="Billetterie GN" class="h-8" />
-                <span class="text-surface-300 font-medium">Billetterie GN</span>
+                <!-- Contact -->
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Contact</h4>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3">
+                            <i class="pi pi-map-marker text-orange-400 text-sm mt-0.5"></i>
+                            <span class="text-surface-400 text-sm">Conakry, Guinee</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="pi pi-phone text-orange-400 text-sm mt-0.5"></i>
+                            <span class="text-surface-400 text-sm">+224 XXX XXX XXX</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="pi pi-envelope text-orange-400 text-sm mt-0.5"></i>
+                            <span class="text-surface-400 text-sm">contact&#64;guidipress-io.com</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <p class="text-sm text-surface-500">&copy; 2026 Billetterie GN. Tous droits reserves.</p>
+
+            <!-- Bottom -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8">
+                <p class="text-surface-500 text-xs">&copy; 2026 Billetterie GN. Tous droits reserves.</p>
+                <div class="flex items-center gap-4">
+                    <span class="text-surface-500 text-xs">Moyens de paiement :</span>
+                    <div class="flex gap-2">
+                        <div class="bg-surface-800 rounded px-2 py-1"><span class="text-surface-400 text-xs font-medium">Orange Money</span></div>
+                        <div class="bg-surface-800 rounded px-2 py-1"><span class="text-surface-400 text-xs font-medium">MTN MoMo</span></div>
+                        <div class="bg-surface-800 rounded px-2 py-1"><span class="text-surface-400 text-xs font-medium">Visa</span></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </footer>
 </div>

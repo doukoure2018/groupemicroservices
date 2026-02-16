@@ -9,42 +9,52 @@ import { loginUrl } from '@/utils/fileutils';
     selector: 'topbar',
     standalone: true,
     imports: [RouterModule, StyleClassModule, ButtonModule, RippleModule],
-    template: `<div style="height: 68px; backdrop-filter: blur(17px)" class="flex justify-between items-center z-30 px-8 bg-black/40 top-0 w-full fixed">
-        <div>
-            <img [attr.draggable]="false" src="/layout/images/logo/logo.png" alt="logo" />
-        </div>
-
-        <a class="cursor-pointer block lg:hidden text-white" pStyleClass="@next" enterFromClass="hidden" leaveToClass="hidden" [hideOnOutsideClick]="true">
-            <i class="pi pi-bars !text-4xl"></i>
+    template: `
+    <header style="height: 72px; backdrop-filter: blur(20px)" class="flex justify-between items-center z-50 px-4 sm:px-8 bg-surface-950/80 top-0 w-full fixed border-b border-white/10">
+        <a href="/" class="flex items-center gap-3">
+            <img [attr.draggable]="false" src="/layout/images/logo/logo.png" alt="Billetterie GN" class="h-9" />
+            <span class="text-white font-bold text-lg hidden sm:inline">Billetterie<span class="text-orange-400">GN</span></span>
         </a>
 
-        <div id="menu" class="items-center grow hidden lg:flex absolute lg:static w-full lg:px-0 z-30 shadow lg:shadow-none animate-fadein bg-surface-0 lg:!bg-transparent" style="top: 68px; right: 0%">
-            <ul class="list-none p-4 lg:p-0 m-0 ml-auto flex lg:items-center select-none flex-col lg:flex-row cursor-pointer">
+        <a class="cursor-pointer block lg:hidden text-white" pStyleClass="@next" enterFromClass="hidden" leaveToClass="hidden" [hideOnOutsideClick]="true">
+            <i class="pi pi-bars !text-2xl"></i>
+        </a>
+
+        <nav id="menu" class="items-center grow hidden lg:flex absolute lg:static w-full lg:px-0 z-50 shadow-lg lg:shadow-none animate-fadein bg-surface-900 lg:!bg-transparent rounded-b-xl lg:rounded-none" style="top: 72px; left: 0">
+            <ul class="list-none p-4 lg:p-0 m-0 ml-auto flex lg:items-center select-none flex-col lg:flex-row gap-1 lg:gap-0">
                 <li>
-                    <a class="flex m-0 md:ml-8 px-0 py-4 lg:!text-surface-0 text-surface-900 leading-normal" pStyleClass="#menu" enterFromClass="hidden" leaveToClass="hidden">
-                        <span>HOME</span>
+                    <a href="/" class="flex m-0 md:ml-6 px-3 py-3 lg:py-2 lg:!text-surface-0 text-surface-200 hover:text-orange-400 transition-colors duration-200 text-sm font-medium rounded-lg lg:rounded-none" pStyleClass="#menu" enterFromClass="hidden" leaveToClass="hidden">
+                        <i class="pi pi-home mr-2 lg:hidden"></i>
+                        Accueil
                     </a>
                 </li>
-
                 <li>
-                    <a
-                        [routerLink]="['/auth/forgotpassword']"
-                        class="flex m-0 md:ml-8 px-0 py-4 lg:!text-surface-0 text-surface-900 leading-normal"
-                        (click)="handleScroll('collaboration')"
-                        pStyleClass="#menu"
-                        enterFromClass="hidden"
-                        leaveToClass="hidden"
-                    >
-                        <span>Mot de passe Oublié</span>
+                    <a (click)="handleScroll('destinations')" class="flex m-0 md:ml-6 px-3 py-3 lg:py-2 lg:!text-surface-0 text-surface-200 hover:text-orange-400 transition-colors duration-200 text-sm font-medium cursor-pointer rounded-lg lg:rounded-none" pStyleClass="#menu" enterFromClass="hidden" leaveToClass="hidden">
+                        <i class="pi pi-map mr-2 lg:hidden"></i>
+                        Destinations
                     </a>
                 </li>
-
                 <li>
-                    <a [href]="loginUrl" pButton pRipple class="!bg-surface-900 !border-surface-900 m-0 mt-4 md:mt-0 md:ml-8 rounded-md px-3 py-2§"><span pButtonLabel class="font-medium text-surface-0">Login</span></a>
+                    <a (click)="handleScroll('services')" class="flex m-0 md:ml-6 px-3 py-3 lg:py-2 lg:!text-surface-0 text-surface-200 hover:text-orange-400 transition-colors duration-200 text-sm font-medium cursor-pointer rounded-lg lg:rounded-none" pStyleClass="#menu" enterFromClass="hidden" leaveToClass="hidden">
+                        <i class="pi pi-cog mr-2 lg:hidden"></i>
+                        Services
+                    </a>
+                </li>
+                <li>
+                    <a (click)="handleScroll('about')" class="flex m-0 md:ml-6 px-3 py-3 lg:py-2 lg:!text-surface-0 text-surface-200 hover:text-orange-400 transition-colors duration-200 text-sm font-medium cursor-pointer rounded-lg lg:rounded-none" pStyleClass="#menu" enterFromClass="hidden" leaveToClass="hidden">
+                        <i class="pi pi-info-circle mr-2 lg:hidden"></i>
+                        A propos
+                    </a>
+                </li>
+                <li class="mt-2 lg:mt-0 lg:ml-6">
+                    <a [href]="loginUrl" pButton pRipple class="!bg-orange-500 hover:!bg-orange-600 !border-orange-500 hover:!border-orange-600 rounded-lg px-5 py-2.5 text-sm font-semibold w-full lg:w-auto justify-center">
+                        <i class="pi pi-sign-in mr-2"></i>
+                        Se connecter
+                    </a>
                 </li>
             </ul>
-        </div>
-    </div>`
+        </nav>
+    </header>`
 })
 export class Topbar {
     loginUrl = loginUrl;
