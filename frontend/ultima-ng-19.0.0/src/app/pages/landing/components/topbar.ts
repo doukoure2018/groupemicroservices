@@ -40,13 +40,7 @@ import { loginUrl } from '@/utils/fileutils';
                 </li>
 
                 <li>
-                    <a
-                        [href]="loginUrl"
-                        pButton
-                        pRipple
-                        class="!bg-surface-900 !border-surface-900 m-0 mt-4 md:mt-0 md:ml-8 rounded-md px-3 py-2§"
-                        ><span pButtonLabel class="font-medium text-surface-0">Login</span></a
-                    >
+                    <a [href]="loginUrl" pButton pRipple class="!bg-surface-900 !border-surface-900 m-0 mt-4 md:mt-0 md:ml-8 rounded-md px-3 py-2§"><span pButtonLabel class="font-medium text-surface-0">Login</span></a>
                 </li>
             </ul>
         </div>
