@@ -57,6 +57,11 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    properties:
+      spring:
+        json:
+          type:
+            mapping: Notification:io.multi.authorizationserver.event.Notification
 
   security:
     oauth2:

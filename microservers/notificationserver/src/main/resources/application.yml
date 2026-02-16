@@ -8,12 +8,20 @@ spring:
     suffix: .html
     cache: false
 
-  sendgrid:
-    api:
-      key: ${SENDGRID_API_KEY}
-    from:
-      email: ${SENDGRID_FROM_EMAIL:support@digi-creditrural-io.com}
-      name: ${SENDGRID_FROM_NAME:Digicrg}
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${GMAIL_USERNAME:}
+    password: ${GMAIL_APP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 
   cloud:
     discovery:
@@ -72,10 +80,14 @@ eureka:
     service-url:
       defaultZone: http://manager:manager2711@localhost:5003/eureka/
 
+mail:
+  from:
+    email: ${GMAIL_USERNAME:support@digi-creditrural-io.com}
+    name: ${MAIL_FROM_NAME:Digicrg}
+
 ui:
   app:
     url: http://localhost:4202
-
 
 verify:
   email:
