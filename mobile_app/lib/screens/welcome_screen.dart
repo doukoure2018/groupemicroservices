@@ -34,6 +34,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
+    serverClientId: '421665850163-7uh8sdk3fbtkpam6rq61u653i78p1n5o.apps.googleusercontent.com',
   );
 
   @override
@@ -146,9 +147,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         }
       }
     } catch (e) {
+      debugPrint('Google Sign-In error: $e');
       if (mounted) {
         setState(() => _isLoading = false);
-        _showError('Erreur de connexion Google');
+        _showError('Erreur Google: ${e.toString()}');
       }
     }
   }

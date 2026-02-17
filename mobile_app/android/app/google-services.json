@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "421665850163",
+    "project_id": "supple-alpha-405513",
+    "storage_bucket": "supple-alpha-405513.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:421665850163:android:8cc9226b1ca23a585eb446",
+        "android_client_info": {
+          "package_name": "com.billetterie.gn"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "421665850163-7uh8sdk3fbtkpam6rq61u653i78p1n5o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdeUKjmwDkbxMSPodF7q4X1vsle71C-uk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "421665850163-7uh8sdk3fbtkpam6rq61u653i78p1n5o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

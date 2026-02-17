@@ -214,17 +214,17 @@ public class MobileAuthController {
             User user;
             var existingByGoogleId = userRepository.findByGoogleId(googleId);
             if (existingByGoogleId.isPresent()) {
-                user = userService.getUserByEmail(existingByGoogleId.get().getEmail());
+                user = existingByGoogleId.get();
             } else {
                 var existingByEmail = userRepository.findByEmail(email);
                 if (existingByEmail.isPresent()) {
                     // Link Google account to existing user
                     userRepository.linkGoogleAccount(existingByEmail.get().getUserId(), googleId);
-                    user = userService.getUserByEmail(email);
+                    user = userRepository.findByGoogleId(googleId)
+                            .orElseThrow(() -> new RuntimeException("Failed to retrieve linked user"));
                 } else {
                     // Create new OAuth2 user (auto-enabled)
                     user = userRepository.createOAuth2User(email, firstName, lastName, imageUrl, googleId, "GOOGLE");
-                    user = userService.getUserByEmail(email);
                 }
             }
 
