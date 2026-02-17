@@ -1,0 +1,111 @@
+<header class="fixed top-0 left-0 right-0 z-50 px-4 lg:px-8 pt-4">
+  <div
+    class="mx-auto max-w-7xl rounded-2xl transition-all duration-500"
+    [class]="scrolled() ? 'bg-white/95 shadow-xl shadow-black/[0.08] backdrop-blur-xl' : 'bg-white/90 shadow-lg shadow-black/5 backdrop-blur-md'"
+  >
+    <div class="flex items-center justify-between px-4 py-3 lg:px-6">
+      <!-- Logo -->
+      <a href="#" class="group flex items-center gap-2.5 shrink-0">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#f97316] to-[#ea580c] shadow-lg shadow-[#f97316]/25 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/>
+          </svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-display text-lg font-bold leading-tight text-[#1e3a5f]">
+            Billetterie<span class="text-[#f97316]">GN</span>
+          </span>
+          <span class="text-[10px] font-medium tracking-wide text-[#1e3a5f]/50 uppercase">
+            Transport Guinee
+          </span>
+        </div>
+      </a>
+
+      <!-- Desktop nav -->
+      <nav class="hidden items-center gap-0.5 lg:flex" aria-label="Navigation principale">
+        @for (link of navLinks; track link.label) {
+          <a
+            [href]="link.href"
+            class="relative rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-300"
+            [class]="link.active ? 'text-[#f97316]' : 'text-[#1e3a5f]/70 hover:text-[#1e3a5f]'"
+          >
+            {{ link.label }}
+            @if (link.active) {
+              <span class="absolute bottom-0.5 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-[#f97316]"></span>
+            }
+          </a>
+        }
+      </nav>
+
+      <!-- Desktop right -->
+      <div class="hidden items-center gap-3 lg:flex shrink-0">
+        <a
+          href="tel:+224620000000"
+          class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#1e3a5f]/10 text-[#1e3a5f] transition-all duration-300 hover:border-[#f97316]/30 hover:bg-[#f97316]/5 hover:text-[#f97316]"
+          aria-label="Appelez-nous"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+        </a>
+        <a
+          [href]="loginUrl"
+          class="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#f97316] to-[#ea580c] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#f97316]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#f97316]/30"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+          <span class="flex flex-col items-start leading-tight">
+            <span class="text-[10px] font-normal text-white/80">Contactez-nous</span>
+            <span class="text-xs font-bold">+224 620 00 00 00</span>
+          </span>
+        </a>
+      </div>
+
+      <!-- Mobile burger -->
+      <button
+        (click)="toggleMobile()"
+        class="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#1e3a5f]/10 text-[#1e3a5f] transition-all duration-300 hover:bg-[#f97316]/5 hover:text-[#f97316] lg:hidden"
+        [attr.aria-label]="mobileOpen() ? 'Fermer le menu' : 'Ouvrir le menu'"
+      >
+        <div class="transition-all duration-300" [class.rotate-90]="mobileOpen()" [class.scale-110]="mobileOpen()">
+          @if (mobileOpen()) {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+          }
+        </div>
+      </button>
+    </div>
+
+    <!-- Mobile menu -->
+    <div
+      class="overflow-hidden border-t transition-all duration-500 lg:hidden"
+      [class]="mobileOpen() ? 'max-h-[500px] border-[#1e3a5f]/5 opacity-100' : 'max-h-0 border-transparent opacity-0'"
+    >
+      <nav class="flex flex-col gap-1 px-4 py-4" aria-label="Navigation mobile">
+        @for (link of navLinks; track link.label; let i = $index) {
+          <a
+            [href]="link.href"
+            (click)="closeMobile()"
+            class="rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300"
+            [class]="link.active ? 'bg-[#f97316]/10 text-[#f97316]' : 'text-[#1e3a5f]/70 hover:bg-[#1e3a5f]/5 hover:pl-6 hover:text-[#1e3a5f]'"
+            [style.transition-delay]="mobileOpen() ? (i * 50) + 'ms' : '0ms'"
+          >
+            {{ link.label }}
+          </a>
+        }
+        <div class="mt-2 flex items-center gap-3 border-t border-[#1e3a5f]/5 pt-4">
+          <a href="tel:+224620000000" class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#1e3a5f]/10 text-[#1e3a5f]" aria-label="Appelez-nous">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+          </a>
+          <a [href]="loginUrl" class="flex-1 rounded-full bg-gradient-to-r from-[#f97316] to-[#ea580c] px-5 py-3 text-center text-sm font-semibold text-white">
+            Contactez-nous
+          </a>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>

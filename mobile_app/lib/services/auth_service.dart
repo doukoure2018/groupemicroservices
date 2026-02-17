@@ -33,7 +33,7 @@ class AuthService {
           // IMPORTANT: false pour permettre la persistence des cookies/sessions
           // true causerait un mode "incognito" qui empêche OAuth de fonctionner
           preferEphemeralSession: false,
-          allowInsecureConnections: true, // Allow HTTP for local dev
+          allowInsecureConnections: AppConfig.allowInsecureConnections,
         ),
       );
 
@@ -71,7 +71,7 @@ class AuthService {
           ),
           refreshToken: storedRefreshToken,
           scopes: AppConfig.scopes,
-          allowInsecureConnections: true, // Allow HTTP for local dev
+          allowInsecureConnections: AppConfig.allowInsecureConnections,
         ),
       );
 

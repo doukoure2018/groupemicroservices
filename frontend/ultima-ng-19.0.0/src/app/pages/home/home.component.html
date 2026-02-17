@@ -1,510 +1,1202 @@
-@if(loading()){
-<div class="flex items-center justify-center min-h-screen bg-surface-950">
-    <div class="text-center">
-        <p-progress-spinner ariaLabel="Chargement" [style]="{'width': '4rem', 'height': '4rem'}" strokeWidth="4"
-            animationDuration=".5s" />
-        <h2 class="text-xl font-semibold mt-4 mb-2 text-surface-100">Verification en cours...</h2>
-        <p class="text-surface-400 text-sm">Veuillez patienter</p>
-    </div>
+<!-- Loading spinner -->
+@if (loading()) {
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-white/80 backdrop-blur-sm">
+    <p-progressSpinner strokeWidth="4" />
 </div>
-} @else {
-<div class="bg-surface-50 dark:bg-surface-950">
-    <topbar />
+}
 
-    <!-- ==================== HERO SECTION ==================== -->
-    <section class="relative overflow-hidden" style="min-height: 600px;">
-        <!-- Background with overlay -->
-        <div class="absolute inset-0 bg-gradient-to-br from-surface-950 via-blue-950 to-surface-900"></div>
-        <!-- Decorative elements -->
-        <div class="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-        <div class="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+<!-- Topbar -->
+<topbar />
 
-        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12 lg:pt-36 lg:pb-20">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-                <!-- Left: Text Content -->
-                <div>
-                    <span class="inline-flex items-center gap-2 bg-orange-500/20 text-orange-400 text-xs font-semibold px-4 py-1.5 rounded-full uppercase tracking-wider mb-6">
-                        <i class="pi pi-bolt text-xs"></i> Plateforme N&deg;1 en Guinee
+<main class="font-sans antialiased bg-[#f5f7fa] text-[#1a2a3a]">
+    <!-- ==================== HERO ==================== -->
+    <section class="relative overflow-hidden pb-32 pt-36 lg:pt-48 lg:pb-44 bg-[#0f1f35]">
+        <!-- Background image -->
+        <img src="images/hero-bus.jpg" alt="" class="absolute inset-0 h-full w-full object-cover"
+            (error)="$any($event.target).style.display='none'" />
+        <!-- Gradient overlay -->
+        <div class="absolute inset-0 bg-gradient-to-r from-[#0f1f35]/90 via-[#162d4a]/80 to-[#1e3a5f]/70"></div>
+        <!-- Dot pattern -->
+        <div class="pointer-events-none absolute inset-0 opacity-[0.03]"
+            style="background-image: radial-gradient(circle, white 1px, transparent 1px); background-size: 40px 40px;">
+        </div>
+
+        <!-- Content -->
+        <div class="relative mx-auto max-w-7xl px-4 lg:px-8">
+            <div class="mx-auto max-w-3xl text-center animate-fade-in-up">
+                <!-- Badge -->
+                <span
+                    class="mb-6 inline-flex items-center gap-2 rounded-full border border-[#f97316]/30 bg-[#f97316]/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-[#f97316] backdrop-blur-sm">
+                    <span class="relative flex h-2 w-2">
+                        <span
+                            class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#f97316] opacity-75"></span>
+                        <span class="relative inline-flex h-2 w-2 rounded-full bg-[#f97316]"></span>
                     </span>
-                    <h1 class="text-white text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold leading-tight">
-                        Reservez votre
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400">voyage</span>
-                        en toute simplicite
-                    </h1>
-                    <p class="text-surface-300 mt-5 text-base sm:text-lg leading-relaxed max-w-lg">
-                        Trouvez les meilleurs trajets de transport a travers toute la Guinee. Comparez les prix, choisissez vos horaires et voyagez sereinement.
-                    </p>
-                    <div class="flex flex-wrap gap-6 mt-8">
-                        <div class="flex items-center gap-2">
-                            <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                                <i class="pi pi-map-marker text-orange-400"></i>
-                            </div>
-                            <div>
-                                <span class="text-white font-bold text-lg">50+</span>
-                                <p class="text-surface-400 text-xs">Destinations</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                                <i class="pi pi-car text-blue-400"></i>
-                            </div>
-                            <div>
-                                <span class="text-white font-bold text-lg">200+</span>
-                                <p class="text-surface-400 text-xs">Trajets / jour</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                                <i class="pi pi-users text-green-400"></i>
-                            </div>
-                            <div>
-                                <span class="text-white font-bold text-lg">10K+</span>
-                                <p class="text-surface-400 text-xs">Voyageurs</p>
-                            </div>
-                        </div>
-                    </div>
+                    Plateforme N&deg;1 de transport en Guin&eacute;e
+                </span>
+
+                <!-- Heading -->
+                <h1
+                    class="font-display text-3xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl xl:text-6xl text-balance">
+                    Le meilleur service de
+                    <span class="relative inline-block">
+                        <span class="relative z-10 text-[#f97316]">transport</span>
+                        <span class="absolute bottom-1 left-0 -z-0 h-3 w-full -skew-x-3 bg-[#f97316]/20 lg:h-4"></span>
+                    </span>
+                    en Guin&eacute;e
+                </h1>
+
+                <!-- Description -->
+                <p class="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/70 lg:text-lg">
+                    Trouvez les meilleurs trajets de transport &agrave; travers toute la Guin&eacute;e. Comparez les
+                    prix, choisissez vos horaires et voyagez sereinement.
+                </p>
+
+                <!-- Dual CTA -->
+                <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+                    <a href="#destinations"
+                        class="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#f97316] to-[#ea580c] px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#f97316]/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#f97316]/40">
+                        R&eacute;server maintenant
+                    </a>
+                    <button type="button"
+                        class="group inline-flex items-center gap-3 text-sm font-semibold text-white transition-all duration-300 hover:text-[#f97316]">
+                        <span
+                            class="flex h-12 w-12 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm border border-white/20 transition-all duration-300 group-hover:bg-[#f97316] group-hover:border-[#f97316] group-hover:shadow-lg group-hover:shadow-[#f97316]/30">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 fill-current ml-0.5"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                            </svg>
+                        </span>
+                        Voir la vid&eacute;o
+                    </button>
                 </div>
 
-                <!-- Right: Search Card -->
-                <div class="bg-white dark:bg-surface-800 rounded-2xl shadow-2xl p-6 sm:p-8 border border-surface-100 dark:border-surface-700">
-                    <h3 class="text-surface-800 dark:text-surface-100 font-bold text-xl mb-1">Rechercher un trajet</h3>
-                    <p class="text-surface-400 text-sm mb-6">Trouvez votre prochain voyage</p>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wide">Ville de depart</label>
-                            <div class="flex items-center gap-3 bg-surface-50 dark:bg-surface-700 border border-surface-200 dark:border-surface-600 rounded-xl px-4 py-3 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-400/20 transition-all">
-                                <i class="pi pi-circle-fill text-xs text-green-500"></i>
-                                <input pInputText type="text" placeholder="Ex: Conakry" class="w-full bg-transparent border-none shadow-none p-0 text-sm focus:ring-0" />
-                            </div>
+                <!-- Stats -->
+                <div class="mt-12 flex justify-center gap-8 lg:gap-16">
+                    @for (s of heroStats; track s.label; let last = $last) {
+                    <div class="flex items-center gap-8 lg:gap-16">
+                        <div class="text-center">
+                            <p class="font-display text-2xl font-bold text-white lg:text-3xl xl:text-4xl">
+                                <span [appCountUp]="s.end" [countSuffix]="s.suffix"></span>
+                            </p>
+                            <p class="mt-0.5 text-xs text-white/50 sm:text-sm">{{ s.label }}</p>
                         </div>
+                        @if (!last) {
+                        <div class="h-10 w-px bg-white/15"></div>
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
 
-                        <div class="flex justify-center">
-                            <div class="w-10 h-10 bg-orange-50 dark:bg-orange-900/20 border-2 border-dashed border-orange-300 dark:border-orange-600 rounded-full flex items-center justify-center">
-                                <i class="pi pi-arrows-v text-orange-500 text-sm"></i>
-                            </div>
+        <!-- Booking form -->
+        <div class="relative mx-auto mt-16 max-w-5xl px-4 lg:px-8 animate-fade-in-up" style="animation-delay: 0.3s;">
+            <div class="rounded-2xl bg-white p-6 shadow-2xl shadow-black/15 lg:p-8">
+                <div class="grid gap-4 md:grid-cols-3 lg:grid-cols-6 lg:gap-3">
+                    <!-- From -->
+                    <div class="lg:col-span-1">
+                        <label
+                            class="mb-1.5 block text-xs font-semibold text-[#1e3a5f] uppercase tracking-wide">D&eacute;part</label>
+                        <div class="relative">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#f97316]"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            <select
+                                class="w-full appearance-none rounded-xl border border-[#d1d8e0] bg-[#f0f2f5] py-3 pr-4 pl-9 text-sm font-medium text-[#1a2a3a] transition-all duration-300 focus:border-[#f97316] focus:ring-2 focus:ring-[#f97316]/20 focus:outline-none">
+                                @for (city of cities; track city) {
+                                <option>{{ city }}</option>
+                                }
+                            </select>
                         </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wide">Ville d'arrivee</label>
-                            <div class="flex items-center gap-3 bg-surface-50 dark:bg-surface-700 border border-surface-200 dark:border-surface-600 rounded-xl px-4 py-3 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-400/20 transition-all">
-                                <i class="pi pi-circle-fill text-xs text-red-500"></i>
-                                <input pInputText type="text" placeholder="Ex: Kankan" class="w-full bg-transparent border-none shadow-none p-0 text-sm focus:ring-0" />
-                            </div>
+                    </div>
+                    <!-- To -->
+                    <div class="lg:col-span-1">
+                        <label
+                            class="mb-1.5 block text-xs font-semibold text-[#1e3a5f] uppercase tracking-wide">Arriv&eacute;e</label>
+                        <div class="relative">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-emerald-500"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            <select
+                                class="w-full appearance-none rounded-xl border border-[#d1d8e0] bg-[#f0f2f5] py-3 pr-4 pl-9 text-sm font-medium text-[#1a2a3a] transition-all duration-300 focus:border-[#f97316] focus:ring-2 focus:ring-[#f97316]/20 focus:outline-none">
+                                @for (city of cities; track city) {
+                                <option>{{ city }}</option>
+                                }
+                            </select>
                         </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wide">Date</label>
-                                <div class="flex items-center gap-2 bg-surface-50 dark:bg-surface-700 border border-surface-200 dark:border-surface-600 rounded-xl px-4 py-3">
-                                    <i class="pi pi-calendar text-surface-400 text-sm"></i>
-                                    <input pInputText type="text" placeholder="jj/mm/aaaa" class="w-full bg-transparent border-none shadow-none p-0 text-sm focus:ring-0" />
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-surface-500 dark:text-surface-400 mb-1.5 uppercase tracking-wide">Passagers</label>
-                                <div class="flex items-center gap-2 bg-surface-50 dark:bg-surface-700 border border-surface-200 dark:border-surface-600 rounded-xl px-4 py-3">
-                                    <i class="pi pi-user text-surface-400 text-sm"></i>
-                                    <input pInputText type="text" placeholder="1 adulte" class="w-full bg-transparent border-none shadow-none p-0 text-sm focus:ring-0" />
-                                </div>
-                            </div>
+                    </div>
+                    <!-- Date -->
+                    <div class="lg:col-span-1">
+                        <label
+                            class="mb-1.5 block text-xs font-semibold text-[#1e3a5f] uppercase tracking-wide">Date</label>
+                        <div class="relative">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#64748b]"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                                <line x1="16" x2="16" y1="2" y2="6" />
+                                <line x1="8" x2="8" y1="2" y2="6" />
+                                <line x1="3" x2="21" y1="10" y2="10" />
+                            </svg>
+                            <input type="date"
+                                class="w-full rounded-xl border border-[#d1d8e0] bg-[#f0f2f5] py-3 pr-3 pl-9 text-sm font-medium text-[#1a2a3a] transition-all duration-300 focus:border-[#f97316] focus:ring-2 focus:ring-[#f97316]/20 focus:outline-none" />
                         </div>
-
-                        <a [href]="loginUrl" pButton pRipple class="w-full !bg-orange-500 hover:!bg-orange-600 !border-orange-500 hover:!border-orange-600 rounded-xl px-6 py-3.5 text-sm font-bold justify-center mt-2">
-                            <i class="pi pi-search mr-2"></i>
-                            Rechercher les trajets disponibles
-                        </a>
+                    </div>
+                    <!-- Time -->
+                    <div class="lg:col-span-1">
+                        <label
+                            class="mb-1.5 block text-xs font-semibold text-[#1e3a5f] uppercase tracking-wide">Heure</label>
+                        <div class="relative">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#64748b]"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            <select
+                                class="w-full appearance-none rounded-xl border border-[#d1d8e0] bg-[#f0f2f5] py-3 pr-3 pl-9 text-sm font-medium text-[#1a2a3a] transition-all duration-300 focus:border-[#f97316] focus:ring-2 focus:ring-[#f97316]/20 focus:outline-none">
+                                @for (t of times; track t) {
+                                <option>{{ t }}</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Passengers -->
+                    <div class="lg:col-span-1">
+                        <label
+                            class="mb-1.5 block text-xs font-semibold text-[#1e3a5f] uppercase tracking-wide">Places</label>
+                        <div class="relative">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#64748b]"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                            <select
+                                class="w-full appearance-none rounded-xl border border-[#d1d8e0] bg-[#f0f2f5] py-3 pr-3 pl-9 text-sm font-medium text-[#1a2a3a] transition-all duration-300 focus:border-[#f97316] focus:ring-2 focus:ring-[#f97316]/20 focus:outline-none">
+                                <option>1 place</option>
+                                <option>2 places</option>
+                                <option>3 places</option>
+                                <option>4 places</option>
+                                <option>5+ places</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Search button -->
+                    <div class="flex items-end lg:col-span-1">
+                        <button type="button"
+                            class="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#f97316] to-[#ea580c] py-3 text-sm font-semibold text-white shadow-lg shadow-[#f97316]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#f97316]/35">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-4 w-4 transition-transform duration-300 group-hover:rotate-12"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.3-4.3" />
+                            </svg>
+                            Rechercher
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ==================== POPULAR DESTINATIONS ==================== -->
-    <section id="destinations" class="py-16 lg:py-24 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto">
-            <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-10">
+    <!-- ==================== DESTINATIONS ==================== -->
+    <section id="destinations" class="bg-[#f5f7fa] py-20 lg:py-28">
+        <div class="mx-auto max-w-7xl px-4 lg:px-8">
+            <!-- Header -->
+            <div appScrollAnimation="fade-up"
+                class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
                 <div>
-                    <span class="text-orange-500 font-semibold text-sm uppercase tracking-wider">Destinations populaires</span>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-surface-800 dark:text-surface-100 mt-2">Explorez la Guinee</h2>
+                    <span
+                        class="mb-2 inline-flex items-center gap-2 rounded-full bg-[#f97316]/10 px-4 py-1.5 text-sm font-semibold text-[#f97316]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        Destinations populaires
+                    </span>
+                    <h2
+                        class="mt-3 font-display text-2xl font-bold text-[#1a2a3a] sm:text-3xl lg:text-4xl text-balance">
+                        Les destinations les plus fr&eacute;quent&eacute;es
+                    </h2>
+                    <p class="mt-2 max-w-lg text-sm leading-relaxed text-[#64748b]">
+                        D&eacute;couvrez les villes les plus desservies de Guin&eacute;e et r&eacute;servez votre billet
+                        en quelques clics.
+                    </p>
                 </div>
-                <a [href]="loginUrl" class="text-orange-500 hover:text-orange-600 font-medium text-sm mt-4 sm:mt-0 flex items-center gap-1 transition-colors">
-                    Voir tout <i class="pi pi-arrow-right text-xs"></i>
+                <a href="#"
+                    class="group flex items-center gap-1.5 rounded-full bg-[#1e3a5f] px-5 py-2.5 text-sm font-medium text-white transition-all duration-300 hover:bg-[#f97316] hover:shadow-lg hover:shadow-[#f97316]/25">
+                    Voir tout
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M5 12h14" />
+                        <path d="m12 5 7 7-7 7" />
+                    </svg>
                 </a>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <!-- Destination Card: Conakry -->
-                <div class="group relative rounded-2xl overflow-hidden bg-white dark:bg-surface-800 border border-surface-100 dark:border-surface-700 hover:shadow-xl transition-all duration-300 cursor-pointer">
-                    <div class="h-44 bg-gradient-to-br from-blue-500 to-blue-700 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300"></div>
-                        <div class="absolute bottom-3 left-3 flex items-center gap-1.5 bg-white/20 backdrop-blur-md rounded-full px-3 py-1">
-                            <i class="pi pi-map-marker text-white text-xs"></i>
-                            <span class="text-white text-xs font-medium">Capitale</span>
-                        </div>
-                        <i class="pi pi-building absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/20 text-6xl"></i>
+            <!-- Map + Cards -->
+            <div class="mt-14 grid gap-10 lg:grid-cols-[1fr_1fr] lg:gap-14 items-start">
+                <!-- Map -->
+                <div appScrollAnimation="fade-left" [animThreshold]="0.1" class="relative">
+                    <div
+                        class="absolute -inset-6 rounded-3xl bg-gradient-to-br from-[#1e3a5f]/5 via-transparent to-[#f97316]/5 blur-2xl">
                     </div>
-                    <div class="p-4">
-                        <h3 class="font-bold text-surface-800 dark:text-surface-100">Conakry</h3>
-                        <p class="text-surface-400 text-xs mt-1">15+ trajets disponibles</p>
-                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-surface-100 dark:border-surface-700">
-                            <span class="text-xs text-surface-400">A partir de</span>
-                            <span class="text-orange-500 font-bold">150 000 GNF</span>
+                    <div class="relative rounded-2xl border border-[#d1d8e0] bg-white p-5 lg:p-6 shadow-sm">
+                        <!-- Map header -->
+                        <div class="mb-3 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1e3a5f]/10">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#1e3a5f]"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                                        <circle cx="12" cy="10" r="3" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-bold text-[#1a2a3a]">R&eacute;publique de
+                                        Guin&eacute;e</span>
+                                    <p class="text-[11px] text-[#64748b]">Cliquez sur une ville pour d&eacute;couvrir
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="hidden sm:flex items-center gap-3 text-[11px] text-[#64748b]">
+                                <span class="flex items-center gap-1.5"><span
+                                        class="h-2.5 w-2.5 rounded-full bg-[#f97316]"></span> Capitale</span>
+                                <span class="flex items-center gap-1.5"><span
+                                        class="h-2.5 w-2.5 rounded-full bg-[#1e3a5f]"></span> Villes</span>
+                            </div>
+                        </div>
+
+                        <app-guinea-map [isVisible]="mapVisible()" [activeCity]="activeCity()"
+                            (cityHover)="onCityHover($event)" (cityClick)="onCityClick($event)" />
+
+                        <!-- Footer stats -->
+                        <div class="mt-4 flex items-center justify-around border-t border-[#d1d8e0] pt-4">
+                            <div class="text-center">
+                                <p class="text-lg font-bold text-[#1a2a3a]">8</p>
+                                <p class="text-[11px] text-[#64748b]">R&eacute;gions</p>
+                            </div>
+                            <div class="h-8 w-px bg-[#d1d8e0]"></div>
+                            <div class="text-center">
+                                <p class="text-lg font-bold text-[#f97316]">50+</p>
+                                <p class="text-[11px] text-[#64748b]">Trajets/jour</p>
+                            </div>
+                            <div class="h-8 w-px bg-[#d1d8e0]"></div>
+                            <div class="text-center">
+                                <p class="text-lg font-bold text-[#1a2a3a]">24/7</p>
+                                <p class="text-[11px] text-[#64748b]">Service</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Destination Card: Kankan -->
-                <div class="group relative rounded-2xl overflow-hidden bg-white dark:bg-surface-800 border border-surface-100 dark:border-surface-700 hover:shadow-xl transition-all duration-300 cursor-pointer">
-                    <div class="h-44 bg-gradient-to-br from-emerald-500 to-emerald-700 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300"></div>
-                        <div class="absolute bottom-3 left-3 flex items-center gap-1.5 bg-white/20 backdrop-blur-md rounded-full px-3 py-1">
-                            <i class="pi pi-map-marker text-white text-xs"></i>
-                            <span class="text-white text-xs font-medium">Haute Guinee</span>
+                <!-- Cards grid -->
+                <div class="grid gap-5 sm:grid-cols-2">
+                    @for (d of destinations; track d.id; let i = $index) {
+                    <article appScrollAnimation="fade-up" [animDelay]="i * 100" [animThreshold]="0.1"
+                        class="group cursor-pointer overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-500 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-[#1e3a5f]/[0.08]"
+                        [class]="activeCity() === d.id ? 'ring-2 ring-[#f97316] shadow-lg shadow-[#f97316]/10 border-[#f97316]/30' : 'border-[#d1d8e0]'"
+                        (mouseenter)="activeCity.set(d.id)" (mouseleave)="activeCity.set(null)">
+                        <!-- Image -->
+                        <div class="relative h-36 overflow-hidden bg-gradient-to-br from-[#1e3a5f] to-[#0f1f35]">
+                            <img [src]="d.image" [alt]="'Vue de ' + d.name"
+                                class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                (error)="$any($event.target).style.display='none'" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent">
+                            </div>
+                            <span
+                                class="absolute top-3 left-3 rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md border border-white/10">{{
+                                d.badge }}</span>
+                            <span
+                                class="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-black/30 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 fill-[#f97316] text-[#f97316]"
+                                    viewBox="0 0 24 24">
+                                    <polygon
+                                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                {{ d.rating }}
+                            </span>
+                            <h3
+                                class="absolute bottom-3 left-4 font-display text-lg font-bold text-white drop-shadow-lg transition-transform duration-300 group-hover:translate-x-1">
+                                {{ d.name }}</h3>
                         </div>
-                        <i class="pi pi-sun absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/20 text-6xl"></i>
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-bold text-surface-800 dark:text-surface-100">Kankan</h3>
-                        <p class="text-surface-400 text-xs mt-1">10+ trajets disponibles</p>
-                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-surface-100 dark:border-surface-700">
-                            <span class="text-xs text-surface-400">A partir de</span>
-                            <span class="text-orange-500 font-bold">250 000 GNF</span>
+                        <!-- Info -->
+                        <div class="p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-1.5 text-xs text-[#64748b]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M8 6v6" />
+                                        <path d="M15 6v6" />
+                                        <path d="M2 12h19.6" />
+                                        <path
+                                            d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3" />
+                                        <circle cx="7" cy="18" r="2" />
+                                        <path d="M9 18h5" />
+                                        <circle cx="16" cy="18" r="2" />
+                                    </svg>
+                                    {{ d.trips }}
+                                </div>
+                                <p class="text-xs font-semibold text-[#1a2a3a]">
+                                    A partir de <span class="text-[#f97316]">{{ d.price }}</span>
+                                </p>
+                            </div>
+                            <button
+                                class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1e3a5f]/5 py-2.5 text-xs font-semibold text-[#1e3a5f] transition-all duration-300 group-hover:bg-[#f97316] group-hover:text-white group-hover:shadow-md group-hover:shadow-[#f97316]/20">
+                                D&eacute;couvrir
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5 12h14" />
+                                    <path d="m12 5 7 7-7 7" />
+                                </svg>
+                            </button>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Destination Card: Labe -->
-                <div class="group relative rounded-2xl overflow-hidden bg-white dark:bg-surface-800 border border-surface-100 dark:border-surface-700 hover:shadow-xl transition-all duration-300 cursor-pointer">
-                    <div class="h-44 bg-gradient-to-br from-purple-500 to-purple-700 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300"></div>
-                        <div class="absolute bottom-3 left-3 flex items-center gap-1.5 bg-white/20 backdrop-blur-md rounded-full px-3 py-1">
-                            <i class="pi pi-map-marker text-white text-xs"></i>
-                            <span class="text-white text-xs font-medium">Moyenne Guinee</span>
-                        </div>
-                        <i class="pi pi-globe absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/20 text-6xl"></i>
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-bold text-surface-800 dark:text-surface-100">Labe</h3>
-                        <p class="text-surface-400 text-xs mt-1">12+ trajets disponibles</p>
-                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-surface-100 dark:border-surface-700">
-                            <span class="text-xs text-surface-400">A partir de</span>
-                            <span class="text-orange-500 font-bold">200 000 GNF</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Destination Card: Nzerekore -->
-                <div class="group relative rounded-2xl overflow-hidden bg-white dark:bg-surface-800 border border-surface-100 dark:border-surface-700 hover:shadow-xl transition-all duration-300 cursor-pointer">
-                    <div class="h-44 bg-gradient-to-br from-amber-500 to-orange-600 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-all duration-300"></div>
-                        <div class="absolute bottom-3 left-3 flex items-center gap-1.5 bg-white/20 backdrop-blur-md rounded-full px-3 py-1">
-                            <i class="pi pi-map-marker text-white text-xs"></i>
-                            <span class="text-white text-xs font-medium">Guinee Forestiere</span>
-                        </div>
-                        <i class="pi pi-flag absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/20 text-6xl"></i>
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-bold text-surface-800 dark:text-surface-100">Nzerekore</h3>
-                        <p class="text-surface-400 text-xs mt-1">8+ trajets disponibles</p>
-                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-surface-100 dark:border-surface-700">
-                            <span class="text-xs text-surface-400">A partir de</span>
-                            <span class="text-orange-500 font-bold">300 000 GNF</span>
-                        </div>
-                    </div>
+                    </article>
+                    }
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ==================== SERVICES / FEATURES ==================== -->
-    <section id="services" class="py-16 lg:py-24 px-4 sm:px-6 lg:px-8 bg-white dark:bg-surface-900">
-        <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-14">
-                <span class="text-orange-500 font-semibold text-sm uppercase tracking-wider">Nos services</span>
-                <h2 class="text-2xl sm:text-3xl font-bold text-surface-800 dark:text-surface-100 mt-2">Tout ce dont vous avez besoin pour voyager</h2>
-                <p class="text-surface-400 mt-3 max-w-xl mx-auto text-sm">Une experience complete de reservation, du choix du trajet jusqu'a votre arrivee.</p>
+    <!-- ==================== SERVICES ==================== -->
+    <section id="services" class="bg-white py-20 lg:py-28">
+        <div class="mx-auto max-w-7xl px-4 lg:px-8">
+            <!-- Header -->
+            <div appScrollAnimation="fade-up" class="mx-auto max-w-2xl text-center">
+                <span
+                    class="mb-2 inline-flex items-center gap-2 rounded-full bg-[#f97316]/10 px-4 py-1.5 text-sm font-semibold text-[#f97316]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                    </svg>
+                    Nos services
+                </span>
+                <h2 class="mt-3 font-display text-2xl font-bold text-[#1a2a3a] sm:text-3xl lg:text-4xl text-balance">
+                    Pourquoi choisir BilletterieGN ?
+                </h2>
+                <p class="mt-3 text-sm leading-relaxed text-[#64748b] lg:text-base">
+                    Une exp&eacute;rience de voyage unique avec des services pens&eacute;s pour votre confort et votre
+                    s&eacute;curit&eacute;.
+                </p>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                <div class="group bg-surface-50 dark:bg-surface-800 rounded-2xl p-7 border border-surface-100 dark:border-surface-700 hover:border-orange-200 dark:hover:border-orange-800 hover:shadow-lg transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                        <i class="pi pi-search text-xl text-white"></i>
+            <!-- Grid -->
+            <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                @for (s of services; track s.title; let i = $index) {
+                <div appScrollAnimation="fade-up" [animDelay]="i * 100"
+                    class="group rounded-2xl border border-[#d1d8e0] bg-white p-6 shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:shadow-[#1e3a5f]/[0.06]">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg"
+                        [style.background-color]="s.color + '14'">
+                        @switch (s.icon) {
+                        @case ('shield') {
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" [style.color]="s.color"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+                        </svg>
+                        }
+                        @case ('clock') {
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" [style.color]="s.color"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        }
+                        @case ('wallet') {
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" [style.color]="s.color"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2.468" />
+                        </svg>
+                        }
+                        @case ('headphones') {
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" [style.color]="s.color"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3" />
+                        </svg>
+                        }
+                        @case ('map') {
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" [style.color]="s.color"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        }
+                        @case ('smartphone') {
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" [style.color]="s.color"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+                            <path d="M12 18h.01" />
+                        </svg>
+                        }
+                        }
                     </div>
-                    <h3 class="font-bold text-lg text-surface-800 dark:text-surface-100 mb-2">Recherche intelligente</h3>
-                    <p class="text-surface-400 text-sm leading-relaxed">Trouvez le trajet ideal en filtrant par ville, date, prix et type de vehicule.</p>
+                    <h3 class="mt-4 font-display text-base font-bold text-[#1a2a3a]">{{ s.title }}</h3>
+                    <p class="mt-2 text-sm leading-relaxed text-[#64748b]">{{ s.desc }}</p>
                 </div>
-
-                <div class="group bg-surface-50 dark:bg-surface-800 rounded-2xl p-7 border border-surface-100 dark:border-surface-700 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-lg transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                        <i class="pi pi-shield text-xl text-white"></i>
-                    </div>
-                    <h3 class="font-bold text-lg text-surface-800 dark:text-surface-100 mb-2">Paiement securise</h3>
-                    <p class="text-surface-400 text-sm leading-relaxed">Mobile Money (Orange, MTN), carte bancaire ou paiement au guichet. Vous choisissez.</p>
-                </div>
-
-                <div class="group bg-surface-50 dark:bg-surface-800 rounded-2xl p-7 border border-surface-100 dark:border-surface-700 hover:border-green-200 dark:hover:border-green-800 hover:shadow-lg transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                        <i class="pi pi-ticket text-xl text-white"></i>
-                    </div>
-                    <h3 class="font-bold text-lg text-surface-800 dark:text-surface-100 mb-2">Billet electronique</h3>
-                    <p class="text-surface-400 text-sm leading-relaxed">Recevez votre billet par SMS ou email. Presentez-le directement depuis votre telephone.</p>
-                </div>
-
-                <div class="group bg-surface-50 dark:bg-surface-800 rounded-2xl p-7 border border-surface-100 dark:border-surface-700 hover:border-purple-200 dark:hover:border-purple-800 hover:shadow-lg transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                        <i class="pi pi-clock text-xl text-white"></i>
-                    </div>
-                    <h3 class="font-bold text-lg text-surface-800 dark:text-surface-100 mb-2">Horaires en temps reel</h3>
-                    <p class="text-surface-400 text-sm leading-relaxed">Suivez les departs et arrivees en direct. Plus d'attente inutile aux gares.</p>
-                </div>
-
-                <div class="group bg-surface-50 dark:bg-surface-800 rounded-2xl p-7 border border-surface-100 dark:border-surface-700 hover:border-red-200 dark:hover:border-red-800 hover:shadow-lg transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-red-400 to-red-600 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                        <i class="pi pi-percentage text-xl text-white"></i>
-                    </div>
-                    <h3 class="font-bold text-lg text-surface-800 dark:text-surface-100 mb-2">Promotions exclusives</h3>
-                    <p class="text-surface-400 text-sm leading-relaxed">Profitez de tarifs reduits et d'offres speciales sur les trajets populaires.</p>
-                </div>
-
-                <div class="group bg-surface-50 dark:bg-surface-800 rounded-2xl p-7 border border-surface-100 dark:border-surface-700 hover:border-teal-200 dark:hover:border-teal-800 hover:shadow-lg transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-teal-400 to-teal-600 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                        <i class="pi pi-headphones text-xl text-white"></i>
-                    </div>
-                    <h3 class="font-bold text-lg text-surface-800 dark:text-surface-100 mb-2">Support 24/7</h3>
-                    <p class="text-surface-400 text-sm leading-relaxed">Notre equipe est disponible a tout moment pour vous assister avant et pendant votre voyage.</p>
-                </div>
+                }
             </div>
         </div>
     </section>
 
     <!-- ==================== HOW IT WORKS ==================== -->
-    <section class="py-16 lg:py-24 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-6xl mx-auto">
-            <div class="text-center mb-14">
-                <span class="text-orange-500 font-semibold text-sm uppercase tracking-wider">Simple et rapide</span>
-                <h2 class="text-2xl sm:text-3xl font-bold text-surface-800 dark:text-surface-100 mt-2">Comment ca marche ?</h2>
+    <section id="how-it-works" class="bg-[#f5f7fa] py-20 lg:py-28">
+        <div class="mx-auto max-w-7xl px-4 lg:px-8">
+            <!-- Header -->
+            <div appScrollAnimation="fade-up" class="mx-auto max-w-2xl text-center">
+                <span class="mb-2 inline-block text-sm font-semibold tracking-wide text-[#f97316]">
+                    Comment &ccedil;a marche
+                </span>
+                <h2 class="font-display text-2xl font-bold text-[#1a2a3a] sm:text-3xl lg:text-4xl text-balance">
+                    R&eacute;servez en 4 &eacute;tapes simples
+                </h2>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
-                <!-- Connector line (hidden on mobile) -->
-                <div class="hidden md:block absolute top-12 left-[18%] right-[18%] h-0.5 bg-gradient-to-r from-orange-300 via-blue-300 to-green-300 dark:from-orange-700 dark:via-blue-700 dark:to-green-700"></div>
 
-                <div class="text-center relative">
-                    <div class="w-24 h-24 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-orange-500/20 relative z-10">
-                        <i class="pi pi-search text-3xl text-white"></i>
-                    </div>
-                    <span class="inline-block bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs font-bold px-3 py-1 rounded-full mb-3">Etape 1</span>
-                    <h3 class="font-bold text-surface-800 dark:text-surface-100 text-lg">Recherchez</h3>
-                    <p class="text-surface-400 text-sm mt-2">Choisissez votre trajet, la date et le nombre de passagers.</p>
+            <!-- Steps -->
+            <div class="relative mt-16">
+                <!-- Connecting line (desktop) -->
+                <div class="absolute top-[4.5rem] right-[12.5%] left-[12.5%] hidden lg:block">
+                    <div class="h-0.5" style="background: linear-gradient(to right, rgba(249,115,22,0.4), rgba(59,130,246,0.4), rgba(16,185,129,0.4));"></div>
                 </div>
 
-                <div class="text-center relative">
-                    <div class="w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-blue-500/20 relative z-10">
-                        <i class="pi pi-list text-3xl text-white"></i>
-                    </div>
-                    <span class="inline-block bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold px-3 py-1 rounded-full mb-3">Etape 2</span>
-                    <h3 class="font-bold text-surface-800 dark:text-surface-100 text-lg">Comparez</h3>
-                    <p class="text-surface-400 text-sm mt-2">Consultez les offres, horaires, prix et selectionnez la meilleure.</p>
-                </div>
+                <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+                    @for (step of steps; track step.step; let i = $index) {
+                    <div appScrollAnimation="fade-up" [animDelay]="i * 200" class="relative flex flex-col items-center text-center">
+                        <!-- Icon box -->
+                        <div class="group relative z-10 flex h-28 w-28 items-center justify-center rounded-2xl shadow-xl transition-all duration-500 hover:scale-110 hover:rotate-3 hover:shadow-2xl"
+                            [style.background]="'linear-gradient(to bottom right, ' + step.colorFrom + ', ' + step.colorTo + ')'"
+                            [style.box-shadow]="'0 0 0 4px ' + step.ringColor + ', 0 20px 25px -5px rgba(0,0,0,0.1)'">
+                            @switch (step.icon) {
+                            @case ('search') {
+                            <svg class="h-10 w-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            }
+                            @case ('bar-chart') {
+                            <svg class="h-10 w-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg>
+                            }
+                            @case ('credit-card') {
+                            <svg class="h-10 w-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                            }
+                            @case ('ticket') {
+                            <svg class="h-10 w-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+                            }
+                            }
+                        </div>
 
-                <div class="text-center relative">
-                    <div class="w-24 h-24 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-purple-500/20 relative z-10">
-                        <i class="pi pi-credit-card text-3xl text-white"></i>
-                    </div>
-                    <span class="inline-block bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-bold px-3 py-1 rounded-full mb-3">Etape 3</span>
-                    <h3 class="font-bold text-surface-800 dark:text-surface-100 text-lg">Payez</h3>
-                    <p class="text-surface-400 text-sm mt-2">Reglez en toute securite via mobile money ou carte bancaire.</p>
-                </div>
+                        <!-- Step badge -->
+                        <span class="mt-5 inline-flex items-center gap-1 rounded-full px-4 py-1.5 text-xs font-bold text-white"
+                            [style.background]="'linear-gradient(to right, ' + step.colorFrom + ', ' + step.colorTo + ')'">
+                            &Eacute;tape {{ step.step }}
+                        </span>
 
-                <div class="text-center relative">
-                    <div class="w-24 h-24 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-green-500/20 relative z-10">
-                        <i class="pi pi-check-circle text-3xl text-white"></i>
+                        <h3 class="mt-3 font-display text-lg font-bold text-[#1a2a3a]">{{ step.title }}</h3>
+                        <p class="mt-1.5 max-w-[220px] text-sm leading-relaxed text-[#64748b]">{{ step.desc }}</p>
                     </div>
-                    <span class="inline-block bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-bold px-3 py-1 rounded-full mb-3">Etape 4</span>
-                    <h3 class="font-bold text-surface-800 dark:text-surface-100 text-lg">Voyagez</h3>
-                    <p class="text-surface-400 text-sm mt-2">Recevez votre billet et profitez de votre voyage en toute tranquillite.</p>
+                    }
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ==================== ABOUT / WHY US ==================== -->
-    <section id="about" class="py-16 lg:py-24 px-4 sm:px-6 lg:px-8 bg-white dark:bg-surface-900">
-        <div class="max-w-7xl mx-auto">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <!-- Left: Content -->
-                <div>
-                    <span class="text-orange-500 font-semibold text-sm uppercase tracking-wider">A propos de nous</span>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-surface-800 dark:text-surface-100 mt-2">La premiere plateforme de billetterie de transport en Guinee</h2>
-                    <p class="text-surface-400 mt-5 leading-relaxed">
-                        Billetterie GN est nee de la volonte de moderniser le transport en Guinee. Notre mission est de connecter les voyageurs aux meilleurs transporteurs du pays, en offrant une experience de reservation simple, fiable et accessible a tous.
+    <!-- ==================== ABOUT ==================== -->
+    <section id="about" class="bg-white py-20 lg:py-28">
+        <div class="mx-auto max-w-7xl px-4 lg:px-8">
+            <div class="grid gap-14 lg:grid-cols-2 items-center">
+                <!-- Left: Image -->
+                <div appScrollAnimation="fade-left" class="relative">
+                    <div
+                        class="absolute -inset-6 rounded-3xl bg-gradient-to-br from-[#f97316]/10 via-transparent to-[#1e3a5f]/10 blur-2xl">
+                    </div>
+                    <div
+                        class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1e3a5f] to-[#0f1f35] aspect-[4/3]">
+                        <img src="images/bus-interior.jpg" alt="Equipe BilletterieGN" class="h-full w-full object-cover"
+                            (error)="$any($event.target).style.display='none'" />
+                        <!-- Decorative pattern fallback -->
+                        <div class="absolute inset-0 opacity-[0.06]"
+                            style="background-image: radial-gradient(circle, white 1px, transparent 1px); background-size: 24px 24px;">
+                        </div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-white/10" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#1e3a5f]/60 to-transparent"></div>
+                        <!-- Floating card -->
+                        <div
+                            class="absolute bottom-6 left-6 rounded-xl bg-white/95 backdrop-blur-sm px-5 py-4 shadow-xl">
+                            <p class="text-2xl font-bold text-[#1a2a3a]">
+                                <span [appCountUp]="5" countSuffix=" ans"></span>
+                            </p>
+                            <p class="text-xs text-[#64748b]">d'exp&eacute;rience en Guin&eacute;e</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Content -->
+                <div appScrollAnimation="fade-right">
+                    <span
+                        class="mb-2 inline-flex items-center gap-2 rounded-full bg-[#f97316]/10 px-4 py-1.5 text-sm font-semibold text-[#f97316]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        A propos de nous
+                    </span>
+                    <h2
+                        class="mt-3 font-display text-2xl font-bold text-[#1a2a3a] sm:text-3xl lg:text-4xl text-balance">
+                        Connecter la Guin&eacute;e, un trajet &agrave; la fois
+                    </h2>
+                    <p class="mt-4 text-sm leading-relaxed text-[#64748b] lg:text-base">
+                        BilletterieGN est n&eacute;e de la volont&eacute; de moderniser le transport terrestre en
+                        Guin&eacute;e. Notre mission est de rendre le voyage accessible, s&ucirc;r et agr&eacute;able
+                        pour tous les Guin&eacute;ens.
                     </p>
-                    <div class="space-y-4 mt-8">
-                        <div class="flex gap-4">
-                            <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
-                                <i class="pi pi-check text-green-600"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-surface-800 dark:text-surface-100">Transporteurs verifies</h4>
-                                <p class="text-surface-400 text-sm mt-1">Tous nos partenaires sont selectionnes et verifies pour garantir votre securite.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
-                                <i class="pi pi-check text-blue-600"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-surface-800 dark:text-surface-100">Couverture nationale</h4>
-                                <p class="text-surface-400 text-sm mt-1">Des trajets disponibles dans toutes les regions : Conakry, Kindia, Labe, Kankan, Nzerekore.</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
-                                <i class="pi pi-check text-orange-600"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-surface-800 dark:text-surface-100">Tarifs transparents</h4>
-                                <p class="text-surface-400 text-sm mt-1">Pas de frais caches. Le prix affiche est le prix que vous payez.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Right: Stats Cards -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 text-white">
-                        <i class="pi pi-map-marker text-3xl opacity-80"></i>
-                        <div class="text-4xl font-extrabold mt-4">50+</div>
-                        <p class="text-orange-100 text-sm mt-1">Destinations</p>
+                    <!-- Values -->
+                    <div class="mt-8 space-y-4">
+                        @for (v of values; track v.title) {
+                        <div class="flex gap-4 items-start">
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f97316]/10">
+                                @switch (v.icon) {
+                                @case ('shield') {
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#f97316]"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+                                </svg>
+                                }
+                                @case ('heart') {
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#f97316]"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                                </svg>
+                                }
+                                @case ('zap') {
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#f97316]"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />
+                                </svg>
+                                }
+                                }
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-[#1a2a3a]">{{ v.title }}</h3>
+                                <p class="mt-1 text-sm text-[#64748b] leading-relaxed">{{ v.desc }}</p>
+                            </div>
+                        </div>
+                        }
                     </div>
-                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
-                        <i class="pi pi-car text-3xl opacity-80"></i>
-                        <div class="text-4xl font-extrabold mt-4">200+</div>
-                        <p class="text-blue-100 text-sm mt-1">Trajets / jour</p>
-                    </div>
-                    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white">
-                        <i class="pi pi-users text-3xl opacity-80"></i>
-                        <div class="text-4xl font-extrabold mt-4">10K+</div>
-                        <p class="text-green-100 text-sm mt-1">Voyageurs satisfaits</p>
-                    </div>
-                    <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
-                        <i class="pi pi-star text-3xl opacity-80"></i>
-                        <div class="text-4xl font-extrabold mt-4">4.8</div>
-                        <p class="text-purple-100 text-sm mt-1">Note moyenne</p>
+
+                    <!-- Stats -->
+                    <div class="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                        @for (s of aboutStats; track s.label) {
+                        <div class="rounded-xl bg-[#f0f2f5] p-4 text-center">
+                            <p class="text-xl font-bold text-[#1a2a3a]">
+                                <span [appCountUp]="s.value" [countSuffix]="s.suffix" [countDecimal]="s.decimal"></span>
+                            </p>
+                            <p class="mt-0.5 text-[11px] text-[#64748b]">{{ s.label }}</p>
+                        </div>
+                        }
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ==================== CTA SECTION ==================== -->
-    <section class="py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-5xl mx-auto relative overflow-hidden rounded-3xl">
-            <div class="absolute inset-0 bg-gradient-to-r from-surface-900 to-blue-950"></div>
-            <div class="absolute top-0 right-0 w-80 h-80 bg-orange-500/20 rounded-full blur-3xl"></div>
-            <div class="absolute bottom-0 left-0 w-60 h-60 bg-blue-500/20 rounded-full blur-3xl"></div>
+    <!-- ==================== DOWNLOAD APP ==================== -->
+    <section class="relative overflow-hidden bg-[#f5f7fa]">
+        <!-- Background image -->
+        <img src="images/bus-interior.jpg" alt="" class="absolute inset-0 h-full w-full object-cover"
+            (error)="$any($event.target).style.display='none'" />
+        <div class="absolute inset-0 bg-[#0f1f35]/85"></div>
+        <div class="pointer-events-none absolute inset-0 opacity-[0.03]"
+            style="background-image: radial-gradient(circle, white 1px, transparent 1px); background-size: 32px 32px;">
+        </div>
 
-            <div class="relative z-10 p-8 sm:p-12 lg:p-16 text-center">
-                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-4">Pret a commencer votre voyage ?</h2>
-                <p class="text-surface-300 mb-8 max-w-xl mx-auto">Rejoignez des milliers de voyageurs qui font confiance a Billetterie GN pour leurs deplacements en Guinee.</p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a [href]="loginUrl" pButton pRipple class="!bg-orange-500 hover:!bg-orange-600 !border-orange-500 hover:!border-orange-600 rounded-xl px-8 py-3.5 text-sm font-bold justify-center">
-                        <i class="pi pi-user-plus mr-2"></i>
-                        Creer un compte gratuit
+        <div
+            class="relative mx-auto flex max-w-7xl flex-col items-center gap-12 px-4 py-20 lg:flex-row lg:gap-20 lg:px-8 lg:py-28">
+            <!-- Left: Phone mockups -->
+            <div class="relative flex w-full flex-shrink-0 items-end justify-center lg:w-[45%]">
+                <!-- Glow -->
+                <div
+                    class="pointer-events-none absolute top-1/2 left-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f97316]/15 blur-[100px]">
+                </div>
+
+                <!-- Phone 1: Ticket (left, tilted) -->
+                <div appScrollAnimation="fade-up" class="relative z-10 -mr-4 w-[200px] sm:w-[220px]">
+                  <div style="transform: rotate(-3deg);">
+                    <div
+                        class="overflow-hidden rounded-[2.5rem] border-[6px] border-[#2a2a2e] bg-[#2a2a2e] shadow-[0_25px_60px_-12px_rgba(0,0,0,0.5)]">
+                        <!-- Dynamic Island -->
+                        <div class="absolute top-0 left-1/2 z-30 -translate-x-1/2">
+                            <div class="h-[22px] w-[90px] rounded-b-2xl bg-[#2a2a2e]"></div>
+                        </div>
+                        <!-- Screen -->
+                        <div class="relative overflow-hidden rounded-[2rem] bg-[#f5f7fa]" style="height: 480px;">
+                            <!-- Status bar -->
+                            <div
+                                class="flex items-center justify-between px-5 py-1.5 text-[9px] font-semibold text-[#1a2a3a]">
+                                <span>09:41</span>
+                                <div class="flex items-center gap-1">
+                                    <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M2 20h2V8h-2zm4 0h2V4H6zm4 0h2V12h-2zm4 0h2V2h-2zm4 0h2v-8h-2z" />
+                                    </svg>
+                                    <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+                                        <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                                        <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+                                        <line x1="12" x2="12.01" y1="20" y2="20" />
+                                    </svg>
+                                    <svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                                        <rect x="1" y="6" width="18" height="12" rx="2" fill="none"
+                                            stroke="currentColor" stroke-width="2" />
+                                        <rect x="3" y="8" width="12" height="8" rx="1" fill="currentColor" />
+                                        <rect x="21" y="10" width="2" height="4" rx="0.5" fill="currentColor" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <!-- App header -->
+                            <div class="bg-[#1e3a5f] px-4 py-3">
+                                <p class="text-center text-[10px] font-bold text-white tracking-wide">BILLETTERIE GN</p>
+                            </div>
+                            <!-- Ticket card -->
+                            <div class="flex flex-1 flex-col items-center px-3 pt-4 pb-2">
+                                <div
+                                    class="w-full rounded-2xl bg-white shadow-lg overflow-hidden border border-[#e2e8f0]">
+                                    <!-- Orange header -->
+                                    <div class="bg-[#f97316] px-4 py-2.5">
+                                        <p class="text-[8px] font-semibold text-white/80 uppercase tracking-wider">Votre
+                                            Billet</p>
+                                        <p class="text-[11px] font-bold text-white">CNK-28-3301</p>
+                                    </div>
+                                    <!-- Route info -->
+                                    <div class="flex items-center justify-between px-4 py-3">
+                                        <div class="text-center">
+                                            <p class="text-[13px] font-bold text-[#1a2a3a]">10:30</p>
+                                            <p class="text-[7px] text-[#64748b] mt-0.5">Conakry</p>
+                                        </div>
+                                        <div class="flex flex-1 items-center px-2">
+                                            <div class="h-1.5 w-1.5 rounded-full bg-[#f97316]"></div>
+                                            <div class="mx-1 h-[1px] flex-1 border-t border-dashed border-[#94a3b8]">
+                                            </div>
+                                            <svg class="h-3 w-3 text-[#f97316]" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round">
+                                                <path d="M8 6v6" />
+                                                <path d="M15 6v6" />
+                                                <path d="M2 12h19.6" />
+                                                <path
+                                                    d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3" />
+                                                <circle cx="7" cy="18" r="2" />
+                                                <path d="M9 18h5" />
+                                                <circle cx="16" cy="18" r="2" />
+                                            </svg>
+                                            <div class="mx-1 h-[1px] flex-1 border-t border-dashed border-[#94a3b8]">
+                                            </div>
+                                            <div class="h-1.5 w-1.5 rounded-full bg-[#1e3a5f]"></div>
+                                        </div>
+                                        <div class="text-center">
+                                            <p class="text-[13px] font-bold text-[#1a2a3a]">15:20</p>
+                                            <p class="text-[7px] text-[#64748b] mt-0.5">Lab&eacute;</p>
+                                        </div>
+                                    </div>
+                                    <!-- Tear line -->
+                                    <div class="relative flex items-center px-2">
+                                        <div class="h-3 w-3 -translate-x-1/2 rounded-full bg-[#f5f7fa]"></div>
+                                        <div class="flex-1 border-t border-dashed border-[#e2e8f0]"></div>
+                                        <div class="h-3 w-3 translate-x-1/2 rounded-full bg-[#f5f7fa]"></div>
+                                    </div>
+                                    <!-- Details -->
+                                    <div class="grid grid-cols-2 gap-y-2 px-4 py-3">
+                                        <div>
+                                            <p class="text-[6px] uppercase text-[#94a3b8] tracking-wide">Date</p>
+                                            <p class="text-[9px] font-semibold text-[#1a2a3a]">23 Mars 2026</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-[6px] uppercase text-[#94a3b8] tracking-wide">Si&egrave;ge
+                                            </p>
+                                            <p class="text-[9px] font-semibold text-[#1a2a3a]">A12</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-[6px] uppercase text-[#94a3b8] tracking-wide">Bus N.</p>
+                                            <p class="text-[9px] font-semibold text-[#1a2a3a]">GN-4078</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-[6px] uppercase text-[#94a3b8] tracking-wide">Passager</p>
+                                            <p class="text-[9px] font-semibold text-[#1a2a3a]">M. Diallo</p>
+                                        </div>
+                                    </div>
+                                    <!-- Barcode -->
+                                    <div class="flex flex-col items-center border-t border-[#e2e8f0] px-4 py-3">
+                                        <div class="flex items-end gap-[1.5px]">
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:7.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:15px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:12.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:17.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:7.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:15px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:10px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:12.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:7.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:17.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:15px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:10px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:12.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:7.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:15px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:17.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:12.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:10px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:7.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:15px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:17.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:12.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:7.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:10px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:15px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:12.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:17.5px"></div>
+                                            <div class="w-[2px] rounded-sm bg-[#1a2a3a]" style="height:7.5px"></div>
+                                        </div>
+                                        <p class="mt-1.5 text-[7px] tracking-widest text-[#94a3b8]">2348 2991 5567</p>
+                                    </div>
+                                </div>
+                                <!-- Bottom button -->
+                                <div class="mt-3 w-full rounded-xl bg-[#f97316] py-2.5 text-center">
+                                    <p class="text-[9px] font-bold uppercase tracking-wider text-white">
+                                        T&eacute;l&eacute;charger le billet</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Home indicator -->
+                        <div class="flex justify-center bg-[#2a2a2e] py-1.5">
+                            <div class="h-[4px] w-[80px] rounded-full bg-white/20"></div>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Phone 2: Map / Tracking (right, tilted) -->
+                <div appScrollAnimation="fade-up" [animDelay]="200"
+                    class="relative z-20 w-[210px] sm:w-[235px]">
+                  <div style="transform: rotate(3deg);">
+                    <div
+                        class="overflow-hidden rounded-[2.5rem] border-[6px] border-[#2a2a2e] bg-[#2a2a2e] shadow-[0_25px_60px_-12px_rgba(0,0,0,0.5)]">
+                        <!-- Dynamic Island -->
+                        <div class="absolute top-0 left-1/2 z-30 -translate-x-1/2">
+                            <div class="h-[22px] w-[90px] rounded-b-2xl bg-[#2a2a2e]"></div>
+                        </div>
+                        <!-- Screen -->
+                        <div class="relative overflow-hidden rounded-[2rem] bg-[#f5f7fa]" style="height: 480px;">
+                            <!-- Status bar -->
+                            <div
+                                class="flex items-center justify-between px-5 py-1.5 text-[9px] font-semibold text-[#1a2a3a]">
+                                <span>09:41</span>
+                                <div class="flex items-center gap-1">
+                                    <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M2 20h2V8h-2zm4 0h2V4H6zm4 0h2V12h-2zm4 0h2V2h-2zm4 0h2v-8h-2z" />
+                                    </svg>
+                                    <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+                                        <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                                        <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+                                        <line x1="12" x2="12.01" y1="20" y2="20" />
+                                    </svg>
+                                    <svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                                        <rect x="1" y="6" width="18" height="12" rx="2" fill="none"
+                                            stroke="currentColor" stroke-width="2" />
+                                        <rect x="3" y="8" width="12" height="8" rx="1" fill="currentColor" />
+                                        <rect x="21" y="10" width="2" height="4" rx="0.5" fill="currentColor" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <!-- App header -->
+                            <div class="bg-[#1e3a5f] px-4 py-3">
+                                <p class="text-center text-[10px] font-bold text-white tracking-wide">SUIVI EN DIRECT
+                                </p>
+                            </div>
+                            <!-- Map area -->
+                            <div class="relative flex-1 overflow-hidden bg-[#e8e4dc]" style="height: 320px;">
+                                <!-- Fake map roads -->
+                                <svg class="absolute inset-0 h-full w-full" viewBox="0 0 200 300" fill="none">
+                                    <path d="M0 80 L200 120" stroke="#d4cfc5" stroke-width="8" />
+                                    <path d="M0 80 L200 120" stroke="#f5f2eb" stroke-width="4" />
+                                    <path d="M60 0 L80 300" stroke="#d4cfc5" stroke-width="8" />
+                                    <path d="M60 0 L80 300" stroke="#f5f2eb" stroke-width="4" />
+                                    <path d="M150 0 L120 300" stroke="#d4cfc5" stroke-width="6" />
+                                    <path d="M150 0 L120 300" stroke="#f5f2eb" stroke-width="3" />
+                                    <path d="M0 200 L200 180" stroke="#d4cfc5" stroke-width="6" />
+                                    <path d="M0 200 L200 180" stroke="#f5f2eb" stroke-width="3" />
+                                    <!-- Green areas -->
+                                    <rect x="10" y="10" width="40" height="50" rx="4" fill="#c5d9b2" opacity="0.5" />
+                                    <rect x="160" y="130" width="35" height="40" rx="4" fill="#c5d9b2" opacity="0.5" />
+                                    <rect x="85" y="220" width="50" height="35" rx="4" fill="#c5d9b2" opacity="0.4" />
+                                    <!-- Route dashed -->
+                                    <path d="M75 50 Q100 130 110 200" stroke="#1e3a5f" stroke-width="3"
+                                        stroke-dasharray="6 3" />
+                                </svg>
+                                <!-- Bus marker with pulse -->
+                                <div class="absolute top-[35%] left-[45%] flex flex-col items-center">
+                                    <div class="absolute h-8 w-8 animate-ping rounded-full bg-[#f97316]/30"></div>
+                                    <div
+                                        class="relative z-10 flex h-7 w-7 items-center justify-center rounded-full bg-[#f97316] shadow-lg">
+                                        <svg class="h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M8 6v6" />
+                                            <path d="M15 6v6" />
+                                            <path d="M2 12h19.6" />
+                                            <path
+                                                d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3" />
+                                            <circle cx="7" cy="18" r="2" />
+                                            <path d="M9 18h5" />
+                                            <circle cx="16" cy="18" r="2" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <!-- Start pin -->
+                                <div class="absolute top-[16%] left-[35%] flex flex-col items-center">
+                                    <div
+                                        class="flex h-5 w-5 items-center justify-center rounded-full bg-[#1e3a5f] shadow-md">
+                                        <div class="h-1.5 w-1.5 rounded-full bg-white"></div>
+                                    </div>
+                                    <div class="mt-0.5 rounded bg-[#1e3a5f] px-1.5 py-0.5">
+                                        <p class="text-[6px] font-bold text-white">Conakry</p>
+                                    </div>
+                                </div>
+                                <!-- End pin -->
+                                <div class="absolute top-[62%] left-[52%] flex flex-col items-center">
+                                    <div
+                                        class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 shadow-md">
+                                        <svg class="h-2.5 w-2.5 text-white" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                                        </svg>
+                                    </div>
+                                    <div class="mt-0.5 rounded bg-emerald-600 px-1.5 py-0.5">
+                                        <p class="text-[6px] font-bold text-white">Lab&eacute;</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Bottom card -->
+                            <div class="border-t border-[#e2e8f0] bg-white px-4 py-3">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-[8px] text-[#94a3b8]">En route vers</p>
+                                        <p class="text-[11px] font-bold text-[#1a2a3a]">Lab&eacute;</p>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1">
+                                        <div class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></div>
+                                        <p class="text-[8px] font-semibold text-emerald-600">En cours</p>
+                                    </div>
+                                </div>
+                                <div class="mt-2 flex items-center gap-3">
+                                    <div class="flex items-center gap-1">
+                                        <svg class="h-2.5 w-2.5 text-[#94a3b8]" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <polyline points="12 6 12 12 16 14" />
+                                        </svg>
+                                        <p class="text-[8px] text-[#94a3b8]">Arriv&eacute;e: 15:20</p>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <svg class="h-2.5 w-2.5 text-[#94a3b8]" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                                            <circle cx="12" cy="10" r="3" />
+                                        </svg>
+                                        <p class="text-[8px] text-[#94a3b8]">128 km restants</p>
+                                    </div>
+                                </div>
+                                <!-- Progress bar -->
+                                <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#f0f2f5]">
+                                    <div class="h-full w-[62%] rounded-full bg-[#f97316]"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Home indicator -->
+                        <div class="flex justify-center bg-[#2a2a2e] py-1.5">
+                            <div class="h-[4px] w-[80px] rounded-full bg-white/20"></div>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+            </div>
+
+            <!-- Right: Content -->
+            <div appScrollAnimation="fade-right" class="w-full text-center lg:w-[55%] lg:text-left">
+                <span class="mb-3 inline-block text-sm font-semibold tracking-wide text-[#f97316]">
+                    T&eacute;l&eacute;chargez l'application Billetterie GN
+                </span>
+                <h2
+                    class="font-display text-2xl font-bold leading-tight text-white sm:text-3xl lg:text-4xl xl:text-[2.75rem] text-balance">
+                    Trouvez un
+                    <span class="relative inline-block">
+                        <span class="relative z-10 text-[#f97316]">transport</span>
+                        <span class="absolute bottom-1 left-0 -z-0 h-3 w-full -skew-x-3 bg-[#f97316]/20"></span>
+                    </span>
+                    &agrave; proximit&eacute; avec notre application
+                </h2>
+                <p class="mx-auto mt-5 max-w-lg text-base leading-relaxed text-white/60 lg:mx-0">
+                    Notre application mobile vous permet de r&eacute;server vos billets, suivre vos bus en direct et
+                    g&eacute;rer vos voyages &agrave; travers toute la Guin&eacute;e.
+                </p>
+
+                <!-- Features -->
+                <ul class="mx-auto mt-7 max-w-lg space-y-3.5 lg:mx-0">
+                    @for (f of appFeatures; track f; let i = $index) {
+                    <li appScrollAnimation="fade-right" [animDelay]="500 + i * 100"
+                        class="flex items-center gap-3 text-sm text-white/80">
+                        <svg class="h-5 w-5 flex-shrink-0 text-[#f97316]" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                        {{ f }}
+                    </li>
+                    }
+                </ul>
+
+                <!-- Store badges -->
+                <div class="mt-9 flex flex-wrap items-center justify-center gap-4 lg:justify-start">
+                    <a href="#"
+                        class="group flex items-center gap-3 rounded-xl border border-white/20 bg-white/5 px-5 py-3 backdrop-blur-sm transition-all duration-300 hover:border-white/40 hover:bg-white/10 hover:-translate-y-0.5">
+                        <svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+                        </svg>
+                        <div class="text-left">
+                            <p class="text-[10px] leading-none text-white/60">T&eacute;l&eacute;charger sur</p>
+                            <p class="mt-0.5 text-sm font-semibold leading-tight text-white">App Store</p>
+                        </div>
                     </a>
-                    <a (click)="handleScroll('services')" pButton pRipple class="!bg-white/10 hover:!bg-white/20 !border-white/20 hover:!border-white/30 !text-white rounded-xl px-8 py-3.5 text-sm font-bold justify-center cursor-pointer">
-                        <i class="pi pi-info-circle mr-2"></i>
-                        En savoir plus
+                    <a href="#"
+                        class="group flex items-center gap-3 rounded-xl border border-white/20 bg-white/5 px-5 py-3 backdrop-blur-sm transition-all duration-300 hover:border-white/40 hover:bg-white/10 hover:-translate-y-0.5">
+                        <svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.802 8.99l-2.303 2.303-8.635-8.635z" />
+                        </svg>
+                        <div class="text-left">
+                            <p class="text-[10px] leading-none text-white/60">Disponible sur</p>
+                            <p class="mt-0.5 text-sm font-semibold leading-tight text-white">Google Play</p>
+                        </div>
                     </a>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ==================== FOOTER ==================== -->
-    <footer class="bg-surface-900 dark:bg-surface-950 pt-14 pb-8 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-surface-800">
-                <!-- Brand -->
-                <div class="lg:col-span-1">
-                    <div class="flex items-center gap-3 mb-4">
-                        <img src="/layout/images/logo/logo.png" alt="Billetterie GN" class="h-9" />
-                        <span class="text-white font-bold text-lg">Billetterie<span class="text-orange-400">GN</span></span>
+    <!-- ==================== CTA BANNER ==================== -->
+    <section class="bg-white py-20 lg:py-28">
+        <div class="mx-auto max-w-7xl px-4 lg:px-8">
+            <div appScrollAnimation="scale-in"
+                class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#f97316] to-[#ea580c] px-8 py-14 text-center lg:px-16 lg:py-20">
+                <!-- Background dots -->
+                <div class="pointer-events-none absolute inset-0 opacity-10"
+                    style="background-image: radial-gradient(circle, white 1px, transparent 1px); background-size: 24px 24px;">
+                </div>
+
+                <div class="relative">
+                    <h2 class="font-display text-2xl font-bold text-white sm:text-3xl lg:text-4xl text-balance">
+                        Pr&ecirc;t &agrave; voyager &agrave; travers la Guin&eacute;e ?
+                    </h2>
+                    <p class="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/80 lg:text-base">
+                        Rejoignez des milliers de voyageurs qui font confiance &agrave; BilletterieGN pour leurs
+                        d&eacute;placements quotidiens.
+                    </p>
+                    <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+                        <a href="#"
+                            class="group inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-[#f97316] shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl">
+                            R&eacute;server un billet
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12h14" />
+                                <path d="m12 5 7 7-7 7" />
+                            </svg>
+                        </a>
+                        <a href="tel:+224620000000"
+                            class="inline-flex items-center gap-2 rounded-full border-2 border-white/40 px-6 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/10 hover:border-white/60">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                            </svg>
+                            Nous appeler
+                        </a>
                     </div>
-                    <p class="text-surface-400 text-sm leading-relaxed">La plateforme de reservation de transport N&deg;1 en Guinee. Voyagez en toute confiance.</p>
-                    <div class="flex gap-3 mt-5">
-                        <a href="#" class="w-9 h-9 bg-surface-800 hover:bg-orange-500 rounded-lg flex items-center justify-center transition-colors duration-200">
-                            <i class="pi pi-facebook text-surface-400 hover:text-white text-sm"></i>
-                        </a>
-                        <a href="#" class="w-9 h-9 bg-surface-800 hover:bg-orange-500 rounded-lg flex items-center justify-center transition-colors duration-200">
-                            <i class="pi pi-twitter text-surface-400 hover:text-white text-sm"></i>
-                        </a>
-                        <a href="#" class="w-9 h-9 bg-surface-800 hover:bg-orange-500 rounded-lg flex items-center justify-center transition-colors duration-200">
-                            <i class="pi pi-instagram text-surface-400 hover:text-white text-sm"></i>
-                        </a>
-                        <a href="#" class="w-9 h-9 bg-surface-800 hover:bg-orange-500 rounded-lg flex items-center justify-center transition-colors duration-200">
-                            <i class="pi pi-whatsapp text-surface-400 hover:text-white text-sm"></i>
-                        </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- ==================== FOOTER ==================== -->
+<footer id="contact" class="bg-[#0f1f35] pt-16 pb-8">
+    <div class="mx-auto max-w-7xl px-4 lg:px-8">
+        <!-- Top -->
+        <div class="grid gap-10 lg:grid-cols-[1.5fr_2fr]">
+            <!-- Brand -->
+            <div>
+                <a href="#" class="group flex items-center gap-2.5">
+                    <div
+                        class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#f97316] to-[#ea580c] shadow-lg shadow-[#f97316]/25">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <path d="M8 6v6" />
+                            <path d="M15 6v6" />
+                            <path d="M2 12h19.6" />
+                            <path
+                                d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3" />
+                            <circle cx="7" cy="18" r="2" />
+                            <path d="M9 18h5" />
+                            <circle cx="16" cy="18" r="2" />
+                        </svg>
                     </div>
-                </div>
-
-                <!-- Destinations -->
-                <div>
-                    <h4 class="text-white font-semibold mb-4">Destinations</h4>
-                    <ul class="space-y-2.5">
-                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Conakry</a></li>
-                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Kankan</a></li>
-                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Labe</a></li>
-                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Kindia</a></li>
-                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Nzerekore</a></li>
-                    </ul>
-                </div>
-
-                <!-- Liens utiles -->
-                <div>
-                    <h4 class="text-white font-semibold mb-4">Liens utiles</h4>
-                    <ul class="space-y-2.5">
-                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">A propos</a></li>
-                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Nos services</a></li>
-                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">FAQ</a></li>
-                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Conditions generales</a></li>
-                        <li><a href="#" class="text-surface-400 hover:text-orange-400 text-sm transition-colors">Politique de confidentialite</a></li>
-                    </ul>
-                </div>
-
+                    <div>
+                        <span class="font-display text-lg font-bold text-white">Billetterie<span
+                                class="text-[#f97316]">GN</span></span>
+                        <span class="block text-[10px] font-medium text-white/40 uppercase tracking-wider">Transport
+                            Guinee</span>
+                    </div>
+                </a>
+                <p class="mt-4 max-w-xs text-sm leading-relaxed text-white/50">
+                    La plateforme de r&eacute;f&eacute;rence pour la r&eacute;servation de billets de transport
+                    terrestre en Guin&eacute;e.
+                </p>
                 <!-- Contact -->
-                <div>
-                    <h4 class="text-white font-semibold mb-4">Contact</h4>
-                    <ul class="space-y-3">
-                        <li class="flex items-start gap-3">
-                            <i class="pi pi-map-marker text-orange-400 text-sm mt-0.5"></i>
-                            <span class="text-surface-400 text-sm">Conakry, Guinee</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <i class="pi pi-phone text-orange-400 text-sm mt-0.5"></i>
-                            <span class="text-surface-400 text-sm">+224 XXX XXX XXX</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <i class="pi pi-envelope text-orange-400 text-sm mt-0.5"></i>
-                            <span class="text-surface-400 text-sm">contact&#64;guidipress-io.com</span>
-                        </li>
-                    </ul>
+                <div class="mt-6 space-y-2">
+                    <a href="tel:+224620000000"
+                        class="flex items-center gap-2.5 text-sm text-white/60 transition-colors hover:text-[#f97316]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                        </svg>
+                        +224 620 00 00 00
+                    </a>
+                    <a href="mailto:contact&#64;billetterie-gn.com"
+                        class="flex items-center gap-2.5 text-sm text-white/60 transition-colors hover:text-[#f97316]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="20" height="16" x="2" y="4" rx="2" />
+                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                        </svg>
+                        contact&#64;billetterie-gn.com
+                    </a>
+                </div>
+                <!-- Social -->
+                <div class="mt-6 flex gap-3">
+                    <a href="#"
+                        class="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/60 transition-all duration-300 hover:bg-[#f97316] hover:text-white"
+                        aria-label="Facebook">
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
+                        </svg>
+                    </a>
+                    <a href="#"
+                        class="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/60 transition-all duration-300 hover:bg-[#f97316] hover:text-white"
+                        aria-label="Twitter">
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
+                        </svg>
+                    </a>
+                    <a href="#"
+                        class="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/60 transition-all duration-300 hover:bg-[#f97316] hover:text-white"
+                        aria-label="Instagram">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                            <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
+                            <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                        </svg>
+                    </a>
                 </div>
             </div>
 
-            <!-- Bottom -->
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8">
-                <p class="text-surface-500 text-xs">&copy; 2026 Billetterie GN. Tous droits reserves.</p>
-                <div class="flex items-center gap-4">
-                    <span class="text-surface-500 text-xs">Moyens de paiement :</span>
-                    <div class="flex gap-2">
-                        <div class="bg-surface-800 rounded px-2 py-1"><span class="text-surface-400 text-xs font-medium">Orange Money</span></div>
-                        <div class="bg-surface-800 rounded px-2 py-1"><span class="text-surface-400 text-xs font-medium">MTN MoMo</span></div>
-                        <div class="bg-surface-800 rounded px-2 py-1"><span class="text-surface-400 text-xs font-medium">Visa</span></div>
-                    </div>
+            <!-- Link columns -->
+            <div class="grid grid-cols-2 gap-8 sm:grid-cols-4">
+                @for (col of footerColumns; track col.title) {
+                <div>
+                    <h3 class="text-sm font-bold text-white">{{ col.title }}</h3>
+                    <ul class="mt-4 space-y-2.5">
+                        @for (link of col.links; track link.label) {
+                        <li>
+                            <a [href]="link.href"
+                                class="text-sm text-white/50 transition-colors hover:text-[#f97316]">{{ link.label
+                                }}</a>
+                        </li>
+                        }
+                    </ul>
                 </div>
+                }
             </div>
         </div>
-    </footer>
-</div>
-}
+
+        <!-- Bottom -->
+        <div class="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row">
+            <p class="text-xs text-white/40">&copy; {{ currentYear }} BilletterieGN. Tous droits r&eacute;serv&eacute;s.
+            </p>
+            <p class="text-xs text-white/30">
+                Fait avec passion en Guin&eacute;e
+            </p>
+        </div>
+    </div>
+</footer>

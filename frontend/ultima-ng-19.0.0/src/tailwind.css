@@ -1,3 +1,87 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ===== Design Tokens ===== */
+:root {
+  --color-primary: #1e3a5f;
+  --color-accent: #f97316;
+  --color-accent-dark: #ea580c;
+  --color-bg: #f5f7fa;
+  --color-card: #ffffff;
+  --color-foreground: #1a2a3a;
+  --color-muted: #64748b;
+  --color-border: #d1d8e0;
+  --color-muted-bg: #f0f2f5;
+  --radius: 0.75rem;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Scroll Animation Base States ===== */
+.scroll-hidden {
+  opacity: 0;
+  transition: all 0.7s ease-out;
+}
+
+.scroll-hidden.fade-up {
+  transform: translateY(30px);
+}
+
+.scroll-hidden.fade-down {
+  transform: translateY(-20px);
+}
+
+.scroll-hidden.fade-left {
+  transform: translateX(-30px);
+}
+
+.scroll-hidden.fade-right {
+  transform: translateX(30px);
+}
+
+.scroll-hidden.scale-in {
+  transform: scale(0.9);
+}
+
+.scroll-hidden.slide-up {
+  transform: translateY(50px);
+}
+
+.scroll-visible {
+  opacity: 1 !important;
+  transform: translateY(0) translateX(0) scale(1) !important;
+}
+
+/* ===== Map Animations ===== */
+@keyframes marker-drop {
+  0% { opacity: 0; transform: translateY(-20px) scale(0.5); }
+  60% { opacity: 1; transform: translateY(4px) scale(1.1); }
+  80% { transform: translateY(-2px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes ping-ring {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* ===== Utility ===== */
+.text-balance {
+  text-wrap: balance;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

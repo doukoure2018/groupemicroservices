@@ -1,0 +1,103 @@
+<div class="relative w-full">
+  <svg [attr.viewBox]="'0 0 ' + svgWidth + ' ' + svgHeight" class="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="guineaDots" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+        <circle cx="6" cy="6" r="1.2" fill="rgba(30,58,95,0.12)" />
+      </pattern>
+      <clipPath id="guineaClip">
+        <path [attr.d]="outlinePath" />
+      </clipPath>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="3" result="blur" />
+        <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
+    </defs>
+
+    <!-- Shadow -->
+    <path [attr.d]="outlinePath" fill="rgba(30,58,95,0.03)" stroke="none" transform="translate(3,3)"
+      [class]="isVisible ? 'opacity-100' : 'opacity-0'" class="transition-all duration-1000" />
+
+    <!-- Country fill -->
+    <path [attr.d]="outlinePath" fill="rgba(30,58,95,0.06)" stroke="rgba(30,58,95,0.25)" stroke-width="1.5" stroke-linejoin="round"
+      [class]="isVisible ? 'opacity-100' : 'opacity-0'" class="transition-all duration-1000" />
+
+    <!-- Dot pattern -->
+    <rect x="0" y="0" [attr.width]="svgWidth" [attr.height]="svgHeight" fill="url(#guineaDots)" clip-path="url(#guineaClip)"
+      [class]="isVisible ? 'opacity-100' : 'opacity-0'" class="transition-opacity duration-1000 delay-300" />
+
+    <!-- Routes -->
+    @for (route of routes; track $index; let i = $index) {
+      @if (getSvgCoords(route[0]) && getSvgCoords(route[1])) {
+        <line
+          [attr.x1]="getSvgCoords(route[0])!.x" [attr.y1]="getSvgCoords(route[0])!.y"
+          [attr.x2]="getSvgCoords(route[1])!.x" [attr.y2]="getSvgCoords(route[1])!.y"
+          [attr.stroke]="isRouteActive(route[0], route[1]) ? '#f97316' : 'rgba(30,58,95,0.18)'"
+          [attr.stroke-width]="isRouteActive(route[0], route[1]) ? 2 : 1"
+          stroke-dasharray="6 4"
+          [class]="isVisible ? 'opacity-100' : 'opacity-0'"
+          class="transition-all duration-700"
+          [style.transition-delay]="isVisible ? (500 + i * 80) + 'ms' : '0ms'"
+        />
+      }
+    }
+
+    <!-- City markers -->
+    @for (city of cities; track city.id; let i = $index) {
+      @if (getSvgCoords(city.id)) {
+        <g class="cursor-pointer"
+           [class]="isVisible ? 'opacity-100' : 'opacity-0'"
+           [style.transition]="'opacity 0.5s ease-out'"
+           [style.transition-delay]="getMarkerDelay(i)"
+           [style.animation]="getMarkerAnimation(i)"
+           (mouseenter)="onCityMouseEnter(city.id)"
+           (mouseleave)="onCityMouseLeave()"
+           (click)="onCityClicked(city.id)">
+
+          <!-- Ping ring -->
+          @if (isActive(city.id)) {
+            <circle [attr.cx]="getSvgCoords(city.id)!.x" [attr.cy]="getSvgCoords(city.id)!.y" r="8"
+              fill="none" stroke="#f97316" stroke-width="1.5" style="animation: ping-ring 1.5s ease-out infinite;" />
+          }
+
+          <!-- Outer glow -->
+          @if (isHighlighted(city.id)) {
+            <circle [attr.cx]="getSvgCoords(city.id)!.x" [attr.cy]="getSvgCoords(city.id)!.y"
+              [attr.r]="isActive(city.id) ? 10 : 7"
+              [attr.fill]="isActive(city.id) ? 'rgba(249,115,22,0.12)' : 'rgba(30,58,95,0.06)'"
+              class="transition-all duration-300" />
+          }
+
+          <!-- Main dot -->
+          <circle [attr.cx]="getSvgCoords(city.id)!.x" [attr.cy]="getSvgCoords(city.id)!.y"
+            [attr.r]="getMarkerRadius(city)"
+            [attr.fill]="isActive(city.id) || city.isCapital ? '#f97316' : '#1e3a5f'"
+            [attr.filter]="isActive(city.id) ? 'url(#glow)' : null"
+            class="transition-all duration-300" />
+
+          <!-- White inner -->
+          <circle [attr.cx]="getSvgCoords(city.id)!.x" [attr.cy]="getSvgCoords(city.id)!.y"
+            [attr.r]="getInnerRadius(city)" fill="white" class="transition-all duration-300" />
+
+          <!-- Label -->
+          @if (isHighlighted(city.id) || isActive(city.id)) {
+            <rect
+              [attr.x]="getSvgCoords(city.id)!.x + getLabelOffsetX(city)"
+              [attr.y]="getSvgCoords(city.id)!.y + getLabelOffsetY(city) - 10"
+              [attr.width]="getLabelWidth(city)" height="22" rx="6"
+              [attr.fill]="isActive(city.id) ? '#f97316' : city.isCapital ? 'rgba(249,115,22,0.9)' : 'rgba(30,58,95,0.9)'"
+              class="transition-all duration-300" />
+            <text
+              [attr.x]="getSvgCoords(city.id)!.x + getLabelOffsetX(city) + 9"
+              [attr.y]="getSvgCoords(city.id)!.y + getLabelOffsetY(city) + 2"
+              fill="white" font-size="11"
+              [attr.font-weight]="isActive(city.id) || city.isCapital ? '700' : '600'"
+              font-family="system-ui, sans-serif" dominant-baseline="central"
+              class="select-none pointer-events-none">
+              {{ city.name }}
+            </text>
+          }
+        </g>
+      }
+    }
+  </svg>
+</div>

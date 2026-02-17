@@ -1,15 +1,23 @@
 class AppConfig {
-  // OAuth2 Configuration - Port 8090
-  static const String authorizationEndpoint = 'http://10.0.2.2:8090/oauth2/authorize';
-  static const String tokenEndpoint = 'http://10.0.2.2:8090/oauth2/token';
-  static const String endSessionEndpoint = 'http://10.0.2.2:8090/logout';
-  static const String userInfoEndpoint = 'http://10.0.2.2:8090/userinfo';
+  // Environment flag - set to true for production builds
+  static const bool isProduction = true;
 
-  // For production, use your actual server URL
-  // static const String authorizationEndpoint = 'https://auth.digi-creditrural-io.com/oauth2/authorize';
-  // static const String tokenEndpoint = 'https://auth.digi-creditrural-io.com/oauth2/token';
-  // static const String endSessionEndpoint = 'https://auth.digi-creditrural-io.com/logout';
-  // static const String userInfoEndpoint = 'https://auth.digi-creditrural-io.com/userinfo';
+  // OAuth2 Configuration
+  static const String authorizationEndpoint = isProduction
+      ? 'https://api.guidipress-io.com/authorization/oauth2/authorize'
+      : 'http://10.0.2.2:8090/oauth2/authorize';
+
+  static const String tokenEndpoint = isProduction
+      ? 'https://api.guidipress-io.com/authorization/oauth2/token'
+      : 'http://10.0.2.2:8090/oauth2/token';
+
+  static const String endSessionEndpoint = isProduction
+      ? 'https://api.guidipress-io.com/authorization/logout'
+      : 'http://10.0.2.2:8090/logout';
+
+  static const String userInfoEndpoint = isProduction
+      ? 'https://api.guidipress-io.com/authorization/userinfo'
+      : 'http://10.0.2.2:8090/userinfo';
 
   static const String clientId = 'mobile-app-client';
   static const String redirectUri = 'com.billetterie.gn://oauth2redirect';
@@ -17,13 +25,16 @@ class AppConfig {
 
   static const List<String> scopes = ['openid', 'profile', 'email'];
 
-  // API Base URL - Port 8090
-  static const String apiBaseUrl = 'http://10.0.2.2:8090/api';
-  // For production:
-  // static const String apiBaseUrl = 'https://api.digi-creditrural-io.com/api';
+  // API Base URL (through gateway)
+  static const String apiBaseUrl = isProduction
+      ? 'https://api.guidipress-io.com'
+      : 'http://10.0.2.2:9000';
 
-  // Issuer (for discovery) - Port 8090
-  static const String issuer = 'http://10.0.2.2:8090';
-  // For production:
-  // static const String issuer = 'https://auth.digi-creditrural-io.com';
+  // Issuer (for discovery)
+  static const String issuer = isProduction
+      ? 'https://api.guidipress-io.com/authorization'
+      : 'http://10.0.2.2:8090';
+
+  // Allow insecure connections only in dev
+  static const bool allowInsecureConnections = !isProduction;
 }

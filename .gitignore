@@ -66,3 +66,6 @@ nul
 *.p12
 *.jks
 !**/src/main/resources/*.key
+
+# Template files (v0.dev design references)
+template/
