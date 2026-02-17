@@ -1,1 +1,325 @@
-<p>this is admin page</p>
+<div class="grid grid-cols-12 gap-4">
+
+    <!-- ============ KPI CARDS ============ -->
+
+    <!-- Offres -->
+    <div class="col-span-12 md:col-span-6 xl:col-span-3">
+        <div class="card h-full">
+            @if (loading()) {
+                <p-skeleton height="100px"></p-skeleton>
+            } @else {
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-muted-color font-medium text-sm">Offres de Transport</span>
+                    <div class="flex items-center justify-center w-10 h-10 rounded-lg" style="background-color:rgba(249,115,22,0.12);">
+                        <i class="pi pi-ticket text-lg" style="color:#F97316;"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-bold text-color">{{ offreStats().ouvertes }}</span>
+                    <span class="text-muted-color text-sm">ouvertes</span>
+                </div>
+                <div class="flex items-center gap-3 mt-3 text-sm">
+                    <span class="text-muted-color">
+                        <i class="pi pi-chart-bar mr-1"></i>{{ offreStats().total }} total
+                    </span>
+                    <span style="color:#3B82F6;">
+                        <i class="pi pi-play mr-1"></i>{{ offreStats().enCours }} en cours
+                    </span>
+                </div>
+                <div class="mt-2 text-sm">
+                    <span style="color:#F97316;">
+                        <i class="pi pi-calendar mr-1"></i>{{ offreStats().aujourd_hui }} aujourd'hui
+                    </span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Vehicules -->
+    <div class="col-span-12 md:col-span-6 xl:col-span-3">
+        <div class="card h-full">
+            @if (loading()) {
+                <p-skeleton height="100px"></p-skeleton>
+            } @else {
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-muted-color font-medium text-sm">Flotte Véhicules</span>
+                    <div class="flex items-center justify-center w-10 h-10 rounded-lg" style="background-color:rgba(34,197,94,0.12);">
+                        <i class="pi pi-car text-lg" style="color:#22C55E;"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-bold text-color">{{ vehiculeStats().actifs }}</span>
+                    <span class="text-muted-color text-sm">actifs</span>
+                </div>
+                <div class="flex items-center gap-3 mt-3 text-sm">
+                    <span class="text-muted-color">
+                        <i class="pi pi-chart-bar mr-1"></i>{{ vehiculeStats().total }} total
+                    </span>
+                    <span style="color:#EAB308;">
+                        <i class="pi pi-wrench mr-1"></i>{{ vehiculeStats().enMaintenance }} maintenance
+                    </span>
+                </div>
+                @if (vehiculesAlerte().length > 0) {
+                    <div class="mt-2 text-sm" style="color:#EF4444;">
+                        <i class="pi pi-exclamation-triangle mr-1"></i>{{ vehiculesAlerte().length }} alerte(s)
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Partenaires -->
+    <div class="col-span-12 md:col-span-6 xl:col-span-3">
+        <div class="card h-full">
+            @if (loading()) {
+                <p-skeleton height="100px"></p-skeleton>
+            } @else {
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-muted-color font-medium text-sm">Partenaires</span>
+                    <div class="flex items-center justify-center w-10 h-10 rounded-lg" style="background-color:rgba(59,130,246,0.12);">
+                        <i class="pi pi-users text-lg" style="color:#3B82F6;"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-bold text-color">{{ partenaireStats().actifs }}</span>
+                    <span class="text-muted-color text-sm">actifs</span>
+                </div>
+                <div class="flex items-center gap-3 mt-3 text-sm">
+                    <span class="text-muted-color">
+                        <i class="pi pi-chart-bar mr-1"></i>{{ partenaireStats().total }} total
+                    </span>
+                    @if (partenaireStats().enAttente > 0) {
+                        <span style="color:#F97316;">
+                            <i class="pi pi-clock mr-1"></i>{{ partenaireStats().enAttente }} en attente
+                        </span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Trajets -->
+    <div class="col-span-12 md:col-span-6 xl:col-span-3">
+        <div class="card h-full">
+            @if (loading()) {
+                <p-skeleton height="100px"></p-skeleton>
+            } @else {
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-muted-color font-medium text-sm">Trajets</span>
+                    <div class="flex items-center justify-center w-10 h-10 rounded-lg" style="background-color:rgba(99,102,241,0.12);">
+                        <i class="pi pi-map mr-1 text-lg" style="color:#6366F1;"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-bold text-color">{{ trajetStats().actifs }}</span>
+                    <span class="text-muted-color text-sm">actifs</span>
+                </div>
+                <div class="flex items-center gap-3 mt-3 text-sm">
+                    <span class="text-muted-color">
+                        <i class="pi pi-chart-bar mr-1"></i>{{ trajetStats().total }} total
+                    </span>
+                    <span class="text-muted-color">
+                        <i class="pi pi-ban mr-1"></i>{{ trajetStats().inactifs }} inactifs
+                    </span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ============ CHARTS ROW ============ -->
+
+    <!-- Doughnut: Offres par statut -->
+    <div class="col-span-12 xl:col-span-6">
+        <div class="card h-full">
+            <div class="flex items-center justify-between mb-4">
+                <span class="font-semibold text-lg text-color">Offres par statut</span>
+                <button pButton icon="pi pi-external-link" class="p-button-text p-button-sm" pTooltip="Voir les offres" (click)="navigateTo('/dashboard/admin/offres-transport')"></button>
+            </div>
+            @if (loading()) {
+                <p-skeleton height="280px"></p-skeleton>
+            } @else {
+                @if (offreChartData()) {
+                    <div style="height:280px;">
+                        <p-chart type="doughnut" [data]="offreChartData()" [options]="offreChartOptions()" height="280px"></p-chart>
+                    </div>
+                } @else {
+                    <div class="flex items-center justify-center" style="height:280px;">
+                        <span class="text-muted-color">Aucune donnée</span>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Bar: Partenaires par type -->
+    <div class="col-span-12 xl:col-span-6">
+        <div class="card h-full">
+            <div class="flex items-center justify-between mb-4">
+                <span class="font-semibold text-lg text-color">Partenaires par type</span>
+                <button pButton icon="pi pi-external-link" class="p-button-text p-button-sm" pTooltip="Voir les partenaires" (click)="navigateTo('/dashboard/admin/partenaires')"></button>
+            </div>
+            @if (loading()) {
+                <p-skeleton height="280px"></p-skeleton>
+            } @else {
+                @if (partenaireChartData() && partenaireChartData().labels.length > 0) {
+                    <div style="height:280px;">
+                        <p-chart type="bar" [data]="partenaireChartData()" [options]="partenaireChartOptions()" height="280px"></p-chart>
+                    </div>
+                } @else {
+                    <div class="flex items-center justify-center" style="height:280px;">
+                        <span class="text-muted-color">Aucune donnée</span>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- ============ TABLES ROW ============ -->
+
+    <!-- Offres du jour -->
+    <div class="col-span-12 xl:col-span-7">
+        <div class="card">
+            <div class="flex items-center justify-between mb-4">
+                <span class="font-semibold text-lg text-color">Offres du jour</span>
+                <button pButton label="Voir tout" icon="pi pi-arrow-right" iconPos="right" class="p-button-text p-button-sm" (click)="navigateTo('/dashboard/admin/offres-transport')"></button>
+            </div>
+            @if (loading()) {
+                <p-skeleton height="200px"></p-skeleton>
+            } @else {
+                @if (offresAujourdHui().length === 0) {
+                    <div class="flex flex-col items-center justify-center py-8">
+                        <i class="pi pi-calendar text-4xl text-muted-color mb-3"></i>
+                        <span class="text-muted-color">Aucune offre aujourd'hui</span>
+                    </div>
+                } @else {
+                    <p-table [value]="offresAujourdHui()" [rows]="5" [paginator]="offresAujourdHui().length > 5" styleClass="p-datatable-sm">
+                        <ng-template #header>
+                            <tr>
+                                <th>Trajet</th>
+                                <th>Heure</th>
+                                <th>Places</th>
+                                <th>Prix</th>
+                                <th>Statut</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template #body let-offre>
+                            <tr>
+                                <td>
+                                    <div class="flex flex-col">
+                                        <span class="font-medium">{{ offre.villeDepartLibelle }}</span>
+                                        <span class="text-muted-color text-xs"><i class="pi pi-arrow-right mr-1"></i>{{ offre.villeArriveeLibelle }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="font-medium">{{ formatHeureOffre(offre.heureDepart) }}</span>
+                                </td>
+                                <td>
+                                    <div class="flex flex-col">
+                                        <span class="font-medium">{{ offre.nombrePlacesDisponibles }}/{{ offre.nombrePlacesTotal }}</span>
+                                        <span class="text-xs text-muted-color">{{ getTauxRemplissage(offre) }}% rempli</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="font-medium">{{ formatMontantOffre(offre.montant, offre.devise) }}</span>
+                                </td>
+                                <td>
+                                    <p-tag [value]="getStatutOffreLabel(offre.statut)" [severity]="getStatutOffreSeverity(offre.statut)"></p-tag>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Alertes véhicules -->
+    <div class="col-span-12 xl:col-span-5">
+        <div class="card">
+            <div class="flex items-center justify-between mb-4">
+                <span class="font-semibold text-lg text-color">
+                    <i class="pi pi-exclamation-triangle mr-2" style="color:#EF4444;"></i>Alertes véhicules
+                </span>
+                <button pButton label="Flotte" icon="pi pi-arrow-right" iconPos="right" class="p-button-text p-button-sm" (click)="navigateTo('/dashboard/admin/vehicules')"></button>
+            </div>
+            @if (loading()) {
+                <p-skeleton height="200px"></p-skeleton>
+            } @else {
+                @if (vehiculesAlerte().length === 0) {
+                    <div class="flex flex-col items-center justify-center py-8">
+                        <i class="pi pi-check-circle text-4xl mb-3" style="color:#22C55E;"></i>
+                        <span class="text-muted-color">Aucune alerte</span>
+                    </div>
+                } @else {
+                    <p-table [value]="vehiculesAlerte()" [rows]="5" [paginator]="vehiculesAlerte().length > 5" styleClass="p-datatable-sm">
+                        <ng-template #header>
+                            <tr>
+                                <th>Véhicule</th>
+                                <th>Alerte</th>
+                                <th>Statut</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template #body let-v>
+                            <tr>
+                                <td>
+                                    <div class="flex flex-col">
+                                        <span class="font-medium">{{ v.immatriculation }}</span>
+                                        <span class="text-muted-color text-xs">{{ v.marque }} {{ v.modele }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p-tag [value]="v.alertType" severity="danger"></p-tag>
+                                </td>
+                                <td>
+                                    <p-tag [value]="getStatutVehiculeLabel(v.statut)" [severity]="getStatutVehiculeSeverity(v.statut)"></p-tag>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- ============ PARTENAIRES EN ATTENTE ============ -->
+
+    @if (!loading() && partenairesEnAttente().length > 0) {
+        <div class="col-span-12">
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="font-semibold text-lg text-color">
+                        <i class="pi pi-clock mr-2" style="color:#F97316;"></i>Partenaires en attente de validation
+                    </span>
+                    <button pButton label="Gérer" icon="pi pi-arrow-right" iconPos="right" class="p-button-text p-button-sm" (click)="navigateTo('/dashboard/admin/partenaires')"></button>
+                </div>
+                <p-table [value]="partenairesEnAttente()" [rows]="5" [paginator]="partenairesEnAttente().length > 5" styleClass="p-datatable-sm">
+                    <ng-template #header>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Type</th>
+                            <th>Téléphone</th>
+                            <th>Ville</th>
+                            <th>Responsable</th>
+                            <th>Date partenariat</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template #body let-p>
+                        <tr>
+                            <td>
+                                <span class="font-medium">{{ p.nom }}</span>
+                            </td>
+                            <td>
+                                <p-tag [value]="getTypePartenaireLabel(p.typePartenaire)" severity="info"></p-tag>
+                            </td>
+                            <td>{{ p.telephone || '-' }}</td>
+                            <td>{{ p.villeLibelle || '-' }}</td>
+                            <td>{{ p.responsableNom || '-' }}</td>
+                            <td>{{ p.dateDebutPartenariat ? formatDateOffre(p.dateDebutPartenariat) : '-' }}</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
+    }
+
+</div>

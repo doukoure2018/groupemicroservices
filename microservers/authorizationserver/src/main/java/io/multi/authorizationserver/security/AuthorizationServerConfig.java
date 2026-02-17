@@ -127,6 +127,7 @@ public class AuthorizationServerConfig {
         http.securityMatcher("/api/**", "/user/**")
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/login").permitAll()
+                        .requestMatchers("/api/auth/token", "/api/auth/register", "/api/auth/google", "/api/auth/refresh").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

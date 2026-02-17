@@ -47,7 +47,90 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Login
+  // Login with email/password (REST)
+  Future<bool> loginWithCredentials(String email, String password) async {
+    _status = AuthStatus.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final tokens = await _authService.loginWithCredentials(email, password);
+      if (tokens != null) {
+        _tokens = tokens;
+        _user = await _authService.getUserFromIdToken();
+        _status = AuthStatus.authenticated;
+        notifyListeners();
+        return true;
+      } else {
+        _status = AuthStatus.unauthenticated;
+        _errorMessage = 'Échec de la connexion';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _status = AuthStatus.error;
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Register new account (REST)
+  Future<String?> register({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    String? phone,
+  }) async {
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final message = await _authService.register(
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        password: password,
+        phone: phone,
+      );
+      return message;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return null;
+    }
+  }
+
+  // Login with Google ID token (REST)
+  Future<bool> loginWithGoogle(String googleIdToken) async {
+    _status = AuthStatus.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final tokens = await _authService.loginWithGoogle(googleIdToken);
+      if (tokens != null) {
+        _tokens = tokens;
+        _user = await _authService.getUserFromIdToken();
+        _status = AuthStatus.authenticated;
+        notifyListeners();
+        return true;
+      } else {
+        _status = AuthStatus.unauthenticated;
+        _errorMessage = 'Échec de la connexion Google';
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _status = AuthStatus.error;
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Login via OAuth2 PKCE (fallback)
   Future<bool> login() async {
     _status = AuthStatus.loading;
     _errorMessage = null;
@@ -112,6 +195,13 @@ class AuthProvider extends ChangeNotifier {
   // Get valid access token for API calls
   Future<String?> getAccessToken() async {
     return await _authService.getValidAccessToken();
+  }
+
+  // Reset status to unauthenticated (useful after error)
+  void resetToUnauthenticated() {
+    _status = AuthStatus.unauthenticated;
+    _errorMessage = null;
+    notifyListeners();
   }
 
   // Clear error

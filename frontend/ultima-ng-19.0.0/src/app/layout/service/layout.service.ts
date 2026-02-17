@@ -44,12 +44,12 @@ export interface TabCloseEvent {
 })
 export class LayoutService {
     _config: layoutConfig = {
-        primary: 'indigo',
+        primary: 'orange',
         surface: null,
         darkTheme: false,
         menuMode: 'static',
         menuTheme: 'light',
-        topbarTheme: 'indigo',
+        topbarTheme: 'grey',
         menuProfilePosition: 'end'
     };
 

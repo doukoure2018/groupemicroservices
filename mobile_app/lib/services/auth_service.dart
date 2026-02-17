@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
 import '../config/app_config.dart';
 import '../models/auth_tokens.dart';
@@ -15,7 +16,112 @@ class AuthService {
   static const String _idTokenKey = 'id_token';
   static const String _expirationKey = 'token_expiration';
 
-  // Login with OAuth2 Authorization Code + PKCE
+  // ========== DIRECT LOGIN (email/password) ==========
+
+  Future<AuthTokens?> loginWithCredentials(String email, String password) async {
+    try {
+      final response = await http.post(
+        Uri.parse(AppConfig.loginUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && body['status'] == 'success') {
+        final tokens = AuthTokens(
+          accessToken: body['access_token'],
+          refreshToken: body['refresh_token'],
+          idToken: body['id_token'],
+          accessTokenExpirationDateTime:
+              DateTime.now().add(Duration(seconds: body['expires_in'] ?? 3600)),
+        );
+        await _saveTokens(tokens);
+        return tokens;
+      } else {
+        throw Exception(body['message'] ?? 'Échec de la connexion');
+      }
+    } catch (e) {
+      if (e is Exception && e.toString().contains('Exception:')) {
+        rethrow;
+      }
+      throw Exception('Erreur de connexion. Vérifiez votre connexion internet.');
+    }
+  }
+
+  // ========== REGISTRATION ==========
+
+  Future<String> register({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    String? phone,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse(AppConfig.registerUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'firstName': firstName,
+          'lastName': lastName,
+          'email': email,
+          'password': password,
+          'confirmPassword': password,
+          'phone': phone,
+        }),
+      );
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode == 201 && body['status'] == 'success') {
+        return body['message'] ?? 'Compte créé avec succès';
+      } else {
+        throw Exception(body['message'] ?? "Échec de l'inscription");
+      }
+    } catch (e) {
+      if (e is Exception && e.toString().contains('Exception:')) {
+        rethrow;
+      }
+      throw Exception("Erreur d'inscription. Vérifiez votre connexion internet.");
+    }
+  }
+
+  // ========== GOOGLE LOGIN ==========
+
+  Future<AuthTokens?> loginWithGoogle(String googleIdToken) async {
+    try {
+      final response = await http.post(
+        Uri.parse(AppConfig.googleLoginUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'idToken': googleIdToken}),
+      );
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && body['status'] == 'success') {
+        final tokens = AuthTokens(
+          accessToken: body['access_token'],
+          refreshToken: body['refresh_token'],
+          idToken: body['id_token'],
+          accessTokenExpirationDateTime:
+              DateTime.now().add(Duration(seconds: body['expires_in'] ?? 3600)),
+        );
+        await _saveTokens(tokens);
+        return tokens;
+      } else {
+        throw Exception(body['message'] ?? 'Échec de la connexion Google');
+      }
+    } catch (e) {
+      if (e is Exception && e.toString().contains('Exception:')) {
+        rethrow;
+      }
+      throw Exception('Erreur de connexion Google.');
+    }
+  }
+
+  // ========== OAUTH2 PKCE LOGIN (fallback) ==========
+
   Future<AuthTokens?> login() async {
     try {
       final AuthorizationTokenResponse? result =
@@ -30,8 +136,6 @@ class AuthService {
           ),
           scopes: AppConfig.scopes,
           promptValues: ['login'],
-          // IMPORTANT: false pour permettre la persistence des cookies/sessions
-          // true causerait un mode "incognito" qui empêche OAuth de fonctionner
           preferEphemeralSession: false,
           allowInsecureConnections: AppConfig.allowInsecureConnections,
         ),
@@ -55,12 +159,39 @@ class AuthService {
     }
   }
 
-  // Refresh access token
+  // ========== REFRESH TOKEN ==========
+
   Future<AuthTokens?> refreshToken() async {
     try {
       final storedRefreshToken = await _secureStorage.read(key: _refreshTokenKey);
       if (storedRefreshToken == null) return null;
 
+      // Try REST refresh first
+      try {
+        final response = await http.post(
+          Uri.parse(AppConfig.refreshUrl),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'refreshToken': storedRefreshToken}),
+        );
+
+        final body = jsonDecode(response.body);
+
+        if (response.statusCode == 200 && body['status'] == 'success') {
+          final tokens = AuthTokens(
+            accessToken: body['access_token'],
+            refreshToken: body['refresh_token'],
+            idToken: body['id_token'],
+            accessTokenExpirationDateTime:
+                DateTime.now().add(Duration(seconds: body['expires_in'] ?? 3600)),
+          );
+          await _saveTokens(tokens);
+          return tokens;
+        }
+      } catch (_) {
+        // Fallback to OAuth2 refresh
+      }
+
+      // Fallback: OAuth2 token refresh
       final TokenResponse? result = await _appAuth.token(
         TokenRequest(
           AppConfig.clientId,
@@ -89,18 +220,17 @@ class AuthService {
       return null;
     } catch (e) {
       print('Refresh token error: $e');
-      // If refresh fails, clear tokens and require re-login
       await logout();
       return null;
     }
   }
 
-  // Logout
+  // ========== LOGOUT ==========
+
   Future<void> logout() async {
     try {
       final idToken = await _secureStorage.read(key: _idTokenKey);
 
-      // Try to end session on server
       if (idToken != null) {
         try {
           await _appAuth.endSession(
@@ -119,30 +249,29 @@ class AuthService {
         }
       }
     } finally {
-      // Always clear local tokens
       await _clearTokens();
     }
   }
 
-  // Get current tokens
+  // ========== TOKEN MANAGEMENT ==========
+
   Future<AuthTokens?> getTokens() async {
     final accessToken = await _secureStorage.read(key: _accessTokenKey);
     if (accessToken == null) return null;
 
-    final refreshToken = await _secureStorage.read(key: _refreshTokenKey);
+    final refreshTokenVal = await _secureStorage.read(key: _refreshTokenKey);
     final idToken = await _secureStorage.read(key: _idTokenKey);
     final expirationStr = await _secureStorage.read(key: _expirationKey);
 
     return AuthTokens(
       accessToken: accessToken,
-      refreshToken: refreshToken,
+      refreshToken: refreshTokenVal,
       idToken: idToken,
       accessTokenExpirationDateTime:
           expirationStr != null ? DateTime.parse(expirationStr) : null,
     );
   }
 
-  // Get valid access token (refreshing if needed)
   Future<String?> getValidAccessToken() async {
     final tokens = await getTokens();
     if (tokens == null) return null;
@@ -155,7 +284,6 @@ class AuthService {
     return tokens.accessToken;
   }
 
-  // Get user from ID token
   Future<User?> getUserFromIdToken() async {
     final idToken = await _secureStorage.read(key: _idTokenKey);
     if (idToken == null) return null;
@@ -169,12 +297,10 @@ class AuthService {
     }
   }
 
-  // Check if user is authenticated
   Future<bool> isAuthenticated() async {
     final tokens = await getTokens();
     if (tokens == null) return false;
 
-    // If token is expired and we can't refresh, user is not authenticated
     if (tokens.isAccessTokenExpired) {
       if (tokens.refreshToken != null) {
         final newTokens = await refreshToken();
@@ -186,7 +312,6 @@ class AuthService {
     return true;
   }
 
-  // Save tokens to secure storage
   Future<void> _saveTokens(AuthTokens tokens) async {
     await _secureStorage.write(key: _accessTokenKey, value: tokens.accessToken);
     if (tokens.refreshToken != null) {
@@ -203,7 +328,6 @@ class AuthService {
     }
   }
 
-  // Clear tokens from secure storage
   Future<void> _clearTokens() async {
     await _secureStorage.delete(key: _accessTokenKey);
     await _secureStorage.delete(key: _refreshTokenKey);

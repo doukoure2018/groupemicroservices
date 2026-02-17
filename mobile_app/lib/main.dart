@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
         title: 'Billetterie GN',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: ColorManager.primary),
+          colorScheme: ColorScheme.fromSeed(seedColor: ColorManager.accent),
           useMaterial3: true,
         ),
         home: const AuthWrapper(),
@@ -55,14 +55,7 @@ class AuthWrapper extends StatelessWidget {
             return const MainScreen();
           case AuthStatus.unauthenticated:
           case AuthStatus.error:
-            return WelcomeScreen(
-              onLogin: () => authProvider.login(),
-              onRegister: () => authProvider.login(), // Same OAuth flow
-              onContinueWithoutAccount: () {
-                // For demo, go directly to main screen
-                // In production, you might want guest mode
-              },
-            );
+            return const WelcomeScreen();
         }
       },
     );

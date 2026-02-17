@@ -37,4 +37,14 @@ class AppConfig {
 
   // Allow insecure connections only in dev
   static const bool allowInsecureConnections = !isProduction;
+
+  // Mobile Auth REST endpoints (direct login, no browser redirect)
+  static const String authBaseUrl = isProduction
+      ? 'https://api.guidipress-io.com/authorization/api/auth'
+      : 'http://10.0.2.2:8090/api/auth';
+
+  static const String loginUrl = '$authBaseUrl/token';
+  static const String registerUrl = '$authBaseUrl/register';
+  static const String googleLoginUrl = '$authBaseUrl/google';
+  static const String refreshUrl = '$authBaseUrl/refresh';
 }

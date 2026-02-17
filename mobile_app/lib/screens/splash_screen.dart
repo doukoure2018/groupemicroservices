@@ -76,49 +76,70 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Bus illustration placeholder
+                // Bus icon in orange gradient box
                 Container(
-                  width: 120,
-                  height: 120,
+                  width: 100,
+                  height: 100,
                   decoration: BoxDecoration(
-                    color: ColorManager.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(30),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFF97316), Color(0xFFEA580C)],
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFF97316).withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
                   child: const Icon(
                     Icons.directions_bus_rounded,
-                    size: 70,
-                    color: ColorManager.primary,
+                    size: 56,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 32),
-                // Logo text
+                // Logo text: "Billetterie" in navy + "GN" in orange
                 RichText(
                   text: const TextSpan(
                     children: [
                       TextSpan(
-                        text: 'B',
+                        text: 'Billetterie',
                         style: TextStyle(
-                          fontSize: 42,
+                          fontSize: 38,
                           fontWeight: FontWeight.bold,
-                          color: ColorManager.accent,
+                          color: ColorManager.primary,
                         ),
                       ),
                       TextSpan(
-                        text: 'illetterie',
+                        text: 'GN',
                         style: TextStyle(
-                          fontSize: 42,
+                          fontSize: 38,
                           fontWeight: FontWeight.bold,
-                          color: ColorManager.primary,
+                          color: ColorManager.accent,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
+                const Text(
+                  'TRANSPORT GUINEE',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 2.0,
+                    color: ColorManager.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
                 const Text(
                   'Réservez votre billet de transport',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     color: ColorManager.textSecondary,
                   ),
                 ),
