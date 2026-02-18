@@ -166,61 +166,32 @@ class AuthService {
       final storedRefreshToken = await _secureStorage.read(key: _refreshTokenKey);
       if (storedRefreshToken == null) return null;
 
-      // Try REST refresh first
-      try {
-        final response = await http.post(
-          Uri.parse(AppConfig.refreshUrl),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'refreshToken': storedRefreshToken}),
-        );
-
-        final body = jsonDecode(response.body);
-
-        if (response.statusCode == 200 && body['status'] == 'success') {
-          final tokens = AuthTokens(
-            accessToken: body['access_token'],
-            refreshToken: body['refresh_token'],
-            idToken: body['id_token'],
-            accessTokenExpirationDateTime:
-                DateTime.now().add(Duration(seconds: body['expires_in'] ?? 3600)),
-          );
-          await _saveTokens(tokens);
-          return tokens;
-        }
-      } catch (_) {
-        // Fallback to OAuth2 refresh
-      }
-
-      // Fallback: OAuth2 token refresh
-      final TokenResponse? result = await _appAuth.token(
-        TokenRequest(
-          AppConfig.clientId,
-          AppConfig.redirectUri,
-          serviceConfiguration: const AuthorizationServiceConfiguration(
-            authorizationEndpoint: AppConfig.authorizationEndpoint,
-            tokenEndpoint: AppConfig.tokenEndpoint,
-          ),
-          refreshToken: storedRefreshToken,
-          scopes: AppConfig.scopes,
-          allowInsecureConnections: AppConfig.allowInsecureConnections,
-        ),
+      final response = await http.post(
+        Uri.parse(AppConfig.refreshUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refreshToken': storedRefreshToken}),
       );
 
-      if (result != null) {
-        final tokens = AuthTokens(
-          accessToken: result.accessToken!,
-          refreshToken: result.refreshToken ?? storedRefreshToken,
-          idToken: result.idToken,
-          accessTokenExpirationDateTime: result.accessTokenExpirationDateTime,
-        );
+      final body = jsonDecode(response.body);
 
+      if (response.statusCode == 200 && body['status'] == 'success') {
+        final tokens = AuthTokens(
+          accessToken: body['access_token'],
+          refreshToken: body['refresh_token'],
+          idToken: body['id_token'],
+          accessTokenExpirationDateTime:
+              DateTime.now().add(Duration(seconds: body['expires_in'] ?? 3600)),
+        );
         await _saveTokens(tokens);
         return tokens;
       }
+
+      // Refresh failed — clear tokens and return to login
+      await _clearTokens();
       return null;
     } catch (e) {
       print('Refresh token error: $e');
-      await logout();
+      await _clearTokens();
       return null;
     }
   }
@@ -228,29 +199,7 @@ class AuthService {
   // ========== LOGOUT ==========
 
   Future<void> logout() async {
-    try {
-      final idToken = await _secureStorage.read(key: _idTokenKey);
-
-      if (idToken != null) {
-        try {
-          await _appAuth.endSession(
-            EndSessionRequest(
-              idTokenHint: idToken,
-              postLogoutRedirectUrl: AppConfig.postLogoutRedirectUri,
-              serviceConfiguration: const AuthorizationServiceConfiguration(
-                authorizationEndpoint: AppConfig.authorizationEndpoint,
-                tokenEndpoint: AppConfig.tokenEndpoint,
-                endSessionEndpoint: AppConfig.endSessionEndpoint,
-              ),
-            ),
-          );
-        } catch (e) {
-          print('End session error (continuing with local logout): $e');
-        }
-      }
-    } finally {
-      await _clearTokens();
-    }
+    await _clearTokens();
   }
 
   // ========== TOKEN MANAGEMENT ==========

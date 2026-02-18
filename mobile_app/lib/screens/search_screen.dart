@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 import '../presentation/resource/color_manager.dart';
+import 'city_search_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   final Function(Map<String, dynamic> searchParams)? onSearch;
@@ -13,629 +12,622 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  String? _departure;
-  String? _destination;
-  DateTime _selectedDate = DateTime.now();
-  String _tripType = 'one_way';
-  String _vehicleClass = 'Standard';
+  Map<String, String>? _departureCity;
+  Map<String, String>? _destinationCity;
+  DateTime _departureDate = DateTime.now();
+  DateTime? _returnDate;
+  int _adults = 1;
+  int _children = 0;
 
-  final List<String> _cities = [
-    'Conakry (CKY)',
-    'Kindia (KND)',
-    'Labé (LAB)',
-    'Mamou (MAM)',
-    'Kankan (KAN)',
-    'N\'Zérékoré (NZR)',
-    'Boké (BOK)',
-    'Faranah (FAR)',
-  ];
-
-  final List<String> _classes = ['Standard', 'Confort', 'VIP'];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ColorManager.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with user info
-              _buildHeader(),
-
-              // Main content
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Réservez votre\nprochain voyage!",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: ColorManager.textPrimary,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Search card
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: ColorManager.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: ColorManager.black.withOpacity(0.05),
-                            blurRadius: 20,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          // Trip type toggle
-                          _buildTripTypeToggle(),
-                          const SizedBox(height: 20),
-
-                          // From field
-                          _buildLocationField(
-                            label: 'Départ',
-                            value: _departure,
-                            icon: Icons.trip_origin,
-                            onChanged: (val) => setState(() => _departure = val),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Swap button
-                          Center(
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  final temp = _departure;
-                                  _departure = _destination;
-                                  _destination = temp;
-                                });
-                              },
-                              child: Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: ColorManager.primary.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.swap_vert,
-                                  color: ColorManager.primary,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // To field
-                          _buildLocationField(
-                            label: 'Destination',
-                            value: _destination,
-                            icon: Icons.location_on,
-                            iconColor: ColorManager.accent,
-                            onChanged: (val) => setState(() => _destination = val),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Date field
-                          _buildDateField(),
-                          const SizedBox(height: 16),
-
-                          // Class field
-                          _buildClassField(),
-                          const SizedBox(height: 24),
-
-                          // Search button
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: _handleSearch,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: ColorManager.primary,
-                                foregroundColor: ColorManager.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: const Text(
-                                'Rechercher un billet',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // News section
-                    _buildNewsSection(),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _swapCities() {
+    setState(() {
+      final temp = _departureCity;
+      _departureCity = _destinationCity;
+      _destinationCity = temp;
+    });
   }
 
-  Widget _buildHeader() {
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, child) {
-        final user = authProvider.user;
-        return Container(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-          decoration: BoxDecoration(
-            color: ColorManager.primary,
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(24),
-              bottomRight: Radius.circular(24),
-            ),
+  void _selectDepartureDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _departureDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 90)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: ColorManager.accent),
           ),
-          child: Row(
-            children: [
-              // Avatar
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: ColorManager.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                  image: user?.imageUrl != null
-                      ? DecorationImage(
-                          image: NetworkImage(user!.imageUrl!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: user?.imageUrl == null
-                    ? Center(
-                        child: Text(
-                          user?.initials ?? '?',
-                          style: const TextStyle(
-                            color: ColorManager.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
+          child: child!,
+        );
+      },
+    );
+    if (date != null) {
+      setState(() => _departureDate = date);
+    }
+  }
+
+  void _selectReturnDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _returnDate ?? _departureDate.add(const Duration(days: 1)),
+      firstDate: _departureDate,
+      lastDate: DateTime.now().add(const Duration(days: 90)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: ColorManager.accent),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (date != null) {
+      setState(() => _returnDate = date);
+    }
+  }
+
+  void _showPassengerPicker() {
+    int tempAdults = _adults;
+    int tempChildren = _children;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle bar
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: ColorManager.grey2,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Title row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Passagers',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: ColorManager.textPrimary,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: ColorManager.lightGrey,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 18,
+                            color: ColorManager.textSecondary,
                           ),
                         ),
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 12),
-              // Greeting
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _getGreeting(),
-                      style: TextStyle(
-                        color: ColorManager.white.withOpacity(0.8),
-                        fontSize: 14,
                       ),
-                    ),
-                    Text(
-                      user?.fullName ?? 'Voyageur',
-                      style: const TextStyle(
-                        color: ColorManager.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Adulte row
+                  _buildCounterRow(
+                    label: 'Adulte',
+                    value: tempAdults,
+                    min: 1,
+                    max: 9,
+                    onChanged: (val) {
+                      setSheetState(() => tempAdults = val);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  const Divider(color: ColorManager.grey1),
+                  const SizedBox(height: 20),
+                  // Enfant row
+                  _buildCounterRow(
+                    label: 'Enfant',
+                    subtitle: 'Moins de 12 ans',
+                    value: tempChildren,
+                    min: 0,
+                    max: 9,
+                    onChanged: (val) {
+                      setSheetState(() => tempChildren = val);
+                    },
+                  ),
+                  const SizedBox(height: 28),
+                  // Confirm button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _adults = tempAdults;
+                          _children = tempChildren;
+                        });
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorManager.accent,
+                        foregroundColor: ColorManager.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              // Notification icon
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: ColorManager.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Stack(
-                  children: [
-                    const Center(
-                      child: Icon(
-                        Icons.notifications_outlined,
-                        color: ColorManager.white,
-                      ),
-                    ),
-                    Positioned(
-                      right: 10,
-                      top: 10,
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: ColorManager.accent,
-                          shape: BoxShape.circle,
+                      child: const Text(
+                        'Confirmer',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
   }
 
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Bonjour!';
-    if (hour < 18) return 'Bon après-midi!';
-    return 'Bonsoir!';
-  }
-
-  Widget _buildTripTypeToggle() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: ColorManager.lightGrey,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _tripType = 'one_way'),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: _tripType == 'one_way'
-                      ? ColorManager.primary
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  'Aller simple',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: _tripType == 'one_way'
-                        ? ColorManager.white
-                        : ColorManager.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _tripType = 'round_trip'),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: _tripType == 'round_trip'
-                      ? ColorManager.primary
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  'Aller-retour',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: _tripType == 'round_trip'
-                        ? ColorManager.white
-                        : ColorManager.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLocationField({
+  Widget _buildCounterRow({
     required String label,
-    required String? value,
-    required IconData icon,
-    Color? iconColor,
-    required Function(String?) onChanged,
+    String? subtitle,
+    required int value,
+    required int min,
+    required int max,
+    required Function(int) onChanged,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: ColorManager.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: ColorManager.lightGrey,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: DropdownButtonFormField<String>(
-            value: value,
-            decoration: InputDecoration(
-              prefixIcon: Icon(
-                icon,
-                color: iconColor ?? ColorManager.primary,
-                size: 20,
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
-            ),
-            hint: Text(
-              'Sélectionner $label',
-              style: const TextStyle(color: ColorManager.textTertiary),
-            ),
-            items: _cities.map((city) {
-              return DropdownMenuItem(value: city, child: Text(city));
-            }).toList(),
-            onChanged: onChanged,
-            isExpanded: true,
-            icon: const Icon(Icons.keyboard_arrow_down),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Date de départ',
-          style: TextStyle(
-            fontSize: 12,
-            color: ColorManager.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: () async {
-            final date = await showDatePicker(
-              context: context,
-              initialDate: _selectedDate,
-              firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(const Duration(days: 90)),
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: const ColorScheme.light(
-                      primary: ColorManager.primary,
-                    ),
-                  ),
-                  child: child!,
-                );
-              },
-            );
-            if (date != null) {
-              setState(() => _selectedDate = date);
-            }
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: ColorManager.lightGrey,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.calendar_today,
-                  color: ColorManager.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  _formatDate(_selectedDate),
-                  style: const TextStyle(
-                    color: ColorManager.textPrimary,
-                    fontSize: 16,
-                  ),
-                ),
-                const Spacer(),
-                const Icon(
-                  Icons.keyboard_arrow_down,
-                  color: ColorManager.textSecondary,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildClassField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Classe',
-          style: TextStyle(
-            fontSize: 12,
-            color: ColorManager.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: ColorManager.lightGrey,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: DropdownButtonFormField<String>(
-            value: _vehicleClass,
-            decoration: const InputDecoration(
-              prefixIcon: Icon(
-                Icons.airline_seat_recline_normal,
-                color: ColorManager.primary,
-                size: 20,
-              ),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
-            ),
-            items: _classes.map((cls) {
-              return DropdownMenuItem(value: cls, child: Text(cls));
-            }).toList(),
-            onChanged: (val) => setState(() => _vehicleClass = val ?? 'Standard'),
-            isExpanded: true,
-            icon: const Icon(Icons.keyboard_arrow_down),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNewsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Actualités',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: ColorManager.textPrimary,
-              ),
-            ),
-            TextButton(
-              onPressed: () {},
-              child: const Text(
-                'Voir tout',
-                style: TextStyle(color: ColorManager.primary),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: ColorManager.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: ColorManager.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: ColorManager.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.directions_bus,
-                  color: ColorManager.primary,
-                  size: 40,
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: ColorManager.textPrimary,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Nouvelle ligne Conakry-Labé',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: ColorManager.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Voyagez confortablement avec nos nouveaux bus climatisés',
-                      style: TextStyle(
-                        color: ColorManager.textSecondary,
-                        fontSize: 12,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${DateTime.now().day} ${_getMonthName(DateTime.now().month)} ${DateTime.now().year}',
-                      style: const TextStyle(
-                        color: ColorManager.primary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+              if (subtitle != null)
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: ColorManager.textSecondary,
+                  ),
                 ),
-              ),
             ],
+          ),
+        ),
+        // Minus button
+        GestureDetector(
+          onTap: value > min ? () => onChanged(value - 1) : null,
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: value > min
+                    ? ColorManager.textSecondary
+                    : ColorManager.grey1,
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.remove,
+              color: value > min
+                  ? ColorManager.textPrimary
+                  : ColorManager.grey1,
+              size: 20,
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 48,
+          child: Text(
+            '$value',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: ColorManager.textPrimary,
+            ),
+          ),
+        ),
+        // Plus button
+        GestureDetector(
+          onTap: value < max ? () => onChanged(value + 1) : null,
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: value < max
+                    ? ColorManager.textSecondary
+                    : ColorManager.grey1,
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.add,
+              color: value < max
+                  ? ColorManager.textPrimary
+                  : ColorManager.grey1,
+              size: 20,
+            ),
           ),
         ),
       ],
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day} ${_getMonthName(date.month)} ${date.year}';
+  void _showCityPicker({required bool isDeparture}) async {
+    final otherCity = isDeparture ? _destinationCity : _departureCity;
+    final excludeCity = otherCity?['name'];
+
+    final result = await Navigator.push<Map<String, String>>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CitySearchScreen(
+          fieldLabel: isDeparture ? 'De' : 'Vers',
+          excludeCity: excludeCity,
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        if (isDeparture) {
+          _departureCity = result;
+        } else {
+          _destinationCity = result;
+        }
+      });
+    }
   }
 
-  String _getMonthName(int month) {
-    const months = [
-      '', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-    ];
-    return months[month];
+  String _formatDateShort(DateTime date) {
+    const days = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
+    return '${days[date.weekday - 1]} ${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year.toString().substring(2)}';
+  }
+
+  String get _passengersLabel {
+    String label = 'Adulte $_adults';
+    if (_children > 0) {
+      label += ', Enfant $_children';
+    }
+    return label;
   }
 
   void _handleSearch() {
-    if (_departure == null || _destination == null) {
+    if (_departureCity == null || _destinationCity == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez sélectionner le départ et la destination'),
+        SnackBar(
+          content: const Text(
+            'Veuillez sélectionner le départ et la destination',
+          ),
           backgroundColor: ColorManager.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          margin: const EdgeInsets.all(16),
         ),
       );
       return;
     }
 
     widget.onSearch?.call({
-      'departure': _departure,
-      'destination': _destination,
-      'date': _selectedDate,
-      'passengers': 1,
-      'tripType': _tripType,
-      'class': _vehicleClass,
+      'departure': _departureCity!['name'],
+      'destination': _destinationCity!['name'],
+      'departureVilleUuid': _departureCity!['villeUuid'],
+      'destinationVilleUuid': _destinationCity!['villeUuid'],
+      'date': _departureDate,
+      'returnDate': _returnDate,
+      'passengers': _adults + _children,
+      'adults': _adults,
+      'children': _children,
+      'tripType': _returnDate != null ? 'round_trip' : 'one_way',
     });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: ColorManager.white,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Image + white sheet overlap
+            Stack(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  height: 340,
+                  child: Image.asset(
+                    'assets/images/billetterie-transport.jpg',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                // White sheet overlapping image bottom
+                Container(
+                  margin: const EdgeInsets.only(top: 310),
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: ColorManager.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: const SizedBox(height: 40),
+                ),
+              ],
+            ),
+
+            // Form content on white background
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              child: Column(
+                children: [
+                  // De / Vers fields with swap
+                  Stack(
+                    children: [
+                      Column(
+                        children: [
+                          _buildCityField(
+                            label: 'De',
+                            value: _departureCity?['name'],
+                            onTap: () => _showCityPicker(isDeparture: true),
+                          ),
+                          const SizedBox(height: 10),
+                          _buildCityField(
+                            label: 'Vers',
+                            value: _destinationCity?['name'],
+                            onTap: () => _showCityPicker(isDeparture: false),
+                          ),
+                        ],
+                      ),
+                      Positioned(
+                        right: 0,
+                        top: 22,
+                        child: GestureDetector(
+                          onTap: (_departureCity != null || _destinationCity != null)
+                              ? _swapCities
+                              : null,
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: ColorManager.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: ColorManager.grey1),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: ColorManager.black.withOpacity(0.08),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.swap_vert,
+                              color: ColorManager.textPrimary,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Aller / Retour
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildDateField(
+                          label: 'Aller',
+                          date: _departureDate,
+                          onTap: _selectDepartureDate,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildDateField(
+                          label: 'Retour',
+                          date: _returnDate,
+                          placeholder: 'Retour',
+                          onTap: _selectReturnDate,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Passagers
+                  _buildPassengersField(),
+                  const SizedBox(height: 16),
+
+                  // RECHERCHER
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _handleSearch,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorManager.accent,
+                        foregroundColor: ColorManager.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'RECHERCHER',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCityField({
+    required String label,
+    required String? value,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(14, 8, 44, 10),
+        decoration: BoxDecoration(
+          border: Border.all(color: ColorManager.grey1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: ColorManager.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              value ?? 'Sélectionner',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: value != null
+                    ? ColorManager.textPrimary
+                    : ColorManager.textTertiary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateField({
+    required String label,
+    DateTime? date,
+    String? placeholder,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+        decoration: BoxDecoration(
+          border: Border.all(color: ColorManager.grey1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: ColorManager.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              date != null ? _formatDateShort(date) : (placeholder ?? ''),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: date != null
+                    ? ColorManager.textPrimary
+                    : ColorManager.textTertiary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPassengersField() {
+    return GestureDetector(
+      onTap: _showPassengerPicker,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+        decoration: BoxDecoration(
+          border: Border.all(color: ColorManager.grey1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Passagers',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: ColorManager.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _passengersLabel,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: ColorManager.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              color: ColorManager.textSecondary,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

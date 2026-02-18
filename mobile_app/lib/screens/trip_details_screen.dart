@@ -74,9 +74,9 @@ class TripDetailsScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'Gare de ${offer.departureCity}',
+                                offer.departureSite ?? offer.departureCity,
                                 style: getRegularStyle(
-                                  color: ColorManager.white.withOpacity(0.8),
+                                  color: ColorManager.white.withValues(alpha: 0.8),
                                   fontSize: FontSize.s14,
                                 ),
                               ),
@@ -89,7 +89,7 @@ class TripDetailsScreen extends StatelessWidget {
                             Text(
                               offer.duration,
                               style: getRegularStyle(
-                                color: ColorManager.white.withOpacity(0.8),
+                                color: ColorManager.white.withValues(alpha: 0.8),
                                 fontSize: FontSize.s12,
                               ),
                             ),
@@ -99,7 +99,7 @@ class TripDetailsScreen extends StatelessWidget {
                                 Container(
                                   width: 32,
                                   height: 2,
-                                  color: ColorManager.white.withOpacity(0.5),
+                                  color: ColorManager.white.withValues(alpha: 0.5),
                                 ),
                                 const Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 4),
@@ -112,7 +112,7 @@ class TripDetailsScreen extends StatelessWidget {
                                 Container(
                                   width: 32,
                                   height: 2,
-                                  color: ColorManager.white.withOpacity(0.5),
+                                  color: ColorManager.white.withValues(alpha: 0.5),
                                 ),
                               ],
                             ),
@@ -131,9 +131,9 @@ class TripDetailsScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'Gare de ${offer.arrivalCity}',
+                                offer.arrivalSite ?? offer.arrivalCity,
                                 style: getRegularStyle(
-                                  color: ColorManager.white.withOpacity(0.8),
+                                  color: ColorManager.white.withValues(alpha: 0.8),
                                   fontSize: FontSize.s14,
                                 ),
                               ),
@@ -159,9 +159,15 @@ class TripDetailsScreen extends StatelessWidget {
                     title: 'Informations véhicule',
                     icon: '🚐',
                     children: [
-                      _buildInfoRow('Type', 'Minibus Toyota Hiace'),
-                      _buildInfoRow('Immatriculation', 'RC 1234 AB'),
-                      _buildInfoRow('Capacité', '18 places'),
+                      _buildInfoRow('Type', offer.vehicleFullName),
+                      if (offer.vehicleRegistration != null)
+                        _buildInfoRow('Immatriculation', offer.vehicleRegistration!),
+                      _buildInfoRow(
+                        'Capacité',
+                        offer.totalSeats > 0
+                            ? '${offer.totalSeats} places'
+                            : '${offer.availableSeats} places disponibles',
+                      ),
                       _buildInfoRow(
                         'Climatisation',
                         offer.hasAC ? '✓ Oui' : '✗ Non',
@@ -183,7 +189,7 @@ class TripDetailsScreen extends StatelessWidget {
                           Container(
                             width: 48,
                             height: 48,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: ColorManager.grey1,
                               shape: BoxShape.circle,
                             ),
@@ -198,19 +204,20 @@ class TripDetailsScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Mamadou Diallo',
+                                  offer.driverName ?? 'Non renseigné',
                                   style: getMediumStyle(
                                     color: ColorManager.textPrimary,
                                     fontSize: FontSize.s16,
                                   ),
                                 ),
-                                Text(
-                                  '+224 621 XX XX XX',
-                                  style: getRegularStyle(
-                                    color: ColorManager.textSecondary,
-                                    fontSize: FontSize.s14,
+                                if (offer.driverPhone != null)
+                                  Text(
+                                    offer.driverPhone!,
+                                    style: getRegularStyle(
+                                      color: ColorManager.textSecondary,
+                                      fontSize: FontSize.s14,
+                                    ),
                                   ),
-                                ),
                               ],
                             ),
                           ),
@@ -223,7 +230,7 @@ class TripDetailsScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                offer.rating.toString(),
+                                offer.rating.toStringAsFixed(1),
                                 style: getMediumStyle(
                                   color: ColorManager.textPrimary,
                                   fontSize: FontSize.s14,
@@ -237,6 +244,36 @@ class TripDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSize.s16),
 
+                  // Meeting point (if available)
+                  if (offer.meetingPoint != null) ...[
+                    _buildInfoCard(
+                      title: 'Point de rendez-vous',
+                      icon: '📍',
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              color: ColorManager.accent,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                offer.meetingPoint!,
+                                style: getRegularStyle(
+                                  color: ColorManager.textPrimary,
+                                  fontSize: FontSize.s14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSize.s16),
+                  ],
+
                   // Conditions card
                   Container(
                     width: double.infinity,
@@ -245,7 +282,7 @@ class TripDetailsScreen extends StatelessWidget {
                       color: ColorManager.warningLight,
                       borderRadius: BorderRadius.circular(AppRadius.r16),
                       border: Border.all(
-                        color: ColorManager.warning.withOpacity(0.3),
+                        color: ColorManager.warning.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Column(
@@ -259,10 +296,20 @@ class TripDetailsScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: AppSize.s12),
-                        _buildConditionItem('Bagages inclus (max 20kg)'),
-                        _buildConditionItem('Supplément +50 000 GNF au-delà'),
-                        _buildConditionItem(
-                            'Annulation gratuite jusqu\'à 24h avant'),
+                        if (offer.conditions != null)
+                          _buildConditionItem(offer.conditions!)
+                        else ...[
+                          _buildConditionItem('Bagages inclus (max 20kg)'),
+                          _buildConditionItem('Supplément +50 000 GNF au-delà'),
+                        ],
+                        if (offer.cancellationAllowed)
+                          _buildConditionItem(
+                            offer.cancellationDeadlineHours != null
+                                ? 'Annulation gratuite jusqu\'à ${offer.cancellationDeadlineHours}h avant'
+                                : 'Annulation gratuite jusqu\'à 24h avant',
+                          )
+                        else
+                          _buildConditionItem('Annulation non autorisée'),
                       ],
                     ),
                   ),
@@ -309,7 +356,7 @@ class TripDetailsScreen extends StatelessWidget {
               color: ColorManager.white,
               boxShadow: [
                 BoxShadow(
-                  color: ColorManager.black.withOpacity(0.1),
+                  color: ColorManager.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, -4),
                 ),
@@ -389,11 +436,14 @@ class TripDetailsScreen extends StatelessWidget {
               fontSize: FontSize.s14,
             ),
           ),
-          Text(
-            value,
-            style: getMediumStyle(
-              color: valueColor ?? ColorManager.textPrimary,
-              fontSize: FontSize.s14,
+          Flexible(
+            child: Text(
+              value,
+              style: getMediumStyle(
+                color: valueColor ?? ColorManager.textPrimary,
+                fontSize: FontSize.s14,
+              ),
+              textAlign: TextAlign.end,
             ),
           ),
         ],

@@ -40,6 +40,9 @@ public class ResourceServerConfig {
                 .authorizeHttpRequests( authorize -> authorize
                         .requestMatchers("/actuator/health","/actuator/info", "/billetterie/image/**","/billetterie/docs/**").permitAll()
                         .requestMatchers("/billetterie/files/**").permitAll()
+                        .requestMatchers(GET, "/billetterie/sites/actifs", "/billetterie/sites/search").permitAll()
+                        .requestMatchers(GET, "/billetterie/offres/recherche").permitAll()
+                        .requestMatchers(GET, "/billetterie/villes/active").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .accessDeniedHandler(new CustomAccessDeniedHandler())

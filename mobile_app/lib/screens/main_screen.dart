@@ -28,34 +28,43 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: [
-          _buildSearchTab(),
-          _buildTripsTab(),
-          _buildProfileTab(),
-        ],
+        children: [_buildSearchTab(), _buildTripsTab(), _buildProfileTab()],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: ColorManager.white,
           boxShadow: [
             BoxShadow(
-              color: ColorManager.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -4),
+              color: ColorManager.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
             ),
           ],
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(0, Icons.search, 'Rechercher'),
-                _buildNavItem(1, Icons.confirmation_number, 'Mes Voyages'),
-                _buildNavItem(2, Icons.person, 'Profil'),
-              ],
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Plus de Row indicateur ici !
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(0, Icons.search, 'Réservation'),
+                    _buildNavItem(
+                      1,
+                      Icons.confirmation_number_outlined,
+                      'Billets',
+                    ),
+                    _buildNavItem(2, Icons.info_outline, 'Plus'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -66,27 +75,37 @@ class _MainScreenState extends State<MainScreen> {
     final isSelected = _currentIndex == index;
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? ColorManager.primarySurface : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Indicateur aligné avec l'icône
+            Container(
+              height: 2.5, // était 2
+              width: 32, // était 22
+              decoration: BoxDecoration(
+                color: isSelected ? ColorManager.accent : Colors.transparent,
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+            const SizedBox(height: 6),
             Icon(
               icon,
-              color: isSelected ? ColorManager.primary : ColorManager.textTertiary,
+              size: 22,
+              color: isSelected
+                  ? ColorManager.accent
+                  : ColorManager.textTertiary,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Text(
               label,
-              style: getMediumStyle(
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 color: isSelected
-                    ? ColorManager.primary
+                    ? ColorManager.accent
                     : ColorManager.textTertiary,
-                fontSize: FontSize.s12,
               ),
             ),
           ],
@@ -102,25 +121,19 @@ class _MainScreenState extends State<MainScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => SearchResultsScreen(
-              departure: _extractCity(params['departure'] as String),
-              destination: _extractCity(params['destination'] as String),
+              departure: params['departure'] as String,
+              destination: params['destination'] as String,
+              departureVilleUuid: params['departureVilleUuid'] as String?,
+              destinationVilleUuid: params['destinationVilleUuid'] as String?,
               date: params['date'] as DateTime,
               passengers: params['passengers'] as int,
-              onSelectOffer: (offer) => _navigateToDetails(offer, params['passengers'] as int),
+              onSelectOffer: (offer) =>
+                  _navigateToDetails(offer, params['passengers'] as int),
             ),
           ),
         );
       },
     );
-  }
-
-  String _extractCity(String fullName) {
-    // Extract city name from "Gare de Madina (Conakry)" -> "Madina"
-    final parts = fullName.split(' ');
-    if (parts.length >= 3) {
-      return parts[2].replaceAll('(', '').replaceAll(')', '');
-    }
-    return fullName;
   }
 
   void _navigateToDetails(TripOffer offer, int passengers) {
@@ -155,7 +168,8 @@ class _MainScreenState extends State<MainScreen> {
       MaterialPageRoute(
         builder: (context) => PaymentScreen(
           totalAmount: total,
-          onPaymentSuccess: () => _navigateToConfirmation(offer, passengers, total),
+          onPaymentSuccess: () =>
+              _navigateToConfirmation(offer, passengers, total),
         ),
       ),
     );
@@ -166,7 +180,8 @@ class _MainScreenState extends State<MainScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => ConfirmationScreen(
-          orderNumber: 'CMD-${DateTime.now().year}${DateTime.now().month.toString().padLeft(2, '0')}${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().millisecond}',
+          orderNumber:
+              'CMD-${DateTime.now().year}${DateTime.now().month.toString().padLeft(2, '0')}${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().millisecond}',
           departure: offer.departureCity,
           destination: offer.arrivalCity,
           date: DateTime.now(),
@@ -189,15 +204,16 @@ class _MainScreenState extends State<MainScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => TicketScreen(
-          ticketCode: 'TKT-${DateTime.now().millisecondsSinceEpoch.toRadixString(16).toUpperCase()}',
+          ticketCode:
+              'TKT-${DateTime.now().millisecondsSinceEpoch.toRadixString(16).toUpperCase()}',
           passengerName: 'Ibrahima Camara',
           departure: offer.departureCity,
           destination: offer.arrivalCity,
           date: DateTime.now(),
           time: offer.departureTime,
-          vehiclePlate: 'RC 1234 AB',
-          driverName: 'Mamadou Diallo',
-          meetingPoint: 'Gare de ${offer.departureCity}, près du grand marché',
+          vehiclePlate: offer.vehicleRegistration ?? '',
+          driverName: offer.driverName ?? '',
+          meetingPoint: offer.meetingPoint ?? offer.departureSite ?? 'Gare de ${offer.departureCity}',
         ),
       ),
     );
@@ -378,12 +394,16 @@ class _MainScreenState extends State<MainScreen> {
       child: ListTile(
         leading: Icon(
           icon,
-          color: isDestructive ? ColorManager.error : ColorManager.textSecondary,
+          color: isDestructive
+              ? ColorManager.error
+              : ColorManager.textSecondary,
         ),
         title: Text(
           title,
           style: getMediumStyle(
-            color: isDestructive ? ColorManager.error : ColorManager.textPrimary,
+            color: isDestructive
+                ? ColorManager.error
+                : ColorManager.textPrimary,
             fontSize: FontSize.s16,
           ),
         ),
@@ -392,9 +412,7 @@ class _MainScreenState extends State<MainScreen> {
           color: isDestructive ? ColorManager.error : ColorManager.textTertiary,
         ),
         onTap: onTap,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
