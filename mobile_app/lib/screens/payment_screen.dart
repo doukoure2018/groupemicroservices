@@ -1,8 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../presentation/resource/color_manager.dart';
 import '../presentation/resource/font_manager.dart';
 import '../presentation/resource/values_manager.dart';
 import '../presentation/resource/styles_manager.dart';
+import '../services/billetterie_service.dart';
+import 'passengers_screen.dart';
+import 'search_results_screen.dart';
 
 enum PaymentMethod {
   orangeMoney,
@@ -10,6 +14,23 @@ enum PaymentMethod {
   creditMoney,
   card,
   pointOfSale,
+}
+
+extension PaymentMethodCode on PaymentMethod {
+  String get code {
+    switch (this) {
+      case PaymentMethod.orangeMoney:
+        return 'OM';
+      case PaymentMethod.mtnMomo:
+        return 'MOMO';
+      case PaymentMethod.creditMoney:
+        return 'CM';
+      case PaymentMethod.card:
+        return 'CB';
+      case PaymentMethod.pointOfSale:
+        return 'CASH';
+    }
+  }
 }
 
 class PaymentMethodInfo {
@@ -29,12 +50,16 @@ class PaymentMethodInfo {
 }
 
 class PaymentScreen extends StatefulWidget {
+  final TripOffer offer;
   final int totalAmount;
-  final VoidCallback? onPaymentSuccess;
+  final List<Passenger>? passengers;
+  final void Function(Map<String, dynamic> commande)? onPaymentSuccess;
 
   const PaymentScreen({
     super.key,
+    required this.offer,
     required this.totalAmount,
+    this.passengers,
     this.onPaymentSuccess,
   });
 
@@ -45,6 +70,7 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen> {
   PaymentMethod _selectedMethod = PaymentMethod.orangeMoney;
   bool _isProcessing = false;
+  final BilletterieService _billetterieService = BilletterieService();
 
   final List<PaymentMethodInfo> _paymentMethods = [
     PaymentMethodInfo(
@@ -103,7 +129,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: ColorManager.textPrimary),
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isProcessing ? null : () => Navigator.pop(context),
         ),
         title: Text(
           'Paiement',
@@ -175,8 +201,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: AppPadding.p12),
                       child: GestureDetector(
-                        onTap: () =>
-                            setState(() => _selectedMethod = method.method),
+                        onTap: _isProcessing
+                            ? null
+                            : () =>
+                                setState(() => _selectedMethod = method.method),
                         child: Container(
                           padding: const EdgeInsets.all(AppPadding.p16),
                           decoration: BoxDecoration(
@@ -260,7 +288,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 child: ElevatedButton(
                   onPressed: _isProcessing ? null : _handlePayment,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorManager.primary,
+                    backgroundColor: ColorManager.accent,
                     foregroundColor: ColorManager.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.r16),
@@ -278,10 +306,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ),
                         )
                       : Text(
-                          'Payer maintenant',
+                          'Payer maintenant • ${_formatPrice(_grandTotal)} GNF',
                           style: getSemiBoldStyle(
                             color: ColorManager.white,
-                            fontSize: FontSize.s16,
+                            fontSize: FontSize.s14,
                           ),
                         ),
                 ),
@@ -351,12 +379,108 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Future<void> _handlePayment() async {
     setState(() => _isProcessing = true);
 
-    // Simulate payment processing
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Préparer les passagers
+      final passagers = widget.passengers?.map((p) => {
+        'nom': p.nom,
+        'prenom': p.prenom,
+        'telephone': '+224${p.phone.replaceAll(RegExp(r'\s'), '')}',
+        if (p.idNumber != null && p.idNumber!.isNotEmpty)
+          'pieceIdentite': p.idNumber!,
+      }).toList() ?? [];
 
-    setState(() => _isProcessing = false);
+      // Appel API
+      final commande = await _billetterieService.createCommande(
+        offreUuid: widget.offer.id,
+        passagers: passagers.map((p) =>
+          p.map((k, v) => MapEntry(k, v.toString()))
+        ).toList(),
+        modeReglementCode: _selectedMethod.code,
+        montantTotal: widget.totalAmount,
+      );
 
-    widget.onPaymentSuccess?.call();
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
+
+      // Succès
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Commande ${commande['numeroCommande']} créée avec succès !',
+          ),
+          backgroundColor: ColorManager.success,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      widget.onPaymentSuccess?.call(commande);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
+
+      String errorMessage = 'Une erreur est survenue. Veuillez r\u00e9essayer.';
+
+      if (e is DioException && e.response?.data != null) {
+        final data = e.response!.data;
+        if (data is Map) {
+          // Backend Response format: { "message": "...", "code": 400 }
+          // or GlobalExceptionHandler format: { "error": "..." }
+          errorMessage = data['message'] ?? data['error'] ?? errorMessage;
+        }
+      } else if (e is Exception) {
+        errorMessage = e.toString().replaceAll('Exception: ', '');
+      }
+
+      _showErrorDialog(errorMessage);
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.r16),
+        ),
+        icon: const Icon(
+          Icons.error_outline,
+          color: ColorManager.error,
+          size: 48,
+        ),
+        title: Text(
+          '\u00c9chec du paiement',
+          style: getSemiBoldStyle(
+            color: ColorManager.textPrimary,
+            fontSize: FontSize.s18,
+          ),
+        ),
+        content: Text(
+          message,
+          style: getRegularStyle(
+            color: ColorManager.textSecondary,
+            fontSize: FontSize.s14,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorManager.primary,
+                foregroundColor: ColorManager.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.r12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text('Compris'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatPrice(int price) {

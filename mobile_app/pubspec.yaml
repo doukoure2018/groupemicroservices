@@ -29,8 +29,16 @@ dependencies:
   go_router: ^14.6.2
 
   # Utils
+  url_launcher: ^6.3.1
   shared_preferences: ^2.3.3
   jwt_decoder: ^2.0.1
+  share_plus: ^10.1.4
+
+  # QR Code & PDF
+  qr_flutter: ^4.1.0
+  pdf: ^3.11.1
+  printing: ^5.13.3
+  path_provider: ^2.1.4
 
   # UI
   google_fonts: ^6.2.1

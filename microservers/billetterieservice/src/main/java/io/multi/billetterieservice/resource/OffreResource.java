@@ -1,8 +1,10 @@
 package io.multi.billetterieservice.resource;
 
+import io.multi.billetterieservice.domain.Avis;
 import io.multi.billetterieservice.domain.Offre;
 import io.multi.billetterieservice.domain.Response;
 import io.multi.billetterieservice.dto.OffreRequest;
+import io.multi.billetterieservice.repository.AvisRepository;
 import io.multi.billetterieservice.service.OffreService;
 import io.multi.billetterieservice.utils.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,6 +36,7 @@ import static org.springframework.http.HttpStatus.*;
 public class OffreResource {
 
     private final OffreService offreService;
+    private final AvisRepository avisRepository;
     private final JwtUtils jwtUtils;
 
     // ========== ENDPOINTS DE LECTURE ==========
@@ -556,6 +559,23 @@ public class OffreResource {
         return ResponseEntity.ok(
                 getResponse(request, Map.of("total", total),
                         "Statistiques récupérées avec succès", OK)
+        );
+    }
+
+    // ========== ENDPOINT AVIS ==========
+
+    /**
+     * GET /billetterie/offres/{uuid}/avis - Avis voyageurs pour le véhicule de cette offre
+     */
+    @GetMapping("/{uuid}/avis")
+    public ResponseEntity<Response> getAvisByOffre(
+            @PathVariable String uuid,
+            HttpServletRequest request) {
+        log.info("GET /billetterie/offres/{}/avis", uuid);
+        List<Avis> avis = avisRepository.findByOffreUuid(uuid);
+        return ResponseEntity.ok(
+                getResponse(request, Map.of("avis", avis, "total", avis.size()),
+                        "Avis récupérés avec succès", OK)
         );
     }
 

@@ -103,6 +103,32 @@ class Offre {
   String get heuresArriveeFormatted =>
       heureArriveeEstimee?.substring(0, 5) ?? '';
 
+  /// Parses a date value that may be a String ("2026-02-19") or a List ([2026, 2, 19]).
+  static String? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    if (value is List && value.length >= 3) {
+      final y = value[0].toString();
+      final m = value[1].toString().padLeft(2, '0');
+      final d = value[2].toString().padLeft(2, '0');
+      return '$y-$m-$d';
+    }
+    return value.toString();
+  }
+
+  /// Parses a time value that may be a String ("05:30") or a List ([5, 30]).
+  static String? _parseTime(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    if (value is List && value.length >= 2) {
+      final h = value[0].toString().padLeft(2, '0');
+      final m = value[1].toString().padLeft(2, '0');
+      final s = value.length >= 3 ? value[2].toString().padLeft(2, '0') : '00';
+      return '$h:$m:$s';
+    }
+    return value.toString();
+  }
+
   factory Offre.fromJson(Map<String, dynamic> json) {
     return Offre(
       offreUuid: json['offreUuid'] ?? '',
@@ -117,9 +143,9 @@ class Offre {
       siteArrivee: json['siteArrivee'],
       villeArriveeLibelle: json['villeArriveeLibelle'],
       villeArriveeUuid: json['villeArriveeUuid'],
-      dateDepart: json['dateDepart'],
-      heureDepart: json['heureDepart'],
-      heureArriveeEstimee: json['heureArriveeEstimee'],
+      dateDepart: _parseDate(json['dateDepart']),
+      heureDepart: _parseTime(json['heureDepart']),
+      heureArriveeEstimee: _parseTime(json['heureArriveeEstimee']),
       nombrePlacesDisponibles: json['nombrePlacesDisponibles'] ?? 0,
       nombrePlacesTotal: json['nombrePlacesTotal'] ?? 0,
       montant: (json['montant'] ?? 0).toDouble(),

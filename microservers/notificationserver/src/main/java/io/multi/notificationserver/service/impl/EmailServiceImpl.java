@@ -34,6 +34,10 @@ public class EmailServiceImpl implements EmailService {
 
     public static final String STOCK_VALIDATION_TEMPLATE = "stock_validation";
     public static final String STOCK_REJECTION_TEMPLATE = "stock_rejection";
+    public static final String BOOKING_CONFIRMATION_TEMPLATE = "bookingconfirmation";
+    public static final String BOOKING_CONFIRMATION_SUBJECT = "Confirmation de votre réservation";
+    public static final String BOOKING_CANCELLATION_TEMPLATE = "bookingcancellation";
+    public static final String BOOKING_CANCELLATION_SUBJECT = "Annulation de votre réservation";
 
     private final TemplateEngine templateEngine;
     private final JavaMailSender mailSender;
@@ -95,6 +99,53 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendNewFilesHtmlEmail(String name, String email, String files, String ticketTitle, String ticketNumber, String priority, String date) {
         // TODO: Implement when needed
+    }
+
+    @Override
+    @Async
+    public void sendBookingConfirmationEmail(String name, String email, String numeroCommande, String trajet, String dateDepart, String heureDepart, String nombrePlaces, String montantPaye, String billetCodes) {
+        try {
+            var context = new Context();
+            context.setVariables(Map.of(
+                    "name", name,
+                    "numeroCommande", numeroCommande,
+                    "trajet", trajet,
+                    "dateDepart", dateDepart,
+                    "heureDepart", heureDepart,
+                    "nombrePlaces", nombrePlaces,
+                    "montantPaye", montantPaye,
+                    "billetCodes", billetCodes
+            ));
+            var htmlContent = templateEngine.process(BOOKING_CONFIRMATION_TEMPLATE, context);
+
+            sendEmail(email, BOOKING_CONFIRMATION_SUBJECT + " - " + numeroCommande, htmlContent);
+            log.info("Booking confirmation email sent to: {} for order: {}", email, numeroCommande);
+        } catch (Exception exception) {
+            log.error("Error sending booking confirmation email: {}", exception.getMessage(), exception);
+        }
+    }
+
+    @Override
+    @Async
+    public void sendBookingCancellationEmail(String name, String email, String numeroCommande, String trajet, String dateDepart, String heureDepart, String nombrePlaces, String montantPaye) {
+        try {
+            var context = new Context();
+            context.setVariables(Map.of(
+                    "name", name,
+                    "numeroCommande", numeroCommande,
+                    "trajet", trajet,
+                    "dateDepart", dateDepart,
+                    "heureDepart", heureDepart,
+                    "nombrePlaces", nombrePlaces,
+                    "montantPaye", montantPaye
+            ));
+            var htmlContent = templateEngine.process(BOOKING_CANCELLATION_TEMPLATE, context);
+
+            sendEmail(email, BOOKING_CANCELLATION_SUBJECT + " - " + numeroCommande, htmlContent);
+            log.info("Booking cancellation email sent to: {} for order: {}", email, numeroCommande);
+        } catch (Exception exception) {
+            log.error("Error sending booking cancellation email: {}", exception.getMessage(), exception);
+        }
     }
 
     /**

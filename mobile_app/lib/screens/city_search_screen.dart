@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../presentation/resource/color_manager.dart';
+import '../services/billetterie_service.dart';
 
 class CitySearchScreen extends StatefulWidget {
   final String fieldLabel; // "De" or "Vers"
@@ -18,24 +19,17 @@ class CitySearchScreen extends StatefulWidget {
 class _CitySearchScreenState extends State<CitySearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  List<Map<String, String>> _filteredCities = [];
+  final BilletterieService _billetterieService = BilletterieService();
 
-  // Local cities data — will be replaced by API later
-  static const List<Map<String, String>> _allCities = [
-    {'name': 'Conakry', 'villeUuid': ''},
-    {'name': 'Kindia', 'villeUuid': ''},
-    {'name': 'Labé', 'villeUuid': ''},
-    {'name': 'Mamou', 'villeUuid': ''},
-    {'name': 'Kankan', 'villeUuid': ''},
-    {'name': 'N\'Zérékoré', 'villeUuid': ''},
-    {'name': 'Boké', 'villeUuid': ''},
-    {'name': 'Faranah', 'villeUuid': ''},
-  ];
+  List<Map<String, String>> _allCities = [];
+  List<Map<String, String>> _filteredCities = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _filterCities('');
+    _loadVilles();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _searchFocusNode.requestFocus();
     });
@@ -48,12 +42,39 @@ class _CitySearchScreenState extends State<CitySearchScreen> {
     super.dispose();
   }
 
+  Future<void> _loadVilles() async {
+    try {
+      final villes = await _billetterieService.getActiveVilles();
+      setState(() {
+        _allCities = villes
+            .map(
+              (v) => {
+                'name': v['libelle']?.toString() ?? '',
+                'villeUuid': v['villeUuid']?.toString() ?? '',
+                'region': v['regionLibelle']?.toString() ?? '',
+              },
+            )
+            .toList();
+        _isLoading = false;
+        _filterCities('');
+      });
+    } catch (e) {
+      debugPrint('Load villes error: $e');
+      setState(() {
+        _error = 'Impossible de charger les villes';
+        _isLoading = false;
+      });
+    }
+  }
+
   void _filterCities(String query) {
     setState(() {
       _filteredCities = _allCities
-          .where((city) =>
-              city['name'] != widget.excludeCity &&
-              city['name']!.toLowerCase().contains(query.toLowerCase()))
+          .where(
+            (city) =>
+                city['name'] != widget.excludeCity &&
+                city['name']!.toLowerCase().contains(query.toLowerCase()),
+          )
           .toList();
     });
   }
@@ -73,9 +94,7 @@ class _CitySearchScreenState extends State<CitySearchScreen> {
               right: 16,
               bottom: 20,
             ),
-            decoration: const BoxDecoration(
-              color: ColorManager.accent,
-            ),
+            decoration: const BoxDecoration(color: ColorManager.accent),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -151,48 +170,99 @@ class _CitySearchScreenState extends State<CitySearchScreen> {
           ),
 
           // City results list
-          Expanded(
-            child: _filteredCities.isEmpty
-                ? Center(
-                    child: Text(
-                      'Aucune ville trouvée',
-                      style: TextStyle(
-                        color: ColorManager.textTertiary,
-                        fontSize: 14,
-                      ),
-                    ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: _filteredCities.length,
-                    separatorBuilder: (_, __) => const Divider(
-                      height: 1,
-                      indent: 56,
-                      color: ColorManager.grey1,
-                    ),
-                    itemBuilder: (context, index) {
-                      final city = _filteredCities[index];
-                      return ListTile(
-                        leading: const Icon(
-                          Icons.location_on_outlined,
-                          color: ColorManager.textSecondary,
-                          size: 22,
-                        ),
-                        title: Text(
-                          city['name']!,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: ColorManager.textPrimary,
-                          ),
-                        ),
-                        onTap: () => Navigator.pop(context, city),
-                      );
-                    },
-                  ),
-          ),
+          Expanded(child: _buildContent()),
         ],
       ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: ColorManager.accent),
+      );
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.wifi_off,
+                size: 40,
+                color: ColorManager.textTertiary,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: ColorManager.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isLoading = true;
+                    _error = null;
+                  });
+                  _loadVilles();
+                },
+                child: const Text('Réessayer'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_filteredCities.isEmpty) {
+      return const Center(
+        child: Text(
+          'Aucune ville trouvée',
+          style: TextStyle(color: ColorManager.textTertiary, fontSize: 14),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: _filteredCities.length,
+      separatorBuilder: (_, __) =>
+          const Divider(height: 1, indent: 56, color: ColorManager.grey1),
+      itemBuilder: (context, index) {
+        final city = _filteredCities[index];
+        return ListTile(
+          leading: const Icon(
+            Icons.location_on_outlined,
+            color: ColorManager.textSecondary,
+            size: 22,
+          ),
+          title: Text(
+            city['name']!,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: ColorManager.textPrimary,
+            ),
+          ),
+          subtitle: city['region']!.isNotEmpty
+              ? Text(
+                  city['region']!,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: ColorManager.textTertiary,
+                  ),
+                )
+              : null,
+          onTap: () => Navigator.pop(context, city),
+        );
+      },
     );
   }
 }

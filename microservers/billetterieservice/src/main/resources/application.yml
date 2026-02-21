@@ -43,7 +43,7 @@ spring:
 
   kafka:
     bootstrap-servers:
-      - localhost:9092
+      - localhost:9093
     template:
       default-topic: NOTIFICATION_TOPIC
     producer:
@@ -56,7 +56,7 @@ spring:
       spring:
         json:
           type:
-            mapping: Notification:io.multi.userservice.domain.Notification
+            mapping: Notification:io.multi.billetterieservice.event.Notification
       message.max.bytes: 1300000000
       max.request.size: 1300000000
 

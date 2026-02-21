@@ -38,9 +38,14 @@ class TripOffer {
   final bool cancellationAllowed;
   final int? cancellationDeadlineHours;
 
+  // Status
+  final String? statut;
+
   // Departure site
   final String? departureSite;
   final String? arrivalSite;
+
+  bool get isAvailable => statut == null || statut == 'OUVERT';
 
   TripOffer({
     required this.id,
@@ -65,6 +70,7 @@ class TripOffer {
     this.meetingPoint,
     this.cancellationAllowed = true,
     this.cancellationDeadlineHours,
+    this.statut,
     this.departureSite,
     this.arrivalSite,
   });
@@ -100,6 +106,7 @@ class TripOffer {
       meetingPoint: offre.pointRendezvous,
       cancellationAllowed: offre.annulationAutorisee,
       cancellationDeadlineHours: offre.delaiAnnulationHeures,
+      statut: offre.statut,
       departureSite: offre.siteDepart ?? offre.departLibelle,
       arrivalSite: offre.siteArrivee ?? offre.arriveeLibelle,
     );
@@ -191,7 +198,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       result = result.where((o) => o.hasAC).toList();
     }
     if (_filterVehicleType != null) {
-      result = result.where((o) => o.vehicleType == _filterVehicleType).toList();
+      result = result
+          .where((o) => o.vehicleType == _filterVehicleType)
+          .toList();
     }
 
     // Apply sort
@@ -291,62 +300,111 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
     return Scaffold(
       backgroundColor: ColorManager.background,
-      appBar: AppBar(
-        backgroundColor: ColorManager.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: ColorManager.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${widget.departure} → ${widget.destination}',
-              style: getSemiBoldStyle(
-                color: ColorManager.textPrimary,
-                fontSize: FontSize.s16,
-              ),
+      body: Column(
+        children: [
+          // Navy gradient header
+          Container(
+            decoration: const BoxDecoration(
+              gradient: ColorManager.primaryGradient,
             ),
-            Text(
-              '${widget.date.day}/${widget.date.month}/${widget.date.year} • ${widget.passengers} place${widget.passengers > 1 ? 's' : ''}',
-              style: getRegularStyle(
-                color: ColorManager.textSecondary,
-                fontSize: FontSize.s12,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          if (!_isLoading)
-            Container(
-              margin: const EdgeInsets.only(right: AppPadding.p16),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppPadding.p12,
-                vertical: AppPadding.p6,
-              ),
-              decoration: BoxDecoration(
-                color: ColorManager.primarySurface,
-                borderRadius: BorderRadius.circular(AppRadius.r20),
-              ),
-              child: Text(
-                '${filtered.length} offre${filtered.length > 1 ? 's' : ''}',
-                style: getMediumStyle(
-                  color: ColorManager.primary,
-                  fontSize: FontSize.s12,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  left: AppPadding.p8,
+                  right: AppPadding.p16,
+                  top: AppPadding.p8,
+                  bottom: AppPadding.p16,
+                ),
+                child: Column(
+                  children: [
+                    // Top row: back + badge
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: ColorManager.white,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        const Spacer(),
+                        if (!_isLoading)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppPadding.p12,
+                              vertical: AppPadding.p6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: ColorManager.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.r20,
+                              ),
+                            ),
+                            child: Text(
+                              '${filtered.length} offre${filtered.length > 1 ? 's' : ''}',
+                              style: getMediumStyle(
+                                color: ColorManager.white,
+                                fontSize: FontSize.s12,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    // Route info
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          widget.departure,
+                          style: getSemiBoldStyle(
+                            color: ColorManager.white,
+                            fontSize: FontSize.s18,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Icon(
+                            Icons.arrow_forward,
+                            color: ColorManager.white.withValues(alpha: 0.7),
+                            size: 20,
+                          ),
+                        ),
+                        Text(
+                          widget.destination,
+                          style: getSemiBoldStyle(
+                            color: ColorManager.white,
+                            fontSize: FontSize.s18,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Date + passengers
+                    Text(
+                      '${widget.date.day}/${widget.date.month}/${widget.date.year} • ${widget.passengers} passager${widget.passengers > 1 ? 's' : ''}',
+                      style: getRegularStyle(
+                        color: ColorManager.white.withValues(alpha: 0.8),
+                        fontSize: FontSize.s13,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
+          ),
+          // Body
+          Expanded(child: _buildBody(filtered)),
         ],
       ),
-      body: _buildBody(filtered),
     );
   }
 
   Widget _buildBody(List<TripOffer> filtered) {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: ColorManager.accent),
+        child: CircularProgressIndicator(color: ColorManager.primary),
       );
     }
 
@@ -357,7 +415,11 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: ColorManager.textTertiary),
+              const Icon(
+                Icons.error_outline,
+                size: 48,
+                color: ColorManager.textTertiary,
+              ),
               const SizedBox(height: 16),
               Text(
                 _error!,
@@ -395,7 +457,11 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.search_off, size: 48, color: ColorManager.textTertiary),
+              const Icon(
+                Icons.search_off,
+                size: 48,
+                color: ColorManager.textTertiary,
+              ),
               const SizedBox(height: 16),
               Text(
                 'Aucune offre disponible pour ce trajet',
@@ -444,7 +510,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                   padding: const EdgeInsets.all(AppPadding.p16),
                   itemCount: filtered.length,
                   itemBuilder: (context, index) {
-                    return _buildOfferCard(filtered[index], context, index == 0);
+                    return _buildOfferCard(filtered[index], context);
                   },
                 ),
         ),
@@ -457,7 +523,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
     return Container(
       color: ColorManager.white,
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -489,17 +555,21 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             // Filter: Vehicle types (if more than 1 type)
             if (vehicleTypes.length > 1) ...[
               const SizedBox(width: 8),
-              ...vehicleTypes.map((type) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: _buildFilterChip(
-                  type,
-                  Icons.directions_bus,
-                  _filterVehicleType == type,
-                  () => setState(() {
-                    _filterVehicleType = _filterVehicleType == type ? null : type;
-                  }),
+              ...vehicleTypes.map(
+                (type) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _buildFilterChip(
+                    type,
+                    Icons.directions_bus,
+                    _filterVehicleType == type,
+                    () => setState(() {
+                      _filterVehicleType = _filterVehicleType == type
+                          ? null
+                          : type;
+                    }),
+                  ),
                 ),
-              )),
+              ),
             ],
           ],
         ),
@@ -526,7 +596,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             Icon(
               icon,
               size: 14,
-              color: isSelected ? ColorManager.white : ColorManager.textSecondary,
+              color: isSelected
+                  ? ColorManager.white
+                  : ColorManager.textSecondary,
             ),
             const SizedBox(width: 4),
             Text(
@@ -534,7 +606,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? ColorManager.white : ColorManager.textSecondary,
+                color: isSelected
+                    ? ColorManager.white
+                    : ColorManager.textSecondary,
               ),
             ),
           ],
@@ -554,7 +628,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: isActive ? ColorManager.accent.withValues(alpha: 0.1) : ColorManager.background,
+          color: isActive
+              ? ColorManager.accent.withValues(alpha: 0.1)
+              : ColorManager.background,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isActive ? ColorManager.accent : ColorManager.grey1,
@@ -566,7 +642,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             Icon(
               icon,
               size: 14,
-              color: isActive ? ColorManager.accent : ColorManager.textSecondary,
+              color: isActive
+                  ? ColorManager.accent
+                  : ColorManager.textSecondary,
             ),
             const SizedBox(width: 4),
             Text(
@@ -574,7 +652,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? ColorManager.accent : ColorManager.textSecondary,
+                color: isActive
+                    ? ColorManager.accent
+                    : ColorManager.textSecondary,
               ),
             ),
           ],
@@ -583,13 +663,18 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     );
   }
 
-  Widget _buildOfferCard(TripOffer offer, BuildContext context, bool isPrimary) {
-    return Container(
+  Widget _buildOfferCard(TripOffer offer, BuildContext context) {
+    final available = offer.isAvailable;
+    return Opacity(
+      opacity: available ? 1.0 : 0.55,
+      child: Container(
       margin: const EdgeInsets.only(bottom: AppPadding.p16),
       decoration: BoxDecoration(
         color: ColorManager.white,
         borderRadius: BorderRadius.circular(AppRadius.r16),
-        border: Border.all(color: ColorManager.grey1),
+        border: Border.all(
+          color: available ? ColorManager.grey1 : ColorManager.grey2,
+        ),
         boxShadow: [
           BoxShadow(
             color: ColorManager.black.withValues(alpha: 0.05),
@@ -643,10 +728,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          Container(
-                            height: 2,
-                            color: ColorManager.primaryLight,
-                          ),
+                          Container(height: 2, color: ColorManager.grey2),
                           Container(
                             padding: const EdgeInsets.all(4),
                             decoration: const BoxDecoration(
@@ -654,7 +736,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                             ),
                             child: const Icon(
                               Icons.directions_bus,
-                              color: ColorManager.primary,
+                              color: ColorManager.busIcon,
                               size: 16,
                             ),
                           ),
@@ -692,9 +774,17 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             // Features row
             Row(
               children: [
-                _buildFeatureChip(Icons.directions_bus, offer.vehicleType),
+                _buildFeatureChip(
+                  Icons.directions_bus,
+                  offer.vehicleType,
+                  color: ColorManager.busIcon,
+                ),
                 const SizedBox(width: AppSize.s8),
-                _buildFeatureChip(Icons.people, '${offer.availableSeats} places'),
+                _buildFeatureChip(
+                  Icons.event_seat,
+                  '${offer.availableSeats} places',
+                  color: ColorManager.primary,
+                ),
                 if (offer.hasAC) ...[
                   const SizedBox(width: AppSize.s8),
                   _buildFeatureChip(
@@ -747,14 +837,14 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                           TextSpan(
                             text: '${_formatPrice(offer.price)} ',
                             style: getBoldStyle(
-                              color: ColorManager.primary,
+                              color: ColorManager.accent,
                               fontSize: FontSize.s20,
                             ),
                           ),
                           TextSpan(
                             text: 'GNF',
                             style: getRegularStyle(
-                              color: ColorManager.primary,
+                              color: ColorManager.accentDark,
                               fontSize: FontSize.s12,
                             ),
                           ),
@@ -774,55 +864,83 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             ),
             const SizedBox(height: AppSize.s16),
 
-            // Action button
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () => widget.onSelectOffer?.call(offer),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isPrimary
-                      ? ColorManager.primary
-                      : ColorManager.lightGrey,
-                  foregroundColor: isPrimary
-                      ? ColorManager.white
-                      : ColorManager.textPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.r12),
+            // Action button or status badge
+            if (available)
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => widget.onSelectOffer?.call(offer),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorManager.accent,
+                    foregroundColor: ColorManager.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.r12),
+                    ),
+                    elevation: 0,
                   ),
-                  elevation: 0,
+                  child: Text(
+                    'Voir les d\u00e9tails',
+                    style: getSemiBoldStyle(
+                      color: ColorManager.white,
+                      fontSize: FontSize.s14,
+                    ),
+                  ),
                 ),
-                child: Text(
-                  isPrimary ? 'Réserver' : 'Voir détails',
-                  style: getSemiBoldStyle(
-                    color: isPrimary
-                        ? ColorManager.white
-                        : ColorManager.textPrimary,
-                    fontSize: FontSize.s14,
-                  ),
+              )
+            else
+              Container(
+                width: double.infinity,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: ColorManager.warningLight,
+                  borderRadius: BorderRadius.circular(AppRadius.r12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.hourglass_top,
+                      color: ColorManager.accentDark,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'En attente de confirmation',
+                      style: getMediumStyle(
+                        color: ColorManager.accentDark,
+                        fontSize: FontSize.s14,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
           ],
         ),
       ),
+    ),
     );
   }
 
   Widget _buildFeatureChip(IconData icon, String label, {Color? color}) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: color ?? ColorManager.textSecondary),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: getRegularStyle(
-            color: color ?? ColorManager.textSecondary,
-            fontSize: FontSize.s12,
+    final chipColor = color ?? ColorManager.textSecondary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: chipColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: chipColor),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: getRegularStyle(color: chipColor, fontSize: FontSize.s11),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

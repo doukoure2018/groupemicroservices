@@ -18,4 +18,17 @@ public class Data {
     private String comment;
     private String date;
     private String files;
+
+    private String phone;
+
+    // Champs commande/billetterie
+    private String numeroCommande;
+    private String trajet;
+    private String dateDepart;
+    private String heureDepart;
+    private String nombrePlaces;
+    private String montantPaye;
+    private String billetCodes;
+    private String referencePaiement;
+    private String userEmail; // email de l'utilisateur qui a réservé
 }

@@ -69,7 +69,7 @@ spring:
       spring:
         json:
           type:
-            mapping: "Notification:io.multi.notificationserver.domain.Notification,io.multi.authorizationserver.event.Notification:io.multi.notificationserver.domain.Notification"
+            mapping: "Notification:io.multi.notificationserver.domain.Notification,io.multi.authorizationserver.event.Notification:io.multi.notificationserver.domain.Notification,io.multi.billetterieservice.event.Notification:io.multi.notificationserver.domain.Notification"
       # Add global properties for handling large messages
       fetch.message.max.bytes: 1300000000
 
@@ -103,3 +103,18 @@ server:
 
 jwks:
   uri: http://localhost:8090/oauth2/jwks
+
+orange:
+  api:
+    oauth:
+      url: https://api.orange.com/oauth/v3/token
+    sms:
+      url: https://api.orange.com/smsmessaging/v1/outbound/tel:+224622459305/requests
+    client:
+      credentials: Basic VExqQ1BlQ1ZDdUxTRURLUjc2Z0RZcXo5QWw4a3h5M3A6RmlMZlNLcmJUYllickxqdVhvRU9CcWVPMGI0N3pjaE5CcGlVbFJadFk1Ylc=
+    sender:
+      address: tel:+224622459305
+
+sms:
+  sender:
+    name: YIGUI

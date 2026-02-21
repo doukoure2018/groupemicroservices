@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.multi.notificationserver.domain.Data;
 import io.multi.notificationserver.domain.Notification;
 import io.multi.notificationserver.service.EmailService;
+import io.multi.notificationserver.service.SmsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -18,6 +19,7 @@ import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKN
 public class NotificationListener {
     private static final String NOTIFICATION_TOPIC = "NOTIFICATION_TOPIC";
     private final EmailService emailService;
+    private final SmsService smsService;
 
     @KafkaListener(topics = NOTIFICATION_TOPIC)
     public void handleNotification(Notification notification) {
@@ -34,7 +36,62 @@ public class NotificationListener {
                 var data = mapper.convertValue(notification.getPayload().getData(), Data.class);
                 emailService.sendNewAccountHtmlEmail(data.getName(), data.getEmail(), data.getToken());
             }
-
+            case COMMANDE_CONFIRMEE -> {
+                var data = mapper.convertValue(notification.getPayload().getData(), Data.class);
+                // Email au transporteur
+                if (data.getEmail() != null && !data.getEmail().isBlank()) {
+                    emailService.sendBookingConfirmationEmail(
+                            data.getName(), data.getEmail(), data.getNumeroCommande(),
+                            data.getTrajet(), data.getDateDepart(), data.getHeureDepart(),
+                            data.getNombrePlaces(), data.getMontantPaye(), data.getBilletCodes()
+                    );
+                }
+                // Email au passager
+                if (data.getUserEmail() != null && !data.getUserEmail().isBlank()
+                        && !data.getUserEmail().equals(data.getEmail())) {
+                    emailService.sendBookingConfirmationEmail(
+                            data.getName(), data.getUserEmail(), data.getNumeroCommande(),
+                            data.getTrajet(), data.getDateDepart(), data.getHeureDepart(),
+                            data.getNombrePlaces(), data.getMontantPaye(), data.getBilletCodes()
+                    );
+                }
+                // SMS de confirmation
+                if (data.getPhone() != null && !data.getPhone().isBlank()) {
+                    smsService.sendBookingConfirmationSms(
+                            data.getPhone(), data.getName(), data.getNumeroCommande(),
+                            data.getTrajet(), data.getDateDepart(), data.getHeureDepart(),
+                            data.getNombrePlaces(), data.getMontantPaye(), data.getBilletCodes()
+                    );
+                }
+            }
+            case COMMANDE_ANNULEE -> {
+                var data = mapper.convertValue(notification.getPayload().getData(), Data.class);
+                // Email au transporteur
+                if (data.getEmail() != null && !data.getEmail().isBlank()) {
+                    emailService.sendBookingCancellationEmail(
+                            data.getName(), data.getEmail(), data.getNumeroCommande(),
+                            data.getTrajet(), data.getDateDepart(), data.getHeureDepart(),
+                            data.getNombrePlaces(), data.getMontantPaye()
+                    );
+                }
+                // Email au passager
+                if (data.getUserEmail() != null && !data.getUserEmail().isBlank()
+                        && !data.getUserEmail().equals(data.getEmail())) {
+                    emailService.sendBookingCancellationEmail(
+                            data.getName(), data.getUserEmail(), data.getNumeroCommande(),
+                            data.getTrajet(), data.getDateDepart(), data.getHeureDepart(),
+                            data.getNombrePlaces(), data.getMontantPaye()
+                    );
+                }
+                // SMS d'annulation
+                if (data.getPhone() != null && !data.getPhone().isBlank()) {
+                    smsService.sendBookingCancellationSms(
+                            data.getPhone(), data.getName(), data.getNumeroCommande(),
+                            data.getTrajet(), data.getDateDepart(), data.getMontantPaye()
+                    );
+                }
+            }
+            default -> log.warn("Unhandled event type: {}", notification.getPayload().getEventType());
         }
     }
 }

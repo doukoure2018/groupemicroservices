@@ -82,6 +82,11 @@
             <artifactId>spring-dotenv</artifactId>
             <version>4.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.konghq</groupId>
+            <artifactId>unirest-java-core</artifactId>
+            <version>4.4.4</version>
+        </dependency>
 
     </dependencies>
 

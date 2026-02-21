@@ -11,7 +11,9 @@ import 'passengers_screen.dart';
 import 'payment_screen.dart';
 import 'confirmation_screen.dart';
 import 'ticket_screen.dart';
+import 'ticket_list_screen.dart';
 import 'my_trips_screen.dart';
+import '../models/billet.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -155,40 +157,85 @@ class _MainScreenState extends State<MainScreen> {
         builder: (context) => PassengersScreen(
           offer: offer,
           passengerCount: passengers,
-          onProceedToPayment: () => _navigateToPayment(offer, passengers),
+          onProceedToPayment: (passengerList) =>
+              _navigateToPayment(offer, passengers, passengerList),
         ),
       ),
     );
   }
 
-  void _navigateToPayment(TripOffer offer, int passengers) {
+  void _navigateToPayment(
+    TripOffer offer,
+    int passengers,
+    List<Passenger> passengerList,
+  ) {
     final total = offer.price * passengers + 5000; // + service fee
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => PaymentScreen(
+          offer: offer,
           totalAmount: total,
-          onPaymentSuccess: () =>
-              _navigateToConfirmation(offer, passengers, total),
+          passengers: passengerList,
+          onPaymentSuccess: (commande) =>
+              _navigateToConfirmation(offer, commande),
         ),
       ),
     );
   }
 
-  void _navigateToConfirmation(TripOffer offer, int passengers, int amount) {
+  /// Parse time from backend (can be String "06:00", List [6,0], or List [6,0,0]).
+  String _parseTime(dynamic value, String fallback) {
+    if (value is String) return value.length >= 5 ? value.substring(0, 5) : value;
+    if (value is List && value.length >= 2) {
+      final h = value[0].toString().padLeft(2, '0');
+      final m = value[1].toString().padLeft(2, '0');
+      return '$h:$m';
+    }
+    return fallback;
+  }
+
+  /// Parse date from backend (can be String "2026-02-19" or List [2026,2,19]).
+  DateTime _parseDate(dynamic value) {
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is List && value.length >= 3) {
+      return DateTime(value[0] as int, value[1] as int, value[2] as int);
+    }
+    return DateTime.now();
+  }
+
+  void _navigateToConfirmation(TripOffer offer, Map<String, dynamic> commande) {
+    // Extract billets list for ticket navigation
+    final billetsJson = commande['billets'] as List<dynamic>? ?? [];
+    final billets = billetsJson
+        .map((b) => Billet.fromJson(b as Map<String, dynamic>))
+        .toList();
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
         builder: (context) => ConfirmationScreen(
-          orderNumber:
-              'CMD-${DateTime.now().year}${DateTime.now().month.toString().padLeft(2, '0')}${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().millisecond}',
-          departure: offer.departureCity,
-          destination: offer.arrivalCity,
-          date: DateTime.now(),
-          time: offer.departureTime,
-          passengerCount: passengers,
-          amountPaid: amount,
-          onViewTickets: () => _navigateToTicket(offer),
+          orderNumber: commande['numeroCommande'] ?? '',
+          departure: commande['villeDepartLibelle'] ?? offer.departureCity,
+          destination: commande['villeArriveeLibelle'] ?? offer.arrivalCity,
+          date: commande['dateDepart'] != null
+              ? _parseDate(commande['dateDepart'])
+              : DateTime.now(),
+          time: _parseTime(commande['heureDepart'], offer.departureTime),
+          passengerCount: commande['nombrePlaces'] ?? 1,
+          amountPaid: (commande['montantPaye'] is num)
+              ? (commande['montantPaye'] as num).toInt()
+              : int.tryParse(commande['montantPaye']?.toString() ?? '0') ?? 0,
+          billetCodes: billets
+              .map((b) => b.codeBillet)
+              .where((c) => c.isNotEmpty)
+              .join(', '),
+          referencePaiement: commande['referencePaiement'] ?? '',
+          onViewTickets: () => _navigateToTickets(
+            offer: offer,
+            billets: billets,
+            commande: commande,
+          ),
           onGoHome: () {
             Navigator.pop(context);
             setState(() => _currentIndex = 0);
@@ -199,61 +246,147 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  void _navigateToTicket(TripOffer offer) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => TicketScreen(
-          ticketCode:
-              'TKT-${DateTime.now().millisecondsSinceEpoch.toRadixString(16).toUpperCase()}',
-          passengerName: 'Ibrahima Camara',
-          departure: offer.departureCity,
-          destination: offer.arrivalCity,
-          date: DateTime.now(),
-          time: offer.departureTime,
-          vehiclePlate: offer.vehicleRegistration ?? '',
-          driverName: offer.driverName ?? '',
-          meetingPoint: offer.meetingPoint ?? offer.departureSite ?? 'Gare de ${offer.departureCity}',
+  void _navigateToTickets({
+    required TripOffer offer,
+    required List<Billet> billets,
+    required Map<String, dynamic> commande,
+  }) {
+    final departure = commande['villeDepartLibelle'] ?? offer.departureCity;
+    final destination = commande['villeArriveeLibelle'] ?? offer.arrivalCity;
+    final date = commande['dateDepart'] != null
+        ? _parseDate(commande['dateDepart'])
+        : DateTime.now();
+    final time = _parseTime(commande['heureDepart'], offer.departureTime);
+    final vehiclePlate = offer.vehicleRegistration ?? '';
+    final driverName = offer.driverName ?? '';
+    final meetingPoint =
+        commande['siteDepart'] ??
+        offer.meetingPoint ??
+        offer.departureSite ??
+        'Gare de ${offer.departureCity}';
+
+    if (billets.length == 1) {
+      // Single billet → go directly to TicketScreen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TicketScreen(
+            billet: billets.first,
+            departure: departure,
+            destination: destination,
+            date: date,
+            time: time,
+            vehiclePlate: vehiclePlate,
+            driverName: driverName,
+            meetingPoint: meetingPoint,
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      // Multiple billets → show list first
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TicketListScreen(
+            billets: billets,
+            departure: departure,
+            destination: destination,
+            date: date,
+            time: time,
+            vehiclePlate: vehiclePlate,
+            driverName: driverName,
+            meetingPoint: meetingPoint,
+          ),
+        ),
+      );
+    }
   }
 
   Widget _buildTripsTab() {
     return MyTripsScreen(
-      onViewTickets: (trip) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TicketScreen(
-              ticketCode: 'TKT-A3F82B1C',
-              passengerName: 'Ibrahima Camara',
-              departure: trip.departure,
-              destination: trip.destination,
-              date: trip.date,
-              time: trip.time,
-              vehiclePlate: 'RC 1234 AB',
-              driverName: 'Mamadou Diallo',
-              meetingPoint: 'Gare de ${trip.departure}, près du grand marché',
+      onViewTickets: (commande) {
+        final billets = commande.billets;
+        if (billets.isEmpty) return;
+
+        final departure = commande.villeDepartLibelle;
+        final destination = commande.villeArriveeLibelle;
+        final date = commande.dateDepart;
+        final time = commande.heureDepart;
+        final vehiclePlate = commande.vehiculeImmatriculation ?? '';
+        final driverName = commande.nomChauffeur ?? '';
+        final meetingPoint = commande.siteDepart ?? 'Gare de $departure';
+
+        if (billets.length == 1) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TicketScreen(
+                billet: billets.first,
+                departure: departure,
+                destination: destination,
+                date: date,
+                time: time,
+                vehiclePlate: vehiclePlate,
+                driverName: driverName,
+                meetingPoint: meetingPoint,
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TicketListScreen(
+                billets: billets,
+                departure: departure,
+                destination: destination,
+                date: date,
+                time: time,
+                vehiclePlate: vehiclePlate,
+                driverName: driverName,
+                meetingPoint: meetingPoint,
+              ),
+            ),
+          );
+        }
       },
-      onContact: (trip) {
-        // Show contact dialog or phone call
+      onContact: (commande) {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Contacter le chauffeur'),
-            content: const Text('Mamadou Diallo\n+224 621 XX XX XX'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text('D\u00e9tails commande'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('N\u00b0 ${commande.numeroCommande}'),
+                const SizedBox(height: 8),
+                Text(
+                  '${commande.villeDepartLibelle} \u2192 ${commande.villeArriveeLibelle}',
+                ),
+                const SizedBox(height: 4),
+                Text('${commande.nombrePlaces} place(s)'),
+                if (commande.referencePaiement != null) ...[
+                  const SizedBox(height: 4),
+                  Text('Ref: ${commande.referencePaiement}'),
+                ],
+                if (commande.vehiculeImmatriculation != null) ...[
+                  const SizedBox(height: 8),
+                  Text('V\u00e9hicule: ${commande.vehiculeImmatriculation}'),
+                ],
+                if (commande.nomChauffeur != null) ...[
+                  const SizedBox(height: 4),
+                  Text('Chauffeur: ${commande.nomChauffeur}'),
+                ],
+              ],
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Fermer'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Appeler'),
               ),
             ],
           ),

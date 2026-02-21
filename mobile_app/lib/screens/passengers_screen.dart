@@ -6,21 +6,25 @@ import '../presentation/resource/styles_manager.dart';
 import 'search_results_screen.dart';
 
 class Passenger {
-  String fullName;
+  String nom;
+  String prenom;
   String phone;
   String? idNumber;
 
   Passenger({
-    this.fullName = '',
+    this.nom = '',
+    this.prenom = '',
     this.phone = '',
     this.idNumber,
   });
+
+  String get fullName => '$prenom $nom'.trim();
 }
 
 class PassengersScreen extends StatefulWidget {
   final TripOffer offer;
   final int passengerCount;
-  final VoidCallback? onProceedToPayment;
+  final void Function(List<Passenger>)? onProceedToPayment;
 
   const PassengersScreen({
     super.key,
@@ -44,21 +48,9 @@ class _PassengersScreenState extends State<PassengersScreen> {
       widget.passengerCount,
       (index) => Passenger(),
     );
-    // Pre-fill first passenger with mock data
-    _passengers[0] = Passenger(
-      fullName: 'Ibrahima Camara',
-      phone: '+224 620 XX XX XX',
-    );
-    if (widget.passengerCount > 1) {
-      _passengers[1] = Passenger(
-        fullName: 'Fatoumata Bah',
-        phone: '+224 621 XX XX XX',
-      );
-    }
   }
 
-  int get _totalPrice =>
-      widget.offer.price * widget.passengerCount;
+  int get _totalPrice => widget.offer.price * widget.passengerCount;
   int get _serviceFee => 5000;
   int get _grandTotal => _totalPrice + _serviceFee;
 
@@ -66,35 +58,83 @@ class _PassengersScreenState extends State<PassengersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColorManager.background,
-      appBar: AppBar(
-        backgroundColor: ColorManager.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: ColorManager.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Informations passagers',
-          style: getSemiBoldStyle(
-            color: ColorManager.textPrimary,
-            fontSize: FontSize.s18,
-          ),
-        ),
-      ),
       body: Column(
         children: [
-          // Trip summary banner
+          // Navy gradient header
+          Container(
+            decoration: const BoxDecoration(
+              gradient: ColorManager.primaryGradient,
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppPadding.p4,
+                  vertical: AppPadding.p12,
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: ColorManager.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: AppSize.s8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Informations passagers',
+                            style: getSemiBoldStyle(
+                              color: ColorManager.white,
+                              fontSize: FontSize.s18,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${widget.offer.departureCity} → ${widget.offer.arrivalCity} • ${widget.offer.departureTime}',
+                            style: getRegularStyle(
+                              color: ColorManager.white.withOpacity(0.8),
+                              fontSize: FontSize.s12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Passenger count indicator
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(AppPadding.p12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppPadding.p16,
+              vertical: AppPadding.p12,
+            ),
             color: ColorManager.primarySurface,
-            child: Text(
-              '${widget.offer.departureCity} → ${widget.offer.arrivalCity} • ${widget.offer.departureTime}',
-              style: getMediumStyle(
-                color: ColorManager.primary,
-                fontSize: FontSize.s14,
-              ),
-              textAlign: TextAlign.center,
+            child: Row(
+              children: [
+                Icon(Icons.people, color: ColorManager.primary, size: 20),
+                const SizedBox(width: AppSize.s8),
+                Text(
+                  '${widget.passengerCount} passager${widget.passengerCount > 1 ? 's' : ''}',
+                  style: getMediumStyle(
+                    color: ColorManager.primary,
+                    fontSize: FontSize.s14,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  'Remplissez les informations ci-dessous',
+                  style: getRegularStyle(
+                    color: ColorManager.textSecondary,
+                    fontSize: FontSize.s12,
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -117,11 +157,21 @@ class _PassengersScreenState extends State<PassengersScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(AppPadding.p16),
                       decoration: BoxDecoration(
-                        color: ColorManager.lightGrey,
+                        color: ColorManager.white,
                         borderRadius: BorderRadius.circular(AppRadius.r16),
+                        border: Border.all(color: ColorManager.grey1),
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(
+                            'Résumé du prix',
+                            style: getSemiBoldStyle(
+                              color: ColorManager.textPrimary,
+                              fontSize: FontSize.s16,
+                            ),
+                          ),
+                          const SizedBox(height: AppSize.s12),
                           _buildPriceRow(
                             '${widget.passengerCount} place${widget.passengerCount > 1 ? 's' : ''} × ${_formatPrice(widget.offer.price)} GNF',
                             '${_formatPrice(_totalPrice)} GNF',
@@ -148,7 +198,7 @@ class _PassengersScreenState extends State<PassengersScreen> {
                               Text(
                                 '${_formatPrice(_grandTotal)} GNF',
                                 style: getBoldStyle(
-                                  color: ColorManager.primary,
+                                  color: ColorManager.accent,
                                   fontSize: FontSize.s18,
                                 ),
                               ),
@@ -185,19 +235,26 @@ class _PassengersScreenState extends State<PassengersScreen> {
                 child: ElevatedButton(
                   onPressed: _handleProceed,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorManager.primary,
+                    backgroundColor: ColorManager.accent,
                     foregroundColor: ColorManager.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.r16),
                     ),
                     elevation: 0,
                   ),
-                  child: Text(
-                    'Procéder au paiement',
-                    style: getSemiBoldStyle(
-                      color: ColorManager.white,
-                      fontSize: FontSize.s16,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.payment, size: 20),
+                      const SizedBox(width: AppSize.s8),
+                      Text(
+                        'Procéder au paiement • ${_formatPrice(_grandTotal)} GNF',
+                        style: getSemiBoldStyle(
+                          color: ColorManager.white,
+                          fontSize: FontSize.s14,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -210,59 +267,164 @@ class _PassengersScreenState extends State<PassengersScreen> {
 
   Widget _buildPassengerForm(int index) {
     final isFirst = index == 0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Passager ${index + 1}${isFirst ? ' (Vous)' : ''}',
-          style: getSemiBoldStyle(
-            color: ColorManager.textPrimary,
-            fontSize: FontSize.s16,
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppPadding.p16),
+      padding: const EdgeInsets.all(AppPadding.p16),
+      decoration: BoxDecoration(
+        color: ColorManager.white,
+        borderRadius: BorderRadius.circular(AppRadius.r16),
+        border: Border.all(color: ColorManager.grey1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: ColorManager.accent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Center(
+                  child: Text(
+                    '${index + 1}',
+                    style: getBoldStyle(
+                      color: ColorManager.accent,
+                      fontSize: FontSize.s14,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSize.s12),
+              Text(
+                'Passager ${index + 1}${isFirst ? ' (Vous)' : ''}',
+                style: getSemiBoldStyle(
+                  color: ColorManager.textPrimary,
+                  fontSize: FontSize.s16,
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: AppSize.s12),
-        _buildTextField(
-          icon: Icons.person,
-          hint: 'Nom complet *',
-          initialValue: _passengers[index].fullName,
-          onChanged: (value) => _passengers[index].fullName = value,
-          validator: (value) =>
-              value?.isEmpty ?? true ? 'Champ requis' : null,
-        ),
-        const SizedBox(height: AppSize.s12),
-        _buildTextField(
-          icon: Icons.phone,
-          hint: 'Téléphone *',
-          initialValue: _passengers[index].phone,
-          onChanged: (value) => _passengers[index].phone = value,
-          keyboardType: TextInputType.phone,
-          validator: (value) =>
-              value?.isEmpty ?? true ? 'Champ requis' : null,
-        ),
-        if (isFirst) ...[
+          const SizedBox(height: AppSize.s16),
+          _buildTextField(
+            icon: Icons.person_outline,
+            hint: 'Nom *',
+            onChanged: (value) => _passengers[index].nom = value,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) return 'Le nom est requis';
+              if (value.trim().length < 2) return 'Minimum 2 caractères';
+              return null;
+            },
+          ),
           const SizedBox(height: AppSize.s12),
           _buildTextField(
-            icon: Icons.badge,
-            hint: 'N° CNI ou Passeport',
-            initialValue: _passengers[index].idNumber ?? '',
-            onChanged: (value) => _passengers[index].idNumber = value,
+            icon: Icons.person,
+            hint: 'Prénom *',
+            onChanged: (value) => _passengers[index].prenom = value,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) return 'Le prénom est requis';
+              if (value.trim().length < 2) return 'Minimum 2 caractères';
+              return null;
+            },
           ),
+          const SizedBox(height: AppSize.s12),
+          _buildPhoneField(index),
+          if (isFirst) ...[
+            const SizedBox(height: AppSize.s12),
+            _buildTextField(
+              icon: Icons.badge,
+              hint: 'N° CNI ou Passeport (optionnel)',
+              onChanged: (value) => _passengers[index].idNumber = value,
+            ),
+          ],
         ],
-        const SizedBox(height: AppSize.s24),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildPhoneField(int index) {
+    return TextFormField(
+      onChanged: (value) => _passengers[index].phone = value,
+      keyboardType: TextInputType.phone,
+      maxLength: 9,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) return 'Le téléphone est requis';
+        final digits = value.replaceAll(RegExp(r'\s'), '');
+        if (digits.length != 9) return 'Le numéro doit contenir 9 chiffres';
+        if (!digits.startsWith('6')) return 'Le numéro doit commencer par 6';
+        if (!RegExp(r'^\d+$').hasMatch(digits)) return 'Numéro invalide';
+        return null;
+      },
+      decoration: InputDecoration(
+        prefixIcon: Container(
+          padding: const EdgeInsets.only(left: 16, right: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.phone, color: ColorManager.textTertiary),
+              const SizedBox(width: 8),
+              Text(
+                '+224',
+                style: getMediumStyle(
+                  color: ColorManager.textPrimary,
+                  fontSize: FontSize.s14,
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 24,
+                margin: const EdgeInsets.only(left: 8),
+                color: ColorManager.grey1,
+              ),
+            ],
+          ),
+        ),
+        hintText: '6XX XX XX XX *',
+        counterText: '',
+        hintStyle: getRegularStyle(
+          color: ColorManager.textTertiary,
+          fontSize: FontSize.s14,
+        ),
+        filled: true,
+        fillColor: ColorManager.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.r16),
+          borderSide: const BorderSide(color: ColorManager.grey1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.r16),
+          borderSide: const BorderSide(color: ColorManager.grey1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.r16),
+          borderSide: const BorderSide(color: ColorManager.primary),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.r16),
+          borderSide: const BorderSide(color: ColorManager.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.r16),
+          borderSide: const BorderSide(color: ColorManager.error),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppPadding.p16,
+          vertical: AppPadding.p16,
+        ),
+      ),
     );
   }
 
   Widget _buildTextField({
     required IconData icon,
     required String hint,
-    required String initialValue,
     required Function(String) onChanged,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
-      initialValue: initialValue,
       onChanged: onChanged,
       keyboardType: keyboardType,
       validator: validator,
@@ -288,6 +450,10 @@ class _PassengersScreenState extends State<PassengersScreen> {
           borderSide: const BorderSide(color: ColorManager.primary),
         ),
         errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.r16),
+          borderSide: const BorderSide(color: ColorManager.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.r16),
           borderSide: const BorderSide(color: ColorManager.error),
         ),
@@ -323,7 +489,7 @@ class _PassengersScreenState extends State<PassengersScreen> {
 
   void _handleProceed() {
     if (_formKey.currentState?.validate() ?? false) {
-      widget.onProceedToPayment?.call();
+      widget.onProceedToPayment?.call(_passengers);
     }
   }
 
