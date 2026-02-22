@@ -77,6 +77,11 @@ class Commande {
   static String? _parseDateTime(dynamic value) {
     if (value == null) return null;
     if (value is String) return value;
+    if (value is num) {
+      // Jackson numeric timestamp (seconds since epoch)
+      final ms = value > 1e12 ? value.toInt() : (value * 1000).toInt();
+      return DateTime.fromMillisecondsSinceEpoch(ms).toIso8601String();
+    }
     if (value is List && value.length >= 3) {
       final y = value[0] as int;
       final m = (value[1] as int).toString().padLeft(2, '0');
