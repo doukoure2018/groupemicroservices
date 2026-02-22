@@ -138,11 +138,11 @@ services:
           memory: 512M
           cpus: '0.5'
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 0"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -s http://localhost:8761/ > /dev/null 2>&1 || exit 1"]
+      interval: 15s
       timeout: 10s
-      retries: 3
-      start_period: 120s
+      retries: 10
+      start_period: 60s
 
   gateway:
     image: doukoure93/billetterie-gateway:latest
@@ -168,11 +168,11 @@ services:
           memory: 512M
           cpus: '0.5'
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9000/actuator/health || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -s http://localhost:9000/ > /dev/null 2>&1 || exit 1"]
+      interval: 15s
       timeout: 10s
-      retries: 3
-      start_period: 120s
+      retries: 10
+      start_period: 60s
 
   authorizationserver:
     image: doukoure93/billetterie-authorizationserver:latest
@@ -212,11 +212,11 @@ services:
           memory: 1024M
           cpus: '1.0'
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8090/authorization/actuator/health || exit 0"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -s http://localhost:8090/authorization/ > /dev/null 2>&1 || exit 1"]
+      interval: 15s
       timeout: 10s
-      retries: 3
-      start_period: 120s
+      retries: 10
+      start_period: 60s
 
   userservice:
     image: doukoure93/billetterie-userservice:latest
@@ -256,11 +256,11 @@ services:
           memory: 1024M
           cpus: '1.0'
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8091/actuator/health || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -s http://localhost:8091/ > /dev/null 2>&1 || exit 1"]
+      interval: 15s
       timeout: 10s
-      retries: 3
-      start_period: 120s
+      retries: 5
+      start_period: 60s
 
   billetterieservice:
     image: doukoure93/billetterie-billetterieservice:latest
@@ -298,11 +298,11 @@ services:
           memory: 1024M
           cpus: '1.0'
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8092/actuator/health || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -s http://localhost:8092/ > /dev/null 2>&1 || exit 1"]
+      interval: 15s
       timeout: 10s
-      retries: 3
-      start_period: 120s
+      retries: 5
+      start_period: 60s
 
   notificationserver:
     image: doukoure93/billetterie-notificationserver:latest
@@ -343,11 +343,11 @@ services:
           memory: 512M
           cpus: '0.5'
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8093/actuator/health || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -s http://localhost:8093/ > /dev/null 2>&1 || exit 1"]
+      interval: 15s
       timeout: 10s
-      retries: 3
-      start_period: 120s
+      retries: 5
+      start_period: 60s
 
   # ==============================================
   # FRONTEND
