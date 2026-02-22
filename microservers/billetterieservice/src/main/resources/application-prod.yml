@@ -52,7 +52,7 @@ spring:
       spring:
         json:
           type:
-            mapping: Notification:io.multi.billetterieservice.domain.Notification
+            mapping: Notification:io.multi.billetterieservice.event.Notification
 
 eureka:
   instance:
@@ -77,5 +77,3 @@ jwks:
 logging:
   level:
     root: INFO
-    org.apache.kafka: WARN
-    org.springframework.kafka: DEBUG
