@@ -21,6 +21,7 @@ import java.util.Base64;
 @Component
 public class KeyUtils {
     private static final String RSA = "RSA";
+    private volatile RSAKey cachedKeyPair;
 
     @Value("${key.private}")
     private String privateKeyPath;
@@ -29,22 +30,29 @@ public class KeyUtils {
     private String publicKeyPath;
 
     public RSAKey getRSAKeyPair() {
-        try {
-            // Try loading from file path first
-            File privateKeyFile = new File(privateKeyPath);
-            File publicKeyFile = new File(publicKeyPath);
-
-            if (privateKeyFile.exists() && publicKeyFile.exists()) {
-                log.info("Loading RSA keys from file paths: {}, {}", privateKeyPath, publicKeyPath);
-                return loadKeysFromPEM(privateKeyFile, publicKeyFile);
+        if (cachedKeyPair != null) {
+            return cachedKeyPair;
+        }
+        synchronized (this) {
+            if (cachedKeyPair != null) {
+                return cachedKeyPair;
             }
+            try {
+                File privateKeyFile = new File(privateKeyPath);
+                File publicKeyFile = new File(publicKeyPath);
 
-            // Fallback to in-memory generation
-            log.warn("Keys not found at specified paths. Using in-memory generated keys.");
-            return generateInMemoryKeys();
-        } catch (Exception e) {
-            log.error("Key loading failed: {}. Falling back to in-memory keys.", e.getMessage());
-            return generateInMemoryKeys();
+                if (privateKeyFile.exists() && publicKeyFile.exists()) {
+                    log.info("Loading RSA keys from file paths: {}, {}", privateKeyPath, publicKeyPath);
+                    cachedKeyPair = loadKeysFromPEM(privateKeyFile, publicKeyFile);
+                } else {
+                    log.warn("Keys not found at specified paths. Using in-memory generated keys.");
+                    cachedKeyPair = generateInMemoryKeys();
+                }
+            } catch (Exception e) {
+                log.error("Key loading failed: {}. Falling back to in-memory keys.", e.getMessage());
+                cachedKeyPair = generateInMemoryKeys();
+            }
+            return cachedKeyPair;
         }
     }
 

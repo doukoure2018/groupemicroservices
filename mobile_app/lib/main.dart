@@ -6,6 +6,7 @@ import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/main_screen.dart';
 import 'presentation/resource/color_manager.dart';
+import 'services/api_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,8 +41,25 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    // When API gets 401 + refresh fails, force logout to redirect to login
+    ApiService.onSessionExpired = () {
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.isAuthenticated) {
+        authProvider.logout();
+      }
+    };
+  }
 
   @override
   Widget build(BuildContext context) {

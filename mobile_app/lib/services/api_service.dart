@@ -7,6 +7,10 @@ class ApiService {
   late final Dio _dio;
   final AuthService _authService = AuthService();
 
+  /// Callback invoked when session is expired (401 + refresh failed).
+  /// Set this from main.dart to trigger AuthProvider.logout().
+  static VoidCallback? onSessionExpired;
+
   ApiService() {
     _dio = Dio(
       BaseOptions(
@@ -47,10 +51,12 @@ class ApiService {
                 final response = await _dio.fetch(options);
                 return handler.resolve(response);
               } else {
-                debugPrint('ApiService: Refresh returned null');
+                debugPrint('ApiService: Refresh returned null - session expired');
+                onSessionExpired?.call();
               }
             } catch (e) {
               debugPrint('ApiService: Refresh failed: $e');
+              onSessionExpired?.call();
             }
           }
           return handler.next(error);
