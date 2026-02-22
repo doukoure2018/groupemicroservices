@@ -1,6 +1,6 @@
 class AppConfig {
   // Environment flag - set to true for production builds
-  static const bool isProduction = false;
+  static const bool isProduction = true;
 
   // OAuth2 Configuration
   static const String authorizationEndpoint = isProduction
