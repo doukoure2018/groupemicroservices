@@ -116,6 +116,11 @@ public final class CommandeQuery {
         WHERE commande_id = :commandeId
         """;
 
+    public static final String UPDATE_COMMANDE_STATUT_UTILISEE = """
+        UPDATE commandes SET statut = 'UTILISEE', updated_at = CURRENT_TIMESTAMP
+        WHERE commande_id = :commandeId
+        """;
+
     public static final String FIND_BILLETS_BY_COMMANDE_ID = """
         SELECT billet_id, billet_uuid, commande_id, code_billet, numero_siege,
                nom_passager, telephone_passager, piece_identite, statut,

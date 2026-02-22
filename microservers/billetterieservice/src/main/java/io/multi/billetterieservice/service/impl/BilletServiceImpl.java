@@ -5,7 +5,9 @@ import io.multi.billetterieservice.event.Event;
 import io.multi.billetterieservice.event.EventType;
 import io.multi.billetterieservice.event.Notification;
 import io.multi.billetterieservice.exception.ApiException;
+import io.multi.billetterieservice.exception.BilletAlreadyUsedException;
 import io.multi.billetterieservice.query.BilletQuery;
+import io.multi.billetterieservice.query.CommandeQuery;
 import io.multi.billetterieservice.service.BilletService;
 import io.multi.billetterieservice.service.InAppNotificationService;
 import io.multi.clients.UserClient;
@@ -22,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static org.springframework.kafka.support.KafkaHeaders.TOPIC;
@@ -77,8 +80,16 @@ public class BilletServiceImpl implements BilletService {
         LocalDate dateDepart = (LocalDate) result[4];
 
         // 2. Vérifier le statut
+        String trajet = villeDepart + " \u2192 " + villeArrivee;
         if ("UTILISE".equals(billet.getStatut())) {
-            throw new ApiException("Ce billet a déjà été utilisé");
+            throw new BilletAlreadyUsedException("Ce billet a déjà été utilisé", Map.of(
+                    "codeBillet", billet.getCodeBillet(),
+                    "nomPassager", billet.getNomPassager() != null ? billet.getNomPassager() : "",
+                    "statut", billet.getStatut(),
+                    "dateValidation", billet.getDateValidation() != null ? billet.getDateValidation().toString() : "",
+                    "numeroSiege", billet.getNumeroSiege() != null ? billet.getNumeroSiege() : "",
+                    "trajet", trajet
+            ));
         }
         if ("ANNULE".equals(billet.getStatut())) {
             throw new ApiException("Ce billet a été annulé");
@@ -102,13 +113,24 @@ public class BilletServiceImpl implements BilletService {
         billet.setStatut("UTILISE");
         billet.setDateValidation(OffsetDateTime.now());
 
-        // 4. Notification in-app
-        String trajet = villeDepart + " \u2192 " + villeArrivee;
+        // 4. Vérifier si tous les billets de la commande sont UTILISE → passer commande à UTILISEE
+        Long remainingCount = jdbcClient.sql(BilletQuery.COUNT_NON_UTILISE_BY_COMMANDE)
+                .param("commandeId", billet.getCommandeId())
+                .query(Long.class)
+                .single();
+        if (remainingCount == 0) {
+            jdbcClient.sql(CommandeQuery.UPDATE_COMMANDE_STATUT_UTILISEE)
+                    .param("commandeId", billet.getCommandeId())
+                    .update();
+            log.info("Tous les billets de la commande {} sont utilisés → statut UTILISEE", billet.getCommandeId());
+        }
+
+        // 5. Notification in-app
         inAppNotificationService.createNotification(userId, "IN_APP", "BILLET_VALIDE",
                 "Billet validé", "Votre billet " + codeBillet + " pour " + trajet + " a été validé. Bon voyage!",
                 false, billet.getBilletId(), "BILLET");
 
-        // 5. Notification Kafka (email)
+        // 6. Notification Kafka (email + SMS)
         try {
             String userEmail = "";
             try {

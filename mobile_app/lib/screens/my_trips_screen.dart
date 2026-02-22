@@ -647,33 +647,35 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: AppSize.s8),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () => _annulerCommande(commande),
-              icon: const Icon(
-                Icons.cancel_outlined,
-                size: 18,
-                color: ColorManager.error,
-              ),
-              label: Text(
-                'Annuler la commande',
-                style: getMediumStyle(
+          if (commande.canCancel) ...[
+            const SizedBox(height: AppSize.s8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _annulerCommande(commande),
+                icon: const Icon(
+                  Icons.cancel_outlined,
+                  size: 18,
                   color: ColorManager.error,
-                  fontSize: FontSize.s14,
                 ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: ColorManager.error,
-                side: const BorderSide(color: ColorManager.error),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.r12),
+                label: Text(
+                  'Annuler la commande',
+                  style: getMediumStyle(
+                    color: ColorManager.error,
+                    fontSize: FontSize.s14,
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ColorManager.error,
+                  side: const BorderSide(color: ColorManager.error),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.r12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
-          ),
+          ],
         ],
       );
     }

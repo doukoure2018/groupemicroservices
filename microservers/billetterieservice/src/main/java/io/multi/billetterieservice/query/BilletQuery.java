@@ -36,4 +36,8 @@ public final class BilletQuery {
                valide_par = :validePar, updated_at = CURRENT_TIMESTAMP
         WHERE billet_id = :billetId AND statut = 'VALIDE'
         """;
+
+    public static final String COUNT_NON_UTILISE_BY_COMMANDE = """
+        SELECT COUNT(*) FROM billets WHERE commande_id = :commandeId AND statut != 'UTILISE'
+        """;
 }

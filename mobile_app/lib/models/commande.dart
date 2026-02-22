@@ -59,6 +59,13 @@ class Commande {
 
   bool get isPast => !isActive && !isCancelled;
 
+  bool get canCancel {
+    if (createdAt == null) return false;
+    final created = DateTime.tryParse(createdAt!);
+    if (created == null) return false;
+    return isActive && DateTime.now().difference(created).inHours < 48;
+  }
+
   static DateTime _parseDate(dynamic value) {
     if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
     if (value is List && value.length >= 3) {

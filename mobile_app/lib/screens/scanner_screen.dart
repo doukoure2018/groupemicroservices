@@ -5,7 +5,7 @@ import '../presentation/resource/font_manager.dart';
 import '../presentation/resource/styles_manager.dart';
 import '../services/billetterie_service.dart';
 
-enum ScanState { scanning, loading, success, error }
+enum ScanState { scanning, loading, success, alreadyUsed, error }
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -20,6 +20,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   ScanState _state = ScanState.scanning;
   Map<String, dynamic>? _validatedBillet;
+  Map<String, dynamic>? _alreadyUsedBillet;
   String? _errorMessage;
   bool _hasScanned = false;
 
@@ -40,11 +41,24 @@ class _ScannerScreenState extends State<ScannerScreen> {
     setState(() => _state = ScanState.loading);
 
     try {
-      final billet = await _billetterieService.validateBillet(codeBillet);
-      setState(() {
-        _validatedBillet = billet;
-        _state = ScanState.success;
-      });
+      final result = await _billetterieService.validateBillet(codeBillet);
+      if (result['success'] == true) {
+        setState(() {
+          _validatedBillet = result['billet'] as Map<String, dynamic>?;
+          _state = ScanState.success;
+        });
+      } else if (result['status'] == 'ALREADY_USED') {
+        setState(() {
+          _alreadyUsedBillet = result['billet'] as Map<String, dynamic>?;
+          _errorMessage = result['error'] as String?;
+          _state = ScanState.alreadyUsed;
+        });
+      } else {
+        setState(() {
+          _errorMessage = result['error'] as String? ?? 'Erreur inconnue';
+          _state = ScanState.error;
+        });
+      }
     } catch (e) {
       setState(() {
         _errorMessage = e.toString().replaceFirst('Exception: ', '');
@@ -57,6 +71,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     setState(() {
       _state = ScanState.scanning;
       _validatedBillet = null;
+      _alreadyUsedBillet = null;
       _errorMessage = null;
       _hasScanned = false;
     });
@@ -98,6 +113,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         ScanState.scanning => _buildScanner(),
         ScanState.loading => _buildLoading(),
         ScanState.success => _buildSuccess(),
+        ScanState.alreadyUsed => _buildAlreadyUsed(),
         ScanState.error => _buildError(),
       },
     );
@@ -114,7 +130,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 controller: _scannerController,
                 onDetect: _onDetect,
               ),
-              // QR overlay frame
               Container(
                 width: 250,
                 height: 250,
@@ -184,7 +199,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
       child: Column(
         children: [
           const SizedBox(height: 32),
-          // Success icon
           Container(
             width: 80,
             height: 80,
@@ -207,77 +221,65 @@ class _ScannerScreenState extends State<ScannerScreen> {
             ),
           ),
           const SizedBox(height: 32),
+          _buildBilletCard(billet),
+          const SizedBox(height: 32),
+          _buildScanAnotherButton(),
+        ],
+      ),
+    );
+  }
 
-          // Billet details card
+  Widget _buildAlreadyUsed() {
+    final billet = _alreadyUsedBillet;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          const SizedBox(height: 32),
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: ColorManager.warning.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.warning_amber_rounded,
+              color: ColorManager.warning,
+              size: 48,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Billet déjà utilisé',
+            style: getBoldStyle(
+              color: ColorManager.warning,
+              fontSize: FontSize.s24,
+            ),
+          ),
+          const SizedBox(height: 12),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: ColorManager.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: ColorManager.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              color: ColorManager.warning.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildDetailRow(
-                  Icons.confirmation_number,
-                  'Code Billet',
-                  billet['codeBillet'] ?? '',
-                ),
-                const Divider(height: 24),
-                _buildDetailRow(
-                  Icons.person,
-                  'Passager',
-                  billet['nomPassager'] ?? '',
-                ),
-                if (billet['numeroSiege'] != null) ...[
-                  const Divider(height: 24),
-                  _buildDetailRow(
-                    Icons.event_seat,
-                    'Siège',
-                    billet['numeroSiege'],
-                  ),
-                ],
-                const Divider(height: 24),
-                _buildDetailRow(
-                  Icons.info,
-                  'Statut',
-                  billet['statut'] ?? 'VALIDE',
-                ),
-              ],
+            child: Text(
+              _errorMessage ?? 'Ce billet a déjà été validé',
+              style: getRegularStyle(
+                color: ColorManager.warning,
+                fontSize: FontSize.s14,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
+          if (billet != null) ...[
+            const SizedBox(height: 24),
+            _buildBilletCard(billet),
+          ],
           const SizedBox(height: 32),
-
-          // Scan another button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: _resetScanner,
-              icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
-              label: Text(
-                'Scanner un autre billet',
-                style: getSemiBoldStyle(
-                  color: ColorManager.white,
-                  fontSize: FontSize.s16,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColorManager.accent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
+          _buildScanAnotherButton(),
         ],
       ),
     );
@@ -289,7 +291,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
       child: Column(
         children: [
           const SizedBox(height: 48),
-          // Error icon
           Container(
             width: 80,
             height: 80,
@@ -329,32 +330,110 @@ class _ScannerScreenState extends State<ScannerScreen> {
             ),
           ),
           const SizedBox(height: 32),
-
-          // Retry button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: _resetScanner,
-              icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
-              label: Text(
-                'Réessayer',
-                style: getSemiBoldStyle(
-                  color: ColorManager.white,
-                  fontSize: FontSize.s16,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColorManager.accent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
+          _buildScanAnotherButton(),
         ],
       ),
     );
+  }
+
+  Widget _buildBilletCard(Map<String, dynamic> billet) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: ColorManager.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: ColorManager.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildDetailRow(
+            Icons.confirmation_number,
+            'Code Billet',
+            billet['codeBillet']?.toString() ?? '',
+          ),
+          const Divider(height: 24),
+          _buildDetailRow(
+            Icons.person,
+            'Passager',
+            billet['nomPassager']?.toString() ?? '',
+          ),
+          if (billet['numeroSiege'] != null &&
+              billet['numeroSiege'].toString().isNotEmpty) ...[
+            const Divider(height: 24),
+            _buildDetailRow(
+              Icons.event_seat,
+              'Siège',
+              billet['numeroSiege'].toString(),
+            ),
+          ],
+          if (billet['trajet'] != null &&
+              billet['trajet'].toString().isNotEmpty) ...[
+            const Divider(height: 24),
+            _buildDetailRow(
+              Icons.route,
+              'Trajet',
+              billet['trajet'].toString(),
+            ),
+          ],
+          const Divider(height: 24),
+          _buildDetailRow(
+            Icons.info,
+            'Statut',
+            billet['statut']?.toString() ?? '',
+          ),
+          if (billet['dateValidation'] != null &&
+              billet['dateValidation'].toString().isNotEmpty) ...[
+            const Divider(height: 24),
+            _buildDetailRow(
+              Icons.access_time,
+              'Validé le',
+              _formatDateTime(billet['dateValidation'].toString()),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScanAnotherButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton.icon(
+        onPressed: _resetScanner,
+        icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
+        label: Text(
+          'Scanner un autre billet',
+          style: getSemiBoldStyle(
+            color: ColorManager.white,
+            fontSize: FontSize.s16,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: ColorManager.accent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDateTime(String isoDate) {
+    try {
+      final dt = DateTime.parse(isoDate);
+      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} à ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return isoDate;
+    }
   }
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
@@ -362,25 +441,27 @@ class _ScannerScreenState extends State<ScannerScreen> {
       children: [
         Icon(icon, size: 20, color: ColorManager.textSecondary),
         const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: getRegularStyle(
-                color: ColorManager.textTertiary,
-                fontSize: FontSize.s12,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: getRegularStyle(
+                  color: ColorManager.textTertiary,
+                  fontSize: FontSize.s12,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: getSemiBoldStyle(
-                color: ColorManager.textPrimary,
-                fontSize: FontSize.s16,
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: getSemiBoldStyle(
+                  color: ColorManager.textPrimary,
+                  fontSize: FontSize.s16,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );

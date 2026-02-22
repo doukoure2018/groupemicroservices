@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../models/avis.dart';
 import '../models/commande.dart';
 import '../models/offre.dart';
@@ -88,13 +89,27 @@ class BilletterieService {
   }
 
   /// POST /billetterie/billets/validate - Valider un billet via QR code
+  /// Returns a structured result: {success, billet, ?status, ?error}
   Future<Map<String, dynamic>> validateBillet(String codeBillet) async {
-    final response = await _api.post(
-      '$_basePath/billets/validate',
-      data: {'codeBillet': codeBillet},
-    );
-    final data = response.data['data'];
-    return data['billet'] as Map<String, dynamic>;
+    try {
+      final response = await _api.post(
+        '$_basePath/billets/validate',
+        data: {'codeBillet': codeBillet},
+      );
+      final data = response.data['data'];
+      return {'success': true, 'billet': data['billet'] as Map<String, dynamic>};
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 409) {
+        final body = e.response?.data as Map<String, dynamic>?;
+        return {
+          'success': false,
+          'status': body?['status'] ?? 'ALREADY_USED',
+          'error': body?['error'] ?? 'Billet déjà utilisé',
+          'billet': body?['billet'],
+        };
+      }
+      rethrow;
+    }
   }
 
   /// POST /billetterie/commandes - Créer commande + billets + paiement
