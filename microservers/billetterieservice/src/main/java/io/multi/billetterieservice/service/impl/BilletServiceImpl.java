@@ -123,6 +123,7 @@ public class BilletServiceImpl implements BilletService {
             var data = new HashMap<String, String>();
             data.put("name", billet.getNomPassager());
             data.put("userEmail", userEmail);
+            data.put("phone", billet.getTelephonePassager() != null ? billet.getTelephonePassager() : "");
             data.put("codeBillet", codeBillet);
             data.put("trajet", trajet);
             data.put("dateDepart", dateDepart != null ? dateDepart.toString() : "");

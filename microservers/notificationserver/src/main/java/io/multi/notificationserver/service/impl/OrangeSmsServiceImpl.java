@@ -145,6 +145,55 @@ public class OrangeSmsServiceImpl implements SmsService {
         }
     }
 
+    @Override
+    @Async
+    public void sendBilletValideSms(String phone, String name, String codeBillet, String trajet, String dateDepart) {
+        try {
+            String message = "YIGUI - Billet valide!\n"
+                    + "Billet: " + codeBillet + "\n"
+                    + "Trajet: " + trajet + "\n"
+                    + "Date: " + dateDepart + "\n"
+                    + "Votre billet a ete valide. Bon voyage!";
+
+            boolean sent = sendSms(phone, message);
+            if (sent) {
+                log.info("SMS billet valide envoye a {} pour billet {}", phone, codeBillet);
+            } else {
+                log.warn("Echec envoi SMS billet valide a {} pour billet {}", phone, codeBillet);
+            }
+        } catch (Exception e) {
+            log.error("Erreur envoi SMS billet valide: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    @Async
+    public void sendRemplissageSms(String phone, String name, String trajet, String dateDepart, String heureDepart, String niveauRemplissage) {
+        try {
+            String message;
+            if ("100".equals(niveauRemplissage)) {
+                message = "YIGUI - Vehicule complet!\n"
+                        + "Trajet: " + trajet + "\n"
+                        + "Depart: " + dateDepart + " a " + heureDepart + "\n"
+                        + "Le vehicule est complet. Preparez-vous, le depart approche!";
+            } else {
+                message = "YIGUI - Remplissage " + niveauRemplissage + "%\n"
+                        + "Trajet: " + trajet + "\n"
+                        + "Depart: " + dateDepart + " a " + heureDepart + "\n"
+                        + "Votre vehicule est rempli a " + niveauRemplissage + "%.";
+            }
+
+            boolean sent = sendSms(phone, message);
+            if (sent) {
+                log.info("SMS remplissage envoye a {} pour trajet {}", phone, trajet);
+            } else {
+                log.warn("Echec envoi SMS remplissage a {} pour trajet {}", phone, trajet);
+            }
+        } catch (Exception e) {
+            log.error("Erreur envoi SMS remplissage: {}", e.getMessage());
+        }
+    }
+
     private TokenResponse getOAuthToken() {
         try {
             HttpResponse<String> response = Unirest.post(oauthUrl)

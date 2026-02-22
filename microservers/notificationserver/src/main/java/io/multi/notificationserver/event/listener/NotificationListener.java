@@ -117,12 +117,25 @@ public class NotificationListener {
                             data.getNiveauRemplissage()
                     );
                 }
+                if (data.getPhone() != null && !data.getPhone().isBlank()) {
+                    smsService.sendRemplissageSms(
+                            data.getPhone(), data.getName(), data.getTrajet(),
+                            data.getDateDepart(), data.getHeureDepart(),
+                            data.getNiveauRemplissage()
+                    );
+                }
             }
             case BILLET_VALIDE -> {
                 var data = mapper.convertValue(notification.getPayload().getData(), Data.class);
                 if (data.getUserEmail() != null && !data.getUserEmail().isBlank()) {
                     emailService.sendBilletValideEmail(
                             data.getName(), data.getUserEmail(), data.getCodeBillet(),
+                            data.getTrajet(), data.getDateDepart()
+                    );
+                }
+                if (data.getPhone() != null && !data.getPhone().isBlank()) {
+                    smsService.sendBilletValideSms(
+                            data.getPhone(), data.getName(), data.getCodeBillet(),
                             data.getTrajet(), data.getDateDepart()
                     );
                 }

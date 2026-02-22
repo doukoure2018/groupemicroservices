@@ -82,6 +82,8 @@ public class ScheduledNotificationService {
 
             for (var cmd : commandes) {
                 Long userId = (Long) cmd[1];
+                String passagerNoms = cmd[4] != null ? (String) cmd[4] : "";
+                String passagerPhone = cmd[5] != null ? (String) cmd[5] : "";
 
                 if (inAppNotificationService.existsByReference(offreId, "OFFRE", categorie)) {
                     continue;
@@ -96,6 +98,19 @@ public class ScheduledNotificationService {
 
                 inAppNotificationService.createNotification(userId, "IN_APP", categorie,
                         titre, message, false, offreId, "OFFRE");
+
+                // Kafka → email + SMS
+                String userEmail = getUserEmail(userId);
+                var data = new HashMap<String, String>();
+                data.put("name", passagerNoms);
+                data.put("email", userEmail);
+                data.put("userEmail", userEmail);
+                data.put("phone", passagerPhone);
+                data.put("trajet", trajet);
+                data.put("dateDepart", offre[3].toString());
+                data.put("heureDepart", offre[4].toString());
+                data.put("niveauRemplissage", String.valueOf(remplissage));
+                sendKafkaNotification(eventType, data);
             }
         }
     }
