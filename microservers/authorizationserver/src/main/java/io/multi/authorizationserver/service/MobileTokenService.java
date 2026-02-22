@@ -180,6 +180,8 @@ public class MobileTokenService {
                 .claim("family_name", user.getLastName())
                 .claim("email", user.getEmail())
                 .claim("preferred_username", user.getEmail())
+                .claim("authorities", (user.getRole() != null ? user.getRole() : "") +
+                        (user.getAuthorities() != null ? "," + user.getAuthorities() : ""))
                 .build();
 
         SignedJWT signedJWT = new SignedJWT(

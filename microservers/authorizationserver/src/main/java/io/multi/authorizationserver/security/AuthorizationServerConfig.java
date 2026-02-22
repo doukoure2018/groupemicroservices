@@ -405,13 +405,17 @@ public class AuthorizationServerConfig {
                         log.info("✅ Adding user claims to ID token for user: {} (ID: {})",
                                 user.getEmail(), user.getUserId());
 
+                        String authorities = (user.getRole() != null ? user.getRole() : "") +
+                                (user.getAuthorities() != null ? "," + user.getAuthorities() : "");
+
                         context.getClaims()
                                 .claim("sub", user.getUserId().toString())
                                 .claim("name", user.getFirstName() + " " + user.getLastName())
                                 .claim("given_name", user.getFirstName())
                                 .claim("family_name", user.getLastName())
                                 .claim("email", user.getEmail())
-                                .claim("preferred_username", user.getEmail());
+                                .claim("preferred_username", user.getEmail())
+                                .claim("authorities", authorities);
                     } else {
                         log.warn("⚠️ Could not extract User from principal: {}", principalObj.getClass().getName());
                     }
