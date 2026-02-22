@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+<body style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; width: 100%; background-color: #f6f6f6; margin: 0;" bgcolor="#f6f6f6">
+
+<table style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; width: 100%; background-color: #f6f6f6; margin: 0;" bgcolor="#f6f6f6">
+    <tbody>
+    <tr>
+        <td></td>
+        <td width="600" style="vertical-align: top; display: block !important; max-width: 600px !important; clear: both !important; margin: 0 auto;" valign="top">
+            <div style="max-width: 600px; display: block; margin: 0 auto; padding: 20px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="border-radius: 6px; background-color: #fff; border: 1px solid #e5e7eb; overflow: hidden;" bgcolor="#fff">
+                    <tbody>
+                    <!-- Header -->
+                    <tr>
+                        <td style="font-size: 16px; vertical-align: top; color: #fff; font-weight: 500; text-align: center; border-radius: 6px 6px 0 0; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); margin: 0; padding: 30px 20px;" align="center" valign="top">
+                            <a href="#" style="font-size: 28px; color: #fff; text-decoration: none; font-weight: 700; letter-spacing: 1px;">YIGUI</a>
+                            <br>
+                            <span style="margin-top: 12px; display: block; font-size: 15px; font-weight: 400; opacity: 0.9;">Rappel de depart</span>
+                        </td>
+                    </tr>
+                    <!-- Body -->
+                    <tr>
+                        <td style="vertical-align: top; padding: 30px 28px;" valign="top">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tbody>
+                                <tr>
+                                    <td style="font-size: 16px; padding: 0 0 12px; color: #111827;">
+                                        Bonjour <span style="font-weight: 600;" th:text="${name}"></span>,
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-size: 14px; padding: 0 0 20px; line-height: 1.7; color: #374151;">
+                                        <p style="margin: 0 0 12px;">Votre depart approche ! Voici les details de votre voyage.</p>
+                                    </td>
+                                </tr>
+                                <!-- Trip details -->
+                                <tr>
+                                    <td style="padding: 0 0 20px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fffbeb; border-radius: 8px; border: 1px solid #fde68a;">
+                                            <tbody>
+                                            <tr>
+                                                <td style="padding: 16px 20px; border-bottom: 1px solid #fde68a;">
+                                                    <table width="100%">
+                                                        <tr>
+                                                            <td style="font-size: 13px; color: #6b7280;">Trajet</td>
+                                                            <td style="font-size: 14px; font-weight: 600; color: #111827; text-align: right;" th:text="${trajet}"></td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 12px 20px; border-bottom: 1px solid #fde68a;">
+                                                    <table width="100%">
+                                                        <tr>
+                                                            <td style="font-size: 13px; color: #6b7280;">Date de depart</td>
+                                                            <td style="font-size: 14px; color: #111827; text-align: right;" th:text="${dateDepart}"></td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 12px 20px; border-bottom: 1px solid #fde68a;">
+                                                    <table width="100%">
+                                                        <tr>
+                                                            <td style="font-size: 13px; color: #6b7280;">Heure de depart</td>
+                                                            <td style="font-size: 14px; font-weight: 700; color: #d97706; text-align: right;" th:text="${heureDepart}"></td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr th:if="${pointRendezVous != null and !pointRendezVous.isEmpty()}">
+                                                <td style="padding: 12px 20px; border-bottom: 1px solid #fde68a;">
+                                                    <table width="100%">
+                                                        <tr>
+                                                            <td style="font-size: 13px; color: #6b7280;">Point de RDV</td>
+                                                            <td style="font-size: 14px; font-weight: 600; color: #92400e; text-align: right;" th:text="${pointRendezVous}"></td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr th:if="${billetCodes != null and !billetCodes.isEmpty()}">
+                                                <td style="padding: 16px 20px; background-color: #fef3c7;">
+                                                    <table width="100%">
+                                                        <tr>
+                                                            <td style="font-size: 13px; color: #6b7280;">Code(s) billet</td>
+                                                            <td style="font-size: 13px; font-weight: 600; color: #d97706; text-align: right; font-family: monospace;" th:text="${billetCodes}"></td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-size: 13px; padding: 16px 0 0; border-top: 1px solid #e5e7eb; color: #6b7280; line-height: 1.6;">
+                                        Presentez votre code billet au chauffeur le jour du depart. Bon voyage !
+                                        <br><br>
+                                        Cordialement,<br>
+                                        <strong style="color: #374151;">L'equipe YIGUI</strong>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div style="font-size: 12px; width: 100%; color: #9ca3af; text-align: center; padding: 20px 0;">
+                    &copy; 2026 YIGUI. Tous droits reserves.
+                </div>
+            </div>
+        </td>
+        <td></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

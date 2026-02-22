@@ -36,6 +36,7 @@ dependencies:
 
   # QR Code & PDF
   qr_flutter: ^4.1.0
+  mobile_scanner: ^6.0.2
   pdf: ^3.11.1
   printing: ^5.13.3
   path_provider: ^2.1.4

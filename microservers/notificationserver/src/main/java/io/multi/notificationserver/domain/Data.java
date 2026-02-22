@@ -31,4 +31,10 @@ public class Data {
     private String billetCodes;
     private String referencePaiement;
     private String userEmail; // email de l'utilisateur qui a réservé
+
+    // Champs notifications programmees
+    private String pointRendezVous;
+    private String niveauRemplissage;
+    private String codeBillet;
+    private String nomPassager;
 }

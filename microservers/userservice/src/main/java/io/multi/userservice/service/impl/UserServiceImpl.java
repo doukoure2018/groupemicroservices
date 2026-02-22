@@ -168,7 +168,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User updateRole(String userUuid, String role) {
-        return null;
+        return userRepository.updateRole(userUuid, role);
     }
 
     @Override

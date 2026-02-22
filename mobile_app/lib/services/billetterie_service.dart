@@ -87,6 +87,16 @@ class BilletterieService {
     await _api.put('$_basePath/commandes/$commandeUuid/annuler');
   }
 
+  /// POST /billetterie/billets/validate - Valider un billet via QR code
+  Future<Map<String, dynamic>> validateBillet(String codeBillet) async {
+    final response = await _api.post(
+      '$_basePath/billets/validate',
+      data: {'codeBillet': codeBillet},
+    );
+    final data = response.data['data'];
+    return data['billet'] as Map<String, dynamic>;
+  }
+
   /// POST /billetterie/commandes - Créer commande + billets + paiement
   Future<Map<String, dynamic>> createCommande({
     required String offreUuid,

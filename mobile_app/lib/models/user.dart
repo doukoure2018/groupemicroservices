@@ -22,6 +22,9 @@ class User {
     return firstName ?? lastName ?? email;
   }
 
+  bool get isControleur => authorities.any((a) =>
+      a.contains('billet:validate') || a.toUpperCase() == 'CONTROLEUR');
+
   String get initials {
     if (firstName != null && lastName != null) {
       return '${firstName![0]}${lastName![0]}'.toUpperCase();

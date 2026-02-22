@@ -174,7 +174,7 @@ public class UserQuery {
 
     public static final String UPDATE_USER_ROLE_FUNCTION=
             """
-             SELECT * FROM update_user_role (:userUuid,role)
+             SELECT * FROM update_user_role (:userUuid, :role)
             """;
     public static final String SELECT_USER_QUERY=
             """

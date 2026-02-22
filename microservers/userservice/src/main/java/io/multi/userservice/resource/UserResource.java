@@ -129,14 +129,14 @@ public class UserResource {
         return ok(getResponse(request, Map.of("credential",credential), "Profile retrieved", OK));
     }
 
-    @PatchMapping("/{update}")
+    @PatchMapping("/update")
     public ResponseEntity<Response> updateUser(@NotNull Authentication authentication, @RequestBody UserRequest user, HttpServletRequest request) {
         var updatedUser = userService.updateUser(authentication.getName(),user.getFirstName(),user.getLastName(),user.getEmail(),user.getPhone(),user.getBio(),user.getAddress());
         return ok(getResponse(request, Map.of("user",updatedUser), "User Updated Successfully", OK));
     }
 
     // When user is  logged in
-    @PatchMapping("/{updateRole}")
+    @PatchMapping("/updateRole")
     public ResponseEntity<Response> updateRole(@NotNull Authentication authentication, @RequestBody RoleRequest role, HttpServletRequest request) {
         var updatedRole = userService.updateRole(authentication.getName(), role.getRole());
         return ok(getResponse(request, Map.of("user",updatedRole), "Role Updated Successfully", OK));
@@ -194,6 +194,24 @@ public class UserResource {
     @GetMapping("/list")
     public ResponseEntity<Response> getUsers(@NotNull Authentication authentication, HttpServletRequest request) {
         return ok(getResponse(request, Map.of("users",userService.getUsers()), "List of Users Retreived Successfully", OK));
+    }
+
+    // Admin: Get all available roles
+    @GetMapping("/roles")
+    public ResponseEntity<Response> getRoles(@NotNull Authentication authentication, HttpServletRequest request) {
+        return ok(getResponse(request, Map.of("roles", userService.getRoles()), "Roles retrieved successfully", OK));
+    }
+
+    // Admin: Update a user's role by userUuid
+    @PatchMapping("/{userUuid}/role")
+    public ResponseEntity<Response> updateUserRole(
+            @PathVariable("userUuid") String userUuid,
+            @RequestBody RoleRequest role,
+            @NotNull Authentication authentication,
+            HttpServletRequest request) {
+        log.info("PATCH /user/{}/role - role: {} by admin: {}", userUuid, role.getRole(), authentication.getName());
+        var updatedUser = userService.updateRole(userUuid, role.getRole());
+        return ok(getResponse(request, Map.of("user", updatedUser), "Role updated successfully", OK));
     }
     // When user is logged in
     @GetMapping("/photo")

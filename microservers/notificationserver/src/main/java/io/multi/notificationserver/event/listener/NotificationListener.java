@@ -91,6 +91,42 @@ public class NotificationListener {
                     );
                 }
             }
+            case RAPPEL_J1, RAPPEL_H2 -> {
+                var data = mapper.convertValue(notification.getPayload().getData(), Data.class);
+                if (data.getUserEmail() != null && !data.getUserEmail().isBlank()) {
+                    emailService.sendDepartureReminderEmail(
+                            data.getName(), data.getUserEmail(), data.getTrajet(),
+                            data.getDateDepart(), data.getHeureDepart(),
+                            data.getPointRendezVous(), data.getBilletCodes()
+                    );
+                }
+                if (data.getPhone() != null && !data.getPhone().isBlank()) {
+                    smsService.sendDepartureReminderSms(
+                            data.getPhone(), data.getName(), data.getTrajet(),
+                            data.getDateDepart(), data.getHeureDepart(),
+                            data.getPointRendezVous()
+                    );
+                }
+            }
+            case REMPLISSAGE_50, REMPLISSAGE_75, REMPLISSAGE_100 -> {
+                var data = mapper.convertValue(notification.getPayload().getData(), Data.class);
+                if (data.getEmail() != null && !data.getEmail().isBlank()) {
+                    emailService.sendRemplissageUpdateEmail(
+                            data.getName(), data.getEmail(), data.getTrajet(),
+                            data.getDateDepart(), data.getHeureDepart(),
+                            data.getNiveauRemplissage()
+                    );
+                }
+            }
+            case BILLET_VALIDE -> {
+                var data = mapper.convertValue(notification.getPayload().getData(), Data.class);
+                if (data.getUserEmail() != null && !data.getUserEmail().isBlank()) {
+                    emailService.sendBilletValideEmail(
+                            data.getName(), data.getUserEmail(), data.getCodeBillet(),
+                            data.getTrajet(), data.getDateDepart()
+                    );
+                }
+            }
             default -> log.warn("Unhandled event type: {}", notification.getPayload().getEventType());
         }
     }

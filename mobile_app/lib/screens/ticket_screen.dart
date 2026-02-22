@@ -140,20 +140,23 @@ class TicketScreen extends StatelessWidget {
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: ColorManager.primarySurface,
                             borderRadius: BorderRadius.circular(AppRadius.r8),
                           ),
                           child: Text(
                             billet.codeBillet,
-                            style: getBoldStyle(
-                              color: ColorManager.primary,
-                              fontSize: 22,
-                            ).copyWith(
-                              fontFamily: 'monospace',
-                              letterSpacing: 3,
-                            ),
+                            style:
+                                getBoldStyle(
+                                  color: ColorManager.primary,
+                                  fontSize: 22,
+                                ).copyWith(
+                                  fontFamily: 'monospace',
+                                  letterSpacing: 3,
+                                ),
                           ),
                         ),
                         const SizedBox(height: AppSize.s20),
@@ -204,20 +207,32 @@ class TicketScreen extends StatelessWidget {
 
                         // Ticket details
                         _buildTicketRow(
-                            Icons.person_outline, 'Passager', billet.nomPassager),
-                        _buildTicketRow(Icons.route,
-                            'Trajet', '$departure - $destination'),
+                          Icons.person_outline,
+                          'Passager',
+                          billet.nomPassager,
+                        ),
+                        _buildTicketRow(
+                          Icons.route,
+                          'Trajet',
+                          '$departure - $destination',
+                        ),
                         _buildTicketRow(
                           Icons.calendar_today_outlined,
                           'Date & Heure',
                           '$_formattedDate - $time',
                         ),
                         if (vehiclePlate.isNotEmpty)
-                          _buildTicketRow(Icons.directions_bus_outlined,
-                              'V\u00e9hicule', vehiclePlate),
+                          _buildTicketRow(
+                            Icons.directions_bus_outlined,
+                            'V\u00e9hicule',
+                            vehiclePlate,
+                          ),
                         if (driverName.isNotEmpty)
-                          _buildTicketRow(Icons.badge_outlined,
-                              'Chauffeur', driverName),
+                          _buildTicketRow(
+                            Icons.badge_outlined,
+                            'Chauffeur',
+                            driverName,
+                          ),
 
                         // Status
                         const SizedBox(height: 4),
@@ -226,8 +241,11 @@ class TicketScreen extends StatelessWidget {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.verified_outlined,
-                                    color: ColorManager.textTertiary, size: 16),
+                                const Icon(
+                                  Icons.verified_outlined,
+                                  color: ColorManager.textTertiary,
+                                  size: 16,
+                                ),
                                 const SizedBox(width: 6),
                                 Text(
                                   'Statut',
@@ -240,11 +258,14 @@ class TicketScreen extends StatelessWidget {
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: ColorManager.successLight,
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.r4),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.r4,
+                                ),
                               ),
                               child: Text(
                                 billet.statut,
@@ -358,9 +379,9 @@ class TicketScreen extends StatelessWidget {
       await TicketPdfService.printPdf(pdfBytes);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur PDF: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur PDF: $e')));
       }
     }
   }
@@ -383,9 +404,9 @@ class TicketScreen extends StatelessWidget {
       );
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur partage: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur partage: $e')));
       }
     }
   }

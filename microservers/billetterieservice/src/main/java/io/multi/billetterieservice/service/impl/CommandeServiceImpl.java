@@ -280,6 +280,9 @@ public class CommandeServiceImpl implements CommandeService {
                         .vehiculeImmatriculation(rs.getString("vehicule_immatriculation"))
                         .nomChauffeur(rs.getString("nom_chauffeur"))
                         .contactChauffeur(rs.getString("contact_chauffeur"))
+                        .niveauRemplissage(rs.getObject("niveau_remplissage") != null ? rs.getInt("niveau_remplissage") : null)
+                        .pointRendezVous(rs.getString("point_rendez_vous"))
+                        .typeVehicule(rs.getString("type_vehicule"))
                         .build())
                 .optional()
                 .orElseThrow(() -> new ApiException("Commande non trouvée: " + commandeUuid));
@@ -347,6 +350,9 @@ public class CommandeServiceImpl implements CommandeService {
                         .vehiculeImmatriculation(rs.getString("vehicule_immatriculation"))
                         .nomChauffeur(rs.getString("nom_chauffeur"))
                         .contactChauffeur(rs.getString("contact_chauffeur"))
+                        .niveauRemplissage(rs.getObject("niveau_remplissage") != null ? rs.getInt("niveau_remplissage") : null)
+                        .pointRendezVous(rs.getString("point_rendez_vous"))
+                        .typeVehicule(rs.getString("type_vehicule"))
                         .build())
                 .list();
 

@@ -124,6 +124,27 @@ public class OrangeSmsServiceImpl implements SmsService {
         }
     }
 
+    @Override
+    @Async
+    public void sendDepartureReminderSms(String phone, String name, String trajet, String dateDepart, String heureDepart, String pointRendezVous) {
+        try {
+            String message = "YIGUI - Rappel depart!\n"
+                    + "Trajet: " + trajet + "\n"
+                    + "Depart: " + dateDepart + " a " + heureDepart + "\n"
+                    + (pointRendezVous != null && !pointRendezVous.isBlank() ? "RDV: " + pointRendezVous + "\n" : "")
+                    + "Presentez votre code billet au chauffeur.";
+
+            boolean sent = sendSms(phone, message);
+            if (sent) {
+                log.info("SMS de rappel depart envoye a {} pour trajet {}", phone, trajet);
+            } else {
+                log.warn("Echec envoi SMS de rappel depart a {} pour trajet {}", phone, trajet);
+            }
+        } catch (Exception e) {
+            log.error("Erreur envoi SMS de rappel depart: {}", e.getMessage());
+        }
+    }
+
     private TokenResponse getOAuthToken() {
         try {
             HttpResponse<String> response = Unirest.post(oauthUrl)

@@ -38,6 +38,12 @@ public class EmailServiceImpl implements EmailService {
     public static final String BOOKING_CONFIRMATION_SUBJECT = "Confirmation de votre réservation";
     public static final String BOOKING_CANCELLATION_TEMPLATE = "bookingcancellation";
     public static final String BOOKING_CANCELLATION_SUBJECT = "Annulation de votre réservation";
+    public static final String DEPARTURE_REMINDER_TEMPLATE = "rappeldepart";
+    public static final String DEPARTURE_REMINDER_SUBJECT = "Rappel de votre départ";
+    public static final String REMPLISSAGE_UPDATE_TEMPLATE = "remplissageupdate";
+    public static final String REMPLISSAGE_UPDATE_SUBJECT = "Mise à jour remplissage";
+    public static final String BILLET_VALIDE_TEMPLATE = "billetvalide";
+    public static final String BILLET_VALIDE_SUBJECT = "Billet validé";
 
     private final TemplateEngine templateEngine;
     private final JavaMailSender mailSender;
@@ -145,6 +151,69 @@ public class EmailServiceImpl implements EmailService {
             log.info("Booking cancellation email sent to: {} for order: {}", email, numeroCommande);
         } catch (Exception exception) {
             log.error("Error sending booking cancellation email: {}", exception.getMessage(), exception);
+        }
+    }
+
+    @Override
+    @Async
+    public void sendDepartureReminderEmail(String name, String email, String trajet, String dateDepart, String heureDepart, String pointRendezVous, String billetCodes) {
+        try {
+            var context = new Context();
+            context.setVariables(Map.of(
+                    "name", name,
+                    "trajet", trajet,
+                    "dateDepart", dateDepart,
+                    "heureDepart", heureDepart,
+                    "pointRendezVous", pointRendezVous != null ? pointRendezVous : "",
+                    "billetCodes", billetCodes != null ? billetCodes : ""
+            ));
+            var htmlContent = templateEngine.process(DEPARTURE_REMINDER_TEMPLATE, context);
+
+            sendEmail(email, DEPARTURE_REMINDER_SUBJECT + " - " + trajet, htmlContent);
+            log.info("Departure reminder email sent to: {} for trip: {}", email, trajet);
+        } catch (Exception exception) {
+            log.error("Error sending departure reminder email: {}", exception.getMessage(), exception);
+        }
+    }
+
+    @Override
+    @Async
+    public void sendRemplissageUpdateEmail(String name, String email, String trajet, String dateDepart, String heureDepart, String niveauRemplissage) {
+        try {
+            var context = new Context();
+            context.setVariables(Map.of(
+                    "name", name,
+                    "trajet", trajet,
+                    "dateDepart", dateDepart,
+                    "heureDepart", heureDepart,
+                    "niveauRemplissage", niveauRemplissage
+            ));
+            var htmlContent = templateEngine.process(REMPLISSAGE_UPDATE_TEMPLATE, context);
+
+            sendEmail(email, REMPLISSAGE_UPDATE_SUBJECT + " - " + trajet + " (" + niveauRemplissage + "%)", htmlContent);
+            log.info("Remplissage update email sent to: {} for trip: {}", email, trajet);
+        } catch (Exception exception) {
+            log.error("Error sending remplissage update email: {}", exception.getMessage(), exception);
+        }
+    }
+
+    @Override
+    @Async
+    public void sendBilletValideEmail(String name, String email, String codeBillet, String trajet, String dateDepart) {
+        try {
+            var context = new Context();
+            context.setVariables(Map.of(
+                    "name", name,
+                    "codeBillet", codeBillet,
+                    "trajet", trajet,
+                    "dateDepart", dateDepart
+            ));
+            var htmlContent = templateEngine.process(BILLET_VALIDE_TEMPLATE, context);
+
+            sendEmail(email, BILLET_VALIDE_SUBJECT + " - " + codeBillet, htmlContent);
+            log.info("Billet valide email sent to: {} for billet: {}", email, codeBillet);
+        } catch (Exception exception) {
+            log.error("Error sending billet valide email: {}", exception.getMessage(), exception);
         }
     }
 

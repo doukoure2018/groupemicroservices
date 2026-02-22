@@ -7,4 +7,5 @@ public interface SmsService {
                                      String nombrePlaces, String montantPaye, String billetCodes);
     void sendBookingCancellationSms(String phone, String name, String numeroCommande,
                                      String trajet, String dateDepart, String montantPaye);
+    void sendDepartureReminderSms(String phone, String name, String trajet, String dateDepart, String heureDepart, String pointRendezVous);
 }

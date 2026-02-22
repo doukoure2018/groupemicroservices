@@ -13,6 +13,7 @@ import 'confirmation_screen.dart';
 import 'ticket_screen.dart';
 import 'ticket_list_screen.dart';
 import 'my_trips_screen.dart';
+import 'scanner_screen.dart';
 import '../models/billet.dart';
 
 class MainScreen extends StatefulWidget {
@@ -27,10 +28,25 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final isControleur = authProvider.user?.isControleur ?? false;
+
+    final tabs = <Widget>[
+      _buildSearchTab(),
+      _buildTripsTab(),
+      if (isControleur) const ScannerScreen(),
+      _buildProfileTab(),
+    ];
+
+    // Adjust index if it's out of bounds (e.g. role changed)
+    if (_currentIndex >= tabs.length) {
+      _currentIndex = 0;
+    }
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: [_buildSearchTab(), _buildTripsTab(), _buildProfileTab()],
+        children: tabs,
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -47,7 +63,6 @@ class _MainScreenState extends State<MainScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Plus de Row indicateur ici !
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -62,7 +77,13 @@ class _MainScreenState extends State<MainScreen> {
                       Icons.confirmation_number_outlined,
                       'Billets',
                     ),
-                    _buildNavItem(2, Icons.info_outline, 'Plus'),
+                    if (isControleur)
+                      _buildNavItem(2, Icons.qr_code_scanner, 'Scanner'),
+                    _buildNavItem(
+                      isControleur ? 3 : 2,
+                      Icons.info_outline,
+                      'Plus',
+                    ),
                   ],
                 ),
               ),
@@ -186,7 +207,8 @@ class _MainScreenState extends State<MainScreen> {
 
   /// Parse time from backend (can be String "06:00", List [6,0], or List [6,0,0]).
   String _parseTime(dynamic value, String fallback) {
-    if (value is String) return value.length >= 5 ? value.substring(0, 5) : value;
+    if (value is String)
+      return value.length >= 5 ? value.substring(0, 5) : value;
     if (value is List && value.length >= 2) {
       final h = value[0].toString().padLeft(2, '0');
       final m = value[1].toString().padLeft(2, '0');

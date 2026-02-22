@@ -53,6 +53,11 @@ public class Commande {
     private String nomChauffeur;
     private String contactChauffeur;
 
+    // Champs jointure (offre enrichie)
+    private Integer niveauRemplissage;
+    private String pointRendezVous;
+    private String typeVehicule;
+
     // Billets associes
     private List<Billet> billets;
 }

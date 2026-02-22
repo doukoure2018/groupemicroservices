@@ -25,9 +25,9 @@ class TicketPdfService {
   }) async {
     final doc = pw.Document();
 
-    // Load Google Font for full Unicode support (accents, arrows, etc.)
-    final font = await PdfGoogleFonts.notoSansRegular();
-    final fontBold = await PdfGoogleFonts.notoSansBold();
+    // Use built-in fonts (no network required, supports French accents)
+    final font = pw.Font.helvetica();
+    final fontBold = pw.Font.helveticaBold();
 
     final baseStyle = pw.TextStyle(font: font, fontSize: 11);
     final boldStyle = pw.TextStyle(font: fontBold, fontSize: 11);

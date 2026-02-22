@@ -8,4 +8,7 @@ public interface EmailService {
     void sendNewFilesHtmlEmail(String name, String email, String files, String ticketTitle, String ticketNumber, String priority, String date);
     void sendBookingConfirmationEmail(String name, String email, String numeroCommande, String trajet, String dateDepart, String heureDepart, String nombrePlaces, String montantPaye, String billetCodes);
     void sendBookingCancellationEmail(String name, String email, String numeroCommande, String trajet, String dateDepart, String heureDepart, String nombrePlaces, String montantPaye);
+    void sendDepartureReminderEmail(String name, String email, String trajet, String dateDepart, String heureDepart, String pointRendezVous, String billetCodes);
+    void sendRemplissageUpdateEmail(String name, String email, String trajet, String dateDepart, String heureDepart, String niveauRemplissage);
+    void sendBilletValideEmail(String name, String email, String codeBillet, String trajet, String dateDepart);
 }

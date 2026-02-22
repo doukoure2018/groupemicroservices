@@ -42,15 +42,18 @@ public final class CommandeQuery {
                c.date_reservation, c.date_confirmation, c.date_paiement,
                c.reference_paiement, c.notes, c.created_at, c.updated_at,
                o.offre_uuid, o.date_depart, o.heure_depart,
+               o.niveau_remplissage, o.point_rencontre AS point_rendez_vous,
                vd.libelle AS ville_depart_libelle,
                va.libelle AS ville_arrivee_libelle,
                sd.nom AS site_depart,
                sa.nom AS site_arrivee,
                v.immatriculation AS vehicule_immatriculation,
-               v.nom_chauffeur, v.contact_chauffeur
+               v.nom_chauffeur, v.contact_chauffeur,
+               tv.libelle AS type_vehicule
         FROM commandes c
         INNER JOIN offres o ON c.offre_id = o.offre_id
         INNER JOIN vehicules v ON o.vehicule_id = v.vehicule_id
+        LEFT JOIN types_vehicules tv ON v.type_vehicule_id = tv.type_vehicule_id
         INNER JOIN trajets t ON o.trajet_id = t.trajet_id
         INNER JOIN departs dep ON t.depart_id = dep.depart_id
         INNER JOIN sites sd ON dep.site_id = sd.site_id
@@ -74,15 +77,18 @@ public final class CommandeQuery {
                c.date_reservation, c.date_confirmation, c.date_paiement,
                c.reference_paiement, c.notes, c.created_at, c.updated_at,
                o.offre_uuid, o.date_depart, o.heure_depart,
+               o.niveau_remplissage, o.point_rencontre AS point_rendez_vous,
                vd.libelle AS ville_depart_libelle,
                va.libelle AS ville_arrivee_libelle,
                sd.nom AS site_depart,
                sa.nom AS site_arrivee,
                v.immatriculation AS vehicule_immatriculation,
-               v.nom_chauffeur, v.contact_chauffeur
+               v.nom_chauffeur, v.contact_chauffeur,
+               tv.libelle AS type_vehicule
         FROM commandes c
         INNER JOIN offres o ON c.offre_id = o.offre_id
         INNER JOIN vehicules v ON o.vehicule_id = v.vehicule_id
+        LEFT JOIN types_vehicules tv ON v.type_vehicule_id = tv.type_vehicule_id
         INNER JOIN trajets t ON o.trajet_id = t.trajet_id
         INNER JOIN departs dep ON t.depart_id = dep.depart_id
         INNER JOIN sites sd ON dep.site_id = sd.site_id
