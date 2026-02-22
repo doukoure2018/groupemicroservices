@@ -85,7 +85,7 @@ public class ScheduledNotificationService {
                 String passagerNoms = cmd[4] != null ? (String) cmd[4] : "";
                 String passagerPhone = cmd[5] != null ? (String) cmd[5] : "";
 
-                if (inAppNotificationService.existsByReference(offreId, "OFFRE", categorie)) {
+                if (inAppNotificationService.existsByReference(userId, offreId, "OFFRE", categorie)) {
                     continue;
                 }
 
@@ -158,7 +158,7 @@ public class ScheduledNotificationService {
                 String passagerNoms = cmd[4] != null ? (String) cmd[4] : "";
                 String passagerPhone = cmd[5] != null ? (String) cmd[5] : "";
 
-                if (inAppNotificationService.existsByReference(offreId, "OFFRE", "RAPPEL_J1")) {
+                if (inAppNotificationService.existsByReference(userId, offreId, "OFFRE", "RAPPEL_J1")) {
                     continue;
                 }
 
@@ -224,7 +224,7 @@ public class ScheduledNotificationService {
                 String passagerNoms = cmd[4] != null ? (String) cmd[4] : "";
                 String passagerPhone = cmd[5] != null ? (String) cmd[5] : "";
 
-                if (inAppNotificationService.existsByReference(offreId, "OFFRE", "RAPPEL_H2")) {
+                if (inAppNotificationService.existsByReference(userId, offreId, "OFFRE", "RAPPEL_H2")) {
                     continue;
                 }
 

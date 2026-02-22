@@ -91,8 +91,9 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean existsByReference(Long referenceId, String referenceType, String categorie) {
+    public boolean existsByReference(Long userId, Long referenceId, String referenceType, String categorie) {
         Long count = jdbcClient.sql(NotificationQuery.CHECK_EXISTS_BY_REFERENCE)
+                .param("userId", userId)
                 .param("referenceId", referenceId)
                 .param("referenceType", referenceType)
                 .param("categorie", categorie)

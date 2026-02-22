@@ -39,6 +39,6 @@ public final class NotificationQuery {
 
     public static final String CHECK_EXISTS_BY_REFERENCE = """
         SELECT COUNT(*) FROM notifications
-        WHERE reference_id = :referenceId AND reference_type = :referenceType AND categorie = :categorie
+        WHERE user_id = :userId AND reference_id = :referenceId AND reference_type = :referenceType AND categorie = :categorie
         """;
 }
