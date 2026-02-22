@@ -207,7 +207,7 @@ public class CommandeServiceImpl implements CommandeService {
                     kafkaTemplate.send(message);
                     log.info("Notification Kafka envoyée pour commande: {}", cmdNum);
                 } catch (Exception ex) {
-                    log.warn("Kafka indisponible, notification non envoyée pour: {}", cmdNum);
+                    log.warn("Kafka indisponible, notification non envoyée pour: {} - cause: {}", cmdNum, ex.getMessage());
                 }
             });
         } catch (Exception e) {
@@ -472,7 +472,7 @@ public class CommandeServiceImpl implements CommandeService {
                     kafkaTemplate.send(message);
                     log.info("Notification Kafka annulation envoyée pour commande: {}", cmdNum);
                 } catch (Exception ex) {
-                    log.warn("Kafka indisponible, notification annulation non envoyée pour: {}", cmdNum);
+                    log.warn("Kafka indisponible, notification annulation non envoyée pour: {} - cause: {}", cmdNum, ex.getMessage());
                 }
             });
         } catch (Exception e) {

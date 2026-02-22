@@ -46,18 +46,13 @@ spring:
     template:
       default-topic: NOTIFICATION_TOPIC
     producer:
-      group-id: topicgroupid
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      properties:
-        max.request.size: 1300000000
     properties:
       spring:
         json:
           type:
             mapping: Notification:io.multi.billetterieservice.domain.Notification
-      message.max.bytes: 1300000000
-      max.request.size: 1300000000
 
 eureka:
   instance:
@@ -82,3 +77,5 @@ jwks:
 logging:
   level:
     root: INFO
+    org.apache.kafka: WARN
+    org.springframework.kafka: DEBUG
