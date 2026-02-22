@@ -74,6 +74,21 @@ class Commande {
     return DateTime.now();
   }
 
+  static String? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    if (value is List && value.length >= 3) {
+      final y = value[0] as int;
+      final m = (value[1] as int).toString().padLeft(2, '0');
+      final d = (value[2] as int).toString().padLeft(2, '0');
+      final h = value.length > 3 ? (value[3] as int).toString().padLeft(2, '0') : '00';
+      final min = value.length > 4 ? (value[4] as int).toString().padLeft(2, '0') : '00';
+      final s = value.length > 5 ? (value[5] as int).toString().padLeft(2, '0') : '00';
+      return '$y-$m-${d}T$h:$min:$s';
+    }
+    return value.toString();
+  }
+
   static String _parseTime(dynamic value) {
     if (value is String) {
       return value.length >= 5 ? value.substring(0, 5) : value;
@@ -114,7 +129,7 @@ class Commande {
       billets: billetsJson
           .map((b) => Billet.fromJson(b as Map<String, dynamic>))
           .toList(),
-      createdAt: json['createdAt']?.toString(),
+      createdAt: _parseDateTime(json['createdAt']),
     );
   }
 }
