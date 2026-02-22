@@ -2,6 +2,9 @@ server:
   port: 8097
 
 spring:
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
   application:
     name: billetterieservice
   profiles:
