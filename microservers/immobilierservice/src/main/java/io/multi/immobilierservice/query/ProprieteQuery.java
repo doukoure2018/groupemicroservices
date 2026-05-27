@@ -214,15 +214,22 @@ public final class ProprieteQuery {
     // Une seule requête : ST_Distance dans SELECT, ST_DWithin dans WHERE.
     // =========================================================================
 
-    public static final String SEARCH_FROM = """
+    /** Partie JOIN seulement (tables) — le WHERE est appliqué après pour permettre
+     *  d'insérer des LEFT JOIN supplémentaires conditionnellement (ex: favoris). */
+    public static final String SEARCH_JOINS = """
             FROM immo_propriete p
             LEFT JOIN immo_type_bien tb ON tb.type_bien_id = p.type_bien_id
             LEFT JOIN localisations loc ON loc.localisation_id = p.localisation_id
             LEFT JOIN quartiers q ON q.quartier_id = loc.quartier_id
             LEFT JOIN communes c ON c.commune_id = q.commune_id
             LEFT JOIN villes v ON v.ville_id = c.ville_id
-            WHERE p.statut = 'PUBLIE'
             """;
+
+    /** Clause WHERE de base (statut PUBLIE) — appliquée après les JOINs additionnels. */
+    public static final String SEARCH_WHERE_BASE = " WHERE p.statut = 'PUBLIE'";
+
+    /** Conservé pour compat. Représente JOINs + WHERE de base. */
+    public static final String SEARCH_FROM = SEARCH_JOINS + SEARCH_WHERE_BASE;
 
     /** Calcul de distance — concaténé dans SELECT seulement si lat/lng fournis. */
     public static final String DISTANCE_EXPR =

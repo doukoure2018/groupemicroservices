@@ -45,6 +45,13 @@ public class ProprieteSearchCriteria {
     private Integer limit = 20;
     private Integer offset = 0;
 
+    /**
+     * <b>Set par le controller depuis le JWT</b> — jamais accepté en query param
+     * (sinon un user pourrait spoofer l'identité d'un autre pour voir ses favoris).
+     * Null = requête anonyme → {@code isFavorite} restera null dans les résultats.
+     */
+    private Long currentUserId;
+
     public String trierOrDefault() {
         if (trier == null || trier.isBlank()) {
             // Si géo fournie → tri distance, sinon date desc.

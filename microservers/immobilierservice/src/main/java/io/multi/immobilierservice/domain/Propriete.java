@@ -89,4 +89,14 @@ public class Propriete {
 
     /** Distance en mètres au point de recherche (null si pas de recherche spatiale). */
     private Double distanceM;
+
+    /**
+     * Indique si la propriété est en favoris du user connecté qui exécute la requête.
+     * <ul>
+     *   <li>{@code null} → requête anonyme (pas de JWT) : information indéterminée</li>
+     *   <li>{@code true}/{@code false} → user connecté, statut connu</li>
+     * </ul>
+     * Important pour le client mobile : null ≠ false. null signifie "non connecté".
+     */
+    private Boolean isFavorite;
 }

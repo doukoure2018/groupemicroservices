@@ -230,16 +230,30 @@ public class ProprieteRepositoryImpl implements ProprieteRepository {
     public List<Propriete> search(ProprieteSearchCriteria c) {
         String tri = resolveTri(c);
         boolean geo = hasGeo(c);
+        boolean withFavorite = c.getCurrentUserId() != null;
 
+        // SELECT — ajouts conditionnels (distance si géo, is_favorite si user connecté).
+        // Choix : 2 variantes SQL explicites au lieu d'un LEFT JOIN avec NULL.user_id qui
+        // s'appuierait sur la sémantique tristate (= NULL ne match jamais). Plus robuste
+        // à un futur refactor SQL.
+        // Ordre SQL : SELECT … FROM joins [+ LEFT JOIN favori] WHERE … (les JOINs doivent
+        // être AVANT le WHERE, sinon syntax error).
         StringBuilder sql = new StringBuilder("SELECT p.*");
         if (geo) sql.append(", ").append(ProprieteQuery.DISTANCE_EXPR).append(" AS distance_m");
-        sql.append(' ').append(ProprieteQuery.SEARCH_FROM);
+        if (withFavorite) sql.append(", (f.favori_id IS NOT NULL) AS is_favorite");
+        sql.append(' ').append(ProprieteQuery.SEARCH_JOINS);
+        if (withFavorite) {
+            sql.append(" LEFT JOIN immo_favori f")
+               .append(" ON f.user_id = :currentUserId AND f.propriete_id = p.propriete_id");
+        }
+        sql.append(ProprieteQuery.SEARCH_WHERE_BASE);
         appendFilters(sql, c, geo);
         sql.append(" ORDER BY ").append(orderByClause(tri, geo));
         sql.append(" LIMIT :limit OFFSET :offset");
 
         var spec = jdbcClient.sql(sql.toString());
         spec = bindFilters(spec, c, geo);
+        if (withFavorite) spec = spec.param("currentUserId", c.getCurrentUserId());
         return spec
                 .param("limit", c.getLimit() != null ? c.getLimit() : 20)
                 .param("offset", c.getOffset() != null ? c.getOffset() : 0)
@@ -250,6 +264,7 @@ public class ProprieteRepositoryImpl implements ProprieteRepository {
     @Override
     public long countSearch(ProprieteSearchCriteria c) {
         boolean geo = hasGeo(c);
+        // Pas de besoin de JOIN favoris pour le COUNT (n'affecte pas le nombre de lignes).
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) ");
         sql.append(ProprieteQuery.SEARCH_FROM);
         appendFilters(sql, c, geo);

@@ -64,6 +64,8 @@ public class ProprieteResource {
             @RequestParam(required = false) String trier,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(defaultValue = "0") int offset,
+            // JWT optionnel : si présent, on enrichit avec is_favorite ; sinon recherche anonyme.
+            @AuthenticationPrincipal Jwt jwt,
             HttpServletRequest http) {
 
         ProprieteSearchCriteria criteria = new ProprieteSearchCriteria();
@@ -86,6 +88,10 @@ public class ProprieteResource {
         criteria.setTrier(trier);
         criteria.setLimit(limit);
         criteria.setOffset(offset);
+        // currentUserId vient du JWT, JAMAIS d'un query param (sinon spoof favoris d'autrui).
+        if (jwt != null) {
+            criteria.setCurrentUserId(jwtUtils.extractUserId(jwt));
+        }
 
         SearchResult result = rechercheService.rechercher(criteria);
         return ResponseEntity.ok(RequestUtils.getResponse(http,

@@ -67,6 +67,10 @@ public class ProprieteRowMapper implements RowMapper<Propriete> {
                 .rappelExpirationEnvoyeAt(hasColumn(rs, "rappel_expiration_envoye_at")
                         ? rs.getObject("rappel_expiration_envoye_at", OffsetDateTime.class) : null)
                 .distanceM(distanceM)
+                // is_favorite : présent uniquement quand la recherche est exécutée
+                // par un user connecté. Null = anonyme (à ne pas confondre avec false).
+                .isFavorite(hasColumn(rs, "is_favorite")
+                        ? rs.getObject("is_favorite", Boolean.class) : null)
                 .build();
     }
 
