@@ -7,6 +7,7 @@ import io.multi.immobilierservice.domain.Propriete;
 import io.multi.immobilierservice.domain.TypeBien;
 import io.multi.immobilierservice.dto.ProprieteCreateRequest;
 import io.multi.immobilierservice.dto.ProprieteUpdateRequest;
+import io.multi.immobilierservice.config.ImmoProperties;
 import io.multi.immobilierservice.exception.ApiException;
 import io.multi.immobilierservice.exception.ForbiddenException;
 import io.multi.immobilierservice.repository.*;
@@ -29,6 +30,7 @@ public class ProprieteServiceImpl implements ProprieteService {
     private final TypeBienRepository typeBienRepository;
     private final CommoditeRepository commoditeRepository;
     private final ProfilImmoRepository profilImmoRepository;
+    private final ImmoProperties immoProperties;
 
     @Override
     @Transactional
@@ -174,10 +176,65 @@ public class ProprieteServiceImpl implements ProprieteService {
     @Override
     @Transactional
     public Propriete publier(String proprieteUuid, Long userId) {
-        // Note : la modération hybride (auto-publish si VERIFIE, sinon EN_ATTENTE_VALIDATION)
-        // sera implémentée en Phase 9. Ici on passe simplement à PUBLIE.
-        return changeStatut(proprieteUuid, userId, "PUBLIE",
-                List.of("BROUILLON", "EN_ATTENTE_VALIDATION", "RETIRE"));
+        Propriete p = proprieteRepository.findByUuid(proprieteUuid)
+                .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
+        ensureOwner(p, userId);
+        // Transitions autorisées vers une demande de publication
+        List<String> statutsAutorises = List.of("BROUILLON", "EN_ATTENTE_VALIDATION", "RETIRE");
+        if (!statutsAutorises.contains(p.getStatut())) {
+            throw new ApiException("Transition interdite depuis le statut " + p.getStatut());
+        }
+
+        ProfilImmo profil = profilImmoRepository.findByUserId(userId)
+                .orElseThrow(() -> new ApiException("Profil introuvable"));
+
+        // ---- Vérification de la limite d'annonces actives ----
+        int limite = immoProperties.getLimites().forType(profil.getTypeProfil());
+        if (limite >= 0) {
+            long actives = proprieteRepository.countActivesForProfil(profil.getProfilId());
+            // Si l'annonce est déjà ACTIVE on ne double-compte pas (cas EN_ATTENTE_VALIDATION → PUBLIE)
+            boolean dejaActive = List.of("PUBLIE", "EN_ATTENTE_VALIDATION", "RESERVE").contains(p.getStatut());
+            long projetee = dejaActive ? actives : actives + 1;
+            if (projetee > limite) {
+                throw new ApiException("Limite d'annonces actives atteinte pour "
+                        + profil.getTypeProfil() + " (max " + limite + ")");
+            }
+        }
+
+        // ---- Modération hybride ----
+        String statutCible = decideStatutPublication(p, profil);
+        Propriete updated = proprieteRepository.updateStatut(proprieteUuid, statutCible)
+                .orElseThrow(() -> new ApiException("Échec changement de statut"));
+        log.info("Propriete {} : {} → {} (profil {} statutVerification={})",
+                proprieteUuid, p.getStatut(), statutCible,
+                profil.getTypeProfil(), profil.getStatutVerification());
+        return enrich(updated);
+    }
+
+    /**
+     * Décide le statut cible selon la modération hybride :
+     * <ul>
+     *   <li>Profil non vérifié → EN_ATTENTE_VALIDATION</li>
+     *   <li>Profil vérifié + première annonce + flag premiereAnnonceToujoursValidation
+     *       → EN_ATTENTE_VALIDATION</li>
+     *   <li>Profil vérifié (et pas la première) → PUBLIE</li>
+     * </ul>
+     */
+    private String decideStatutPublication(Propriete p, ProfilImmo profil) {
+        var conf = immoProperties.getModeration();
+        // Si auto-publish désactivé globalement, toujours en attente
+        if (!conf.isAutoPublishSiVerifie()) {
+            return "EN_ATTENTE_VALIDATION";
+        }
+        boolean verifie = "VERIFIE".equals(profil.getStatutVerification());
+        if (!verifie) {
+            return "EN_ATTENTE_VALIDATION";
+        }
+        if (conf.isPremiereAnnonceToujoursValidation()
+                && !proprieteRepository.hasAnyNonDraft(profil.getProfilId())) {
+            return "EN_ATTENTE_VALIDATION";
+        }
+        return "PUBLIE";
     }
 
     @Override
@@ -217,6 +274,41 @@ public class ProprieteServiceImpl implements ProprieteService {
         ensureOwner(p, userId);
         // Soft delete : statut RETIRE. La suppression physique reste rare (FK CASCADE).
         proprieteRepository.updateStatut(proprieteUuid, "RETIRE");
+    }
+
+    // ---- Actions admin Phase 9a ----
+
+    @Override
+    @Transactional
+    public Propriete valider(String proprieteUuid) {
+        Propriete p = proprieteRepository.findByUuid(proprieteUuid)
+                .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
+        if (!"EN_ATTENTE_VALIDATION".equals(p.getStatut())) {
+            throw new ApiException("Seules les annonces EN_ATTENTE_VALIDATION peuvent être validées (état actuel : "
+                    + p.getStatut() + ")");
+        }
+        Propriete updated = proprieteRepository.updateStatut(proprieteUuid, "PUBLIE")
+                .orElseThrow(() -> new ApiException("Échec validation"));
+        log.info("Admin validation : propriete {} → PUBLIE", proprieteUuid);
+        return enrich(updated);
+    }
+
+    @Override
+    @Transactional
+    public Propriete rejeter(String proprieteUuid, String motif) {
+        Propriete p = proprieteRepository.findByUuid(proprieteUuid)
+                .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
+        if (!"EN_ATTENTE_VALIDATION".equals(p.getStatut())) {
+            throw new ApiException("Seules les annonces EN_ATTENTE_VALIDATION peuvent être rejetées (état actuel : "
+                    + p.getStatut() + ")");
+        }
+        if (motif == null || motif.isBlank()) {
+            throw new ApiException("motif est requis pour rejeter une annonce");
+        }
+        Propriete updated = proprieteRepository.rejeter(proprieteUuid, motif)
+                .orElseThrow(() -> new ApiException("Échec rejet"));
+        log.info("Admin rejet : propriete {} → RETIRE (motif={})", proprieteUuid, motif);
+        return enrich(updated);
     }
 
     // ---- helpers ----

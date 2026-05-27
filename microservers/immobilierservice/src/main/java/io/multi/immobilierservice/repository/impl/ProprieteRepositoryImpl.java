@@ -168,6 +168,31 @@ public class ProprieteRepositoryImpl implements ProprieteRepository {
                 .list();
     }
 
+    @Override
+    public long countActivesForProfil(Long profilId) {
+        return jdbcClient.sql(ProprieteQuery.COUNT_ACTIVES_FOR_PROFIL)
+                .param("profilId", profilId)
+                .query(Long.class)
+                .single();
+    }
+
+    @Override
+    public boolean hasAnyNonDraft(Long profilId) {
+        return jdbcClient.sql(ProprieteQuery.EXISTS_NON_DRAFT_FOR_PROFIL)
+                .param("profilId", profilId)
+                .query(Boolean.class)
+                .single();
+    }
+
+    @Override
+    public Optional<Propriete> rejeter(String proprieteUuid, String motif) {
+        return jdbcClient.sql(ProprieteQuery.UPDATE_MOTIF_REJET)
+                .param("proprieteUuid", proprieteUuid)
+                .param("motif", motif)
+                .query(proprieteRowMapper)
+                .optional();
+    }
+
     // =========================================================================
     // RECHERCHE — Phase 8 (SQL dynamique côté Java)
     // =========================================================================
@@ -254,8 +279,11 @@ public class ProprieteRepositoryImpl implements ProprieteRepository {
         if (c.getSurfaceMin() != null)      spec = spec.param("surfaceMin", c.getSurfaceMin());
         if (notBlank(c.getQ()))             spec = spec.param("qLike", "%" + c.getQ() + "%");
         if (notEmpty(c.getCommoditesCodes())) {
-            spec = spec.param("commoditesCodes", c.getCommoditesCodes().toArray(new String[0]))
-                       .param("commoditesCount", (long) c.getCommoditesCodes().size());
+            // Dédoublonnage : ?commoditesCodes=PARKING,PARKING ne doit pas
+            // exiger 2 fois la même → count = 1, pas 2.
+            var dedup = c.getCommoditesCodes().stream().distinct().toList();
+            spec = spec.param("commoditesCodes", dedup.toArray(new String[0]))
+                       .param("commoditesCount", (long) dedup.size());
         }
         if (geo) {
             spec = spec.param("lat", c.getLat()).param("lng", c.getLng());

@@ -93,6 +93,32 @@ public final class ProprieteQuery {
             LIMIT :limit OFFSET :offset
             """;
 
+    /** Compte des annonces "actives" (consomment un slot de la limite par profil) — Phase 9a. */
+    public static final String COUNT_ACTIVES_FOR_PROFIL = """
+            SELECT COUNT(*) FROM immo_propriete
+            WHERE profil_id = :profilId
+              AND statut IN ('PUBLIE', 'EN_ATTENTE_VALIDATION', 'RESERVE')
+            """;
+
+    /** Y a-t-il une annonce historique (non BROUILLON) — Phase 9a. */
+    public static final String EXISTS_NON_DRAFT_FOR_PROFIL = """
+            SELECT EXISTS (
+                SELECT 1 FROM immo_propriete
+                WHERE profil_id = :profilId
+                  AND statut <> 'BROUILLON'
+            )
+            """;
+
+    /** Rejet admin avec motif (Phase 9a). */
+    public static final String UPDATE_MOTIF_REJET = """
+            UPDATE immo_propriete SET
+                statut = 'RETIRE',
+                motif_rejet = :motif,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE propriete_uuid = :proprieteUuid
+            RETURNING *
+            """;
+
     public static final String INCREMENT_VUES = """
             UPDATE immo_propriete SET nombre_vues = nombre_vues + 1
             WHERE propriete_uuid = :proprieteUuid

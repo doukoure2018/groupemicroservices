@@ -84,7 +84,7 @@ public class AgenceResource {
     }
 
     @PatchMapping("/{agenceUuid}/verifier")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> verifier(@PathVariable String agenceUuid,
                                              @Valid @RequestBody VerificationRequest request,
                                              HttpServletRequest httpRequest) {

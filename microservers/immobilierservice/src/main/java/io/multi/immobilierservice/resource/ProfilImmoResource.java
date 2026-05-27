@@ -76,7 +76,7 @@ public class ProfilImmoResource {
     }
 
     @PatchMapping("/{profilUuid}/verifier")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> verifier(@PathVariable String profilUuid,
                                              @Valid @RequestBody VerificationRequest request,
                                              HttpServletRequest httpRequest) {

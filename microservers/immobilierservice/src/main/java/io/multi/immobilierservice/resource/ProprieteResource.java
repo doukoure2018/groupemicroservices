@@ -7,6 +7,7 @@ import io.multi.immobilierservice.dto.OrdrePhotoRequest;
 import io.multi.immobilierservice.dto.ProprieteCreateRequest;
 import io.multi.immobilierservice.dto.ProprieteSearchCriteria;
 import io.multi.immobilierservice.dto.ProprieteUpdateRequest;
+import io.multi.immobilierservice.dto.RejeterRequest;
 import io.multi.immobilierservice.dto.SearchResult;
 import io.multi.immobilierservice.service.PhotoService;
 import io.multi.immobilierservice.service.ProprieteService;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -171,6 +173,27 @@ public class ProprieteResource {
         Propriete p = proprieteService.retirer(proprieteUuid, userId);
         return ResponseEntity.ok(RequestUtils.getResponse(http,
                 Map.of("propriete", p), "Propriété retirée", HttpStatus.OK));
+    }
+
+    // ---- Modération admin (Phase 9a) ----
+
+    @PatchMapping("/{proprieteUuid}/valider")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<Response> valider(@PathVariable String proprieteUuid,
+                                            HttpServletRequest http) {
+        Propriete p = proprieteService.valider(proprieteUuid);
+        return ResponseEntity.ok(RequestUtils.getResponse(http,
+                Map.of("propriete", p), "Annonce validée et publiée", HttpStatus.OK));
+    }
+
+    @PatchMapping("/{proprieteUuid}/rejeter")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<Response> rejeter(@PathVariable String proprieteUuid,
+                                            @Valid @RequestBody RejeterRequest req,
+                                            HttpServletRequest http) {
+        Propriete p = proprieteService.rejeter(proprieteUuid, req.getMotif());
+        return ResponseEntity.ok(RequestUtils.getResponse(http,
+                Map.of("propriete", p), "Annonce rejetée", HttpStatus.OK));
     }
 
     @PatchMapping("/{proprieteUuid}/marquer-vendu")

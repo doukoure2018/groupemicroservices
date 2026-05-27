@@ -35,4 +35,13 @@ public interface ProprieteRepository {
     List<Propriete> search(ProprieteSearchCriteria criteria);
 
     long countSearch(ProprieteSearchCriteria criteria);
+
+    /** Compteur d'annonces actives (PUBLIE + EN_ATTENTE_VALIDATION + RESERVE) — Phase 9. */
+    long countActivesForProfil(Long profilId);
+
+    /** Le profil a-t-il déjà publié au moins une fois (toute annonce non-BROUILLON) ? */
+    boolean hasAnyNonDraft(Long profilId);
+
+    /** Rejette une annonce : statut=RETIRE + stocke le motif. */
+    Optional<Propriete> rejeter(String proprieteUuid, String motif);
 }
