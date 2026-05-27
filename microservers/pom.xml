@@ -14,6 +14,7 @@
 		<module>gateway</module>
 		<module>userservice</module>
 		<module>billetterieservice</module>
+		<module>immobilierservice</module>
 		<module>clients</module>
 		<module>database-migrations</module>
 	</modules>
@@ -27,6 +28,7 @@
 		<spring.boot.maven.plugin.version>3.4.1</spring.boot.maven.plugin.version>
 		<spring.boot.dependencies.version>3.4.1</spring.boot.dependencies.version>
 		<spring-cloud.version>2024.0.0</spring-cloud.version>
+		<lombok.version>1.18.36</lombok.version>
 		<image>doukoure93/${project.artifactId}:${project.version}</image>
 		<docker.image.prefix>doukoure93/multi</docker.image.prefix>
 		<docker.image.tag>latest</docker.image.tag>
@@ -63,6 +65,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
+			<version>${lombok.version}</version>
 			<optional>true</optional>
 		</dependency>
 	</dependencies>
@@ -126,6 +129,18 @@
 				<configuration>
 					<source>21</source>
 					<target>21</target>
+					<!-- Active Lombok comme annotation processor explicite.
+					     Obligatoire avec Maven Compiler Plugin 3.10+ et Java 21 ;
+					     sinon les annotations @Slf4j / @Data / @Getter / @AllArgsConstructor
+					     ne sont pas traitées et la compilation échoue avec
+					     "cannot find symbol: variable log" / "method getX()". -->
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
+						</path>
+					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
 		</plugins>

@@ -2,7 +2,7 @@ spring:
   application:
     name: discoveryserver
   datasource:
-    url: jdbc:postgresql://localhost:5433/innodb
+    url: jdbc:postgresql://localhost:5435/innodb
     username: inno2711
     password: manager2711
     hikari:

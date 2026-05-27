@@ -1,21 +1,23 @@
 server:
-  port: 8097
+  port: 8098
 
 spring:
   jackson:
     serialization:
       write-dates-as-timestamps: false
   application:
-    name: billetterieservice
+    name: immobilierservice
   profiles:
     active: default
   main:
     allow-bean-definition-overriding: true
 
-  thymeleaf:
-    prefix: classpath:/templates/
-    suffix: .html
-    cache: false
+  # Multipart upload (photos jusqu'à 10MB + marge pour les headers)
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+      enabled: true
 
   datasource:
     url: jdbc:postgresql://localhost:5435/innodb
@@ -31,7 +33,7 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     properties:
       hibernate:
         format_sql: true
@@ -59,7 +61,7 @@ spring:
       spring:
         json:
           type:
-            mapping: Notification:io.multi.billetterieservice.event.Notification
+            mapping: Notification:io.multi.immobilierservice.event.Notification
       message.max.bytes: 1300000000
       max.request.size: 1300000000
 
@@ -74,45 +76,48 @@ ui:
   app:
     url: http://localhost:4202
 
-key:
-  private: private.key
-  public: public.key
-
 jwks:
   uri: http://localhost:8090/oauth2/jwks
 
-orange:
-  api:
-    oauth:
-      url: https://api.orange.com/oauth/v3/token
-    sms:
-      url: https://api.orange.com/smsmessaging/v1/outbound/tel:+224622459305/requests
-      balance:
-        url: https://api.orange.com/sms/admin/v1/contracts
-    client:
-      credentials: Basic VExqQ1BlQ1ZDdUxTRURLUjc2Z0RZcXo5QWw4a3h5M3A6bVV6Y0tsTHhRdkp1Z1lpTWN2UFdjT2lMN3ppc3RSdDFCRjVvajIxNEwxRGs=
-    sender:
-      address: tel:+224622459305
+# Configuration métier immobilier (Phase 9+)
+immo:
+  limites:
+    proprietaire-simple-max: 5
+    demarcheur-max: 100
+    agent-agence-max: -1
+  expiration:
+    duree-jours: 60
+    rappel-jours-avant: 7
+    job-cron: "0 0 2 * * *"
+  moderation:
+    auto-publish-si-verifie: true
+    premiere-annonce-toujours-validation: true
+  premium:
+    enabled: false
+  devises:
+    base-stockage: AS_ENTERED
+    affichage-conversion: true
 
-sms:
-  code:
-    length: 6
-  expiry:
-    minutes: 10
-  max:
-    attempts: 3
-  rate:
-    limit:
-      per:
-        hour: 3
-  sender:
-    name: SMS 335524
-  primary:
-    provider: orange
-  fallback:
-    enabled: true
-  send:
-    timeout:
-      seconds: 30
-  retry:
-    attempts: 2
+# Stockage photos MinIO (Phase 5)
+# API S3 exposée sur 9100 (host) → 9000 (container). Le port 9000 host est utilisé par le gateway.
+minio:
+  endpoint: http://localhost:9100
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket-photos: immo-photos
+  bucket-thumbnails: immo-photos-thumbnails
+  thumbnail:
+    width: 400
+    height: 300
+    quality: 0.85
+  public-base-url: http://localhost:9100
+
+# Géolocalisation (Phase 8)
+geo:
+  default-rayon-km: 5
+  max-rayon-km: 100
+
+logging:
+  level:
+    io.multi.immobilierservice: DEBUG
+    org.springframework.security: INFO

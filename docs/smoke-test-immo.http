@@ -1,0 +1,322 @@
+### =============================================================================
+### Smoke test runtime — Module Immobilier (Phases 3 à 7)
+### =============================================================================
+### Pré-requis (services à lancer) :
+###   - docker compose up postgresdb minio minio-init -d
+###   - microservers/discoveryserver    (mvn spring-boot:run)
+###   - microservers/authorizationserver (mvn spring-boot:run)
+###   - microservers/userservice        (mvn spring-boot:run)
+###   - microservers/immobilierservice  (mvn spring-boot:run)
+###
+### Compatible : IntelliJ HTTP Client, VS Code REST Client, Bruno
+### =============================================================================
+
+@auth = http://localhost:8090
+@immo = http://localhost:8098
+
+### 0a. (Pré-requis SQL) — Créer un utilisateur de test
+###    Exécuter ce SQL via psql ou IntelliJ Database AVANT le smoke test :
+###
+###    DO $$
+###    DECLARE new_user_id BIGINT;
+###            user_role_id BIGINT;
+###            pwd_hash TEXT := crypt('SmokeTest1234', gen_salt('bf', 12));
+###    BEGIN
+###      DELETE FROM users WHERE email = 'smoketest-immo@test.local';
+###      INSERT INTO users (user_uuid, username, first_name, last_name, email,
+###                        phone, enabled, account_non_expired, account_non_locked, auth_provider)
+###      VALUES (gen_random_uuid()::text, 'smoketest-immo', 'Smoke', 'Test',
+###              'smoketest-immo@test.local', '+224600000001', TRUE, TRUE, TRUE, 'LOCAL')
+###      RETURNING user_id INTO new_user_id;
+###      INSERT INTO credentials (credential_uuid, user_id, password)
+###      VALUES (gen_random_uuid()::text, new_user_id, pwd_hash);
+###      SELECT role_id INTO user_role_id FROM roles WHERE name = 'USER';
+###      INSERT INTO user_roles (user_id, role_id) VALUES (new_user_id, user_role_id);
+###    END $$;
+
+### =============================================================================
+### 1. AUTHENTIFICATION — Obtenir un JWT
+### =============================================================================
+
+### Login via API mobile direct (authorizationserver)
+# @name login
+POST {{auth}}/api/auth/token
+Content-Type: application/json
+
+{
+  "email": "smoketest-immo@test.local",
+  "password": "SmokeTest1234"
+}
+
+> {%
+client.global.set("jwt", response.body.access_token);
+%}
+
+### =============================================================================
+### 2. RÉFÉRENTIELS — Phase 3 (seeds V14)
+### =============================================================================
+
+GET {{immo}}/immo/types-bien
+
+### → HTTP 200, retourne 7 types : MAISON, APPARTEMENT, IMMEUBLE, TERRAIN, BUREAU, BOUTIQUE, CHAMBRE
+
+GET {{immo}}/immo/commodites
+
+### → HTTP 200, retourne 9 commodités : CLIMATISATION, ASCENSEUR, GENERATEUR, ...
+
+### =============================================================================
+### 3. PROFIL VENDEUR — Phase 4
+### =============================================================================
+
+### Devenir propriétaire simple
+# @name createProfil
+POST {{immo}}/immo/profils
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "typeProfil": "PROPRIETAIRE_SIMPLE",
+  "bio": "Smoke test propriétaire",
+  "telephoneContact": "+224600000001"
+}
+
+### → HTTP 201, body.data.profil.profilUuid
+
+> {%
+client.global.set("profilUuid", response.body.data.profil.profilUuid);
+%}
+
+GET {{immo}}/immo/profils/me
+Authorization: Bearer {{jwt}}
+
+### =============================================================================
+### 4. AGENCE — Phase 4
+### =============================================================================
+
+# @name createAgence
+POST {{immo}}/immo/agences
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "nom": "Agence SmokeTest",
+  "raisonSociale": "SmokeTest Immobilier SARL",
+  "numeroRegistre": "RCCM-CKR-2026-001",
+  "telephone": "+224600000099",
+  "email": "agence@smoketest.local",
+  "description": "Agence de test pour smoke test"
+}
+
+> {%
+client.global.set("agenceUuid", response.body.data.agence.agenceUuid);
+%}
+
+GET {{immo}}/immo/agences
+Authorization: Bearer {{jwt}}
+
+### =============================================================================
+### 5. BROUILLON WIZARD — Phase 7
+### =============================================================================
+
+### Création étape 1
+# @name createBrouillon
+POST {{immo}}/immo/brouillons
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "etapeActuelle": 1,
+  "donneesJson": {
+    "etape1": {
+      "typeAnnonce": "LOCATION",
+      "dureeLocation": "LONG_SEJOUR",
+      "typeBienCode": "MAISON",
+      "publieParProprietaire": true
+    }
+  }
+}
+
+> {%
+client.global.set("brouillonUuid", response.body.data.brouillon.brouillonUuid);
+%}
+
+### Mise à jour étapes 2 + 3 + 4 (en une fois pour le smoke test)
+PUT {{immo}}/immo/brouillons/{{brouillonUuid}}
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "etapeActuelle": 4,
+  "donneesJson": {
+    "etape1": {"typeAnnonce": "LOCATION", "dureeLocation": "LONG_SEJOUR", "typeBienCode": "MAISON"},
+    "etape2": {
+      "adresseComplete": "Nongo, Ratoma, Conakry",
+      "latitude": 9.616666,
+      "longitude": -13.616666,
+      "afficherAdresseExacte": false
+    },
+    "etape3": {
+      "prix": 34980000,
+      "devise": "GNF",
+      "periode": "PAR_MOIS",
+      "nombreChambres": 7,
+      "nombreSallesBain": 6,
+      "surfaceM2": 1000,
+      "dateDisponibilite": "2026-06-01",
+      "moisCaution": 3,
+      "moisAvance": 2,
+      "moisHonoraire": 1,
+      "commoditesCodes": ["CLIMATISATION", "PARKING", "CHAUFFE_EAU", "RESERVOIR_EAU"]
+    },
+    "etape4": {
+      "titre": "Maison Nongo smoke test",
+      "description": "07 grandes chambres climatisées, 06 toilettes + chauffe-eau, 01 piscine",
+      "nomContactPublic": "DOUKOURE SALIFOU",
+      "telephoneContact": "+224621091895"
+    }
+  }
+}
+
+GET {{immo}}/immo/brouillons
+Authorization: Bearer {{jwt}}
+
+### =============================================================================
+### 6. MATÉRIALISATION — Brouillon → Propriete (Phase 7 → Phase 6)
+### =============================================================================
+
+# @name materialiser
+POST {{immo}}/immo/brouillons/{{brouillonUuid}}/materialiser
+Authorization: Bearer {{jwt}}
+
+### → HTTP 201, Propriete avec statut=BROUILLON, reference auto BIEN-YYYYMMDD-XXXX
+
+> {%
+client.global.set("proprieteUuid", response.body.data.propriete.proprieteUuid);
+%}
+
+### =============================================================================
+### 7. PHOTOS — Phase 5 (MinIO) + Phase 6 (propriete)
+### =============================================================================
+
+### Upload photo multipart (utiliser une image locale)
+POST {{immo}}/immo/proprietes/{{proprieteUuid}}/photos
+Authorization: Bearer {{jwt}}
+Content-Type: multipart/form-data; boundary=----WebAppBoundary
+
+------WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="photo1.jpeg"
+Content-Type: image/jpeg
+
+< ./fixtures/photo-test.jpg
+------WebAppBoundary--
+
+### → HTTP 201, photo.url + photo.urlThumbnail (servies par MinIO sur :9100)
+
+GET {{immo}}/immo/proprietes/{{proprieteUuid}}/photos
+Authorization: Bearer {{jwt}}
+
+### =============================================================================
+### 8. PUBLICATION — Phase 6 (BROUILLON → PUBLIE)
+### =============================================================================
+
+PATCH {{immo}}/immo/proprietes/{{proprieteUuid}}/publier
+Authorization: Bearer {{jwt}}
+
+### → HTTP 200, statut=PUBLIE, date_expiration auto = NOW + 60 jours
+
+### =============================================================================
+### 9. CONSULTATION FINALE
+### =============================================================================
+
+### Détail (incrémente nombreVues)
+GET {{immo}}/immo/proprietes/{{proprieteUuid}}
+Authorization: Bearer {{jwt}}
+
+### → Vérifier : statut=PUBLIE, datePublication+60j=dateExpiration,
+###    photos.size=1 (cover=true), commodites.size=4, latitude/longitude OK
+
+### Liste mes annonces
+GET {{immo}}/immo/proprietes/mes-proprietes
+Authorization: Bearer {{jwt}}
+
+### =============================================================================
+### 10. TESTS NÉGATIFS — chemins non heureux (authentification, autorisation, validation)
+### =============================================================================
+### Tous validés runtime. Codes HTTP réels documentés.
+### TODO : remonter 403 (au lieu de 400) pour autorisation — ForbiddenException dédié.
+
+### [N1] POST sans JWT — attendu 401
+POST {{immo}}/immo/profils
+Content-Type: application/json
+
+{"typeProfil": "PROPRIETAIRE_SIMPLE"}
+
+### [N2] POST avec JWT invalide — attendu 401
+POST {{immo}}/immo/profils
+Authorization: Bearer FAKE.TOKEN.HERE
+Content-Type: application/json
+
+{"typeProfil": "PROPRIETAIRE_SIMPLE"}
+
+### [N3] Validation Bean : typeProfil invalide (pattern @Pattern) — attendu 400
+POST {{immo}}/immo/profils
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{"typeProfil": "PIRATE"}
+
+### [N4] Doublon : user déjà profilé tente d'en créer un autre — attendu 400 ApiException
+POST {{immo}}/immo/profils
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{"typeProfil": "DEMARCHEUR"}
+
+### → "Un profil immobilier existe déjà pour cet utilisateur (PROPRIETAIRE_SIMPLE)"
+
+### [N5] @PreAuthorize ADMIN : non-admin appelle /verifier — attendu 403 (actuellement 400 — TODO)
+PATCH {{immo}}/immo/agences/{{agenceUuid}}/verifier
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{"statut": "VERIFIE"}
+
+### [N6] Création propriété sans profil immo préalable — attendu 400
+### (créer d'abord un 2e user "no-profile@test.local" via SQL — voir étape 0a adapté)
+POST {{immo}}/immo/proprietes
+Authorization: Bearer {{jwtNoProfile}}
+Content-Type: application/json
+
+{
+  "typeAnnonce": "LOCATION",
+  "dureeLocation": "LONG_SEJOUR",
+  "typeBienCode": "MAISON"
+}
+
+### → "Vous devez créer un profil immobilier avant de publier (POST /immo/profils)"
+
+### [N7] Non-owner modifie propriété d'autrui — attendu 403 (actuellement 400 — TODO)
+PUT {{immo}}/immo/proprietes/{{proprieteUuid}}
+Authorization: Bearer {{jwtAutreUser}}
+Content-Type: application/json
+
+{"titre": "Tentative pirate"}
+
+### → "Vous n'êtes pas propriétaire de cette annonce"
+
+### [N8] GET brouillon d'autrui — attendu 403/404 (actuellement 400 — TODO)
+GET {{immo}}/immo/brouillons/{{brouillonAutruiUuid}}
+Authorization: Bearer {{jwt}}
+
+### [N9] Cascade validations : commodité inconnue — devrait remonter ApiException
+### (passer un brouillon avec étape3.commoditesCodes = ["INVENTE"] puis materialiser)
+
+### =============================================================================
+### 11. CLEANUP (optionnel)
+### =============================================================================
+
+# DELETE {{immo}}/immo/proprietes/{{proprieteUuid}}
+# Authorization: Bearer {{jwt}}
+
+### SQL cleanup utilisateurs de test :
+###   DELETE FROM users WHERE email IN ('smoketest-immo@test.local', 'no-profile@test.local');
