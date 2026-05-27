@@ -1,11 +1,13 @@
 package io.multi.immobilierservice.resource;
 
 import io.multi.immobilierservice.domain.Agence;
+import io.multi.immobilierservice.domain.AgenceInvitation;
 import io.multi.immobilierservice.domain.ProfilImmo;
 import io.multi.immobilierservice.domain.Response;
 import io.multi.immobilierservice.dto.AgenceRequest;
 import io.multi.immobilierservice.dto.AjouterAgentRequest;
 import io.multi.immobilierservice.dto.VerificationRequest;
+import io.multi.immobilierservice.service.AgenceInvitationService;
 import io.multi.immobilierservice.service.AgenceService;
 import io.multi.immobilierservice.utils.JwtUtils;
 import io.multi.immobilierservice.utils.RequestUtils;
@@ -28,6 +30,7 @@ import java.util.Map;
 public class AgenceResource {
 
     private final AgenceService agenceService;
+    private final AgenceInvitationService invitationService;
     private final JwtUtils jwtUtils;
 
     @PostMapping
@@ -110,17 +113,36 @@ public class AgenceResource {
                 Map.of("agents", agents), "Agents de l'agence", HttpStatus.OK));
     }
 
+    /**
+     * <b>Sémantique changée depuis V15</b> : ne crée plus directement le profil AGENT_AGENCE.
+     * Crée une invitation EN_ATTENTE. Le user invité doit accepter via
+     * {@code POST /immo/agences/invitations/{token}/accepter}.
+     */
     @PostMapping("/{agenceUuid}/agents")
     public ResponseEntity<Response> ajouterAgent(@PathVariable String agenceUuid,
                                                  @Valid @RequestBody AjouterAgentRequest request,
                                                  @AuthenticationPrincipal Jwt jwt,
                                                  HttpServletRequest httpRequest) {
         Long requesterUserId = jwtUtils.extractUserId(jwt);
-        ProfilImmo profil = agenceService.ajouterAgent(agenceUuid, request, requesterUserId);
+        AgenceInvitation invitation = agenceService.ajouterAgent(agenceUuid, request, requesterUserId);
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                RequestUtils.getResponse(httpRequest, Map.of("profil", profil),
-                        "Agent ajouté à l'agence", HttpStatus.CREATED)
+                RequestUtils.getResponse(httpRequest, Map.of("invitation", invitation),
+                        "Invitation envoyée — en attente d'acceptation par l'utilisateur",
+                        HttpStatus.CREATED)
         );
+    }
+
+    /**
+     * Liste toutes les invitations émises par cette agence (tout statut confondu).
+     */
+    @GetMapping("/{agenceUuid}/invitations")
+    public ResponseEntity<Response> listerInvitations(@PathVariable String agenceUuid,
+                                                      @AuthenticationPrincipal Jwt jwt,
+                                                      HttpServletRequest httpRequest) {
+        Long requesterUserId = jwtUtils.extractUserId(jwt);
+        List<AgenceInvitation> invitations = invitationService.listForAgence(agenceUuid, requesterUserId);
+        return ResponseEntity.ok(RequestUtils.getResponse(httpRequest,
+                Map.of("invitations", invitations), "Invitations de l'agence", HttpStatus.OK));
     }
 
     @DeleteMapping("/{agenceUuid}/agents/{userIdAgent}")

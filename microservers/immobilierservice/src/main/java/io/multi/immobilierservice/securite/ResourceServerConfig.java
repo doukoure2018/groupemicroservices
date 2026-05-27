@@ -55,6 +55,8 @@ public class ResourceServerConfig {
                                 "/immo/types-bien",
                                 "/immo/commodites"
                         ).permitAll()
+                        // Toutes les routes /immo/agences/invitations/** sont privées (JWT requis)
+                        .requestMatchers("/immo/agences/invitations/**").authenticated()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .accessDeniedHandler(new CustomAccessDeniedHandler())

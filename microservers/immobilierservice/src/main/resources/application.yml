@@ -89,6 +89,8 @@ immo:
     duree-jours: 60
     rappel-jours-avant: 7
     job-cron: "0 0 2 * * *"
+  invitations:
+    duree-jours: 7              # durée de validité d'une invitation agent (V15)
   moderation:
     auto-publish-si-verifie: true
     premiere-annonce-toujours-validation: true

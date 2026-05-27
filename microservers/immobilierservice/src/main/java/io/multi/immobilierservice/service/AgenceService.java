@@ -1,6 +1,7 @@
 package io.multi.immobilierservice.service;
 
 import io.multi.immobilierservice.domain.Agence;
+import io.multi.immobilierservice.domain.AgenceInvitation;
 import io.multi.immobilierservice.domain.ProfilImmo;
 import io.multi.immobilierservice.dto.AgenceRequest;
 import io.multi.immobilierservice.dto.AjouterAgentRequest;
@@ -23,7 +24,13 @@ public interface AgenceService {
 
     void softDelete(String agenceUuid, Long userId);
 
-    ProfilImmo ajouterAgent(String agenceUuid, AjouterAgentRequest request, Long requesterUserId);
+    /**
+     * <b>Depuis V15</b> : n'attache plus directement le user comme agent.
+     * Crée une {@link AgenceInvitation} EN_ATTENTE. Le user doit explicitement
+     * accepter via {@code POST /immo/agences/invitations/{token}/accepter}
+     * pour que son profil AGENT_AGENCE soit créé.
+     */
+    AgenceInvitation ajouterAgent(String agenceUuid, AjouterAgentRequest request, Long requesterUserId);
 
     List<ProfilImmo> listerAgents(String agenceUuid);
 

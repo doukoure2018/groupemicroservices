@@ -3,12 +3,14 @@ package io.multi.immobilierservice.service.impl;
 import io.multi.clients.UserClient;
 import io.multi.clients.domain.User;
 import io.multi.immobilierservice.domain.Agence;
+import io.multi.immobilierservice.domain.AgenceInvitation;
 import io.multi.immobilierservice.domain.ProfilImmo;
 import io.multi.immobilierservice.dto.AgenceRequest;
 import io.multi.immobilierservice.dto.AjouterAgentRequest;
 import io.multi.immobilierservice.exception.ApiException;
 import io.multi.immobilierservice.repository.AgenceRepository;
 import io.multi.immobilierservice.repository.ProfilImmoRepository;
+import io.multi.immobilierservice.service.AgenceInvitationService;
 import io.multi.immobilierservice.service.AgenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ public class AgenceServiceImpl implements AgenceService {
 
     private final AgenceRepository agenceRepository;
     private final ProfilImmoRepository profilImmoRepository;
+    private final AgenceInvitationService invitationService;
     private final UserClient userClient;
 
     @Override
@@ -106,27 +109,11 @@ public class AgenceServiceImpl implements AgenceService {
 
     @Override
     @Transactional
-    public ProfilImmo ajouterAgent(String agenceUuid, AjouterAgentRequest request, Long requesterUserId) {
-        Agence agence = getByUuid(agenceUuid);
-        ensureOwner(agence, requesterUserId);
-
-        // Vérifier que l'agent (user à ajouter) existe via Feign
-        User agentUser = fetchUserOrFail(request.getUserId());
-
-        // Vérifier qu'il n'a pas déjà un profil immo
-        profilImmoRepository.findByUserId(request.getUserId()).ifPresent(p -> {
-            throw new ApiException("L'utilisateur " + agentUser.getEmail()
-                    + " a déjà un profil immobilier (" + p.getTypeProfil() + ")");
-        });
-
-        ProfilImmo profil = ProfilImmo.builder()
-                .userId(request.getUserId())
-                .typeProfil("AGENT_AGENCE")
-                .agenceId(agence.getAgenceId())
-                .bio(request.getBio())
-                .telephoneContact(request.getTelephoneContact())
-                .build();
-        return profilImmoRepository.save(profil);
+    public AgenceInvitation ajouterAgent(String agenceUuid, AjouterAgentRequest request, Long requesterUserId) {
+        // Délègue à AgenceInvitationService : crée une invitation EN_ATTENTE.
+        // Le user doit explicitement accepter via /immo/agences/invitations/{token}/accepter
+        // pour que son profil AGENT_AGENCE soit créé (cf. V15 — fin du trou de sécurité Phase 4).
+        return invitationService.inviter(agenceUuid, request, requesterUserId);
     }
 
     @Override
