@@ -89,6 +89,9 @@ immo:
     duree-jours: 60
     rappel-jours-avant: 7
     job-cron: "0 0 2 * * *"
+    # Fuseau pour interpréter le cron. Si absent, default = TZ de la JVM
+    # → imprévisible selon image Docker. On fixe explicitement.
+    job-tz: "Africa/Conakry"
   invitations:
     duree-jours: 7              # durée de validité d'une invitation agent (V15)
   moderation:

@@ -193,6 +193,30 @@ public class ProprieteRepositoryImpl implements ProprieteRepository {
                 .optional();
     }
 
+    @Override
+    public List<Propriete> markRappelExpirationAndReturn(int joursAvant) {
+        return jdbcClient.sql(ProprieteQuery.MARK_RAPPEL_EXPIRATION)
+                .param("joursAvant", joursAvant)
+                .query(proprieteRowMapper)
+                .list();
+    }
+
+    @Override
+    public List<Propriete> expireOutdatedAndReturn() {
+        return jdbcClient.sql(ProprieteQuery.EXPIRE_OUTDATED)
+                .query(proprieteRowMapper)
+                .list();
+    }
+
+    @Override
+    public Optional<Propriete> renouveler(String proprieteUuid, int dureeJours) {
+        return jdbcClient.sql(ProprieteQuery.RENOUVELER_PROPRIETE)
+                .param("proprieteUuid", proprieteUuid)
+                .param("dureeJours", dureeJours)
+                .query(proprieteRowMapper)
+                .optional();
+    }
+
     // =========================================================================
     // RECHERCHE — Phase 8 (SQL dynamique côté Java)
     // =========================================================================

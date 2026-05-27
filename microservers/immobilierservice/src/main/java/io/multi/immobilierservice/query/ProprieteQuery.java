@@ -119,6 +119,62 @@ public final class ProprieteQuery {
             RETURNING *
             """;
 
+    // =========================================================================
+    // JOB D'EXPIRATION (Phase 9b)
+    // =========================================================================
+
+    /**
+     * UPDATE atomique : marque rappel_expiration_envoye_at sur les propriétés
+     * PUBLIE qui expirent dans la fenêtre [NOW, NOW + :joursAvant jours] et
+     * qui n'ont pas encore reçu de rappel.
+     *
+     * <p>RETURNING * → on récupère uniquement les lignes effectivement
+     * marquées (les autres instances qui tournent en parallèle voient 0).
+     * Idempotence garantie au niveau ligne.
+     */
+    public static final String MARK_RAPPEL_EXPIRATION = """
+            UPDATE immo_propriete SET
+                rappel_expiration_envoye_at = CURRENT_TIMESTAMP
+            WHERE statut = 'PUBLIE'
+              AND rappel_expiration_envoye_at IS NULL
+              AND date_expiration IS NOT NULL
+              AND date_expiration > CURRENT_TIMESTAMP
+              AND date_expiration <= CURRENT_TIMESTAMP + (:joursAvant || ' days')::interval
+            RETURNING *
+            """;
+
+    /**
+     * UPDATE atomique : passe en RETIRE les annonces PUBLIE dont date_expiration
+     * est dépassée. RETURNING * pour log/notification.
+     */
+    public static final String EXPIRE_OUTDATED = """
+            UPDATE immo_propriete SET
+                statut = 'RETIRE',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE statut = 'PUBLIE'
+              AND date_expiration IS NOT NULL
+              AND date_expiration <= CURRENT_TIMESTAMP
+            RETURNING *
+            """;
+
+    /**
+     * Renouvellement 1-clic : date_publication = NOW, date_expiration = NOW + N jours,
+     * statut → PUBLIE, reset du flag rappel, incrémente compteur de renouvellements.
+     * Autorise depuis PUBLIE (avant expiration) et RETIRE (après).
+     */
+    public static final String RENOUVELER_PROPRIETE = """
+            UPDATE immo_propriete SET
+                statut = 'PUBLIE',
+                date_publication = CURRENT_TIMESTAMP,
+                date_expiration = CURRENT_TIMESTAMP + (:dureeJours || ' days')::interval,
+                rappel_expiration_envoye_at = NULL,
+                nombre_renouvellements = nombre_renouvellements + 1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE propriete_uuid = :proprieteUuid
+              AND statut IN ('PUBLIE', 'RETIRE')
+            RETURNING *
+            """;
+
     public static final String INCREMENT_VUES = """
             UPDATE immo_propriete SET nombre_vues = nombre_vues + 1
             WHERE propriete_uuid = :proprieteUuid

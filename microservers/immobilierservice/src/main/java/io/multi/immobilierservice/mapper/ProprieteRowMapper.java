@@ -64,6 +64,8 @@ public class ProprieteRowMapper implements RowMapper<Propriete> {
                 .datePremiumFin(rs.getObject("date_premium_fin", OffsetDateTime.class))
                 .createdAt(rs.getObject("created_at", OffsetDateTime.class))
                 .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+                .rappelExpirationEnvoyeAt(hasColumn(rs, "rappel_expiration_envoye_at")
+                        ? rs.getObject("rappel_expiration_envoye_at", OffsetDateTime.class) : null)
                 .distanceM(distanceM)
                 .build();
     }

@@ -44,4 +44,15 @@ public interface ProprieteRepository {
 
     /** Rejette une annonce : statut=RETIRE + stocke le motif. */
     Optional<Propriete> rejeter(String proprieteUuid, String motif);
+
+    // ---- Phase 9b : job d'expiration ----
+
+    /** Marque atomiquement les rappels J-X et renvoie les lignes effectivement marquées. */
+    List<Propriete> markRappelExpirationAndReturn(int joursAvant);
+
+    /** Passe atomiquement en RETIRE les PUBLIE expirées et renvoie les lignes touchées. */
+    List<Propriete> expireOutdatedAndReturn();
+
+    /** Renouvelle une annonce (1-clic) pour {@code dureeJours} jours supplémentaires. */
+    Optional<Propriete> renouveler(String proprieteUuid, int dureeJours);
 }

@@ -175,6 +175,18 @@ public class ProprieteResource {
                 Map.of("propriete", p), "Propriété retirée", HttpStatus.OK));
     }
 
+    // ---- Renouvellement (Phase 9b) ----
+
+    @PostMapping("/{proprieteUuid}/renouveler")
+    public ResponseEntity<Response> renouveler(@PathVariable String proprieteUuid,
+                                               @AuthenticationPrincipal Jwt jwt,
+                                               HttpServletRequest http) {
+        Long userId = jwtUtils.extractUserId(jwt);
+        Propriete p = proprieteService.renouveler(proprieteUuid, userId);
+        return ResponseEntity.ok(RequestUtils.getResponse(http,
+                Map.of("propriete", p), "Annonce renouvelée", HttpStatus.OK));
+    }
+
     // ---- Modération admin (Phase 9a) ----
 
     @PatchMapping("/{proprieteUuid}/valider")

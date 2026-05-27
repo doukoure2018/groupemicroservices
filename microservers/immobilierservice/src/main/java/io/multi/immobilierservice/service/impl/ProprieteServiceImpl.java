@@ -295,6 +295,24 @@ public class ProprieteServiceImpl implements ProprieteService {
 
     @Override
     @Transactional
+    public Propriete renouveler(String proprieteUuid, Long userId) {
+        Propriete p = proprieteRepository.findByUuid(proprieteUuid)
+                .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
+        ensureOwner(p, userId);
+        if (!List.of("PUBLIE", "RETIRE").contains(p.getStatut())) {
+            throw new ApiException("Renouvellement autorisé seulement depuis PUBLIE ou RETIRE (état actuel : "
+                    + p.getStatut() + ")");
+        }
+        int dureeJours = immoProperties.getExpiration().getDureeJours();
+        Propriete updated = proprieteRepository.renouveler(proprieteUuid, dureeJours)
+                .orElseThrow(() -> new ApiException("Échec renouvellement"));
+        log.info("Propriete {} renouvelée pour {} jours (renouvellement #{} pour ce bien)",
+                proprieteUuid, dureeJours, updated.getNombreRenouvellements());
+        return enrich(updated);
+    }
+
+    @Override
+    @Transactional
     public Propriete rejeter(String proprieteUuid, String motif) {
         Propriete p = proprieteRepository.findByUuid(proprieteUuid)
                 .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));

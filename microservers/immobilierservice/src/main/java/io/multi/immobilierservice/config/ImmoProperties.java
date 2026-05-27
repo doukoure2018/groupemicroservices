@@ -20,6 +20,7 @@ public class ImmoProperties {
 
     private Limites limites = new Limites();
     private Moderation moderation = new Moderation();
+    private Expiration expiration = new Expiration();
 
     @Getter
     @Setter
@@ -49,5 +50,18 @@ public class ImmoProperties {
         private boolean autoPublishSiVerifie = true;
         /** Forcer EN_ATTENTE_VALIDATION pour la toute première annonce (anti-spam). */
         private boolean premiereAnnonceToujoursValidation = true;
+    }
+
+    @Getter
+    @Setter
+    public static class Expiration {
+        /** Durée de vie d'une annonce publiée (en jours) avant passage auto en RETIRE. */
+        private int dureeJours = 60;
+        /** Nb jours avant date_expiration où on envoie le rappel J-X. */
+        private int rappelJoursAvant = 7;
+        /** Cron du job d'expiration (chargé sur le @Scheduled via SpEL). */
+        private String jobCron = "0 0 2 * * *";
+        /** Fuseau horaire pour interpréter le cron. Africa/Conakry pour le marché cible. */
+        private String jobTz = "Africa/Conakry";
     }
 }

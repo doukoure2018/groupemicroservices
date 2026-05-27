@@ -78,6 +78,9 @@ public class Propriete {
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 
+    /** Timestamp du dernier rappel J-7 envoyé (idempotence Phase 9b). NULL = jamais envoyé. */
+    private OffsetDateTime rappelExpirationEnvoyeAt;
+
     // Associations enrichies (chargées par services, pas par RowMapper)
     private TypeBien typeBien;
     private List<Photo> photos;

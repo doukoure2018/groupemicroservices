@@ -40,4 +40,7 @@ public interface ProprieteService {
 
     /** Admin : rejette une annonce + motif. La passe en RETIRE. */
     Propriete rejeter(String proprieteUuid, String motif);
+
+    /** Owner : renouvelle son annonce (1-clic) pour {@code immo.expiration.duree-jours} jours. */
+    Propriete renouveler(String proprieteUuid, Long userId);
 }

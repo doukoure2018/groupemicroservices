@@ -429,6 +429,10 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
       MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://localhost:9100}
+      # TZ explicite : sans ça, Java se base sur l'OS du conteneur (souvent UTC
+      # via /etc/timezone Debian/Alpine). Le @Scheduled utilise déjà zone=...
+      # dans application.yml, mais cette env var aligne aussi les logs.
+      TZ: ${TZ:-Africa/Conakry}
     volumes:
       - ./keys:/app/keys
       - ./logs/immobilierservice:/var/log/immobilierservice
