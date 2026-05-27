@@ -59,7 +59,10 @@ END $$;
 -- Lookup ids nécessaires
 \set ON_ERROR_STOP on
 
--- Insertion des 10 propriétés
+-- Insertion des 10 propriétés.
+-- date_publication ÉCHELONNÉE pour tester un vrai tri par date desc
+-- (sinon le tri ressemble à l'ordre d'insertion).
+-- Décalage : la propriété #1 publiée il y a 1 jour, #2 il y a 4 jours, etc.
 WITH p AS (
     SELECT profil_id FROM immo_profil
     WHERE user_id = (SELECT user_id FROM users WHERE email = 'smoketest-immo@test.local')
@@ -85,32 +88,35 @@ SELECT
     s.etages, s.caution, s.avance, s.honoraire,
     s.adresse, s.lat, s.lng,
     CURRENT_DATE + 7, 'PUBLIE',
-    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '60 days',
+    -- publication échelonnée : la plus récente il y a 1j, la plus ancienne il y a 40j
+    CURRENT_TIMESTAMP - (s.publi_offset_days || ' days')::interval,
+    -- expiration = publication + 60 jours
+    CURRENT_TIMESTAMP - (s.publi_offset_days || ' days')::interval + INTERVAL '60 days',
     'Smoke Test', '+224600000001'
 FROM (VALUES
-    -- titre, desc, type_annonce, duree, type_bien, prix, periode, chamb, sb, surface, etages, caution, avance, honoraire, adresse, lat, lng
+    -- titre, desc, type_annonce, duree, type_bien, prix, periode, chamb, sb, surface, etages, caution, avance, honoraire, adresse, lat, lng, publi_offset_days
     ('[SEED] Maison luxe Nongo',          '7 grandes chambres climatisées, piscine, garage',
-        'LOCATION', 'LONG_SEJOUR',  'MAISON',      35000000, 'PAR_MOIS', 7, 6, 1000,  2, 3, 2, 1,  'Nongo, Ratoma, Conakry',         9.617, -13.617),
+        'LOCATION', 'LONG_SEJOUR',  'MAISON',      35000000, 'PAR_MOIS', 7, 6, 1000,  2, 3, 2, 1,  'Nongo, Ratoma, Conakry',         9.617, -13.617,  1),
     ('[SEED] Appartement moderne Kipé',   'Appartement spacieux 3 chambres, balcon, ascenseur',
-        'LOCATION', 'LONG_SEJOUR',  'APPARTEMENT',  5000000, 'PAR_MOIS', 3, 2, 120,   3, 2, 1, 1,  'Kipé, Ratoma, Conakry',          9.595, -13.661),
+        'LOCATION', 'LONG_SEJOUR',  'APPARTEMENT',  5000000, 'PAR_MOIS', 3, 2, 120,   3, 2, 1, 1,  'Kipé, Ratoma, Conakry',          9.595, -13.661,  4),
     ('[SEED] Terrain à vendre Coyah',     'Terrain plat 20 ares, accès route bitumée',
-        'VENTE',    NULL,           'TERRAIN',     80000000, 'UNIQUE',   0, 0, 2000, NULL, NULL, NULL, NULL,  'Coyah, route Forécariah',     9.706, -13.392),
+        'VENTE',    NULL,           'TERRAIN',     80000000, 'UNIQUE',   0, 0, 2000, NULL, NULL, NULL, NULL,  'Coyah, route Forécariah',     9.706, -13.392,  8),
     ('[SEED] Boutique Kaloum centre',     'Local commercial 40 m² au cœur de Kaloum',
-        'LOCATION', 'LONG_SEJOUR',  'BOUTIQUE',     2500000, 'PAR_MOIS', 0, 1, 40,    0, 3, 2, 1,  'Kaloum centre, Conakry',         9.510, -13.715),
+        'LOCATION', 'LONG_SEJOUR',  'BOUTIQUE',     2500000, 'PAR_MOIS', 0, 1, 40,    0, 3, 2, 1,  'Kaloum centre, Conakry',         9.510, -13.715, 12),
     ('[SEED] Chambre meublée Dixinn',     'Chambre individuelle meublée pour étudiant',
-        'LOCATION', 'COURT_SEJOUR', 'CHAMBRE',       800000, 'PAR_MOIS', 1, 1, 20,    0, 1, 1, 0,  'Dixinn, Conakry',                9.553, -13.674),
+        'LOCATION', 'COURT_SEJOUR', 'CHAMBRE',       800000, 'PAR_MOIS', 1, 1, 20,    0, 1, 1, 0,  'Dixinn, Conakry',                9.553, -13.674, 16),
     ('[SEED] Villa à vendre Ratoma',      '5 chambres, panneaux solaires, générateur',
-        'VENTE',    NULL,           'MAISON',     450000000, 'UNIQUE',   5, 4, 600,   2, NULL, NULL, NULL,  'Ratoma centre, Conakry',         9.625, -13.625),
+        'VENTE',    NULL,           'MAISON',     450000000, 'UNIQUE',   5, 4, 600,   2, NULL, NULL, NULL,  'Ratoma centre, Conakry',         9.625, -13.625, 20),
     ('[SEED] Bureau professionnel Matam', 'Espace bureau meublé climatisé, ascenseur',
-        'LOCATION', 'LONG_SEJOUR',  'BUREAU',       3000000, 'PAR_MOIS', 0, 1, 80,    0, 2, 1, 1,  'Matam, Conakry',                 9.522, -13.706),
+        'LOCATION', 'LONG_SEJOUR',  'BUREAU',       3000000, 'PAR_MOIS', 0, 1, 80,    0, 2, 1, 1,  'Matam, Conakry',                 9.522, -13.706, 24),
     ('[SEED] Immeuble locatif Kipé',      'Immeuble de 4 étages, idéal investissement',
-        'VENTE',    NULL,           'IMMEUBLE',  1500000000, 'UNIQUE',   0, 0, 1500,  4, NULL, NULL, NULL,  'Kipé bord de route, Conakry',     9.598, -13.665),
+        'VENTE',    NULL,           'IMMEUBLE',  1500000000, 'UNIQUE',   0, 0, 1500,  4, NULL, NULL, NULL,  'Kipé bord de route, Conakry',     9.598, -13.665, 28),
     ('[SEED] Appartement 2 ch. Forécariah', 'Appartement 2 chambres en préfecture',
-        'LOCATION', 'LONG_SEJOUR',  'APPARTEMENT',  1500000, 'PAR_MOIS', 2, 1, 70,    1, 2, 1, 0,  'Forécariah centre',              9.430, -13.092),
+        'LOCATION', 'LONG_SEJOUR',  'APPARTEMENT',  1500000, 'PAR_MOIS', 2, 1, 70,    1, 2, 1, 0,  'Forécariah centre',              9.430, -13.092, 32),
     ('[SEED] Grand terrain Kindia',       'Terrain 0.5 hectare en zone résidentielle',
-        'VENTE',    NULL,           'TERRAIN',     25000000, 'UNIQUE',   0, 0, 5000, NULL, NULL, NULL, NULL,  'Kindia centre',                 10.058, -12.866)
+        'VENTE',    NULL,           'TERRAIN',     25000000, 'UNIQUE',   0, 0, 5000, NULL, NULL, NULL, NULL,  'Kindia centre',                 10.058, -12.866, 40)
 ) AS s(titre, description, type_annonce, duree_location, type_bien_code, prix, periode,
-       chambres, salles_bain, surface, etages, caution, avance, honoraire, adresse, lat, lng);
+       chambres, salles_bain, surface, etages, caution, avance, honoraire, adresse, lat, lng, publi_offset_days);
 
 -- Association des commodités (par code, vers les propriétés SEED via leur titre)
 WITH props AS (SELECT propriete_id, titre FROM immo_propriete WHERE titre LIKE '[SEED]%'),
