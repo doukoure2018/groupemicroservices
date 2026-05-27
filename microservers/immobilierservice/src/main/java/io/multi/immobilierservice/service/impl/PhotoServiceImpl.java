@@ -5,6 +5,7 @@ import io.multi.immobilierservice.domain.ProfilImmo;
 import io.multi.immobilierservice.domain.Propriete;
 import io.multi.immobilierservice.dto.UploadResult;
 import io.multi.immobilierservice.exception.ApiException;
+import io.multi.immobilierservice.exception.ForbiddenException;
 import io.multi.immobilierservice.repository.PhotoRepository;
 import io.multi.immobilierservice.repository.ProfilImmoRepository;
 import io.multi.immobilierservice.repository.ProprieteRepository;
@@ -134,9 +135,10 @@ public class PhotoServiceImpl implements PhotoService {
     }
 
     private void ensureOwner(Propriete propriete, Long userId) {
+        // Propriété = publique → 403 si non-owner tente d'agir sur ses photos.
         Optional<ProfilImmo> profil = profilImmoRepository.findByUserId(userId);
         if (profil.isEmpty() || !profil.get().getProfilId().equals(propriete.getProfilId())) {
-            throw new ApiException("Vous n'êtes pas propriétaire de cette annonce");
+            throw new ForbiddenException("Vous n'êtes pas propriétaire de cette annonce");
         }
     }
 }

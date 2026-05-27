@@ -6,6 +6,7 @@ import io.multi.immobilierservice.domain.Agence;
 import io.multi.immobilierservice.domain.ProfilImmo;
 import io.multi.immobilierservice.dto.ProfilImmoRequest;
 import io.multi.immobilierservice.exception.ApiException;
+import io.multi.immobilierservice.exception.ForbiddenException;
 import io.multi.immobilierservice.repository.AgenceRepository;
 import io.multi.immobilierservice.repository.ProfilImmoRepository;
 import io.multi.immobilierservice.service.ProfilImmoService;
@@ -103,8 +104,9 @@ public class ProfilImmoServiceImpl implements ProfilImmoService {
     }
 
     private void ensureOwner(ProfilImmo profil, Long userId) {
+        // Profil vendeur = ressource PUBLIQUE (accessible en GET sans auth) → 403.
         if (!profil.getUserId().equals(userId)) {
-            throw new ApiException("Vous n'êtes pas propriétaire de ce profil");
+            throw new ForbiddenException("Vous n'êtes pas propriétaire de ce profil");
         }
     }
 

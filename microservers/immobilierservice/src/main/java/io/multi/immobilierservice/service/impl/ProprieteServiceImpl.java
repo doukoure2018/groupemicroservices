@@ -8,6 +8,7 @@ import io.multi.immobilierservice.domain.TypeBien;
 import io.multi.immobilierservice.dto.ProprieteCreateRequest;
 import io.multi.immobilierservice.dto.ProprieteUpdateRequest;
 import io.multi.immobilierservice.exception.ApiException;
+import io.multi.immobilierservice.exception.ForbiddenException;
 import io.multi.immobilierservice.repository.*;
 import io.multi.immobilierservice.service.ProprieteService;
 import lombok.RequiredArgsConstructor;
@@ -267,9 +268,10 @@ public class ProprieteServiceImpl implements ProprieteService {
     }
 
     private void ensureOwner(Propriete p, Long userId) {
+        // Ressource PUBLIQUE (annonces publiées) : 403 ForbiddenException, pas 404.
         Optional<ProfilImmo> profil = profilImmoRepository.findByUserId(userId);
         if (profil.isEmpty() || !profil.get().getProfilId().equals(p.getProfilId())) {
-            throw new ApiException("Vous n'êtes pas propriétaire de cette annonce");
+            throw new ForbiddenException("Vous n'êtes pas propriétaire de cette annonce");
         }
     }
 }

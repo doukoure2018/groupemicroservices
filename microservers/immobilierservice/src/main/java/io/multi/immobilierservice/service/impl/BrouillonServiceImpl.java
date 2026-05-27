@@ -6,6 +6,7 @@ import io.multi.immobilierservice.domain.Propriete;
 import io.multi.immobilierservice.dto.BrouillonSaveRequest;
 import io.multi.immobilierservice.dto.ProprieteCreateRequest;
 import io.multi.immobilierservice.exception.ApiException;
+import io.multi.immobilierservice.exception.NotFoundException;
 import io.multi.immobilierservice.repository.BrouillonRepository;
 import io.multi.immobilierservice.service.BrouillonService;
 import io.multi.immobilierservice.service.ProprieteService;
@@ -49,10 +50,11 @@ public class BrouillonServiceImpl implements BrouillonService {
 
     @Override
     public Brouillon getByUuid(String brouillonUuid, Long userId) {
+        // Ressource PRIVÉE : 404 si introuvable OU si non-owner (anti-fuite d'information).
         Brouillon b = brouillonRepository.findByUuid(brouillonUuid)
-                .orElseThrow(() -> new ApiException("Brouillon introuvable : " + brouillonUuid));
+                .orElseThrow(() -> new NotFoundException("Brouillon introuvable : " + brouillonUuid));
         if (!b.getUserId().equals(userId)) {
-            throw new ApiException("Vous n'êtes pas propriétaire de ce brouillon");
+            throw new NotFoundException("Brouillon introuvable : " + brouillonUuid);
         }
         return b;
     }
@@ -72,10 +74,11 @@ public class BrouillonServiceImpl implements BrouillonService {
     @Override
     @Transactional
     public Propriete materialiser(String brouillonUuid, Long userId) {
+        // Ressource PRIVÉE : 404 si introuvable OU si non-owner.
         Brouillon b = brouillonRepository.findByUuid(brouillonUuid)
-                .orElseThrow(() -> new ApiException("Brouillon introuvable : " + brouillonUuid));
+                .orElseThrow(() -> new NotFoundException("Brouillon introuvable : " + brouillonUuid));
         if (!b.getUserId().equals(userId)) {
-            throw new ApiException("Vous n'êtes pas propriétaire de ce brouillon");
+            throw new NotFoundException("Brouillon introuvable : " + brouillonUuid);
         }
 
         ProprieteCreateRequest req = toCreateRequest(b.getDonneesJson());
@@ -161,10 +164,11 @@ public class BrouillonServiceImpl implements BrouillonService {
     }
 
     private void ensureOwner(String brouillonUuid, Long userId) {
+        // Ressource PRIVÉE : 404 si introuvable OU si non-owner (anti-fuite).
         Brouillon b = brouillonRepository.findByUuid(brouillonUuid)
-                .orElseThrow(() -> new ApiException("Brouillon introuvable : " + brouillonUuid));
+                .orElseThrow(() -> new NotFoundException("Brouillon introuvable : " + brouillonUuid));
         if (!b.getUserId().equals(userId)) {
-            throw new ApiException("Vous n'êtes pas propriétaire de ce brouillon");
+            throw new NotFoundException("Brouillon introuvable : " + brouillonUuid);
         }
     }
 

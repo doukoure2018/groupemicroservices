@@ -7,6 +7,8 @@ import io.multi.immobilierservice.domain.AgenceInvitation;
 import io.multi.immobilierservice.domain.ProfilImmo;
 import io.multi.immobilierservice.dto.AjouterAgentRequest;
 import io.multi.immobilierservice.exception.ApiException;
+import io.multi.immobilierservice.exception.ForbiddenException;
+import io.multi.immobilierservice.exception.NotFoundException;
 import io.multi.immobilierservice.repository.AgenceInvitationRepository;
 import io.multi.immobilierservice.repository.AgenceRepository;
 import io.multi.immobilierservice.repository.ProfilImmoRepository;
@@ -40,7 +42,8 @@ public class AgenceInvitationServiceImpl implements AgenceInvitationService {
         Agence agence = agenceRepository.findByUuid(agenceUuid)
                 .orElseThrow(() -> new ApiException("Agence introuvable : " + agenceUuid));
         if (!agence.getProprietaireUserId().equals(requesterUserId)) {
-            throw new ApiException("Vous n'êtes pas propriétaire de cette agence");
+            // Agence = ressource PUBLIQUE → 403.
+            throw new ForbiddenException("Vous n'êtes pas propriétaire de cette agence");
         }
 
         // Vérifier que le user à inviter existe (via Feign UserClient)
@@ -98,9 +101,9 @@ public class AgenceInvitationServiceImpl implements AgenceInvitationService {
     @Override
     public List<AgenceInvitation> listForAgence(String agenceUuid, Long requesterUserId) {
         Agence agence = agenceRepository.findByUuid(agenceUuid)
-                .orElseThrow(() -> new ApiException("Agence introuvable : " + agenceUuid));
+                .orElseThrow(() -> new NotFoundException("Agence introuvable : " + agenceUuid));
         if (!agence.getProprietaireUserId().equals(requesterUserId)) {
-            throw new ApiException("Vous n'êtes pas propriétaire de cette agence");
+            throw new ForbiddenException("Vous n'êtes pas propriétaire de cette agence");
         }
         return invitationRepository.findForAgence(agence.getAgenceId());
     }
@@ -108,8 +111,9 @@ public class AgenceInvitationServiceImpl implements AgenceInvitationService {
     @Override
     @Transactional
     public ProfilImmo accepter(String token, Long userId) {
+        // Ressource ciblée (privée au destinataire) : 404 si token invalide ou pas pour ce user.
         AgenceInvitation invitation = invitationRepository.findByToken(token)
-                .orElseThrow(() -> new ApiException("Invitation introuvable"));
+                .orElseThrow(() -> new NotFoundException("Invitation introuvable"));
         validatePending(invitation, userId);
 
         // Re-vérifier l'unicité du profil (au cas où le user en aurait créé un entre temps)
@@ -136,8 +140,9 @@ public class AgenceInvitationServiceImpl implements AgenceInvitationService {
     @Override
     @Transactional
     public AgenceInvitation refuser(String token, Long userId, String motif) {
+        // Ressource ciblée (privée au destinataire) : 404 si token invalide ou pas pour ce user.
         AgenceInvitation invitation = invitationRepository.findByToken(token)
-                .orElseThrow(() -> new ApiException("Invitation introuvable"));
+                .orElseThrow(() -> new NotFoundException("Invitation introuvable"));
         validatePending(invitation, userId);
 
         return invitationRepository.updateStatut(invitation.getInvitationId(), "REFUSEE", motif)
@@ -148,9 +153,12 @@ public class AgenceInvitationServiceImpl implements AgenceInvitationService {
     @Transactional
     public AgenceInvitation revoquer(String invitationUuid, Long requesterUserId) {
         AgenceInvitation invitation = invitationRepository.findByUuid(invitationUuid)
-                .orElseThrow(() -> new ApiException("Invitation introuvable"));
+                .orElseThrow(() -> new NotFoundException("Invitation introuvable"));
         if (!invitation.getInviteParUserId().equals(requesterUserId)) {
-            throw new ApiException("Vous n'êtes pas l'émetteur de cette invitation");
+            // Émetteur de l'invitation n'a pas accès aux détails autres que les siennes :
+            // pour révocation, l'agence et l'invitation sont des notions publiques côté patron →
+            // ForbiddenException convient (action non autorisée, ressource connue).
+            throw new ForbiddenException("Vous n'êtes pas l'émetteur de cette invitation");
         }
         if (!"EN_ATTENTE".equals(invitation.getStatut())) {
             throw new ApiException("Seules les invitations EN_ATTENTE peuvent être révoquées");
@@ -161,7 +169,9 @@ public class AgenceInvitationServiceImpl implements AgenceInvitationService {
 
     private void validatePending(AgenceInvitation invitation, Long userId) {
         if (!invitation.getInviteUserId().equals(userId)) {
-            throw new ApiException("Cette invitation ne vous est pas destinée");
+            // 404 anti-fuite : un attaquant avec le token mais pas destinataire
+            // ne doit pas confirmer que l'invitation existe.
+            throw new NotFoundException("Invitation introuvable");
         }
         if (!"EN_ATTENTE".equals(invitation.getStatut())) {
             throw new ApiException("Invitation déjà " + invitation.getStatut().toLowerCase());

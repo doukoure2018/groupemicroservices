@@ -8,6 +8,7 @@ import io.multi.immobilierservice.domain.ProfilImmo;
 import io.multi.immobilierservice.dto.AgenceRequest;
 import io.multi.immobilierservice.dto.AjouterAgentRequest;
 import io.multi.immobilierservice.exception.ApiException;
+import io.multi.immobilierservice.exception.ForbiddenException;
 import io.multi.immobilierservice.repository.AgenceRepository;
 import io.multi.immobilierservice.repository.ProfilImmoRepository;
 import io.multi.immobilierservice.service.AgenceInvitationService;
@@ -138,8 +139,9 @@ public class AgenceServiceImpl implements AgenceService {
     }
 
     private void ensureOwner(Agence agence, Long userId) {
+        // Agence = ressource PUBLIQUE (GET sans auth) → 403.
         if (!agence.getProprietaireUserId().equals(userId)) {
-            throw new ApiException("Vous n'êtes pas propriétaire de cette agence");
+            throw new ForbiddenException("Vous n'êtes pas propriétaire de cette agence");
         }
     }
 
