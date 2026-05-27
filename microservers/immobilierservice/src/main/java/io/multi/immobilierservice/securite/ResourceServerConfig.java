@@ -50,6 +50,7 @@ public class ResourceServerConfig {
                                 "/immo/agences/*/agents",
                                 "/immo/profils/*",
                                 "/immo/profils/user/*",
+                                "/immo/proprietes/recherche",
                                 "/immo/proprietes/*",
                                 "/immo/proprietes/*/photos",
                                 "/immo/types-bien",

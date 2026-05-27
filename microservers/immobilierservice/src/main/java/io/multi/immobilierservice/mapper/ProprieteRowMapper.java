@@ -16,6 +16,8 @@ public class ProprieteRowMapper implements RowMapper<Propriete> {
     public Propriete mapRow(ResultSet rs, int rowNum) throws SQLException {
         BigDecimal lat = rs.getBigDecimal("latitude");
         BigDecimal lng = rs.getBigDecimal("longitude");
+        // distance_m est présente dans la requête de recherche, absente ailleurs
+        Double distanceM = hasColumn(rs, "distance_m") ? rs.getObject("distance_m", Double.class) : null;
         return Propriete.builder()
                 .proprieteId(rs.getLong("propriete_id"))
                 .proprieteUuid(rs.getString("propriete_uuid"))
@@ -62,6 +64,16 @@ public class ProprieteRowMapper implements RowMapper<Propriete> {
                 .datePremiumFin(rs.getObject("date_premium_fin", OffsetDateTime.class))
                 .createdAt(rs.getObject("created_at", OffsetDateTime.class))
                 .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+                .distanceM(distanceM)
                 .build();
+    }
+
+    private static boolean hasColumn(ResultSet rs, String colName) {
+        try {
+            rs.findColumn(colName);
+            return true;
+        } catch (SQLException e) {
+            return false;
+        }
     }
 }

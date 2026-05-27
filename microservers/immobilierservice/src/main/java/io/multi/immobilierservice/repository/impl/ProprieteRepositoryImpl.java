@@ -2,6 +2,8 @@ package io.multi.immobilierservice.repository.impl;
 
 import io.multi.immobilierservice.domain.Commodite;
 import io.multi.immobilierservice.domain.Propriete;
+import io.multi.immobilierservice.dto.ProprieteSearchCriteria;
+import io.multi.immobilierservice.exception.ApiException;
 import io.multi.immobilierservice.mapper.CommoditeRowMapper;
 import io.multi.immobilierservice.mapper.ProprieteRowMapper;
 import io.multi.immobilierservice.query.ProprieteQuery;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -163,5 +166,130 @@ public class ProprieteRepositoryImpl implements ProprieteRepository {
                 .param("proprieteId", proprieteId)
                 .query(commoditeRowMapper)
                 .list();
+    }
+
+    // =========================================================================
+    // RECHERCHE — Phase 8 (SQL dynamique côté Java)
+    // =========================================================================
+
+    /** Tris whitelistés (sécurise contre injection SQL via paramètre `trier`). */
+    private static final Set<String> TRIS_AUTORISES = Set.of(
+            "PRIX_ASC", "PRIX_DESC", "DATE_DESC", "DISTANCE_ASC", "PERTINENCE"
+    );
+
+    @Override
+    public List<Propriete> search(ProprieteSearchCriteria c) {
+        String tri = resolveTri(c);
+        boolean geo = hasGeo(c);
+
+        StringBuilder sql = new StringBuilder("SELECT p.*");
+        if (geo) sql.append(", ").append(ProprieteQuery.DISTANCE_EXPR).append(" AS distance_m");
+        sql.append(' ').append(ProprieteQuery.SEARCH_FROM);
+        appendFilters(sql, c, geo);
+        sql.append(" ORDER BY ").append(orderByClause(tri, geo));
+        sql.append(" LIMIT :limit OFFSET :offset");
+
+        var spec = jdbcClient.sql(sql.toString());
+        spec = bindFilters(spec, c, geo);
+        return spec
+                .param("limit", c.getLimit() != null ? c.getLimit() : 20)
+                .param("offset", c.getOffset() != null ? c.getOffset() : 0)
+                .query(proprieteRowMapper)
+                .list();
+    }
+
+    @Override
+    public long countSearch(ProprieteSearchCriteria c) {
+        boolean geo = hasGeo(c);
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) ");
+        sql.append(ProprieteQuery.SEARCH_FROM);
+        appendFilters(sql, c, geo);
+
+        var spec = jdbcClient.sql(sql.toString());
+        spec = bindFilters(spec, c, geo);
+        return spec.query(Long.class).single();
+    }
+
+    /** Ajoute les clauses AND seulement quand un filtre est fourni (évite NULL casting JDBC). */
+    private void appendFilters(StringBuilder sql, ProprieteSearchCriteria c, boolean geo) {
+        if (notBlank(c.getTypeAnnonce()))          sql.append(" AND p.type_annonce = :typeAnnonce");
+        if (notBlank(c.getDureeLocation()))        sql.append(" AND p.duree_location = :dureeLocation");
+        if (notEmpty(c.getTypeBienCodes()))        sql.append(" AND tb.code = ANY(:typeBienCodes)");
+        if (notBlank(c.getVilleUuid()))            sql.append(" AND v.ville_uuid = :villeUuid");
+        if (notBlank(c.getCommuneUuid()))          sql.append(" AND c.commune_uuid = :communeUuid");
+        if (notBlank(c.getQuartierUuid()))         sql.append(" AND q.quartier_uuid = :quartierUuid");
+        if (c.getPrixMin() != null)                sql.append(" AND p.prix >= :prixMin");
+        if (c.getPrixMax() != null)                sql.append(" AND p.prix <= :prixMax");
+        if (notBlank(c.getDevise()))               sql.append(" AND p.devise = :devise");
+        if (c.getChambresMin() != null)            sql.append(" AND p.nombre_chambres >= :chambresMin");
+        if (c.getSurfaceMin() != null)             sql.append(" AND p.surface_m2 >= :surfaceMin");
+        if (notBlank(c.getQ())) {
+            sql.append(" AND (p.titre ILIKE :qLike OR p.description ILIKE :qLike OR p.adresse_complete ILIKE :qLike)");
+        }
+        if (notEmpty(c.getCommoditesCodes())) {
+            // Toutes les commodités demandées doivent être présentes.
+            sql.append(" AND (SELECT COUNT(DISTINCT ic.code) FROM immo_propriete_commodite pc")
+               .append(" JOIN immo_commodite ic ON ic.commodite_id = pc.commodite_id")
+               .append(" WHERE pc.propriete_id = p.propriete_id AND ic.code = ANY(:commoditesCodes))")
+               .append(" = :commoditesCount");
+        }
+        if (geo && c.getRayonKm() != null) {
+            sql.append(" AND ").append(ProprieteQuery.DWITHIN_CLAUSE);
+        }
+    }
+
+    private org.springframework.jdbc.core.simple.JdbcClient.StatementSpec bindFilters(
+            org.springframework.jdbc.core.simple.JdbcClient.StatementSpec spec,
+            ProprieteSearchCriteria c, boolean geo) {
+        if (notBlank(c.getTypeAnnonce()))   spec = spec.param("typeAnnonce", c.getTypeAnnonce());
+        if (notBlank(c.getDureeLocation())) spec = spec.param("dureeLocation", c.getDureeLocation());
+        if (notEmpty(c.getTypeBienCodes())) spec = spec.param("typeBienCodes", c.getTypeBienCodes().toArray(new String[0]));
+        if (notBlank(c.getVilleUuid()))     spec = spec.param("villeUuid", c.getVilleUuid());
+        if (notBlank(c.getCommuneUuid()))   spec = spec.param("communeUuid", c.getCommuneUuid());
+        if (notBlank(c.getQuartierUuid()))  spec = spec.param("quartierUuid", c.getQuartierUuid());
+        if (c.getPrixMin() != null)         spec = spec.param("prixMin", c.getPrixMin());
+        if (c.getPrixMax() != null)         spec = spec.param("prixMax", c.getPrixMax());
+        if (notBlank(c.getDevise()))        spec = spec.param("devise", c.getDevise());
+        if (c.getChambresMin() != null)     spec = spec.param("chambresMin", c.getChambresMin());
+        if (c.getSurfaceMin() != null)      spec = spec.param("surfaceMin", c.getSurfaceMin());
+        if (notBlank(c.getQ()))             spec = spec.param("qLike", "%" + c.getQ() + "%");
+        if (notEmpty(c.getCommoditesCodes())) {
+            spec = spec.param("commoditesCodes", c.getCommoditesCodes().toArray(new String[0]))
+                       .param("commoditesCount", (long) c.getCommoditesCodes().size());
+        }
+        if (geo) {
+            spec = spec.param("lat", c.getLat()).param("lng", c.getLng());
+            if (c.getRayonKm() != null) spec = spec.param("rayonMeters", c.getRayonKm() * 1000.0);
+        }
+        return spec;
+    }
+
+    private static boolean notBlank(String s) { return s != null && !s.isBlank(); }
+    private static boolean notEmpty(List<String> l) { return l != null && !l.isEmpty(); }
+    private static boolean hasGeo(ProprieteSearchCriteria c) {
+        return c.getLat() != null && c.getLng() != null;
+    }
+
+    private String resolveTri(ProprieteSearchCriteria c) {
+        String tri = c.trierOrDefault();
+        if (!TRIS_AUTORISES.contains(tri)) {
+            throw new ApiException("Tri non supporté : " + tri
+                    + ". Valeurs autorisées : " + TRIS_AUTORISES);
+        }
+        if ("DISTANCE_ASC".equals(tri) && !hasGeo(c)) {
+            return "DATE_DESC";
+        }
+        return tri;
+    }
+
+    private static String orderByClause(String tri, boolean geo) {
+        return switch (tri) {
+            case "PRIX_ASC"    -> "p.prix ASC NULLS LAST, p.date_publication DESC";
+            case "PRIX_DESC"   -> "p.prix DESC NULLS LAST, p.date_publication DESC";
+            case "DATE_DESC"   -> "p.date_publication DESC NULLS LAST, p.propriete_id DESC";
+            case "DISTANCE_ASC" -> geo ? ProprieteQuery.DISTANCE_EXPR + " ASC" : "p.date_publication DESC";
+            case "PERTINENCE"  -> "p.premium DESC, p.date_publication DESC";
+            default -> "p.date_publication DESC";
+        };
     }
 }

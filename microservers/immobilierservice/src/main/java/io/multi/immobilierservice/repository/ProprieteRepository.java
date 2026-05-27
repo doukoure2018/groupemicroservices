@@ -2,6 +2,7 @@ package io.multi.immobilierservice.repository;
 
 import io.multi.immobilierservice.domain.Commodite;
 import io.multi.immobilierservice.domain.Propriete;
+import io.multi.immobilierservice.dto.ProprieteSearchCriteria;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,4 +30,9 @@ public interface ProprieteRepository {
     void replaceCommodites(Long proprieteId, List<Long> commoditeIds);
 
     List<Commodite> findCommoditesOfPropriete(Long proprieteId);
+
+    /** Recherche multi-critères + spatiale (cf. Phase 8). */
+    List<Propriete> search(ProprieteSearchCriteria criteria);
+
+    long countSearch(ProprieteSearchCriteria criteria);
 }

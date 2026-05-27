@@ -120,4 +120,33 @@ public final class ProprieteQuery {
             WHERE pc.propriete_id = :proprieteId
             ORDER BY c.ordre_affichage
             """;
+
+    // =========================================================================
+    // RECHERCHE MULTI-CRITÈRES + SPATIALE (Phase 8)
+    // =========================================================================
+    // Le SQL est construit dynamiquement côté Java (ProprieteRepositoryImpl) :
+    // - clauses WHERE optionnelles ajoutées seulement quand un filtre est fourni
+    //   (plus simple que `(:p IS NULL OR ...)` qui pose des problèmes de typage
+    //   JDBC avec les NULL non typés et les `text[]`)
+    // - ORDER BY concaténé depuis une whitelist
+    // Une seule requête : ST_Distance dans SELECT, ST_DWithin dans WHERE.
+    // =========================================================================
+
+    public static final String SEARCH_FROM = """
+            FROM immo_propriete p
+            LEFT JOIN immo_type_bien tb ON tb.type_bien_id = p.type_bien_id
+            LEFT JOIN localisations loc ON loc.localisation_id = p.localisation_id
+            LEFT JOIN quartiers q ON q.quartier_id = loc.quartier_id
+            LEFT JOIN communes c ON c.commune_id = q.commune_id
+            LEFT JOIN villes v ON v.ville_id = c.ville_id
+            WHERE p.statut = 'PUBLIE'
+            """;
+
+    /** Calcul de distance — concaténé dans SELECT seulement si lat/lng fournis. */
+    public static final String DISTANCE_EXPR =
+            "ST_Distance(p.position, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography)";
+
+    /** Clause ST_DWithin — concaténée dans WHERE seulement si géo + rayon fournis. */
+    public static final String DWITHIN_CLAUSE =
+            "ST_DWithin(p.position, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography, :rayonMeters)";
 }

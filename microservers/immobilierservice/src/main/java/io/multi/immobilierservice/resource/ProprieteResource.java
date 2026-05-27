@@ -5,9 +5,12 @@ import io.multi.immobilierservice.domain.Propriete;
 import io.multi.immobilierservice.domain.Response;
 import io.multi.immobilierservice.dto.OrdrePhotoRequest;
 import io.multi.immobilierservice.dto.ProprieteCreateRequest;
+import io.multi.immobilierservice.dto.ProprieteSearchCriteria;
 import io.multi.immobilierservice.dto.ProprieteUpdateRequest;
+import io.multi.immobilierservice.dto.SearchResult;
 import io.multi.immobilierservice.service.PhotoService;
 import io.multi.immobilierservice.service.ProprieteService;
+import io.multi.immobilierservice.service.RechercheService;
 import io.multi.immobilierservice.utils.JwtUtils;
 import io.multi.immobilierservice.utils.RequestUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +36,66 @@ public class ProprieteResource {
 
     private final ProprieteService proprieteService;
     private final PhotoService photoService;
+    private final RechercheService rechercheService;
     private final JwtUtils jwtUtils;
+
+    // ---- RECHERCHE (Phase 8) — endpoint public ----
+
+    @GetMapping("/recherche")
+    public ResponseEntity<Response> rechercher(
+            @RequestParam(required = false) String typeAnnonce,
+            @RequestParam(required = false) String dureeLocation,
+            @RequestParam(required = false) List<String> typeBienCodes,
+            @RequestParam(required = false) String villeUuid,
+            @RequestParam(required = false) String communeUuid,
+            @RequestParam(required = false) String quartierUuid,
+            @RequestParam(required = false) BigDecimal prixMin,
+            @RequestParam(required = false) BigDecimal prixMax,
+            @RequestParam(required = false) String devise,
+            @RequestParam(required = false) Integer chambresMin,
+            @RequestParam(required = false) BigDecimal surfaceMin,
+            @RequestParam(required = false) List<String> commoditesCodes,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
+            @RequestParam(required = false) Double rayonKm,
+            @RequestParam(required = false) String trier,
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(defaultValue = "0") int offset,
+            HttpServletRequest http) {
+
+        ProprieteSearchCriteria criteria = new ProprieteSearchCriteria();
+        criteria.setTypeAnnonce(typeAnnonce);
+        criteria.setDureeLocation(dureeLocation);
+        criteria.setTypeBienCodes(typeBienCodes);
+        criteria.setVilleUuid(villeUuid);
+        criteria.setCommuneUuid(communeUuid);
+        criteria.setQuartierUuid(quartierUuid);
+        criteria.setPrixMin(prixMin);
+        criteria.setPrixMax(prixMax);
+        criteria.setDevise(devise);
+        criteria.setChambresMin(chambresMin);
+        criteria.setSurfaceMin(surfaceMin);
+        criteria.setCommoditesCodes(commoditesCodes);
+        criteria.setQ(q);
+        criteria.setLat(lat);
+        criteria.setLng(lng);
+        criteria.setRayonKm(rayonKm);
+        criteria.setTrier(trier);
+        criteria.setLimit(limit);
+        criteria.setOffset(offset);
+
+        SearchResult result = rechercheService.rechercher(criteria);
+        return ResponseEntity.ok(RequestUtils.getResponse(http,
+                Map.of(
+                        "proprietes", result.getProprietes(),
+                        "total", result.getTotal(),
+                        "limit", result.getLimit(),
+                        "offset", result.getOffset(),
+                        "tri", result.getTri()
+                ),
+                "Résultats de recherche", HttpStatus.OK));
+    }
 
     // ---- CRUD ----
 

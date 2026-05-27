@@ -83,4 +83,7 @@ public class Propriete {
     private List<Photo> photos;
     private List<Commodite> commodites;
     private Photo photoCouverture;
+
+    /** Distance en mètres au point de recherche (null si pas de recherche spatiale). */
+    private Double distanceM;
 }
