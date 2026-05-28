@@ -21,7 +21,9 @@ services:
     ports:
       # Port host configurable (défaut 5435 pour éviter conflit avec un Postgres existant).
       # Port interne conteneur reste 5433 → aucun changement côté réseau Docker.
-      - "${POSTGRES_HOST_PORT:-5435}:5433"
+      # Binding 127.0.0.1: → loopback ONLY (jamais d'accès direct depuis internet,
+      # même si le firewall est mal configuré). Pour accès distant : tunnel SSH (ssh -L).
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5435}:5433"
     volumes:
       - billetterie_postgres_data:/var/lib/postgresql/data
     networks:
@@ -71,7 +73,8 @@ services:
     depends_on:
       - postgresdb
     ports:
-      - "7001:7001"
+      # Loopback ONLY : pgAdmin = panneau admin BDD, JAMAIS public. Accès dev via SSH tunnel.
+      - "127.0.0.1:7001:7001"
     volumes:
       - billetterie_pgadmin:/var/lib/pgadmin
     networks:
@@ -93,8 +96,10 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     ports:
-      - "9100:9000"   # API S3
-      - "9101:9001"   # Console web
+      # Loopback ONLY : photos servies via gateway reverse-proxy (Phase 13b), pas direct.
+      # Console = admin, jamais public.
+      - "127.0.0.1:9100:9000"   # API S3
+      - "127.0.0.1:9101:9001"   # Console web
     volumes:
       - billetterie_minio_data:/data
     networks:
@@ -139,7 +144,8 @@ services:
     image: confluentinc/cp-zookeeper:7.4.0
     container_name: billetterie-zookeeper
     ports:
-      - "2183:2183"
+      # Loopback ONLY : interne au cluster Kafka, aucun client externe.
+      - "127.0.0.1:2183:2183"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2183
       ZOOKEEPER_TICK_TIME: 2000
@@ -151,7 +157,8 @@ services:
     image: confluentinc/cp-kafka:7.4.0
     container_name: billetterie-kafka
     ports:
-      - "9093:9093"
+      # Loopback ONLY : Kafka consommé par services internes via réseau Docker, pas client externe.
+      - "127.0.0.1:9093:9093"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2183
@@ -174,7 +181,8 @@ services:
     image: doukoure93/billetterie-discoveryserver:latest
     container_name: billetterie-discoveryserver
     ports:
-      - "8761:8761"
+      # Loopback ONLY : Eureka = annuaire interne services, JAMAIS public.
+      - "127.0.0.1:8761:8761"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
@@ -236,7 +244,8 @@ services:
     image: doukoure93/billetterie-authorizationserver:latest
     container_name: billetterie-authorizationserver
     ports:
-      - "8090:8090"
+      # Loopback ONLY : accédé via gateway (/authorization/**), pas direct.
+      - "127.0.0.1:8090:8090"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
@@ -280,7 +289,9 @@ services:
     image: doukoure93/billetterie-userservice:latest
     container_name: billetterie-userservice
     ports:
-      - "8091:8091"
+      # Loopback ONLY : accédé via gateway (/user/**) OU via Feign Eureka interne, jamais direct.
+      # NB : /user/getUser/** reste permitAll côté userservice (fuite RGPD #24 corrigée au gateway).
+      - "127.0.0.1:8091:8091"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
@@ -324,7 +335,8 @@ services:
     image: doukoure93/billetterie-billetterieservice:latest
     container_name: billetterie-billetterieservice
     ports:
-      - "8092:8092"
+      # Loopback ONLY : accédé via gateway (/billetterie/**), pas direct.
+      - "127.0.0.1:8092:8092"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
@@ -366,7 +378,8 @@ services:
     image: doukoure93/billetterie-notificationserver:latest
     container_name: billetterie-notificationserver
     ports:
-      - "8093:8093"
+      # Loopback ONLY : accédé via gateway (/notification/**), pas direct.
+      - "127.0.0.1:8093:8093"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
@@ -411,7 +424,9 @@ services:
     image: doukoure93/billetterie-immobilierservice:latest
     container_name: billetterie-immobilierservice
     ports:
-      - "8098:8098"
+      # Loopback ONLY : accédé via gateway (/immo/**), pas direct. Photos servies en
+      # reverse-proxy par gateway (cf. Phase 13b), pas par accès MinIO direct.
+      - "127.0.0.1:8098:8098"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
@@ -469,7 +484,8 @@ services:
     image: doukoure93/billetterie-frontend:latest
     container_name: billetterie-frontend
     ports:
-      - "4202:80"
+      # Loopback ONLY : nginx prod tape sur 127.0.0.1:4202 (cf. nginx/guidipress-io.conf).
+      - "127.0.0.1:4202:80"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
