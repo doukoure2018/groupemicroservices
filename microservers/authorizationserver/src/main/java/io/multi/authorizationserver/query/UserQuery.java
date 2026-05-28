@@ -3,10 +3,14 @@ package io.multi.authorizationserver.query;
 
 public class UserQuery {
 
+    // Multi-rôle : STRING_AGG agrège noms et permissions sur tous les rôles de l'user.
+    // Sans ça, .single() côté Java casse avec "expected 1, actual N" dès qu'un user a 2+ rôles.
+    // GROUP BY (u.user_id, c.credential_id) suffit : PG déduit toutes les colonnes user/credentials
+    // par dépendance fonctionnelle PK.
     public static final String SELECT_USER_BY_UUID_QUERY=
             """
-                SELECT   r.name AS role,
-                r.authority AS authorities,
+                SELECT   STRING_AGG(DISTINCT r.name, ',' ORDER BY r.name) AS role,
+                STRING_AGG(DISTINCT r.authority, ',') AS authorities,
                 u.qr_code_image_uri,
                 u.member_id,
                 u.account_non_expired,
@@ -27,12 +31,13 @@ public class UserQuery {
                 u.address,
                 c.password,
                 c.updated_at + INTERVAL '90 day' > NOW() AS credentials_non_expired
-                FROM users u JOIN user_roles ur ON ur.user_id = u.user_id JOIN roles r ON r.role_id = ur.role_id JOIN credentials c ON c.user_id = u.user_id WHERE u.username =:username;
+                FROM users u JOIN user_roles ur ON ur.user_id = u.user_id JOIN roles r ON r.role_id = ur.role_id JOIN credentials c ON c.user_id = u.user_id WHERE u.username =:username
+                GROUP BY u.user_id, c.credential_id;
               """;
     public static final String SELECT_USER_BY_EMAIL_QUERY=
             """
-              SELECT   r.name AS role,
-              r.authority AS authorities,
+              SELECT   STRING_AGG(DISTINCT r.name, ',' ORDER BY r.name) AS role,
+              STRING_AGG(DISTINCT r.authority, ',') AS authorities,
               u.qr_code_image_uri,
               u.member_id,
               u.account_non_expired,
@@ -53,7 +58,8 @@ public class UserQuery {
               u.address,
               c.password,
               c.updated_at + INTERVAL '90 day' > NOW() AS credentials_non_expired
-              FROM users u JOIN user_roles ur ON ur.user_id = u.user_id JOIN roles r ON r.role_id = ur.role_id JOIN credentials c ON c.user_id = u.user_id WHERE u.email =:email;
+              FROM users u JOIN user_roles ur ON ur.user_id = u.user_id JOIN roles r ON r.role_id = ur.role_id JOIN credentials c ON c.user_id = u.user_id WHERE u.email =:email
+              GROUP BY u.user_id, c.credential_id;
              """;
     public static final String RESET_LOGIN_ATTEMPTS_QUERY=
             """
@@ -72,11 +78,11 @@ public class UserQuery {
                INSERT INTO devices (user_id, device, client, ip_address) VALUES (:userId, :device, :client, :ipAddress)
             """;
 
-    // OAuth2 queries
+    // OAuth2 queries — même correction multi-rôle (cf. SELECT_USER_BY_EMAIL_QUERY).
     public static final String SELECT_USER_BY_GOOGLE_ID_QUERY =
             """
-            SELECT r.name AS role,
-                   r.authority AS authorities,
+            SELECT STRING_AGG(DISTINCT r.name, ',' ORDER BY r.name) AS role,
+                   STRING_AGG(DISTINCT r.authority, ',') AS authorities,
                    u.qr_code_image_uri,
                    u.member_id,
                    u.account_non_expired,
@@ -97,19 +103,20 @@ public class UserQuery {
                    u.address,
                    u.google_id,
                    u.auth_provider,
-                   COALESCE(c.password, '') AS password,
-                   COALESCE(c.updated_at + INTERVAL '90 day' > NOW(), true) AS credentials_non_expired
+                   COALESCE(MAX(c.password), '') AS password,
+                   COALESCE(MAX(c.updated_at) + INTERVAL '90 day' > NOW(), true) AS credentials_non_expired
             FROM users u
             JOIN user_roles ur ON ur.user_id = u.user_id
             JOIN roles r ON r.role_id = ur.role_id
             LEFT JOIN credentials c ON c.user_id = u.user_id
             WHERE u.google_id = :googleId
+            GROUP BY u.user_id
             """;
 
     public static final String FIND_USER_BY_EMAIL_OPTIONAL_QUERY =
             """
-            SELECT r.name AS role,
-                   r.authority AS authorities,
+            SELECT STRING_AGG(DISTINCT r.name, ',' ORDER BY r.name) AS role,
+                   STRING_AGG(DISTINCT r.authority, ',') AS authorities,
                    u.qr_code_image_uri,
                    u.member_id,
                    u.account_non_expired,
@@ -130,13 +137,14 @@ public class UserQuery {
                    u.address,
                    u.google_id,
                    u.auth_provider,
-                   COALESCE(c.password, '') AS password,
-                   COALESCE(c.updated_at + INTERVAL '90 day' > NOW(), true) AS credentials_non_expired
+                   COALESCE(MAX(c.password), '') AS password,
+                   COALESCE(MAX(c.updated_at) + INTERVAL '90 day' > NOW(), true) AS credentials_non_expired
             FROM users u
             JOIN user_roles ur ON ur.user_id = u.user_id
             JOIN roles r ON r.role_id = ur.role_id
             LEFT JOIN credentials c ON c.user_id = u.user_id
             WHERE u.email = :email
+            GROUP BY u.user_id
             """;
 
     public static final String INSERT_OAUTH2_USER_QUERY =
