@@ -51,7 +51,14 @@ public class ResourceServerConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests( authorize -> authorize
-                        .requestMatchers("/actuator/health","/actuator/info","/user/register/**", "/user/verify/account/**","/user/verify/password/**", "/user/resetpassword/**", "/user/image/**","user/getUser/**").permitAll()
+                        .requestMatchers("/actuator/health","/actuator/info","/user/register/**", "/user/verify/account/**","/user/verify/password/**", "/user/resetpassword/**", "/user/image/**").permitAll()
+                        // FUITE RGPD #24 corrigée : "user/getUser/**" RETIRÉ du permitAll public.
+                        // Quiconque sans JWT lisait email/phone/firstName/lastName d'un user par ID
+                        // via api.guidipress-io.com/user/getUser/<id>. Désormais 401 sans JWT.
+                        // Userservice direct (via Feign Eureka interne) reste permitAll côté
+                        // userservice/ResourceServerConfig — Feign continue à marcher sans M2M token.
+                        // Défense en profondeur : compose hardening loopback ferme aussi userservice
+                        // direct depuis internet (commit 9901dec).
                         // --- Phase 13a : immo public alignment ---
                         // DOIT rester strictement aligné avec immobilierservice ResourceServerConfig.
                         // Toute divergence = 401 sur du public (bug SEO/découverte) OU fuite (public où ça ne devrait pas l'être).

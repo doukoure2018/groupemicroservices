@@ -38,6 +38,22 @@ public class ResourceServerConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 // .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests( authorize -> authorize
+                        // INTENTIONNEL — décision Phase 13c dette #24 :
+                        // "/user/getUser/**" reste permitAll côté userservice MAIS retiré du
+                        // gateway public. Justification : Feign UserClient (cf. clients/UserClient.java)
+                        // appelle userservice via Eureka direct sans propager de JWT user, et il
+                        // n'y a PAS d'interceptor M2M token (client_credentials grant pas configuré
+                        // côté authorizationserver). Sécuriser ici = casser tout le Feign immédiatement.
+                        //
+                        // La protection externe est en 3 couches :
+                        // 1. Firewall serveur (22/443 only)
+                        // 2. Compose loopback "127.0.0.1:8091:8091" (commit 9901dec) → userservice
+                        //    direct inaccessible depuis internet
+                        // 3. Gateway permitAll resserré (commit suivant) → /user/getUser/** exige JWT
+                        //    pour les appels externes via api.guidipress-io.com
+                        //
+                        // À RETIRER QUAND : Feign interceptor M2M en place (tâche backlog).
+                        // NE PAS "corriger" naïvement en supprimant /user/getUser/** = casse Feign immo.
                         .requestMatchers("/actuator/health","/actuator/info","/user/register/**", "/user/verify/account/**","/user/verify/password/**", "/user/resetpassword/**", "/user/image/**","/user/getUser/**","/user/client/**","/user/offLine/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
