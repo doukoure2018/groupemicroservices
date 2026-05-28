@@ -14,10 +14,10 @@ import io.multi.immobilierservice.repository.ContactRepository;
 import io.multi.immobilierservice.repository.FavoriRepository;
 import io.multi.immobilierservice.repository.ProfilImmoRepository;
 import io.multi.immobilierservice.repository.ProprieteRepository;
-import io.multi.immobilierservice.repository.UserLookupRepository;
 import io.multi.immobilierservice.service.ContactService;
 import io.multi.immobilierservice.service.ImmoNotificationProducer;
 import io.multi.immobilierservice.service.PreferencesNotificationService;
+import io.multi.immobilierservice.utils.UserDisplayUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,7 +40,6 @@ public class ContactServiceImpl implements ContactService {
     private final ProfilImmoRepository profilImmoRepository;
     private final ImmoNotificationProducer notificationProducer;
     private final PreferencesNotificationService preferencesService;
-    private final UserLookupRepository userLookupRepository;  // pour publish (Feign sync ⇒ 401)
 
     @Override
     @Transactional
@@ -100,20 +99,22 @@ public class ContactServiceImpl implements ContactService {
                 log.warn("Notification CONTACT_RECU skip : profil {} introuvable", propriete.getProfilId());
                 return;
             }
-            // Lookup SQL local (pas Feign) : ContactServiceImpl.creer() s'exécute en thread
-            // HTTP synchrone avec SecurityContext rempli. Feign UserClient propage alors un
-            // Authorization header au userservice qui le rejette en 401 (cf. dette #23
-            // investigation Phase 13c). Le SQL local contourne le problème en attendant
-            // l'interceptor M2M ou solution propre.
-            var vendeur = userLookupRepository.findById(vendeurProfil.getUserId()).orElse(null);
-            if (vendeur == null || vendeur.email() == null) {
+            User vendeur;
+            try {
+                vendeur = userClient.getUserById(vendeurProfil.getUserId());
+            } catch (Exception e) {
+                log.error("Lookup vendeur Feign échec pour userId={} : {}",
+                        vendeurProfil.getUserId(), e.getMessage());
+                return;
+            }
+            if (vendeur == null || vendeur.getEmail() == null) {
                 log.warn("Notification CONTACT_RECU skip : vendeur {} introuvable ou sans email",
                         vendeurProfil.getUserId());
                 return;
             }
-            String vendeurNom = vendeur.nomComplet();
-            String vendeurTelephone = vendeur.phone() != null ? vendeur.phone() : "";
-            String vendeurEmail = vendeur.email();
+            String vendeurNom = UserDisplayUtils.nomComplet(vendeur);
+            String vendeurTelephone = vendeur.getPhone() != null ? vendeur.getPhone() : "";
+            String vendeurEmail = vendeur.getEmail();
 
             // Snapshot des préférences SMS du vendeur (destinataire du SMS).
             // Si désactivé après le publish, le SMS partira quand même (choix MVP).

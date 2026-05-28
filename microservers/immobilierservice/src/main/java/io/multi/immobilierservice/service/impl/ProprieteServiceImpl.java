@@ -11,9 +11,12 @@ import io.multi.immobilierservice.config.ImmoProperties;
 import io.multi.immobilierservice.event.EventType;
 import io.multi.immobilierservice.exception.ApiException;
 import io.multi.immobilierservice.exception.ForbiddenException;
+import io.multi.clients.UserClient;
+import io.multi.clients.domain.User;
 import io.multi.immobilierservice.repository.*;
 import io.multi.immobilierservice.service.ImmoNotificationProducer;
 import io.multi.immobilierservice.service.ProprieteService;
+import io.multi.immobilierservice.utils.UserDisplayUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,7 +40,7 @@ public class ProprieteServiceImpl implements ProprieteService {
     private final ProfilImmoRepository profilImmoRepository;
     private final ImmoProperties immoProperties;
     private final ImmoNotificationProducer notificationProducer;
-    private final io.multi.immobilierservice.repository.UserLookupRepository userLookupRepository;
+    private final UserClient userClient;
 
     @Override
     @Transactional
@@ -341,11 +344,11 @@ public class ProprieteServiceImpl implements ProprieteService {
     /** Publie IMMO_ANNONCE_VALIDEE → email propriétaire. Idempotent par propriete_uuid. */
     private void publishAnnonceValidee(Propriete p) {
         try {
-            var vendeur = lookupVendeur(p.getProfilId());
-            if (vendeur == null || vendeur.email() == null) return;
+            User vendeur = lookupVendeur(p.getProfilId());
+            if (vendeur == null || vendeur.getEmail() == null) return;
             Map<String, Object> data = new HashMap<>();
-            data.put("vendeurEmail", vendeur.email());
-            data.put("vendeurNom", vendeur.nomComplet());
+            data.put("vendeurEmail", vendeur.getEmail());
+            data.put("vendeurNom", UserDisplayUtils.nomComplet(vendeur));
             data.put("proprieteUuid", p.getProprieteUuid());
             data.put("proprieteReference", p.getReference());
             data.put("proprieteTitre", p.getTitre());
@@ -360,11 +363,11 @@ public class ProprieteServiceImpl implements ProprieteService {
     /** Publie IMMO_ANNONCE_REJETEE → email propriétaire avec motif admin. */
     private void publishAnnonceRejetee(Propriete p, String motif) {
         try {
-            var vendeur = lookupVendeur(p.getProfilId());
-            if (vendeur == null || vendeur.email() == null) return;
+            User vendeur = lookupVendeur(p.getProfilId());
+            if (vendeur == null || vendeur.getEmail() == null) return;
             Map<String, Object> data = new HashMap<>();
-            data.put("vendeurEmail", vendeur.email());
-            data.put("vendeurNom", vendeur.nomComplet());
+            data.put("vendeurEmail", vendeur.getEmail());
+            data.put("vendeurNom", UserDisplayUtils.nomComplet(vendeur));
             data.put("proprieteUuid", p.getProprieteUuid());
             data.put("proprieteReference", p.getReference());
             data.put("proprieteTitre", p.getTitre());
@@ -376,10 +379,15 @@ public class ProprieteServiceImpl implements ProprieteService {
         }
     }
 
-    private io.multi.immobilierservice.repository.UserLookupRepository.UserBasic lookupVendeur(Long profilId) {
+    private User lookupVendeur(Long profilId) {
         ProfilImmo profil = profilImmoRepository.findById(profilId).orElse(null);
         if (profil == null) return null;
-        return userLookupRepository.findById(profil.getUserId()).orElse(null);
+        try {
+            return userClient.getUserById(profil.getUserId());
+        } catch (Exception e) {
+            log.error("Lookup vendeur Feign échec pour profil {} : {}", profilId, e.getMessage());
+            return null;
+        }
     }
 
     // ---- helpers ----

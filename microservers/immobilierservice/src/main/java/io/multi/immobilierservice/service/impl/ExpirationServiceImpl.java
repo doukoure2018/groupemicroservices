@@ -1,14 +1,16 @@
 package io.multi.immobilierservice.service.impl;
 
+import io.multi.clients.UserClient;
+import io.multi.clients.domain.User;
 import io.multi.immobilierservice.config.ImmoProperties;
 import io.multi.immobilierservice.domain.ProfilImmo;
 import io.multi.immobilierservice.domain.Propriete;
 import io.multi.immobilierservice.event.EventType;
 import io.multi.immobilierservice.repository.ProfilImmoRepository;
 import io.multi.immobilierservice.repository.ProprieteRepository;
-import io.multi.immobilierservice.repository.UserLookupRepository;
 import io.multi.immobilierservice.service.ExpirationService;
 import io.multi.immobilierservice.service.ImmoNotificationProducer;
+import io.multi.immobilierservice.utils.UserDisplayUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,7 +30,7 @@ public class ExpirationServiceImpl implements ExpirationService {
     private final ProprieteRepository proprieteRepository;
     private final ImmoProperties immoProperties;
     private final ProfilImmoRepository profilImmoRepository;
-    private final UserLookupRepository userLookupRepository;
+    private final UserClient userClient;
     private final ImmoNotificationProducer notificationProducer;
 
     /**
@@ -86,9 +88,14 @@ public class ExpirationServiceImpl implements ExpirationService {
         try {
             ProfilImmo profil = profilImmoRepository.findById(p.getProfilId()).orElse(null);
             if (profil == null) return;
-            // Lookup SQL local (pas Feign) car le job peut tourner sans JWT contextuel.
-            var vendeur = userLookupRepository.findById(profil.getUserId()).orElse(null);
-            if (vendeur == null || vendeur.email() == null) {
+            User vendeur;
+            try {
+                vendeur = userClient.getUserById(profil.getUserId());
+            } catch (Exception e) {
+                log.error("Lookup vendeur Feign échec pour profil {} : {}", profil.getProfilId(), e.getMessage());
+                return;
+            }
+            if (vendeur == null || vendeur.getEmail() == null) {
                 log.warn("RAPPEL_EXPIRATION skip pour {} : vendeur sans email", p.getReference());
                 return;
             }
@@ -96,8 +103,8 @@ public class ExpirationServiceImpl implements ExpirationService {
                     ? ChronoUnit.DAYS.between(LocalDate.now(), p.getDateExpiration().toLocalDate())
                     : joursAvant;
             Map<String, Object> data = new HashMap<>();
-            data.put("vendeurEmail", vendeur.email());
-            data.put("vendeurNom", vendeur.nomComplet());
+            data.put("vendeurEmail", vendeur.getEmail());
+            data.put("vendeurNom", UserDisplayUtils.nomComplet(vendeur));
             data.put("proprieteUuid", p.getProprieteUuid());
             data.put("proprieteReference", p.getReference());
             data.put("proprieteTitre", p.getTitre());

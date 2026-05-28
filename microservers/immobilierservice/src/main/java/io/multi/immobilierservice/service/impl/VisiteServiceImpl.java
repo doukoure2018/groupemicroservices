@@ -1,5 +1,7 @@
 package io.multi.immobilierservice.service.impl;
 
+import io.multi.clients.UserClient;
+import io.multi.clients.domain.User;
 import io.multi.immobilierservice.domain.ProfilImmo;
 import io.multi.immobilierservice.domain.Propriete;
 import io.multi.immobilierservice.domain.Visite;
@@ -10,11 +12,11 @@ import io.multi.immobilierservice.exception.ForbiddenException;
 import io.multi.immobilierservice.repository.FavoriRepository;
 import io.multi.immobilierservice.repository.ProfilImmoRepository;
 import io.multi.immobilierservice.repository.ProprieteRepository;
-import io.multi.immobilierservice.repository.UserLookupRepository;
 import io.multi.immobilierservice.repository.VisiteRepository;
 import io.multi.immobilierservice.service.ImmoNotificationProducer;
 import io.multi.immobilierservice.service.PreferencesNotificationService;
 import io.multi.immobilierservice.service.VisiteService;
+import io.multi.immobilierservice.utils.UserDisplayUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -34,7 +36,7 @@ public class VisiteServiceImpl implements VisiteService {
     private final FavoriRepository favoriRepository;  // réutilise lookupProprieteIdByUuid
     private final ProprieteRepository proprieteRepository;
     private final ProfilImmoRepository profilImmoRepository;
-    private final UserLookupRepository userLookupRepository;
+    private final UserClient userClient;
     private final ImmoNotificationProducer notificationProducer;
     private final PreferencesNotificationService preferencesService;
 
@@ -136,17 +138,17 @@ public class VisiteServiceImpl implements VisiteService {
             if (propriete == null) return;
             ProfilImmo vendeurProfil = profilImmoRepository.findById(propriete.getProfilId()).orElse(null);
             if (vendeurProfil == null) return;
-            var vendeur = userLookupRepository.findById(vendeurProfil.getUserId()).orElse(null);
-            if (vendeur == null || vendeur.email() == null) return;
-            var visiteur = userLookupRepository.findById(visiteurUserId).orElse(null);
+            User vendeur = fetchUserSafe(vendeurProfil.getUserId());
+            if (vendeur == null || vendeur.getEmail() == null) return;
+            User visiteur = fetchUserSafe(visiteurUserId);
 
             Map<String, Object> data = new HashMap<>();
-            data.put("vendeurEmail", vendeur.email());
-            data.put("vendeurNom", vendeur.nomComplet());
+            data.put("vendeurEmail", vendeur.getEmail());
+            data.put("vendeurNom", UserDisplayUtils.nomComplet(vendeur));
             data.put("proprieteUuid", proprieteUuid);
             data.put("proprieteReference", propriete.getReference());
             data.put("proprieteTitre", propriete.getTitre());
-            data.put("visiteurNom", visiteur != null ? visiteur.nomComplet() : "Utilisateur");
+            data.put("visiteurNom", UserDisplayUtils.nomComplet(visiteur));
             data.put("dateVisite", visite.getDateVisite() != null ? visite.getDateVisite().toString() : "");
             data.put("heureVisite", visite.getHeureVisite() != null ? visite.getHeureVisite().toString() : "");
             data.put("notesVisiteur", visite.getNotesVisiteur() != null ? visite.getNotesVisiteur() : "");
@@ -165,23 +167,23 @@ public class VisiteServiceImpl implements VisiteService {
         try {
             Propriete propriete = proprieteRepository.findById(visite.getProprieteId()).orElse(null);
             if (propriete == null) return;
-            var vendeur = userLookupRepository.findById(vendeurUserId).orElse(null);
-            var visiteur = userLookupRepository.findById(visite.getVisiteurUserId()).orElse(null);
-            if (visiteur == null || visiteur.email() == null) return;
+            User vendeur = fetchUserSafe(vendeurUserId);
+            User visiteur = fetchUserSafe(visite.getVisiteurUserId());
+            if (visiteur == null || visiteur.getEmail() == null) return;
 
             // Snapshot des préférences SMS du visiteur (destinataire du SMS).
             boolean smsEnabled = preferencesService.getOrDefaults(visite.getVisiteurUserId()).isVisiteConfirmeeSms();
 
             Map<String, Object> data = new HashMap<>();
-            data.put("visiteurEmail", visiteur.email());
-            data.put("visiteurNom", visiteur.nomComplet());
-            data.put("visiteurTelephone", visiteur.phone() != null ? visiteur.phone() : "");
+            data.put("visiteurEmail", visiteur.getEmail());
+            data.put("visiteurNom", UserDisplayUtils.nomComplet(visiteur));
+            data.put("visiteurTelephone", visiteur.getPhone() != null ? visiteur.getPhone() : "");
             data.put("smsEnabled", smsEnabled);
             data.put("proprieteUuid", propriete.getProprieteUuid());
             data.put("proprieteReference", propriete.getReference());
             data.put("proprieteTitre", propriete.getTitre());
-            data.put("vendeurNom", vendeur != null ? vendeur.nomComplet() : "");
-            data.put("vendeurTelephone", vendeur != null && vendeur.phone() != null ? vendeur.phone() : "");
+            data.put("vendeurNom", vendeur != null ? UserDisplayUtils.nomComplet(vendeur) : "");
+            data.put("vendeurTelephone", vendeur != null && vendeur.getPhone() != null ? vendeur.getPhone() : "");
             data.put("dateVisite", visite.getDateVisite() != null ? visite.getDateVisite().toString() : "");
             data.put("heureVisite", visite.getHeureVisite() != null ? visite.getHeureVisite().toString() : "");
 
@@ -191,6 +193,15 @@ public class VisiteServiceImpl implements VisiteService {
                     data);
         } catch (Exception e) {
             log.error("Échec publish VISITE_CONFIRMEE pour visite {} : {}", visite.getVisiteUuid(), e.getMessage());
+        }
+    }
+
+    private User fetchUserSafe(Long userId) {
+        try {
+            return userClient.getUserById(userId);
+        } catch (Exception e) {
+            log.error("Lookup user Feign échec pour userId={} : {}", userId, e.getMessage());
+            return null;
         }
     }
 }
