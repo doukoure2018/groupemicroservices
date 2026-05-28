@@ -14,6 +14,7 @@ import io.multi.immobilierservice.repository.ContactRepository;
 import io.multi.immobilierservice.repository.FavoriRepository;
 import io.multi.immobilierservice.repository.ProfilImmoRepository;
 import io.multi.immobilierservice.repository.ProprieteRepository;
+import io.multi.immobilierservice.repository.UserLookupRepository;
 import io.multi.immobilierservice.service.ContactService;
 import io.multi.immobilierservice.service.ImmoNotificationProducer;
 import io.multi.immobilierservice.service.PreferencesNotificationService;
@@ -39,6 +40,7 @@ public class ContactServiceImpl implements ContactService {
     private final ProfilImmoRepository profilImmoRepository;
     private final ImmoNotificationProducer notificationProducer;
     private final PreferencesNotificationService preferencesService;
+    private final UserLookupRepository userLookupRepository;  // pour publish (Feign sync ⇒ 401)
 
     @Override
     @Transactional
@@ -98,24 +100,29 @@ public class ContactServiceImpl implements ContactService {
                 log.warn("Notification CONTACT_RECU skip : profil {} introuvable", propriete.getProfilId());
                 return;
             }
-            User vendeur = userClient.getUserById(vendeurProfil.getUserId());
-            if (vendeur == null || vendeur.getEmail() == null) {
+            // Lookup SQL local (pas Feign) : ContactServiceImpl.creer() s'exécute en thread
+            // HTTP synchrone avec SecurityContext rempli. Feign UserClient propage alors un
+            // Authorization header au userservice qui le rejette en 401 (cf. dette #23
+            // investigation Phase 13c). Le SQL local contourne le problème en attendant
+            // l'interceptor M2M ou solution propre.
+            var vendeur = userLookupRepository.findById(vendeurProfil.getUserId()).orElse(null);
+            if (vendeur == null || vendeur.email() == null) {
                 log.warn("Notification CONTACT_RECU skip : vendeur {} introuvable ou sans email",
                         vendeurProfil.getUserId());
                 return;
             }
-            String vendeurNom = ((vendeur.getFirstName() != null ? vendeur.getFirstName() : "")
-                    + " " + (vendeur.getLastName() != null ? vendeur.getLastName() : "")).trim();
-            if (vendeurNom.isBlank()) vendeurNom = vendeur.getUsername();
+            String vendeurNom = vendeur.nomComplet();
+            String vendeurTelephone = vendeur.phone() != null ? vendeur.phone() : "";
+            String vendeurEmail = vendeur.email();
 
             // Snapshot des préférences SMS du vendeur (destinataire du SMS).
             // Si désactivé après le publish, le SMS partira quand même (choix MVP).
             boolean smsEnabled = preferencesService.getOrDefaults(vendeurProfil.getUserId()).isContactSms();
 
             Map<String, Object> data = new HashMap<>();
-            data.put("vendeurEmail", vendeur.getEmail());
+            data.put("vendeurEmail", vendeurEmail);
             data.put("vendeurNom", vendeurNom);
-            data.put("vendeurTelephone", vendeur.getPhone() != null ? vendeur.getPhone() : "");
+            data.put("vendeurTelephone", vendeurTelephone);
             data.put("smsEnabled", smsEnabled);
             data.put("proprieteUuid", proprieteUuid);
             data.put("proprieteReference", propriete.getReference());
