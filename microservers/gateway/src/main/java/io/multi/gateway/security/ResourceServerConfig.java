@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
@@ -51,6 +52,22 @@ public class ResourceServerConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests( authorize -> authorize
                         .requestMatchers("/actuator/health","/actuator/info","/user/register/**", "/user/verify/account/**","/user/verify/password/**", "/user/resetpassword/**", "/user/image/**","user/getUser/**").permitAll()
+                        // --- Phase 13a : immo public alignment ---
+                        // DOIT rester strictement aligné avec immobilierservice ResourceServerConfig.
+                        // Toute divergence = 401 sur du public (bug SEO/découverte) OU fuite (public où ça ne devrait pas l'être).
+                        .requestMatchers("/immo/health").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/immo/agences",
+                                "/immo/agences/*",
+                                "/immo/agences/*/agents",
+                                "/immo/profils/*",
+                                "/immo/profils/user/*",
+                                "/immo/proprietes/recherche",
+                                "/immo/proprietes/*",
+                                "/immo/proprietes/*/photos",
+                                "/immo/types-bien",
+                                "/immo/commodites"
+                        ).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .accessDeniedHandler(new GatewayAccessDeniedHandler())

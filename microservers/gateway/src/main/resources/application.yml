@@ -28,6 +28,10 @@ spring:
             uri: lb://NOTIFICATIONSERVICE
             predicates:
               - Path=/notification/**
+          - id: immobilier-service
+            uri: lb://IMMOBILIERSERVICE
+            predicates:
+              - Path=/immo/**
 
 eureka:
   client:
