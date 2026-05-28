@@ -312,6 +312,114 @@ Authorization: Bearer {{jwt}}
 ### (passer un brouillon avec étape3.commoditesCodes = ["INVENTE"] puis materialiser)
 
 ### =============================================================================
+### 10. PHASE 10b — Visites + Signalements + Auto-favori
+### =============================================================================
+### Pré-requis : un user "owner" (jwt_owner) + un user "visiteur" (jwt_visitor)
+### avec le visiteur ≠ owner du bien {{proprieteUuid}}.
+
+### [10b-1] AUTO-FAVORI BLOQUÉ — owner ajoute son propre bien → 400
+POST {{immo}}/immo/favoris/{{proprieteUuid}}
+Authorization: Bearer {{jwt_owner}}
+
+### → 400 : "Vous ne pouvez pas ajouter votre propre annonce à vos favoris"
+
+### [10b-2] Visiteur ajoute aux favoris → 201
+POST {{immo}}/immo/favoris/{{proprieteUuid}}
+Authorization: Bearer {{jwt_visitor}}
+
+### → 201, ajouteCetteFois: true
+
+### [10b-3] VISITE — visiteur demande une visite → 201
+POST {{immo}}/immo/proprietes/{{proprieteUuid}}/visites
+Authorization: Bearer {{jwt_visitor}}
+Content-Type: application/json
+
+{"dateVisite":"2026-06-15","heureVisite":"14:30:00","notesVisiteur":"Intéressé location"}
+
+### → 201, visite en statut DEMANDEE
+
+### [10b-4] VISITE DOUBLON — même visiteur retente même bien → 400 (uq_immo_visite_active)
+POST {{immo}}/immo/proprietes/{{proprieteUuid}}/visites
+Authorization: Bearer {{jwt_visitor}}
+Content-Type: application/json
+
+{"dateVisite":"2026-06-20","heureVisite":"10:00:00"}
+
+### → 400 : "Vous avez déjà une visite en cours sur ce bien"
+
+### [10b-5] VENDEUR CONFIRME — DEMANDEE → CONFIRMEE
+PATCH {{immo}}/immo/visites/{{visiteUuid}}/confirmer
+Authorization: Bearer {{jwt_owner}}
+
+### [10b-6] VENDEUR EFFECTUE — CONFIRMEE → EFFECTUEE (avec notes)
+PATCH {{immo}}/immo/visites/{{visiteUuid}}/effectuer?notesVendeur=Client+intéressé
+Authorization: Bearer {{jwt_owner}}
+
+### [10b-7] VISITEUR essaie de confirmer (interdit) → 403
+PATCH {{immo}}/immo/visites/{{visiteUuid}}/confirmer
+Authorization: Bearer {{jwt_visitor}}
+
+### → 403 : "Seul le propriétaire du bien peut effectuer cette action"
+
+### [10b-8] Mes visites (côté visiteur)
+GET {{immo}}/immo/visites/mes-demandes
+Authorization: Bearer {{jwt_visitor}}
+
+### [10b-9] Visites sur mes annonces (côté vendeur)
+GET {{immo}}/immo/visites/sur-mes-annonces
+Authorization: Bearer {{jwt_owner}}
+
+### [10b-10] SIGNALEMENT — visiteur signale → 201
+POST {{immo}}/immo/proprietes/{{proprieteUuid}}/signaler
+Authorization: Bearer {{jwt_visitor}}
+Content-Type: application/json
+
+{"motif":"FAUX","description":"Les photos ne correspondent pas"}
+
+### → 201. Motifs valides : FAUX|INAPPROPRIE|DEJA_VENDU|ARNAQUE|AUTRE
+
+### [10b-11] SIGNALEMENT DOUBLON — même user retente → 400 (anti-spam)
+POST {{immo}}/immo/proprietes/{{proprieteUuid}}/signaler
+Authorization: Bearer {{jwt_visitor}}
+Content-Type: application/json
+
+{"motif":"AUTRE","description":"redite"}
+
+### → 400 : "Vous avez déjà signalé cette annonce"
+
+### [10b-12] ADMIN endpoint sans privilège → 403 (anti-fuite)
+GET {{immo}}/immo/signalements
+Authorization: Bearer {{jwt_visitor}}
+
+### [10b-13] ADMIN liste signalements (statut=EN_ATTENTE par défaut, triés par nb distinct DESC)
+GET {{immo}}/immo/signalements?limit=20&offset=0
+Authorization: Bearer {{jwt_admin}}
+
+### [10b-14] ADMIN traite — action LAISSE (vu, propriété intacte)
+PATCH {{immo}}/immo/signalements/{{signalementUuid}}/traiter
+Authorization: Bearer {{jwt_admin}}
+Content-Type: application/json
+
+{"action":"LAISSE","notesAdmin":"Examiné, pas de retrait"}
+
+### [10b-15] ADMIN traite — action RETIRE (signalement légitime → propriété → RETIRE)
+PATCH {{immo}}/immo/signalements/{{signalementUuid2}}/traiter
+Authorization: Bearer {{jwt_admin}}
+Content-Type: application/json
+
+{"action":"RETIRE","notesAdmin":"Annonce frauduleuse confirmée"}
+
+### [10b-16] ADMIN traite — action REJETE (signalement infondé)
+PATCH {{immo}}/immo/signalements/{{signalementUuid3}}/traiter
+Authorization: Bearer {{jwt_admin}}
+Content-Type: application/json
+
+{"action":"REJETE","notesAdmin":"Signalement abusif"}
+
+### → Quand >= 3 signalements distincts sur une propriété, un WARN est loggé
+###   et (Phase 11) un email admin sera envoyé via Kafka.
+
+### =============================================================================
 ### 11. CLEANUP (optionnel)
 ### =============================================================================
 

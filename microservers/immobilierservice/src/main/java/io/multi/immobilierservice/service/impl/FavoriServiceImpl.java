@@ -1,10 +1,13 @@
 package io.multi.immobilierservice.service.impl;
 
 import io.multi.immobilierservice.domain.Photo;
+import io.multi.immobilierservice.domain.ProfilImmo;
 import io.multi.immobilierservice.domain.Propriete;
 import io.multi.immobilierservice.exception.ApiException;
 import io.multi.immobilierservice.repository.FavoriRepository;
 import io.multi.immobilierservice.repository.PhotoRepository;
+import io.multi.immobilierservice.repository.ProfilImmoRepository;
+import io.multi.immobilierservice.repository.ProprieteRepository;
 import io.multi.immobilierservice.service.FavoriService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,12 +24,24 @@ public class FavoriServiceImpl implements FavoriService {
 
     private final FavoriRepository favoriRepository;
     private final PhotoRepository photoRepository;
+    private final ProprieteRepository proprieteRepository;
+    private final ProfilImmoRepository profilImmoRepository;
 
     @Override
     @Transactional
     public boolean ajouter(String proprieteUuid, Long userId) {
         Long proprieteId = favoriRepository.lookupProprieteIdByUuid(proprieteUuid)
                 .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
+
+        // Anti auto-favori : un vendeur ne peut pas ajouter sa propre annonce à ses favoris
+        // (sinon nombre_favoris devient biaisé en tant que KPI d'intérêt extérieur).
+        Propriete propriete = proprieteRepository.findById(proprieteId)
+                .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
+        Optional<ProfilImmo> userProfil = profilImmoRepository.findByUserId(userId);
+        if (userProfil.isPresent() && userProfil.get().getProfilId().equals(propriete.getProfilId())) {
+            throw new ApiException("Vous ne pouvez pas ajouter votre propre annonce à vos favoris");
+        }
+
         boolean inserted = favoriRepository.add(userId, proprieteId).isPresent();
         if (inserted) {
             log.debug("Favori ajouté user={} propriete={}", userId, proprieteUuid);
