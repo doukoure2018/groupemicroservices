@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Nouvelle demande de visite</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #222; background: #f5f5f5; }
+    .container { max-width: 600px; margin: 30px auto; background: #fff; border-radius: 8px;
+                 box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; }
+    .header { background: #43a047; color: white; padding: 20px 24px; }
+    .header h1 { margin: 0; font-size: 20px; }
+    .body { padding: 24px; line-height: 1.5; }
+    .annonce-box { background: #f1f8e9; border-left: 4px solid #43a047; padding: 12px 16px;
+                   margin: 16px 0; border-radius: 4px; }
+    .annonce-box .ref { color: #555; font-size: 12px; text-transform: uppercase; }
+    .annonce-box .titre { font-weight: bold; font-size: 16px; }
+    .info-card { background: #fafafa; padding: 16px; border-radius: 6px; margin: 16px 0; }
+    .info-card dt { font-weight: 600; color: #555; margin-top: 8px; }
+    .info-card dd { margin: 2px 0 0 0; }
+    .footer { background: #fafafa; padding: 16px 24px; font-size: 12px; color: #777;
+              text-align: center; border-top: 1px solid #eee; }
+    a.btn { display: inline-block; background: #43a047; color: white; padding: 10px 20px;
+            border-radius: 4px; text-decoration: none; margin-top: 12px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Nouvelle demande de visite</h1>
+  </div>
+  <div class="body">
+    <p>Bonjour <strong th:text="${vendeurNom}">[Vendeur]</strong>,</p>
+    <p>Un visiteur souhaite voir votre annonce :</p>
+
+    <div class="annonce-box">
+      <div class="ref">Référence <span th:text="${proprieteReference}">BIEN-XXXXX</span></div>
+      <div class="titre" th:text="${proprieteTitre}">[Titre]</div>
+    </div>
+
+    <div class="info-card">
+      <dl>
+        <dt>Visiteur</dt>
+        <dd th:text="${visiteurNom}">[Nom]</dd>
+        <dt>Date demandée</dt>
+        <dd><span th:text="${dateVisite}">[Date]</span>
+            <span th:if="${heureVisite != null and heureVisite != ''}">à <span th:text="${heureVisite}">[Heure]</span></span>
+        </dd>
+        <dt th:if="${notesVisiteur != null and notesVisiteur != ''}">Notes du visiteur</dt>
+        <dd th:if="${notesVisiteur != null and notesVisiteur != ''}" th:text="${notesVisiteur}">[Notes]</dd>
+      </dl>
+    </div>
+
+    <p>Connectez-vous pour confirmer ou refuser la visite :</p>
+    <p style="text-align: center;">
+      <a class="btn" th:href="${uiUrl + '/immobilier/visites'}" href="#">Gérer mes visites</a>
+    </p>
+  </div>
+  <div class="footer">
+    Notification automatique du service immobilier. Ne pas répondre à cet email.
+  </div>
+</div>
+</body>
+</html>

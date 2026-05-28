@@ -1,18 +1,24 @@
 package io.multi.immobilierservice.service.impl;
 
+import io.multi.immobilierservice.domain.Propriete;
 import io.multi.immobilierservice.domain.Signalement;
 import io.multi.immobilierservice.dto.SignalementCreateRequest;
+import io.multi.immobilierservice.event.EventType;
 import io.multi.immobilierservice.exception.ApiException;
 import io.multi.immobilierservice.repository.FavoriRepository;
 import io.multi.immobilierservice.repository.ProprieteRepository;
 import io.multi.immobilierservice.repository.SignalementRepository;
+import io.multi.immobilierservice.service.ImmoNotificationProducer;
 import io.multi.immobilierservice.service.SignalementService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +31,11 @@ public class SignalementServiceImpl implements SignalementService {
     private final SignalementRepository signalementRepository;
     private final ProprieteRepository proprieteRepository;
     private final FavoriRepository favoriRepository;
+    private final ImmoNotificationProducer notificationProducer;
+
+    /** Email destinataire pour les alertes seuil (configurable ; pas un user en BD). */
+    @Value("${immo.moderation.admin-email:moderation@digi-creditrural-io.com}")
+    private String moderationAdminEmail;
 
     @Override
     @Transactional
@@ -49,7 +60,7 @@ public class SignalementServiceImpl implements SignalementService {
         if (nbDistinct >= SEUIL_ALERTE_ADMIN) {
             log.warn("[SEUIL ALERTE] propriete uuid={} a maintenant {} signalements distincts (≥ {})",
                     proprieteUuid, nbDistinct, SEUIL_ALERTE_ADMIN);
-            // TODO Phase 11 : Kafka SIGNALEMENT_SEUIL_ATTEINT → email admin
+            publishSignalementSeuil(proprieteUuid, proprieteId, nbDistinct);
         }
 
         log.info("Signalement créé : uuid={} user={} propriete={} motif={}",
@@ -107,7 +118,29 @@ public class SignalementServiceImpl implements SignalementService {
 
         log.info("Signalement {} traité par admin {} : action={} → statut={}",
                 signalementUuid, adminUserId, action, nouveauStatut);
-        // TODO Phase 11 : Kafka SIGNALEMENT_TRAITE → email signaleur + vendeur
         return updated;
+    }
+
+    /**
+     * Publie IMMO_SIGNALEMENT_SEUIL → email admin. Idempotent par propriete_uuid :
+     * une seule alerte par bien, même si le compteur dépasse 3 plusieurs fois
+     * (les rejeu/franchissements successifs ne re-spamment pas l'admin).
+     */
+    private void publishSignalementSeuil(String proprieteUuid, Long proprieteId, int nbDistinct) {
+        try {
+            Propriete propriete = proprieteRepository.findById(proprieteId).orElse(null);
+            if (propriete == null) return;
+            Map<String, Object> data = new HashMap<>();
+            data.put("adminEmail", moderationAdminEmail);
+            data.put("proprieteUuid", proprieteUuid);
+            data.put("proprieteReference", propriete.getReference());
+            data.put("proprieteTitre", propriete.getTitre());
+            data.put("nbSignalementsDistincts", String.valueOf(nbDistinct));
+            data.put("derniersMotifs", ""); // optionnel, peut être enrichi plus tard
+            notificationProducer.publish(EventType.IMMO_SIGNALEMENT_SEUIL,
+                    EventType.IMMO_SIGNALEMENT_SEUIL.name() + ":" + proprieteUuid, data);
+        } catch (Exception e) {
+            log.error("Échec publish SIGNALEMENT_SEUIL pour {} : {}", proprieteUuid, e.getMessage());
+        }
     }
 }

@@ -8,16 +8,21 @@ import io.multi.immobilierservice.domain.TypeBien;
 import io.multi.immobilierservice.dto.ProprieteCreateRequest;
 import io.multi.immobilierservice.dto.ProprieteUpdateRequest;
 import io.multi.immobilierservice.config.ImmoProperties;
+import io.multi.immobilierservice.event.EventType;
 import io.multi.immobilierservice.exception.ApiException;
 import io.multi.immobilierservice.exception.ForbiddenException;
 import io.multi.immobilierservice.repository.*;
+import io.multi.immobilierservice.service.ImmoNotificationProducer;
 import io.multi.immobilierservice.service.ProprieteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -31,6 +36,8 @@ public class ProprieteServiceImpl implements ProprieteService {
     private final CommoditeRepository commoditeRepository;
     private final ProfilImmoRepository profilImmoRepository;
     private final ImmoProperties immoProperties;
+    private final ImmoNotificationProducer notificationProducer;
+    private final io.multi.immobilierservice.repository.UserLookupRepository userLookupRepository;
 
     @Override
     @Transactional
@@ -290,6 +297,7 @@ public class ProprieteServiceImpl implements ProprieteService {
         Propriete updated = proprieteRepository.updateStatut(proprieteUuid, "PUBLIE")
                 .orElseThrow(() -> new ApiException("Échec validation"));
         log.info("Admin validation : propriete {} → PUBLIE", proprieteUuid);
+        publishAnnonceValidee(updated);
         return enrich(updated);
     }
 
@@ -326,7 +334,52 @@ public class ProprieteServiceImpl implements ProprieteService {
         Propriete updated = proprieteRepository.rejeter(proprieteUuid, motif)
                 .orElseThrow(() -> new ApiException("Échec rejet"));
         log.info("Admin rejet : propriete {} → RETIRE (motif={})", proprieteUuid, motif);
+        publishAnnonceRejetee(updated, motif);
         return enrich(updated);
+    }
+
+    /** Publie IMMO_ANNONCE_VALIDEE → email propriétaire. Idempotent par propriete_uuid. */
+    private void publishAnnonceValidee(Propriete p) {
+        try {
+            var vendeur = lookupVendeur(p.getProfilId());
+            if (vendeur == null || vendeur.email() == null) return;
+            Map<String, Object> data = new HashMap<>();
+            data.put("vendeurEmail", vendeur.email());
+            data.put("vendeurNom", vendeur.nomComplet());
+            data.put("proprieteUuid", p.getProprieteUuid());
+            data.put("proprieteReference", p.getReference());
+            data.put("proprieteTitre", p.getTitre());
+            data.put("dateValidation", OffsetDateTime.now().toString());
+            notificationProducer.publish(EventType.IMMO_ANNONCE_VALIDEE,
+                    EventType.IMMO_ANNONCE_VALIDEE.name() + ":" + p.getProprieteUuid(), data);
+        } catch (Exception e) {
+            log.error("Échec publish ANNONCE_VALIDEE pour {} : {}", p.getProprieteUuid(), e.getMessage());
+        }
+    }
+
+    /** Publie IMMO_ANNONCE_REJETEE → email propriétaire avec motif admin. */
+    private void publishAnnonceRejetee(Propriete p, String motif) {
+        try {
+            var vendeur = lookupVendeur(p.getProfilId());
+            if (vendeur == null || vendeur.email() == null) return;
+            Map<String, Object> data = new HashMap<>();
+            data.put("vendeurEmail", vendeur.email());
+            data.put("vendeurNom", vendeur.nomComplet());
+            data.put("proprieteUuid", p.getProprieteUuid());
+            data.put("proprieteReference", p.getReference());
+            data.put("proprieteTitre", p.getTitre());
+            data.put("motif", motif != null ? motif : "");
+            notificationProducer.publish(EventType.IMMO_ANNONCE_REJETEE,
+                    EventType.IMMO_ANNONCE_REJETEE.name() + ":" + p.getProprieteUuid(), data);
+        } catch (Exception e) {
+            log.error("Échec publish ANNONCE_REJETEE pour {} : {}", p.getProprieteUuid(), e.getMessage());
+        }
+    }
+
+    private io.multi.immobilierservice.repository.UserLookupRepository.UserBasic lookupVendeur(Long profilId) {
+        ProfilImmo profil = profilImmoRepository.findById(profilId).orElse(null);
+        if (profil == null) return null;
+        return userLookupRepository.findById(profil.getUserId()).orElse(null);
     }
 
     // ---- helpers ----

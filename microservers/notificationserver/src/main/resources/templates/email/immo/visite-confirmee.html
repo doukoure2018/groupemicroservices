@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Visite confirmée</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #222; background: #f5f5f5; }
+    .container { max-width: 600px; margin: 30px auto; background: #fff; border-radius: 8px;
+                 box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; }
+    .header { background: #00897b; color: white; padding: 20px 24px; }
+    .header h1 { margin: 0; font-size: 20px; }
+    .body { padding: 24px; line-height: 1.5; }
+    .confirm-box { background: #e0f2f1; border-left: 4px solid #00897b; padding: 16px;
+                   margin: 16px 0; border-radius: 4px; }
+    .confirm-box .titre { font-weight: bold; font-size: 16px; margin-bottom: 6px; }
+    .footer { background: #fafafa; padding: 16px 24px; font-size: 12px; color: #777;
+              text-align: center; border-top: 1px solid #eee; }
+    a.btn { display: inline-block; background: #00897b; color: white; padding: 10px 20px;
+            border-radius: 4px; text-decoration: none; margin-top: 12px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Visite confirmée</h1>
+  </div>
+  <div class="body">
+    <p>Bonjour <strong th:text="${visiteurNom}">[Visiteur]</strong>,</p>
+    <p>Votre demande de visite a été <strong>confirmée</strong> par le propriétaire :</p>
+
+    <div class="confirm-box">
+      <div class="titre" th:text="${proprieteTitre}">[Titre]</div>
+      <div>Référence : <span th:text="${proprieteReference}">BIEN-XXXXX</span></div>
+      <div style="margin-top: 10px;">
+        <strong>Date :</strong> <span th:text="${dateVisite}">[Date]</span>
+        <span th:if="${heureVisite != null and heureVisite != ''}">à <span th:text="${heureVisite}">[Heure]</span></span>
+      </div>
+      <div style="margin-top: 6px;">
+        <strong>Propriétaire :</strong> <span th:text="${vendeurNom}">[Vendeur]</span>
+        <span th:if="${vendeurTelephone != null and vendeurTelephone != ''}">
+          — <span th:text="${vendeurTelephone}">[Tel]</span>
+        </span>
+      </div>
+    </div>
+
+    <p>Présentez-vous à l'heure convenue avec les coordonnées du propriétaire.</p>
+    <p style="text-align: center;">
+      <a class="btn" th:href="${uiUrl + '/immobilier/visites'}" href="#">Voir mes visites</a>
+    </p>
+  </div>
+  <div class="footer">
+    Notification automatique du service immobilier. Ne pas répondre à cet email.
+  </div>
+</div>
+</body>
+</html>

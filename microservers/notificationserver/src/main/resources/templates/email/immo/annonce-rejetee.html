@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Annonce rejetée</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #222; background: #f5f5f5; }
+    .container { max-width: 600px; margin: 30px auto; background: #fff; border-radius: 8px;
+                 box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; }
+    .header { background: #d84315; color: white; padding: 20px 24px; }
+    .header h1 { margin: 0; font-size: 20px; }
+    .body { padding: 24px; line-height: 1.5; }
+    .reject-box { background: #fbe9e7; border-left: 4px solid #d84315; padding: 16px;
+                  margin: 16px 0; border-radius: 4px; }
+    .motif-block { background: #fff8e1; padding: 12px 16px; border-radius: 4px;
+                   margin-top: 12px; white-space: pre-wrap; font-style: italic; }
+    .footer { background: #fafafa; padding: 16px 24px; font-size: 12px; color: #777;
+              text-align: center; border-top: 1px solid #eee; }
+    a.btn { display: inline-block; background: #d84315; color: white; padding: 10px 20px;
+            border-radius: 4px; text-decoration: none; margin-top: 12px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Annonce non validée</h1>
+  </div>
+  <div class="body">
+    <p>Bonjour <strong th:text="${vendeurNom}">[Propriétaire]</strong>,</p>
+    <p>Nous n'avons pas pu publier votre annonce :</p>
+
+    <div class="reject-box">
+      <div style="font-weight: bold; font-size: 16px;" th:text="${proprieteTitre}">[Titre]</div>
+      <div style="margin-top: 6px;">Référence : <span th:text="${proprieteReference}">BIEN-XXXXX</span></div>
+      <div th:if="${motif != null and motif != ''}" class="motif-block" th:text="${motif}">[Motif]</div>
+    </div>
+
+    <p>Vous pouvez corriger les éléments mentionnés et soumettre à nouveau votre annonce
+       depuis votre espace.</p>
+    <p style="text-align: center;">
+      <a class="btn" th:href="${uiUrl + '/immobilier/proprietes/' + proprieteUuid + '/edit'}" href="#">Corriger mon annonce</a>
+    </p>
+  </div>
+  <div class="footer">
+    Notification automatique du service immobilier. Pour toute question, contactez notre support.
+  </div>
+</div>
+</body>
+</html>
