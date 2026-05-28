@@ -12,9 +12,29 @@ import java.util.Optional;
  *       le SecurityContext.</li>
  * </ul>
  *
- * <p>TODO : à supprimer le jour où un Feign RequestInterceptor JWT-aware
- * (M2M ou propagation) est ajouté côté immo. C'est une "fuite d'accès BD"
- * temporaire — immo lit une table qui appartient logiquement à userservice.
+ * <h2>DETTE TECHNIQUE — à corriger avant production</h2>
+ *
+ * <p>Cette classe <b>viole le principe d'isolation microservices</b> : immo lit
+ * directement la table {@code users} qui appartient logiquement à userservice.
+ * Atténuation factuelle : la BD {@code innodb} est physiquement partagée par
+ * tous les services (pattern "shared database" du repo) — mais le découpage
+ * logique reste violé.
+ *
+ * <p>La vraie solution est un token <b>service-to-service</b> :
+ * <ol>
+ *   <li>Ajouter {@code AuthorizationGrantType.CLIENT_CREDENTIALS} côté
+ *       {@code authorizationserver} (actuellement seuls
+ *       {@code authorization_code} et {@code refresh_token} sont configurés).</li>
+ *   <li>Créer un client OAuth2 {@code immo-service} avec secret (équivalent
+ *       du {@code mobile-app-client} mais pour M2M).</li>
+ *   <li>Implémenter un Feign {@code RequestInterceptor} qui obtient et cache
+ *       un access_token via le grant client_credentials.</li>
+ *   <li>Ajuster {@code userservice} ResourceServer pour accepter ces tokens
+ *       machine (vérification scope/role).</li>
+ * </ol>
+ *
+ * <p>Une fois la chaîne M2M en place : supprimer cette classe et brancher
+ * {@code userClient.getUserById()} dans tous les publishXxx().
  */
 public interface UserLookupRepository {
 
