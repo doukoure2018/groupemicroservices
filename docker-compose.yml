@@ -214,7 +214,12 @@ services:
     image: doukoure93/billetterie-gateway:latest
     container_name: billetterie-gateway
     ports:
-      - "9000:9000"
+      # Loopback ONLY : nginx prod tape sur 127.0.0.1:9000 (cf. nginx/guidipress-io.conf
+      # server_name api.guidipress-io.com → proxy_pass http://127.0.0.1:9000).
+      # Plus aucune surface HTTP brute en bypass nginx — tout passe par HTTPS + SSL headers.
+      # ATTENTION : si conf nginx cassée → plateforme injoignable. Rollback isolé possible
+      # via git revert de ce commit seul.
+      - "127.0.0.1:9000:9000"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       EUREKA_USER: ${EUREKA_USER:-manager}
