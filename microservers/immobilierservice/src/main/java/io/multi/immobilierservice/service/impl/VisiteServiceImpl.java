@@ -13,6 +13,7 @@ import io.multi.immobilierservice.repository.ProprieteRepository;
 import io.multi.immobilierservice.repository.UserLookupRepository;
 import io.multi.immobilierservice.repository.VisiteRepository;
 import io.multi.immobilierservice.service.ImmoNotificationProducer;
+import io.multi.immobilierservice.service.PreferencesNotificationService;
 import io.multi.immobilierservice.service.VisiteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ public class VisiteServiceImpl implements VisiteService {
     private final ProfilImmoRepository profilImmoRepository;
     private final UserLookupRepository userLookupRepository;
     private final ImmoNotificationProducer notificationProducer;
+    private final PreferencesNotificationService preferencesService;
 
     @Override
     @Transactional
@@ -158,7 +160,7 @@ public class VisiteServiceImpl implements VisiteService {
         }
     }
 
-    /** Publie IMMO_VISITE_CONFIRMEE → email visiteur. */
+    /** Publie IMMO_VISITE_CONFIRMEE → email + (peut-être) SMS visiteur. */
     private void publishVisiteConfirmee(Visite visite, Long vendeurUserId) {
         try {
             Propriete propriete = proprieteRepository.findById(visite.getProprieteId()).orElse(null);
@@ -167,9 +169,14 @@ public class VisiteServiceImpl implements VisiteService {
             var visiteur = userLookupRepository.findById(visite.getVisiteurUserId()).orElse(null);
             if (visiteur == null || visiteur.email() == null) return;
 
+            // Snapshot des préférences SMS du visiteur (destinataire du SMS).
+            boolean smsEnabled = preferencesService.getOrDefaults(visite.getVisiteurUserId()).isVisiteConfirmeeSms();
+
             Map<String, Object> data = new HashMap<>();
             data.put("visiteurEmail", visiteur.email());
             data.put("visiteurNom", visiteur.nomComplet());
+            data.put("visiteurTelephone", visiteur.phone() != null ? visiteur.phone() : "");
+            data.put("smsEnabled", smsEnabled);
             data.put("proprieteUuid", propriete.getProprieteUuid());
             data.put("proprieteReference", propriete.getReference());
             data.put("proprieteTitre", propriete.getTitre());

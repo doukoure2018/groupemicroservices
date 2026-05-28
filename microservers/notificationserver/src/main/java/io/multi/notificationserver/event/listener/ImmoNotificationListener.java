@@ -2,6 +2,7 @@ package io.multi.notificationserver.event.listener;
 
 import io.multi.notificationserver.event.immo.ImmoNotification;
 import io.multi.notificationserver.service.ImmoEmailService;
+import io.multi.notificationserver.service.ImmoSmsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -24,6 +25,7 @@ public class ImmoNotificationListener {
     private static final String IMMO_NOTIFICATION_TOPIC = "IMMO_NOTIFICATION_TOPIC";
 
     private final ImmoEmailService immoEmailService;
+    private final ImmoSmsService immoSmsService;
 
     @KafkaListener(topics = IMMO_NOTIFICATION_TOPIC, groupId = "immo-notification-consumer")
     public void handle(ImmoNotification notification) {
@@ -35,6 +37,8 @@ public class ImmoNotificationListener {
         log.info("Reçu event immo : type={} dataKeys={}",
                 event.getEventType(),
                 event.getData() != null ? event.getData().keySet() : "[]");
+        // Les 2 canaux sont indépendants : un échec/skip de l'un n'affecte pas l'autre.
         immoEmailService.handle(event.getEventType(), event.getData());
+        immoSmsService.handle(event.getEventType(), event.getData());
     }
 }

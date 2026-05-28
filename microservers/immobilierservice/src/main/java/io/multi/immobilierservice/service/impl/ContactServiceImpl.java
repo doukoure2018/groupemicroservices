@@ -16,6 +16,7 @@ import io.multi.immobilierservice.repository.ProfilImmoRepository;
 import io.multi.immobilierservice.repository.ProprieteRepository;
 import io.multi.immobilierservice.service.ContactService;
 import io.multi.immobilierservice.service.ImmoNotificationProducer;
+import io.multi.immobilierservice.service.PreferencesNotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,7 @@ public class ContactServiceImpl implements ContactService {
     private final ProprieteRepository proprieteRepository;
     private final ProfilImmoRepository profilImmoRepository;
     private final ImmoNotificationProducer notificationProducer;
+    private final PreferencesNotificationService preferencesService;
 
     @Override
     @Transactional
@@ -106,9 +108,15 @@ public class ContactServiceImpl implements ContactService {
                     + " " + (vendeur.getLastName() != null ? vendeur.getLastName() : "")).trim();
             if (vendeurNom.isBlank()) vendeurNom = vendeur.getUsername();
 
+            // Snapshot des préférences SMS du vendeur (destinataire du SMS).
+            // Si désactivé après le publish, le SMS partira quand même (choix MVP).
+            boolean smsEnabled = preferencesService.getOrDefaults(vendeurProfil.getUserId()).isContactSms();
+
             Map<String, Object> data = new HashMap<>();
             data.put("vendeurEmail", vendeur.getEmail());
             data.put("vendeurNom", vendeurNom);
+            data.put("vendeurTelephone", vendeur.getPhone() != null ? vendeur.getPhone() : "");
+            data.put("smsEnabled", smsEnabled);
             data.put("proprieteUuid", proprieteUuid);
             data.put("proprieteReference", propriete.getReference());
             data.put("proprieteTitre", propriete.getTitre());
