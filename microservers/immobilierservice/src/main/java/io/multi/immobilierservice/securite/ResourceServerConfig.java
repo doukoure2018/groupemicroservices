@@ -54,7 +54,8 @@ public class ResourceServerConfig {
                                 "/immo/proprietes/*",
                                 "/immo/proprietes/*/photos",
                                 "/immo/types-bien",
-                                "/immo/commodites"
+                                "/immo/commodites",
+                                "/immo/photos/*"                    // Phase 13b serve photo reverse-proxy
                         ).permitAll()
                         // Toutes les routes /immo/agences/invitations/** sont privées (JWT requis)
                         .requestMatchers("/immo/agences/invitations/**").authenticated()

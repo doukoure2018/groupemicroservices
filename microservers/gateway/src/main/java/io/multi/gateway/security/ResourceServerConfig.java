@@ -66,7 +66,8 @@ public class ResourceServerConfig {
                                 "/immo/proprietes/*",
                                 "/immo/proprietes/*/photos",
                                 "/immo/types-bien",
-                                "/immo/commodites"
+                                "/immo/commodites",
+                                "/immo/photos/*"                    // Phase 13b serve photo reverse-proxy
                         ).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2

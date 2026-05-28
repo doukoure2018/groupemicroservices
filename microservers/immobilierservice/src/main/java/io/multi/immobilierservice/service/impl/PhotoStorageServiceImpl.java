@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
@@ -134,6 +135,16 @@ public class PhotoStorageServiceImpl implements PhotoStorageService {
             deleteObjectSafe(bucketThumbnails, objectKeyThumbnail);
         }
     }
+
+    @Override
+    public ResponseInputStream<GetObjectResponse> downloadStream(String bucket, String key) {
+        return s3Client.getObject(GetObjectRequest.builder()
+                .bucket(bucket).key(key).build());
+    }
+
+    @Override public String getBucketPhotos() { return bucketPhotos; }
+
+    @Override public String getBucketThumbnails() { return bucketThumbnails; }
 
     @Override
     public void ensureBucketsExist() {

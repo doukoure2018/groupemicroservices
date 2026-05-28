@@ -1,6 +1,8 @@
 package io.multi.immobilierservice.service;
 
 import io.multi.immobilierservice.dto.UploadResult;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 /**
  * Service de stockage des photos (et autres fichiers) sur MinIO via l'API S3.
@@ -34,4 +36,22 @@ public interface PhotoStorageService {
      * Vérifie l'existence des buckets configurés et les crée au besoin (safety net si minio-init n'a pas tourné).
      */
     void ensureBucketsExist();
+
+    /**
+     * Streaming chunk-by-chunk depuis MinIO — JAMAIS readAllBytes().
+     * Le caller fait passer le {@link ResponseInputStream} dans un
+     * {@code InputStreamResource} retourné en HTTP : Spring pull les chunks
+     * du stream S3 et push vers le ServletOutputStream, sans buffer complet.
+     *
+     * @return le stream (à fermer par le caller — typiquement Spring le fait
+     *         après écriture du response body).
+     * @throws software.amazon.awssdk.services.s3.model.NoSuchKeyException si la clé n'existe pas
+     */
+    ResponseInputStream<GetObjectResponse> downloadStream(String bucket, String key);
+
+    /** Bucket S3 des photos originales. Utilisé par le serve photo endpoint. */
+    String getBucketPhotos();
+
+    /** Bucket S3 des thumbnails. Utilisé par le serve photo endpoint. */
+    String getBucketThumbnails();
 }
