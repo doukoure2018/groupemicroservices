@@ -3,18 +3,25 @@ package io.multi.immobilierservice.service.impl;
 import io.multi.clients.UserClient;
 import io.multi.clients.domain.User;
 import io.multi.immobilierservice.domain.Contact;
+import io.multi.immobilierservice.domain.ProfilImmo;
+import io.multi.immobilierservice.domain.Propriete;
 import io.multi.immobilierservice.dto.ContactCreateRequest;
 import io.multi.immobilierservice.dto.ContactView;
+import io.multi.immobilierservice.event.EventType;
 import io.multi.immobilierservice.exception.ApiException;
 import io.multi.immobilierservice.exception.ForbiddenException;
 import io.multi.immobilierservice.repository.ContactRepository;
 import io.multi.immobilierservice.repository.FavoriRepository;
+import io.multi.immobilierservice.repository.ProfilImmoRepository;
+import io.multi.immobilierservice.repository.ProprieteRepository;
 import io.multi.immobilierservice.service.ContactService;
+import io.multi.immobilierservice.service.ImmoNotificationProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +34,9 @@ public class ContactServiceImpl implements ContactService {
     private final ContactRepository contactRepository;
     private final FavoriRepository favoriRepository;  // réutilise lookupProprieteIdByUuid
     private final UserClient userClient;
+    private final ProprieteRepository proprieteRepository;
+    private final ProfilImmoRepository profilImmoRepository;
+    private final ImmoNotificationProducer notificationProducer;
 
     @Override
     @Transactional
@@ -64,8 +74,59 @@ public class ContactServiceImpl implements ContactService {
         Contact saved = contactRepository.save(c);
         log.info("Contact créé : uuid={} de user {} sur propriete {}",
                 saved.getContactUuid(), userId, proprieteUuid);
-        // TODO Phase 11 : publier Kafka NOUVEAU_CONTACT_PROPRIETE → email vendeur
+        publishContactRecu(saved, proprieteUuid, proprieteId);
         return saved;
+    }
+
+    /**
+     * Publie un événement IMMO_CONTACT_RECU avec payload auto-suffisant pour l'email
+     * (snapshot des coordonnées vendeur + visiteur + propriété au moment T). Si la
+     * récupération des infos vendeur échoue, on log et on skip — le contact reste
+     * créé en BD, le vendeur le verra dans son interface "mes contacts".
+     */
+    private void publishContactRecu(Contact contact, String proprieteUuid, Long proprieteId) {
+        try {
+            Propriete propriete = proprieteRepository.findById(proprieteId).orElse(null);
+            if (propriete == null) {
+                log.warn("Notification CONTACT_RECU skip : propriété {} introuvable", proprieteUuid);
+                return;
+            }
+            ProfilImmo vendeurProfil = profilImmoRepository.findById(propriete.getProfilId()).orElse(null);
+            if (vendeurProfil == null) {
+                log.warn("Notification CONTACT_RECU skip : profil {} introuvable", propriete.getProfilId());
+                return;
+            }
+            User vendeur = userClient.getUserById(vendeurProfil.getUserId());
+            if (vendeur == null || vendeur.getEmail() == null) {
+                log.warn("Notification CONTACT_RECU skip : vendeur {} introuvable ou sans email",
+                        vendeurProfil.getUserId());
+                return;
+            }
+            String vendeurNom = ((vendeur.getFirstName() != null ? vendeur.getFirstName() : "")
+                    + " " + (vendeur.getLastName() != null ? vendeur.getLastName() : "")).trim();
+            if (vendeurNom.isBlank()) vendeurNom = vendeur.getUsername();
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("vendeurEmail", vendeur.getEmail());
+            data.put("vendeurNom", vendeurNom);
+            data.put("proprieteUuid", proprieteUuid);
+            data.put("proprieteReference", propriete.getReference());
+            data.put("proprieteTitre", propriete.getTitre());
+            data.put("visiteurNom", contact.getNomDemandeur());
+            data.put("visiteurTelephone", contact.getTelephoneDemandeur() != null ? contact.getTelephoneDemandeur() : "");
+            data.put("visiteurEmail", contact.getEmailDemandeur() != null ? contact.getEmailDemandeur() : "");
+            data.put("message", contact.getMessage() != null ? contact.getMessage() : "");
+            data.put("typeDemande", contact.getTypeDemande());
+            data.put("dateContact", contact.getCreatedAt() != null
+                    ? contact.getCreatedAt().toString() : "");
+
+            String reference = EventType.IMMO_CONTACT_RECU.name() + ":" + contact.getContactUuid();
+            notificationProducer.publish(EventType.IMMO_CONTACT_RECU, reference, data);
+        } catch (Exception e) {
+            // L'event publish ne doit JAMAIS faire rollback la création du contact.
+            log.error("Échec publication CONTACT_RECU pour contact {} : {} — contact persisté quand même",
+                    contact.getContactUuid(), e.getMessage());
+        }
     }
 
     @Override

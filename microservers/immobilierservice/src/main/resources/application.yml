@@ -61,7 +61,7 @@ spring:
       spring:
         json:
           type:
-            mapping: Notification:io.multi.immobilierservice.event.Notification
+            mapping: ImmoNotification:io.multi.immobilierservice.event.Notification
       message.max.bytes: 1300000000
       max.request.size: 1300000000
 

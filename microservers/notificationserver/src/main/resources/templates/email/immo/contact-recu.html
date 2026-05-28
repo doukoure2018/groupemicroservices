@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Nouveau contact sur votre annonce</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #222; background: #f5f5f5; }
+    .container { max-width: 600px; margin: 30px auto; background: #fff; border-radius: 8px;
+                 box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; }
+    .header { background: #1e88e5; color: white; padding: 20px 24px; }
+    .header h1 { margin: 0; font-size: 20px; }
+    .body { padding: 24px; line-height: 1.5; }
+    .annonce-box { background: #f0f7ff; border-left: 4px solid #1e88e5; padding: 12px 16px;
+                   margin: 16px 0; border-radius: 4px; }
+    .annonce-box .ref { color: #555; font-size: 12px; text-transform: uppercase; }
+    .annonce-box .titre { font-weight: bold; font-size: 16px; }
+    .visiteur-card { background: #fafafa; padding: 16px; border-radius: 6px; margin: 16px 0; }
+    .visiteur-card dt { font-weight: 600; color: #555; margin-top: 8px; }
+    .visiteur-card dd { margin: 2px 0 0 0; }
+    .message-block { background: #fff8e1; border-left: 4px solid #ffa000; padding: 12px 16px;
+                     margin: 16px 0; white-space: pre-wrap; }
+    .footer { background: #fafafa; padding: 16px 24px; font-size: 12px; color: #777;
+              text-align: center; border-top: 1px solid #eee; }
+    a.btn { display: inline-block; background: #1e88e5; color: white; padding: 10px 20px;
+            border-radius: 4px; text-decoration: none; margin-top: 12px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Nouveau contact sur votre annonce</h1>
+  </div>
+  <div class="body">
+    <p>Bonjour <strong th:text="${vendeurNom}">[Vendeur]</strong>,</p>
+    <p>Vous avez reçu une nouvelle demande de contact pour votre annonce :</p>
+
+    <div class="annonce-box">
+      <div class="ref">Référence <span th:text="${proprieteReference}">BIEN-XXXXX</span></div>
+      <div class="titre" th:text="${proprieteTitre}">[Titre annonce]</div>
+    </div>
+
+    <p><strong>Coordonnées du demandeur</strong> (au moment du contact) :</p>
+    <div class="visiteur-card">
+      <dl>
+        <dt>Nom</dt>
+        <dd th:text="${visiteurNom}">[Nom visiteur]</dd>
+        <dt th:if="${visiteurTelephone != null and visiteurTelephone != ''}">Téléphone</dt>
+        <dd th:if="${visiteurTelephone != null and visiteurTelephone != ''}" th:text="${visiteurTelephone}">[Tel]</dd>
+        <dt th:if="${visiteurEmail != null and visiteurEmail != ''}">Email</dt>
+        <dd th:if="${visiteurEmail != null and visiteurEmail != ''}" th:text="${visiteurEmail}">[Email]</dd>
+        <dt>Type de demande</dt>
+        <dd th:text="${typeDemande}">INFO</dd>
+        <dt>Date du contact</dt>
+        <dd th:text="${dateContact}">[Date]</dd>
+      </dl>
+    </div>
+
+    <p th:if="${message != null and message != ''}"><strong>Message :</strong></p>
+    <div class="message-block" th:if="${message != null and message != ''}" th:text="${message}">[Message]</div>
+
+    <p>Connectez-vous à votre espace pour répondre directement au demandeur :</p>
+    <p style="text-align: center;">
+      <a class="btn" th:href="${uiUrl + '/immobilier/contacts'}" href="#">Voir mes contacts</a>
+    </p>
+  </div>
+  <div class="footer">
+    Notification automatique du service immobilier. Ne pas répondre à cet email.
+  </div>
+</div>
+</body>
+</html>

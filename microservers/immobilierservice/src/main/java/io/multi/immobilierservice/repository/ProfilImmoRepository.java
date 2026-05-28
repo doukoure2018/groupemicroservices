@@ -17,6 +17,8 @@ public interface ProfilImmoRepository {
 
     Optional<ProfilImmo> findByUserId(Long userId);
 
+    Optional<ProfilImmo> findById(Long profilId);
+
     List<ProfilImmo> findByAgence(Long agenceId);
 
     void softDelete(String profilUuid);

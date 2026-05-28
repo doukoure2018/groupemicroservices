@@ -71,6 +71,14 @@ public class ProfilImmoRepositoryImpl implements ProfilImmoRepository {
     }
 
     @Override
+    public Optional<ProfilImmo> findById(Long profilId) {
+        return jdbcClient.sql("SELECT * FROM immo_profil WHERE profil_id = :profilId")
+                .param("profilId", profilId)
+                .query(rowMapper)
+                .optional();
+    }
+
+    @Override
     public List<ProfilImmo> findByAgence(Long agenceId) {
         return jdbcClient.sql(ProfilImmoQuery.FIND_BY_AGENCE)
                 .param("agenceId", agenceId)
