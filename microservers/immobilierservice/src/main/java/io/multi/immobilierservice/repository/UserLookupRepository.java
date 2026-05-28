@@ -16,9 +16,11 @@ import java.util.Optional;
  *
  * <p>Cette classe <b>viole le principe d'isolation microservices</b> : immo lit
  * directement la table {@code users} qui appartient logiquement à userservice.
- * Atténuation factuelle : la BD {@code innodb} est physiquement partagée par
- * tous les services (pattern "shared database" du repo) — mais le découpage
- * logique reste violé.
+ * Atténuation factuelle : la BD <b>PostgreSQL</b> (nommée {@code innodb} dans
+ * {@code POSTGRES_DB} — nom historique trompeur, évoque MySQL/InnoDB) est
+ * physiquement partagée par tous les services du repo (pattern "shared
+ * database") — donc lire la table {@code users} depuis immo n'ajoute pas
+ * de connexion cross-DB, mais reste une entorse au découpage logique.
  *
  * <p>La vraie solution est un token <b>service-to-service</b> :
  * <ol>
