@@ -17,7 +17,13 @@ import 'scanner_screen.dart';
 import '../models/billet.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  /// Si true, la nav interne (Réservation / Billets / [Scanner] / Plus) est
+  /// affichée EN HAUT (sous un PreferredSize) au lieu d'en bas. Utilisé quand
+  /// MainScreen est imbriqué dans un parent qui a déjà sa propre bottomNav
+  /// (cf. features/hub/hub_screen.dart Phase 15.2a). Default false = legacy.
+  final bool embedded;
+
+  const MainScreen({super.key, this.embedded = false});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -43,49 +49,55 @@ class _MainScreenState extends State<MainScreen> {
       _currentIndex = 0;
     }
 
+    final navBar = _buildNavBar(isControleur, atTop: widget.embedded);
+
     return Scaffold(
+      appBar: widget.embedded
+          ? PreferredSize(
+              // 88 = ~24 status bar (SafeArea.top) + ~56 contenu nav + petite marge.
+              // Évite l'overflow 1.5px observé runtime quand atTop=true.
+              preferredSize: const Size.fromHeight(88),
+              child: navBar,
+            )
+          : null,
       body: IndexedStack(
         index: _currentIndex,
         children: tabs,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: ColorManager.white,
-          boxShadow: [
-            BoxShadow(
-              color: ColorManager.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      bottomNavigationBar: widget.embedded ? null : navBar,
+    );
+  }
+
+  Widget _buildNavBar(bool isControleur, {required bool atTop}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: ColorManager.white,
+        boxShadow: [
+          BoxShadow(
+            color: ColorManager.black.withOpacity(0.08),
+            blurRadius: 8,
+            // Shadow projetée vers le contenu : vers le bas si la barre est en
+            // haut, vers le haut si la barre est en bas.
+            offset: Offset(0, atTop ? 2 : -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: atTop,
+        bottom: !atTop,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(0, Icons.search, 'Réservation'),
-                    _buildNavItem(
-                      1,
-                      Icons.confirmation_number_outlined,
-                      'Billets',
-                    ),
-                    if (isControleur)
-                      _buildNavItem(2, Icons.qr_code_scanner, 'Scanner'),
-                    _buildNavItem(
-                      isControleur ? 3 : 2,
-                      Icons.info_outline,
-                      'Plus',
-                    ),
-                  ],
-                ),
+              _buildNavItem(0, Icons.search, 'Réservation'),
+              _buildNavItem(1, Icons.confirmation_number_outlined, 'Billets'),
+              if (isControleur)
+                _buildNavItem(2, Icons.qr_code_scanner, 'Scanner'),
+              _buildNavItem(
+                isControleur ? 3 : 2,
+                Icons.info_outline,
+                'Plus',
               ),
             ],
           ),
