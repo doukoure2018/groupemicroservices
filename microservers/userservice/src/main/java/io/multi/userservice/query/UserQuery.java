@@ -3,10 +3,15 @@ package io.multi.userservice.query;
 
 public class UserQuery {
 
+    // Multi-rôle : STRING_AGG agrège noms et permissions sur tous les rôles de l'user.
+    // Sans ça, .single() / .list() côté Java casse avec "expected 1, actual N" dès qu'un
+    // user a 2+ rôles (révélé par tests D3 #23). Mirror du fix authorizationserver 146c991.
+    // GROUP BY u.user_id suffit : PG déduit toutes les colonnes u.* par dépendance
+    // fonctionnelle PK (users.user_id PRIMARY KEY).
     public static final String SELECT_USER_BY_UUID_QUERY=
             """
-                SELECT   r.name AS role,
-                r.authority AS authorities,
+                SELECT   STRING_AGG(DISTINCT r.name, ',' ORDER BY r.name) AS role,
+                STRING_AGG(DISTINCT r.authority, ',') AS authorities,
                 u.qr_code_image_uri,
                 u.member_id,
                 u.account_non_expired,
@@ -25,12 +30,13 @@ public class UserQuery {
                 u.bio,
                 u.phone,
                 u.address
-                FROM users u JOIN user_roles ur ON ur.user_id = u.user_id JOIN roles r ON r.role_id = ur.role_id  WHERE u.user_uuid =:userUuid;
+                FROM users u JOIN user_roles ur ON ur.user_id = u.user_id JOIN roles r ON r.role_id = ur.role_id  WHERE u.user_uuid =:userUuid
+                GROUP BY u.user_id;
               """;
     public static final String SELECT_USER_BY_ID_QUERY=
             """
-            SELECT   r.name AS role,
-            r.authority AS authorities,
+            SELECT   STRING_AGG(DISTINCT r.name, ',' ORDER BY r.name) AS role,
+            STRING_AGG(DISTINCT r.authority, ',') AS authorities,
             u.qr_code_image_uri,
             u.member_id,
             u.account_non_expired,
@@ -49,12 +55,13 @@ public class UserQuery {
             u.bio,
             u.phone,
             u.address
-            FROM users u JOIN user_roles ur ON ur.user_id = u.user_id JOIN roles r ON r.role_id = ur.role_id WHERE u.user_id =:userId;
+            FROM users u JOIN user_roles ur ON ur.user_id = u.user_id JOIN roles r ON r.role_id = ur.role_id WHERE u.user_id =:userId
+            GROUP BY u.user_id;
             """;
     public static final String SELECT_USER_BY_EMAIL_QUERY=
             """
-            SELECT   r.name AS role,
-            r.authority AS authorities,
+            SELECT   STRING_AGG(DISTINCT r.name, ',' ORDER BY r.name) AS role,
+            STRING_AGG(DISTINCT r.authority, ',') AS authorities,
             u.qr_code_image_uri,
             u.member_id,
             u.account_non_expired,
@@ -73,7 +80,8 @@ public class UserQuery {
             u.bio,
             u.phone,
             u.address
-            FROM users u JOIN user_roles ur ON ur.user_id = u.user_id JOIN roles r ON r.role_id = ur.role_id WHERE u.email =:email;
+            FROM users u JOIN user_roles ur ON ur.user_id = u.user_id JOIN roles r ON r.role_id = ur.role_id WHERE u.email =:email
+            GROUP BY u.user_id;
             """;
     public static final String UPDATE_USER_FUNCTION=
             """
@@ -176,10 +184,12 @@ public class UserQuery {
             """
              SELECT * FROM update_user_role (:userUuid, :role)
             """;
+    // Liste admin : même fix multi-rôle. Sans STRING_AGG, getUsers().list() retourne
+    // un user multi-rôle N fois (duplicat dans la liste affichée à l'admin).
     public static final String SELECT_USER_QUERY=
             """
-                SELECT   r.name AS role,
-                r.authority AS authorities,
+                SELECT   STRING_AGG(DISTINCT r.name, ',' ORDER BY r.name) AS role,
+                STRING_AGG(DISTINCT r.authority, ',') AS authorities,
                 u.qr_code_image_uri,
                 u.member_id,
                 u.account_non_expired,
@@ -198,7 +208,9 @@ public class UserQuery {
                 u.bio,
                 u.phone,
                 u.address
-                FROM users u JOIN user_roles ur ON ur.user_id = u.user_id JOIN roles r ON r.role_id = ur.role_id LIMIT 500
+                FROM users u JOIN user_roles ur ON ur.user_id = u.user_id JOIN roles r ON r.role_id = ur.role_id
+                GROUP BY u.user_id
+                LIMIT 500
               """;
     public static final String SELECT_TICKET_ASSIGNEE_QUERY=
             """
