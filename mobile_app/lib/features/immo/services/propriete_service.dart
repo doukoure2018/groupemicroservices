@@ -1,6 +1,7 @@
 import '../../../shared/http/api_client.dart';
 import '../../../shared/models/paged_result.dart';
 import '../models/propriete.dart';
+import '../models/recherche_filtres.dart';
 import '../models/type_bien.dart';
 
 /// Service HTTP pour les annonces immobilières. Tape les endpoints derrière
@@ -13,22 +14,28 @@ class ProprieteService {
 
   ProprieteService({ApiClient? api}) : _api = api ?? ApiClient();
 
-  /// `GET /immo/proprietes/recherche` — search paginée.
+  /// `GET /immo/proprietes/recherche` — search paginée + filtrée.
   ///
-  /// En 15.2b, expose seulement `limit`, `offset`, `q`. Les filtres
-  /// (typeAnnonce, prix, chambres, géoloc, etc.) seront ajoutés en 15.2c
-  /// quand l'UI les exposera.
+  /// Les 5 filtres user-facing de 15.2c sont portés par [RechercheFiltres].
+  /// Les autres params backend (devise, surfaceMin, commodites, géoloc, etc.)
+  /// seront ajoutés dans des phases ultérieures avec leur UI dédiée.
   Future<PagedResult<Propriete>> rechercher({
     int limit = 20,
     int offset = 0,
-    String? q,
+    RechercheFiltres? filtres,
   }) async {
+    final f = filtres ?? const RechercheFiltres();
     final response = await _api.get(
       '/immo/proprietes/recherche',
       queryParameters: {
         'limit': limit,
         'offset': offset,
-        if (q != null && q.isNotEmpty) 'q': q,
+        if (f.typeAnnonce != null) 'typeAnnonce': f.typeAnnonce,
+        if (f.typeBienCodes.isNotEmpty) 'typeBienCodes': f.typeBienCodes,
+        if (f.prixMin != null) 'prixMin': f.prixMin,
+        if (f.prixMax != null) 'prixMax': f.prixMax,
+        if (f.chambresMin != null) 'chambresMin': f.chambresMin,
+        if (f.q != null && f.q!.trim().isNotEmpty) 'q': f.q!.trim(),
       },
     );
     final data = response.data['data'] as Map<String, dynamic>;
