@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
-import 'screens/main_screen.dart';
+import 'features/hub/hub_screen.dart';
 import 'presentation/resource/color_manager.dart';
 import 'services/api_service.dart';
 
@@ -70,7 +70,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           case AuthStatus.loading:
             return const SplashScreen();
           case AuthStatus.authenticated:
-            return const MainScreen();
+            return const HubScreen();
           case AuthStatus.unauthenticated:
           case AuthStatus.error:
             return const WelcomeScreen();
