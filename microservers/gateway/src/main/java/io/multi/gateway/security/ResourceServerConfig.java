@@ -51,6 +51,11 @@ public class ResourceServerConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests( authorize -> authorize
+                        // #28 : /error en permitAll pour que les forwards internes
+                        // (downstream 5xx, ConnectException sur service down, etc.) sortent
+                        // avec le vrai statut HTTP et le bon corps d'erreur — pas un 401
+                        // trompeur "You are not logged in" qui masque la cause réelle.
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/actuator/health","/actuator/info","/user/register/**", "/user/verify/account/**","/user/verify/password/**", "/user/resetpassword/**", "/user/image/**").permitAll()
                         // FUITE RGPD #24 corrigée : "user/getUser/**" RETIRÉ du permitAll public.
                         // Quiconque sans JWT lisait email/phone/firstName/lastName d'un user par ID
