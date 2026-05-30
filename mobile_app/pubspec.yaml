@@ -48,6 +48,7 @@ dependencies:
   lottie: ^3.1.2
   shimmer: ^3.0.0
   photo_view: ^0.15.0          # Phase 15.2d-2 — galerie photos fullscreen zoomable (premier ajout pubspec post-15.1)
+  image_picker: ^1.1.2         # Phase 15.2e-3 — pick gallery + camera pour wizard publication
 
 dev_dependencies:
   flutter_test:

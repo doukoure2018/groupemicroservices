@@ -45,6 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Phase 15.2e-3 — image_picker (wizard publication étape Photos) -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>L'application a besoin d'accéder à votre galerie pour vous permettre de joindre des photos à votre annonce immobilière.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>L'application a besoin d'accéder à votre caméra pour vous permettre de prendre des photos pour votre annonce immobilière.</string>
 	<!-- OAuth2 Deep Link / URL Scheme -->
 	<key>CFBundleURLTypes</key>
 	<array>

@@ -8,7 +8,7 @@ import '../../models/brouillon.dart';
 import '../../models/brouillon_save_request.dart';
 import '../../services/brouillon_service.dart';
 import 'step_infos.dart';
-import 'step_photos_placeholder.dart';
+import 'step_photos.dart';
 import 'step_profil.dart';
 import 'step_validation_placeholder.dart';
 
@@ -44,6 +44,7 @@ class _WizardPublicationScreenState extends State<WizardPublicationScreen> {
   final _brouillonService = BrouillonService();
   final _pageController = PageController();
   final _stepInfosKey = GlobalKey<StepInfosState>();
+  final _stepPhotosKey = GlobalKey<StepPhotosState>();
 
   // État global
   int _currentStep = 1;
@@ -168,9 +169,16 @@ class _WizardPublicationScreenState extends State<WizardPublicationScreen> {
       final state = _stepInfosKey.currentState;
       if (state == null || !state.validate()) return;
       _donneesJson['infosBien'] = state.collect();
+    } else if (_currentStep == 3) {
+      // Validation + collecte de l'étape Photos. La liste est sérialisée en
+      // List<Map> (LocalPhoto.toJson) — le brouillon stocke les paths
+      // permanents pour reprise post-kill.
+      final state = _stepPhotosKey.currentState;
+      if (state == null || !state.validate()) return;
+      _donneesJson['photos'] = state.collect().map((p) => p.toJson()).toList();
     }
     // Étape 1 (profil) : pas de validation custom — le widget appelle déjà
-    // onReady. Étapes 3-4 : placeholders, pas de save spécifique.
+    // onReady. Étape 4 (placeholder) : pas de save spécifique en 15.2e-3.
 
     final next = (_currentStep + 1).clamp(1, _totalSteps);
     await _persistAndGoTo(next);
@@ -321,7 +329,15 @@ class _WizardPublicationScreenState extends State<WizardPublicationScreen> {
                   _donneesJson['infosBien'] = infos;
                 },
               ),
-              const StepPhotosPlaceholder(),
+              StepPhotos(
+                stepKey: _stepPhotosKey,
+                initialValues: {
+                  'photos': _donneesJson['photos'] ?? const [],
+                },
+                onChanged: (photos) {
+                  _donneesJson['photos'] = photos.map((p) => p.toJson()).toList();
+                },
+              ),
               const StepValidationPlaceholder(),
             ],
           ),
