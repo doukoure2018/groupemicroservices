@@ -11,6 +11,7 @@ import '../models/type_bien.dart';
 import '../services/propriete_service.dart';
 import '../widgets/filtres_sheet.dart';
 import '../widgets/propriete_card.dart';
+import 'fiche_propriete_screen.dart';
 
 /// Écran de recherche immobilier (15.2c). Liste de [Propriete] paginée avec
 /// filtres exposés via bottom sheet ([FiltresSheet]).
@@ -156,8 +157,8 @@ class _RechercheScreenState extends State<RechercheScreen> {
   }
 
   void _onTapCard(Propriete p) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Fiche "${p.titre}" — à venir en 15.2d'),
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => FicheProprieteScreen(proprieteUuid: p.proprieteUuid),
     ));
   }
 
