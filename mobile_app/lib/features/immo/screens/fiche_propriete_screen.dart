@@ -13,19 +13,25 @@ import '../models/photo.dart';
 import '../models/propriete.dart';
 import '../models/type_bien.dart';
 import '../services/propriete_service.dart';
+import '../widgets/contacter_sheet.dart';
+import '../widgets/visite_sheet.dart';
 
-/// Écran fiche détaillée d'une propriété (Phase 15.2d-2, read-only).
+/// Écran fiche détaillée d'une propriété (Phase 15.2d, finalisée en 15.2d-3).
 ///
 /// Layout CustomScrollView + SliverAppBar pinné (expandedHeight 280) :
 ///   - Galerie photos en arrière-plan SliverAppBar (PageView + indicateur)
 ///   - Sections successives (Prix, Specs, Adresse, Description, Commodités, Vendeur)
-///
-/// Les actions Contact + Visite arrivent en 15.2d-3 via BottomAppBar FAB sticky.
-/// La section Vendeur affiche un hint désactivé "Contactez via les boutons
-/// (à venir 15.2d-3)" en attendant.
+///   - BottomAppBar sticky avec 2 actions : Contacter (OutlinedButton) + Visiter
+///     (FilledButton, hiérarchie visuelle visiteur > contact). Affiché seulement
+///     quand la fiche est chargée (pas pendant loading/error).
 ///
 /// Tap sur une photo → ouvre [_FullscreenGallery] avec swipe horizontal + zoom
 /// pinch via `photo_view`.
+///
+/// Sheets [ContacterSheet] et [VisiteSheet] renvoient `true` via Navigator.pop
+/// quand le POST réussit (201). Le caller affiche un SnackBar succès. Sur
+/// AppException, l'erreur s'affiche INLINE dans la sheet et la saisie est
+/// préservée — l'utilisateur n'a pas à retaper après un timeout.
 class FicheProprieteScreen extends StatefulWidget {
   final String proprieteUuid;
 
@@ -123,12 +129,81 @@ class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
               ],
               const _Divider(),
               _SectionVendeur(nomContactPublic: p.nomContactPublic),
-              const SizedBox(height: 80), // futur FAB 15.2d-3
+              const SizedBox(height: 16),
             ]),
           ),
         ],
       ),
+      bottomNavigationBar: BottomAppBar(
+        elevation: 8,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _openContacterSheet,
+                icon: const Icon(Icons.email_outlined),
+                label: const Text('Contacter'),
+                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: _openVisiteSheet,
+                icon: const Icon(Icons.event_outlined),
+                label: const Text('Visiter'),
+                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  Future<void> _openContacterSheet() async {
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => ContacterSheet(
+        proprieteUuid: widget.proprieteUuid,
+        titreFiche: _propriete!.titre,
+      ),
+    );
+    if (result == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text('Demande de contact envoyée'),
+        backgroundColor: AppColors.success,
+      ));
+    }
+  }
+
+  Future<void> _openVisiteSheet() async {
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => VisiteSheet(
+        proprieteUuid: widget.proprieteUuid,
+        titreFiche: _propriete!.titre,
+      ),
+    );
+    if (result == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text('Demande de visite envoyée'),
+        backgroundColor: AppColors.success,
+      ));
+    }
   }
 }
 
@@ -504,14 +579,12 @@ class _SectionVendeur extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Hint désactivé. Téléphone/email PAS exposés direct (RGPD) — les
-          // actions Contacter / Visiter arriveront en 15.2d-3 via BottomAppBar
-          // FAB sticky.
+          // Téléphone/email PAS exposés direct (RGPD) — les actions
+          // Contacter / Visiter passent par la BottomAppBar de la fiche.
           Text(
-            'Contactez via les boutons (à venir 15.2d-3)',
+            'Contactez le vendeur via les boutons en bas de l\'écran.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.onBackground,
-                  fontStyle: FontStyle.italic,
                 ),
           ),
         ],
