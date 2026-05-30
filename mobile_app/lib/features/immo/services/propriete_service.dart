@@ -1,5 +1,6 @@
 import '../../../shared/http/api_client.dart';
 import '../../../shared/models/paged_result.dart';
+import '../models/commodite.dart';
 import '../models/propriete.dart';
 import '../models/recherche_filtres.dart';
 import '../models/type_bien.dart';
@@ -56,6 +57,17 @@ class ProprieteService {
     final data = response.data['data'] as Map<String, dynamic>;
     return (data['types'] as List<dynamic>)
         .map((e) => TypeBien.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// `GET /immo/commodites` — référentiel des commodités actives groupables
+  /// par catégorie (CONFORT / SECURITE / EXTERIEUR). Utilisé par le wizard
+  /// 15.2e-2 pour la sélection multi-chip.
+  Future<List<Commodite>> listCommodites() async {
+    final response = await _api.get('/immo/commodites');
+    final data = response.data['data'] as Map<String, dynamic>;
+    return (data['commodites'] as List<dynamic>)
+        .map((e) => Commodite.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 }

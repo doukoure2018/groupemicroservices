@@ -21,11 +21,17 @@ class ProfilImmoService {
 
   /// `GET /immo/profils/me` — récupère le profil de l'utilisateur courant.
   ///
-  /// Retourne `null` si l'utilisateur n'a pas (encore) de profil — équivalent
-  /// d'un 404 backend. Le caller utilise ce null pour décider de proposer la
-  /// création (étape 1 du wizard 15.2e-2).
+  /// Retourne `null` si l'utilisateur n'a pas (encore) de profil. Le caller
+  /// (StepProfil) utilise ce null pour déclencher la création silencieuse.
   ///
-  /// Toute autre erreur (réseau, 5xx) remonte en [AppException].
+  /// Détection "pas de profil" :
+  ///   - 404 (cas conforme REST)
+  ///   - 400 + message contenant "aucun profil" (dette backend : l'endpoint
+  ///     lève une ApiException métier mappée à BAD_REQUEST par le
+  ///     GlobalExceptionHandler immobilierservice — devrait être 404).
+  ///
+  /// Toute autre erreur (réseau, 5xx, 400 sur autre cause) remonte en
+  /// [AppException].
   Future<ProfilImmo?> getMien() async {
     try {
       final response = await _api.get('/immo/profils/me');
@@ -33,6 +39,9 @@ class ProfilImmoService {
       return ProfilImmo.fromJson(data['profil'] as Map<String, dynamic>);
     } on ApiException catch (e) {
       if (e.statusCode == 404) return null;
+      if (e.statusCode == 400 && e.message.toLowerCase().contains('aucun profil')) {
+        return null;
+      }
       rethrow;
     }
   }

@@ -7,6 +7,7 @@ import '../../shared/theme/app_theme.dart';
 import '../immo/models/brouillon_save_request.dart';
 import '../immo/models/profil_immo_request.dart';
 import '../immo/screens/recherche_screen.dart';
+import '../immo/screens/wizard/wizard_publication_screen.dart';
 import '../immo/services/brouillon_service.dart';
 import '../immo/services/profil_immo_service.dart';
 
@@ -218,6 +219,16 @@ class _ProfilPlaceholderState extends State<_ProfilPlaceholder> {
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.drafts_outlined),
               label: const Text('Test Brouillon CRUD'),
+            ),
+            const SizedBox(height: 12),
+            // Phase 15.2e-2 — lance le wizard publication (squelette).
+            // FAB définitif viendra sur RechercheScreen en 15.2e-4.
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const WizardPublicationScreen()),
+              ),
+              icon: const Icon(Icons.rocket_launch_outlined),
+              label: const Text('Lancer wizard publication'),
             ),
             const SizedBox(height: 24),
             if (_lastResult != null)
