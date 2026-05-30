@@ -1,3 +1,4 @@
+import 'commodite.dart';
 import 'photo.dart';
 
 /// Annonce immobilière. Modèle commun pour les deux formes que le backend
@@ -11,13 +12,17 @@ import 'photo.dart';
 /// `datePublication` reste en String ISO 8601 — parsé via DateTime.parse()
 /// au moment du display pour éviter une conversion locale prématurée.
 ///
-/// Champs backend ignorés en 15.2b (à ajouter si un usage UI les requiert) :
+/// `nomContactPublic` exposé en 15.2d pour la section "Vendeur" de la fiche
+/// (téléphone/email PAS exposés direct — passe par bottom sheets Contact/Visite,
+/// RGPD).
+///
+/// Champs backend ignorés (à ajouter si un usage UI les requiert) :
 /// proprieteId, profilId, agenceId, nombreEtages, etageSituation,
 /// anneeConstruction, moisCaution/Avance/Honoraire, localisationId,
 /// afficherAdresseExacte, dateDisponibilite, dateExpiration,
-/// nombreRenouvellements, motifRejet, nomContactPublic, telephoneContact,
+/// nombreRenouvellements, motifRejet, telephoneContact,
 /// premium, datePremiumFin, createdAt, updatedAt,
-/// rappelExpirationEnvoyeAt, commodites, distanceM, isFavorite,
+/// rappelExpirationEnvoyeAt, distanceM, isFavorite,
 /// typeBien (toujours null aujourd'hui).
 class Propriete {
   final String proprieteUuid;
@@ -43,8 +48,10 @@ class Propriete {
   final int nombreVues;
   final int nombreFavoris;
   final int nombreContacts;
+  final String? nomContactPublic;
   final List<Photo> photos;
   final Photo? photoCouverture;
+  final List<Commodite> commodites;
 
   const Propriete({
     required this.proprieteUuid,
@@ -70,8 +77,10 @@ class Propriete {
     required this.nombreVues,
     required this.nombreFavoris,
     required this.nombreContacts,
+    this.nomContactPublic,
     this.photos = const [],
     this.photoCouverture,
+    this.commodites = const [],
   });
 
   factory Propriete.fromJson(Map<String, dynamic> json) => Propriete(
@@ -98,6 +107,7 @@ class Propriete {
         nombreVues: json['nombreVues'] as int? ?? 0,
         nombreFavoris: json['nombreFavoris'] as int? ?? 0,
         nombreContacts: json['nombreContacts'] as int? ?? 0,
+        nomContactPublic: json['nomContactPublic'] as String?,
         photos: (json['photos'] as List<dynamic>?)
                 ?.map((e) => Photo.fromJson(e as Map<String, dynamic>))
                 .toList() ??
@@ -105,5 +115,9 @@ class Propriete {
         photoCouverture: json['photoCouverture'] != null
             ? Photo.fromJson(json['photoCouverture'] as Map<String, dynamic>)
             : null,
+        commodites: (json['commodites'] as List<dynamic>?)
+                ?.map((e) => Commodite.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            const [],
       );
 }
