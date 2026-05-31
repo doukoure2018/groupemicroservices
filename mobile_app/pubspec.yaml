@@ -44,6 +44,7 @@ dependencies:
   # UI
   google_fonts: ^6.2.1
   cached_network_image: ^3.4.1
+  flutter_cache_manager: ^3.4.1   # Phase Partage — utilisé directement par ShareService (déjà transitive de cached_network_image, déclaration explicite pour le lint)
   flutter_svg: ^2.0.10+1
   lottie: ^3.1.2
   shimmer: ^3.0.0

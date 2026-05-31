@@ -16,6 +16,7 @@ import '../services/favori_service.dart';
 import '../services/propriete_service.dart';
 import '../widgets/contacter_sheet.dart';
 import '../widgets/favori_star_button.dart';
+import '../widgets/share_button.dart';
 import '../widgets/visite_sheet.dart';
 
 /// Écran fiche détaillée d'une propriété (Phase 15.2d, finalisée en 15.2d-3).
@@ -139,6 +140,7 @@ class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
               onPressed: () => Navigator.of(context).pop<bool?>(_isFavorite),
             ),
             actions: [
+              ShareButton(propriete: p),
               FavoriStarButton(
                 proprieteUuid: p.proprieteUuid,
                 isFavorite: _isFavorite ?? false,
