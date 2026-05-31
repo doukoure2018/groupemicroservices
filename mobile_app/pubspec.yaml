@@ -46,6 +46,8 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_cache_manager: ^3.4.1   # Phase Partage — utilisé directement par ShareService (déjà transitive de cached_network_image, déclaration explicite pour le lint)
   geolocator: ^13.0.1             # Phase Géoloc-1 — GPS auto wizard + filtre "Près de moi" recherche (Géoloc-2)
+  flutter_map: ^7.0.2             # Phase Géoloc-3 — mini-carte fiche + picker draggable wizard (tiles OSM)
+  latlong2: ^0.9.1                # Phase Géoloc-3 — LatLng utility, dep directe de flutter_map
   flutter_svg: ^2.0.10+1
   lottie: ^3.1.2
   shimmer: ^3.0.0

@@ -1,4 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../../../shared/http/api_exception.dart';
 import '../../../../shared/theme/app_colors.dart';
@@ -512,14 +516,30 @@ class StepInfosState extends State<StepInfos>
                 label: const Text('Utiliser ma position'),
                 style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'La position GPS s\'auto-remplit. Vous pouvez ajuster manuellement lat/lng si besoin (précision GPS variable selon environnement).',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.onBackground,
-                      fontStyle: FontStyle.italic,
-                    ),
-              ),
+              if (_currentLatLng != null) ...[
+                const SizedBox(height: 12),
+                _PickerCarte(
+                  initialLatLng: _currentLatLng!,
+                  onChanged: _onPickerChanged,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Glissez le marqueur pour ajuster la position précisément.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.onBackground,
+                        fontStyle: FontStyle.italic,
+                      ),
+                ),
+              ] else ...[
+                const SizedBox(height: 4),
+                Text(
+                  'La position GPS s\'auto-remplit. Vous pouvez ajuster manuellement lat/lng si besoin (précision GPS variable selon environnement).',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.onBackground,
+                        fontStyle: FontStyle.italic,
+                      ),
+                ),
+              ],
             ],
             _sectionTitle('Commodités'),
             if (_commodites.isEmpty)
@@ -600,6 +620,25 @@ class StepInfosState extends State<StepInfos>
       content: Text('Position obtenue (±${pos.accuracy.toStringAsFixed(0)}m)'),
       backgroundColor: AppColors.success,
     ));
+  }
+
+  /// LatLng courant si les 2 TextFields sont valides. Affiché dans le
+  /// _PickerCarte (Géoloc-3). Null si lat/lng non saisis encore.
+  LatLng? get _currentLatLng {
+    final lat = double.tryParse(_latitudeController.text.trim());
+    final lng = double.tryParse(_longitudeController.text.trim());
+    if (lat == null || lng == null) return null;
+    return LatLng(lat, lng);
+  }
+
+  /// Callback du _PickerCarte au drag du marker — synchronise les
+  /// TextEditingController vers la nouvelle position.
+  void _onPickerChanged(LatLng newPos) {
+    setState(() {
+      _latitudeController.text = newPos.latitude.toStringAsFixed(6);
+      _longitudeController.text = newPos.longitude.toStringAsFixed(6);
+    });
+    _notifyChanged();
   }
 
   Widget _stepperRow(String label, int value, int min, int max, ValueChanged<int> onChanged) {
@@ -711,5 +750,112 @@ class StepInfosState extends State<StepInfos>
       case 'SECURITE_PRIVEE':   return Icons.shield_outlined;
       default:                  return Icons.check_circle_outline;
     }
+  }
+}
+
+/// Mini-carte draggable du wizard étape 2 (Géoloc-3).
+///
+/// L'utilisateur a un marker au centre qui peut être déplacé par drag. À
+/// chaque déplacement, le caller reçoit la nouvelle [LatLng] et synchronise
+/// les TextFields lat/lng. Pas de tap-to-move (décision UX drag-only) :
+/// les taps simples sont consommés par le pan/zoom de la carte.
+///
+/// Le drag du marker fonctionne via un GestureDetector dans le child du
+/// Marker : on convertit le delta pixel en delta LatLng via
+/// `mapController.camera.offsetToCrs(pixelPoint)` — `offsetToCrs` projette
+/// un point écran (offset depuis le coin de la carte) en LatLng.
+class _PickerCarte extends StatefulWidget {
+  final LatLng initialLatLng;
+  final ValueChanged<LatLng> onChanged;
+
+  const _PickerCarte({
+    required this.initialLatLng,
+    required this.onChanged,
+  });
+
+  @override
+  State<_PickerCarte> createState() => _PickerCarteState();
+}
+
+class _PickerCarteState extends State<_PickerCarte> {
+  late LatLng _markerPos;
+  final _mapController = MapController();
+
+  @override
+  void initState() {
+    super.initState();
+    _markerPos = widget.initialLatLng;
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 220,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: _markerPos,
+            initialZoom: 16,
+            interactionOptions: const InteractionOptions(
+              flags: InteractiveFlag.pinchZoom |
+                  InteractiveFlag.drag |
+                  InteractiveFlag.doubleTapZoom,
+            ),
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.billetterie.gn',
+            ),
+            MarkerLayer(markers: [
+              Marker(
+                point: _markerPos,
+                width: 48,
+                height: 48,
+                // Anchor centré-bas : la pointe du pin pointe la position.
+                alignment: Alignment.topCenter,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onPanUpdate: (details) {
+                    final camera = _mapController.camera;
+                    // Position actuelle du marker en pixels écran (relatif
+                    // au coin top-left de la carte).
+                    final currentScreen = camera.latLngToScreenPoint(_markerPos);
+                    // Nouveau point écran après le delta du pan.
+                    final newScreen = Offset(
+                      currentScreen.x + details.delta.dx,
+                      currentScreen.y + details.delta.dy,
+                    );
+                    final newLatLng = camera.pointToLatLng(
+                      math.Point(newScreen.dx, newScreen.dy),
+                    );
+                    setState(() => _markerPos = newLatLng);
+                    widget.onChanged(newLatLng);
+                  },
+                  child: const Icon(
+                    Icons.location_pin,
+                    color: AppColors.primary,
+                    size: 48,
+                  ),
+                ),
+              ),
+            ]),
+            const RichAttributionWidget(
+              attributions: [
+                TextSourceAttribution('© OpenStreetMap contributors'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

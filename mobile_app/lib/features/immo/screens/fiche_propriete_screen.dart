@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 
@@ -173,6 +175,10 @@ class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
               if (p.commodites.isNotEmpty) ...[
                 const _Divider(),
                 _SectionCommodites(commodites: p.commodites),
+              ],
+              if (p.latitude != null && p.longitude != null) ...[
+                const _Divider(),
+                _SectionCarte(latitude: p.latitude!, longitude: p.longitude!),
               ],
               const _Divider(),
               _SectionVendeur(nomContactPublic: p.nomContactPublic),
@@ -626,6 +632,82 @@ class _SectionCommodites extends StatelessWidget {
       case 'INTERNET':       return Icons.wifi;
       default:               return Icons.check_circle_outline;
     }
+  }
+}
+
+/// Mini-carte fiche propriété (Géoloc-3, readonly).
+///
+/// Affichée seulement si la propriete a lat+lng. Tiles OpenStreetMap
+/// (license libre, attribution requise affichée en bas-droite). Marker
+/// fixe sur la position, pinch-zoom et pan activés.
+class _SectionCarte extends StatelessWidget {
+  final double latitude;
+  final double longitude;
+  const _SectionCarte({required this.latitude, required this.longitude});
+
+  @override
+  Widget build(BuildContext context) {
+    final point = LatLng(latitude, longitude);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Localisation', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 200,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: FlutterMap(
+                options: MapOptions(
+                  initialCenter: point,
+                  initialZoom: 15,
+                  // L'utilisateur peut explorer mais la fiche est en lecture
+                  // seule — pas de drag du marker, pas de tap = move.
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.pinchZoom |
+                        InteractiveFlag.drag |
+                        InteractiveFlag.doubleTapZoom,
+                  ),
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.billetterie.gn',
+                  ),
+                  MarkerLayer(markers: [
+                    Marker(
+                      point: point,
+                      width: 40,
+                      height: 40,
+                      child: const Icon(
+                        Icons.location_pin,
+                        color: AppColors.primary,
+                        size: 40,
+                      ),
+                    ),
+                  ]),
+                  const RichAttributionWidget(
+                    attributions: [
+                      TextSourceAttribution('© OpenStreetMap contributors'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Position approximative — ±30m typique',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.onBackground,
+                  fontStyle: FontStyle.italic,
+                ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
