@@ -166,9 +166,18 @@ public class ProprieteServiceImpl implements ProprieteService {
 
     @Override
     @Transactional
-    public Propriete getByUuid(String proprieteUuid, boolean incrementVues) {
-        if (incrementVues) {
-            proprieteRepository.incrementVues(proprieteUuid);
+    public Propriete getByUuid(String proprieteUuid, boolean incrementVues, Long viewerUserId) {
+        // Dédup vues (V21) : on ne compte que si l'utilisateur est authentifié
+        // ET que c'est sa 1ère consultation de la journée. INSERT-ON-CONFLICT
+        // garantit l'atomicité — si rowsAffected=1, c'est une vue nouvelle ;
+        // si 0, c'est un doublon journalier silencieux. Anonyme (viewerUserId
+        // null) : skip total, le vendeur veut un signal "vrais prospects
+        // authentifiés", pas "bots Google + refresh maladif".
+        if (incrementVues && viewerUserId != null) {
+            int inserted = proprieteRepository.recordVue(proprieteUuid, viewerUserId);
+            if (inserted == 1) {
+                proprieteRepository.incrementVues(proprieteUuid);
+            }
         }
         Propriete propriete = proprieteRepository.findByUuid(proprieteUuid)
                 .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));

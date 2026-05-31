@@ -12,8 +12,18 @@ public interface ProprieteService {
 
     Propriete update(String proprieteUuid, ProprieteUpdateRequest request, Long userId);
 
-    /** Récupère + incrémente le compteur de vues + charge photos/commodités/type. */
-    Propriete getByUuid(String proprieteUuid, boolean incrementVues);
+    /**
+     * Récupère une propriété par son UUID + charge photos/commodités/type.
+     *
+     * @param proprieteUuid   identifiant
+     * @param incrementVues   si true ET {@code viewerUserId} non null, tente
+     *                        d'incrémenter le compteur de vues avec dédup par
+     *                        (user, jour calendaire) — voir V21. Si
+     *                        {@code viewerUserId} null (anonyme/bot), aucune
+     *                        vue n'est comptée même si incrementVues=true.
+     * @param viewerUserId    user qui consulte (nullable si endpoint anonyme)
+     */
+    Propriete getByUuid(String proprieteUuid, boolean incrementVues, Long viewerUserId);
 
     List<Propriete> findMine(Long userId, int limit, int offset);
 

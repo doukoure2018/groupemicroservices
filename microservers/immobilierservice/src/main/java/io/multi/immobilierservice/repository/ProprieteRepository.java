@@ -23,6 +23,18 @@ public interface ProprieteRepository {
 
     void incrementVues(String proprieteUuid);
 
+    /**
+     * Tente d'enregistrer une vue dédupée pour ({@code proprieteUuid},
+     * {@code userId}, today). Retourne le nombre de lignes insérées :
+     * <ul>
+     *   <li>1 = INSERT effectué (vue comptable → caller doit appeler
+     *       {@link #incrementVues(String)})</li>
+     *   <li>0 = conflit UNIQUE (déjà vue aujourd'hui par ce user) → caller
+     *       n'incrémente PAS le compteur</li>
+     * </ul>
+     */
+    int recordVue(String proprieteUuid, Long userId);
+
     /** Lookup localisation_id par uuid (table externe : localisations). */
     Optional<Long> lookupLocalisationIdByUuid(String localisationUuid);
 

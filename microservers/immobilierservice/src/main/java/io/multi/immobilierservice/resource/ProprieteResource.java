@@ -120,8 +120,12 @@ public class ProprieteResource {
 
     @GetMapping("/{proprieteUuid}")
     public ResponseEntity<Response> getByUuid(@PathVariable String proprieteUuid,
+                                              @AuthenticationPrincipal Jwt jwt,
                                               HttpServletRequest http) {
-        Propriete p = proprieteService.getByUuid(proprieteUuid, true);
+        // Endpoint permitAll (Phase 13a) → jwt peut être null (anonyme/bot).
+        // Le service skip le compteur de vues dans ce cas (cf. V21 dédup).
+        Long viewerUserId = (jwt != null) ? jwtUtils.extractUserId(jwt) : null;
+        Propriete p = proprieteService.getByUuid(proprieteUuid, true, viewerUserId);
         return ResponseEntity.ok(RequestUtils.getResponse(http,
                 Map.of("propriete", p), "Propriété récupérée", HttpStatus.OK));
     }

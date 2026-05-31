@@ -180,6 +180,21 @@ public final class ProprieteQuery {
             WHERE propriete_uuid = :proprieteUuid
             """;
 
+    /**
+     * Dédup vue par (propriete, user, jour calendaire) — Phase Dédup Vues.
+     * INSERT-SELECT pour résoudre uuid→id en une seule requête. ON CONFLICT
+     * DO NOTHING : 2e tentative dans la même journée → rowsAffected=0,
+     * silencieux. Le service Java n'incrémente nombre_vues QUE si
+     * rowsAffected=1.
+     */
+    public static final String INSERT_VUE_PROPRIETE = """
+            INSERT INTO immo_propriete_vue (propriete_id, user_id, vue_date)
+            SELECT p.propriete_id, :userId, CURRENT_DATE
+            FROM immo_propriete p
+            WHERE p.propriete_uuid = :proprieteUuid
+            ON CONFLICT (propriete_id, user_id, vue_date) DO NOTHING
+            """;
+
     public static final String LOOKUP_LOCALISATION_ID = """
             SELECT localisation_id FROM localisations WHERE localisation_uuid = :uuid
             """;

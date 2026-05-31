@@ -139,6 +139,14 @@ public class ProprieteRepositoryImpl implements ProprieteRepository {
     }
 
     @Override
+    public int recordVue(String proprieteUuid, Long userId) {
+        return jdbcClient.sql(ProprieteQuery.INSERT_VUE_PROPRIETE)
+                .param("proprieteUuid", proprieteUuid)
+                .param("userId", userId)
+                .update();
+    }
+
+    @Override
     public Optional<Long> lookupLocalisationIdByUuid(String localisationUuid) {
         return jdbcClient.sql(ProprieteQuery.LOOKUP_LOCALISATION_ID)
                 .param("uuid", localisationUuid)
