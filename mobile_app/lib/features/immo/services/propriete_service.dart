@@ -37,6 +37,11 @@ class ProprieteService {
         if (f.prixMax != null) 'prixMax': f.prixMax,
         if (f.chambresMin != null) 'chambresMin': f.chambresMin,
         if (f.q != null && f.q!.trim().isNotEmpty) 'q': f.q!.trim(),
+        // Géoloc-2B : les 3 ensemble (geoActive) activent ST_DWithin +
+        // tri DISTANCE_ASC auto côté backend.
+        if (f.lat != null) 'lat': f.lat,
+        if (f.lng != null) 'lng': f.lng,
+        if (f.rayonKm != null) 'rayonKm': f.rayonKm,
       },
     );
     final data = response.data['data'] as Map<String, dynamic>;

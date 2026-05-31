@@ -99,6 +99,32 @@ class ProprieteCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        if (propriete.distanceM != null) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            '· ${_formatDistance(propriete.distanceM!)}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ] else if (propriete.distanceM != null) ...[
+                    // Pas d'adresse mais distance disponible : afficher seule.
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.place_outlined, size: 14, color: AppColors.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatDistance(propriete.distanceM!),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
                       ],
                     ),
                   ],
@@ -237,4 +263,13 @@ class _SpecItem {
   final IconData icon;
   final String label;
   const _SpecItem(this.icon, this.label);
+}
+
+/// Format distance adaptatif (Géoloc-2B) : "à 500m" si < 1000m, sinon
+/// "à 1.5 km" avec 1 décimale.
+String _formatDistance(double meters) {
+  if (meters < 1000) {
+    return 'à ${meters.toStringAsFixed(0)} m';
+  }
+  return 'à ${(meters / 1000).toStringAsFixed(1)} km';
 }

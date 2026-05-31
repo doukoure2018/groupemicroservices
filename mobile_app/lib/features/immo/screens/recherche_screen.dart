@@ -8,6 +8,7 @@ import '../../../shared/widgets/app_loading.dart';
 import '../models/propriete.dart';
 import '../models/recherche_filtres.dart';
 import '../models/type_bien.dart';
+import '../services/geo_service.dart';
 import '../services/propriete_service.dart';
 import '../widgets/filtres_sheet.dart';
 import '../widgets/propriete_card.dart';
@@ -193,12 +194,43 @@ class _RechercheScreenState extends State<RechercheScreen> {
     ));
   }
 
+  /// Raccourci "Près de moi" — toggle neutre (Géoloc-2B). Le badge "Filtres (N)"
+  /// inclut déjà geoActive dans son compteur, donc ce raccourci ne montre PAS
+  /// d'indicateur d'état pour éviter le double-affichage de l'info.
+  ///
+  /// Comportement :
+  ///   - Si geo PAS actif : appelle GeoService → applique avec rayon 5 km
+  ///     défaut + relance la recherche.
+  ///   - Si geo déjà actif : retire les 3 champs → relance la recherche.
+  Future<void> _toggleNearMe() async {
+    if (_filtres.geoActive) {
+      setState(() => _filtres = _filtres.copyWith(lat: null, lng: null, rayonKm: null));
+      _loadInitial();
+      return;
+    }
+    final pos = await GeoService.getCurrentPosition(context);
+    if (!mounted || pos == null) return;
+    setState(() {
+      _filtres = _filtres.copyWith(
+        lat: pos.latitude,
+        lng: pos.longitude,
+        rayonKm: 5,
+      );
+    });
+    _loadInitial();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Immobilier'),
         actions: [
+          IconButton(
+            onPressed: _toggleNearMe,
+            icon: const Icon(Icons.my_location),
+            tooltip: 'Près de moi',
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: TextButton.icon(

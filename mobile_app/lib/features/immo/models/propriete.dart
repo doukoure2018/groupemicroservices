@@ -21,13 +21,17 @@ import 'photo.dart';
 /// L'app mobile actuelle force le login avant HubScreen, donc `null` n'est
 /// jamais reçu en pratique. UI traite `null` comme `false` par défaut.
 ///
+/// `distanceM` (ajouté Phase Géoloc-2B) — distance en mètres à la position
+/// utilisateur si la recherche embarquait lat/lng (filtre rayon). Null sinon.
+/// Affichage adaptatif sur ProprieteCard : "à 500m" / "à 1.5 km".
+///
 /// Champs backend ignorés (à ajouter si un usage UI les requiert) :
 /// proprieteId, profilId, agenceId, nombreEtages, etageSituation,
 /// anneeConstruction, moisCaution/Avance/Honoraire, localisationId,
 /// afficherAdresseExacte, dateDisponibilite, dateExpiration,
 /// nombreRenouvellements, motifRejet, telephoneContact,
 /// premium, datePremiumFin, createdAt, updatedAt,
-/// rappelExpirationEnvoyeAt, distanceM,
+/// rappelExpirationEnvoyeAt,
 /// typeBien (toujours null aujourd'hui).
 class Propriete {
   final String proprieteUuid;
@@ -58,6 +62,7 @@ class Propriete {
   final Photo? photoCouverture;
   final List<Commodite> commodites;
   final bool? isFavorite;
+  final double? distanceM;
 
   const Propriete({
     required this.proprieteUuid,
@@ -88,6 +93,7 @@ class Propriete {
     this.photoCouverture,
     this.commodites = const [],
     this.isFavorite,
+    this.distanceM,
   });
 
   /// Retourne une copie de la propriété avec `isFavorite` patché. Utilisé
@@ -122,6 +128,7 @@ class Propriete {
         photoCouverture: photoCouverture,
         commodites: commodites,
         isFavorite: newValue,
+        distanceM: distanceM,
       );
 
   factory Propriete.fromJson(Map<String, dynamic> json) => Propriete(
@@ -161,5 +168,6 @@ class Propriete {
                 .toList() ??
             const [],
         isFavorite: json['isFavorite'] as bool?,
+        distanceM: (json['distanceM'] as num?)?.toDouble(),
       );
 }
