@@ -133,6 +133,47 @@ Cf. task #22 (jalon SMS réel Orange).
 - [ ] `MINIO_ROOT_PASSWORD` ≠ valeur par défaut `minioadmin`
 - [ ] Rotation faite si déjà déployée précédemment avec defaults
 
+### 3.4 Migrations Flyway + cleanup seed dev
+
+```bash
+# Sur le serveur, après `docker compose up flyway-migrations` :
+docker exec billetterie-postgres psql -U $POSTGRES_USER -d $POSTGRES_DB -c \
+  "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 5;"
+# Attendu : V21 add_immo_propriete_vue (dédup vues backend) présente + success=true
+```
+
+- [ ] Toutes les migrations V1 → V21 appliquées avec `success=true`
+- [ ] V21 (table `immo_propriete_vue` dédup vues) présente — schéma critique
+  pour le comportement compteur vues vendeur. Sans cette migration, le
+  service immo crashera au 1er GET propriete (recordVue ne trouve pas la
+  table).
+
+**Cleanup users de test dev** — ces emails ne DOIVENT PAS exister en prod :
+
+```sql
+-- Vérification (doit retourner 0)
+SELECT user_id, email FROM users WHERE email IN (
+  'visiteur-immo-test@test.com',
+  'smoketest-immo@test.local',
+  'no-profile@test.local',
+  'invite-agent@test.local'
+);
+
+-- Si présent (ex: dump dev importé) :
+DELETE FROM user_roles WHERE user_id IN (SELECT user_id FROM users WHERE email LIKE '%@test.%');
+DELETE FROM immo_favori WHERE user_id IN (SELECT user_id FROM users WHERE email LIKE '%@test.%');
+DELETE FROM immo_brouillon WHERE user_id IN (SELECT user_id FROM users WHERE email LIKE '%@test.%');
+DELETE FROM immo_propriete_vue WHERE user_id IN (SELECT user_id FROM users WHERE email LIKE '%@test.%');
+DELETE FROM immo_propriete WHERE profil_id IN (SELECT profil_id FROM immo_profil WHERE user_id IN (SELECT user_id FROM users WHERE email LIKE '%@test.%'));
+DELETE FROM immo_profil WHERE user_id IN (SELECT user_id FROM users WHERE email LIKE '%@test.%');
+DELETE FROM credentials WHERE user_id IN (SELECT user_id FROM users WHERE email LIKE '%@test.%');
+DELETE FROM users WHERE email LIKE '%@test.%';
+```
+
+- [ ] Aucun user `*@test.*` en prod
+- [ ] Aucun mot de passe BCrypt `$2a$12$ztLkjYfSzxorH8d0IYUI1.URPPLDaFTpQhFxqzaIuzHzYZgB8TF1W`
+  (= hash de `VisiteurTest2026!` du seed dev, à grep dans `credentials.password`)
+
 ---
 
 ## 4. Vérifications post-déploiement Spring
@@ -199,6 +240,81 @@ Si users de test seedés en prod :
 - [ ] PATCH /confirmer → 200 + email + SMS visiteur (Phase 12)
 - [ ] Job @Scheduled expiration tourne à 2h Africa/Conakry (vérifier le lendemain)
 
+### 4.5 Features récentes (post-MVP-immo)
+
+**Favoris** (commit `7f888c4`) :
+```bash
+# Login user authentifié → JWT en variable
+JWT=$(curl -s -X POST https://api.guidipress-io.com/authorization/api/auth/token \
+  -H "Content-Type: application/json" -d '{"email":"...","password":"..."}' | jq -r .access_token)
+
+# Ajouter favori (idempotent)
+curl -s -o /dev/null -w "%{http_code}\n" -X POST \
+  https://api.guidipress-io.com/immo/favoris/<un_uuid_propriete> \
+  -H "Authorization: Bearer $JWT"
+# Attendu : 201 (1ère fois) ou 200 (déjà favori)
+
+# Liste mes favoris
+curl -s https://api.guidipress-io.com/immo/favoris/mes-favoris \
+  -H "Authorization: Bearer $JWT" | jq '.data.total'
+# Attendu : >= 1
+```
+
+- [ ] POST /favoris/{uuid} → 201/200 idempotent
+- [ ] GET /favoris/mes-favoris → liste cohérente
+- [ ] DELETE /favoris/{uuid} → 200
+
+**Dédup vues** (commit `3c0f60f`, migration V21) :
+```bash
+# 1ère consultation
+curl -s -o /dev/null https://api.guidipress-io.com/immo/proprietes/<uuid> \
+  -H "Authorization: Bearer $JWT"
+
+# 2e consultation immédiate (même JWT, même jour)
+curl -s -o /dev/null https://api.guidipress-io.com/immo/proprietes/<uuid> \
+  -H "Authorization: Bearer $JWT"
+
+# Vérifier en BD : nombre_vues +1 SEULEMENT (pas +2)
+docker exec billetterie-postgres psql -U $POSTGRES_USER -d $POSTGRES_DB -c \
+  "SELECT nombre_vues FROM immo_propriete WHERE propriete_uuid='<uuid>';"
+# Attendu : valeur incrémentée d'1 (dédup ON CONFLICT silencieux)
+
+# Vérifier table dédup
+docker exec billetterie-postgres psql -U $POSTGRES_USER -d $POSTGRES_DB -c \
+  "SELECT COUNT(*) FROM immo_propriete_vue WHERE user_id=<user_id> AND vue_date=CURRENT_DATE;"
+# Attendu : 1 (pas 2)
+```
+
+- [ ] 2 GET successifs même JWT/jour → nombre_vues incrémenté de 1 seulement
+- [ ] Table immo_propriete_vue contient 1 row pour ce couple (user, propriete, jour)
+- [ ] GET sans JWT (anonyme) → nombre_vues INCHANGÉ (skip silencieux)
+
+**Géolocalisation recherche** (commit `666ff14`) :
+```bash
+# Recherche avec filtre rayon à Conakry centre
+curl -s "https://api.guidipress-io.com/immo/proprietes/recherche?lat=9.5092&lng=-13.7122&rayonKm=10" \
+  | jq '.data.proprietes | length, .[0].distanceM'
+# Attendu : > 0 résultats, chaque résultat a distanceM non-null, tri DISTANCE_ASC
+```
+
+- [ ] Recherche `?lat=&lng=&rayonKm=` → résultats avec `distanceM` non-null
+- [ ] Tri auto par distance croissante (le 1er résultat doit avoir la distance la plus faible)
+
+**Partage mobile** (commit `75adf89`) — pas testable serveur (mobile only), couvert par tests App Store submission.
+
+**Géoloc-3 carte tiles** (commit `0beee8b`) :
+```bash
+# Vérifier que le serveur peut atteindre les tiles OSM (firewall sortant)
+curl -s -o /dev/null -w "OSM tile : %{http_code}\n" -m 10 \
+  https://tile.openstreetmap.org/15/16384/16384.png
+# Attendu : 200 ou 302. Si refused/timeout → le mobile ne peut pas non plus
+# (passe par même DNS public).
+```
+
+- [ ] Le serveur peut joindre `tile.openstreetmap.org` (relevance : monitoring,
+  pas de blocage applicatif puisque l'app mobile tape direct OSM HTTPS sans
+  passer par le gateway)
+
 ---
 
 ## 5. Données — vérifs business
@@ -217,16 +333,204 @@ Si users de test seedés en prod :
 
 ---
 
-## 6. Backlog dettes non bloquantes mais à traiter
+## 6. Compose hardening — validation runtime
+
+Le commit `4d761b8` impose des limites mémoire serrées + tuning Postgres + log rotation. À vérifier post-`docker compose up -d` :
+
+```bash
+# Limites appliquées
+docker stats --no-stream --format "table {{.Container}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.CPUPerc}}"
+```
+
+- [ ] postgres : limit 1024 MiB respectée, usage typique 200-400 MiB
+- [ ] kafka : limit 800 MiB, usage 300-500 MiB
+- [ ] auth/user/billet : limit 512 MiB chacun, usage 250-400 MiB heap (JVM)
+- [ ] immo : limit 768 MiB, usage 300-500 MiB (peak pendant upload photo)
+- [ ] notif : limit 384 MiB, usage 200-300 MiB
+- [ ] **Aucun service en orange/rouge** (>80% sustained) → si oui, ajuster
+  vers le haut le concerné
+
+**JVM heap allouée vs containers** :
+```bash
+docker exec billetterie-immobilierservice jcmd 1 VM.flags | grep -E "MaxHeapSize|UseG1GC"
+# Attendu : MaxHeapSize ≈ 75% × 768 MiB = ~576 MiB (603979776 bytes)
+#          UseG1GC activé
+```
+
+- [ ] `MaxRAMPercentage=75.0` honorée par la JVM
+- [ ] `UseG1GC` activé
+
+**Postgres tuning effectif** :
+```bash
+docker exec billetterie-postgres psql -U $POSTGRES_USER -d $POSTGRES_DB -c \
+  "SHOW shared_buffers; SHOW effective_cache_size; SHOW work_mem;"
+```
+- [ ] shared_buffers = 256MB (pas 128MB default)
+- [ ] effective_cache_size = 768MB
+- [ ] work_mem = 8MB
+
+**Log rotation Docker** :
+```bash
+docker inspect billetterie-immobilierservice | jq '.[0].HostConfig.LogConfig'
+# Attendu : {"Type":"json-file","Config":{"max-file":"5","max-size":"10m"}}
+```
+- [ ] LogConfig json-file max-size 10m max-file 5 sur tous services hors
+  flyway/minio-init one-shot
+
+---
+
+## 7. Sauvegarde BD — procédure exécutable
+
+Pré-prod : configurer **avant le 1er user inscrit**. Une fois la BD a des données utilisateur, restaurer un dump perdu = catastrophique.
+
+### 7.1 Snapshot OVH automatique
+- [ ] Snapshot OVH activé (panneau OVH > VPS > Sauvegarde automatique)
+- [ ] Fréquence quotidienne, rétention 7 jours minimum
+
+### 7.2 pg_dump local (backup logique, restorable n'importe où)
+```bash
+# Cron quotidien sur le serveur (3h du matin Africa/Conakry = 02:00 UTC)
+0 2 * * * docker exec billetterie-postgres pg_dump -U $POSTGRES_USER -F c -b $POSTGRES_DB \
+  > /backups/postgres/innodb_$(date +\%Y\%m\%d).dump && \
+  find /backups/postgres/ -name "innodb_*.dump" -mtime +30 -delete
+```
+
+- [ ] Script cron installé `/etc/cron.d/postgres-backup`
+- [ ] Test manuel : lancer le pg_dump → fichier `.dump` > 1MB créé
+- [ ] Rotation 30 jours opérationnelle (find -mtime +30 -delete)
+- [ ] Dossier `/backups/postgres/` : permissions 700 propriétaire root
+
+### 7.3 Restore drill (à faire 1× avant lancement, jamais en panique)
+
+```bash
+# Sur un container postgres DIFFÉRENT (ou un volume temp pour pas écraser prod) :
+docker run --rm -v /backups/postgres/innodb_YYYYMMDD.dump:/dump postgres:16 \
+  pg_restore -h $TEMP_HOST -U $POSTGRES_USER -d innodb_test /dump
+
+# Vérifier qu'on retrouve des tables et lignes attendues
+docker exec <temp_container> psql -U $POSTGRES_USER -d innodb_test -c \
+  "SELECT COUNT(*) FROM users; SELECT COUNT(*) FROM immo_propriete;"
+```
+
+- [ ] Restore drill réussi 1× avant lancement (pas restore "panic" le jour de la perte)
+
+---
+
+## 8. Monitoring dettes prod
+
+Dettes connues nécessitant surveillance post-lancement :
+
+### 8.1 MinIO down / S3 SDK hang (dette backend-minio-no-short-timeout-debt)
+
+Le S3 SDK Java côté immo hang ~5min si MinIO down (apiCallTimeout pas configuré). Sous trafic, le pool de threads HTTP immo saturer rapidement.
+
+```bash
+# Détection : grep retry S3 SDK dans les logs immo
+docker logs billetterie-immobilierservice --since 24h 2>&1 | \
+  grep -iE "retry|s3.*timeout|s3.*backoff" | head -20
+```
+
+- [ ] Pas de retry massif S3 dans les 24 dernières heures (signal MinIO instable)
+- [ ] Si présent → vérifier MinIO health avant urgence applicative
+
+### 8.2 Photos thumbnail manquantes (orphelins BD)
+
+Une photo en BD avec `object_key_thumbnail` non-null mais absente de MinIO → cas "orphelin" (cf. `serve photo` Phase 13b qui logue le cas).
+
+```bash
+docker logs billetterie-immobilierservice --since 7d 2>&1 | \
+  grep "ABSENTE de MinIO" | head -10
+```
+
+- [ ] 0 orphelin sur 7 jours → cohérence BD/MinIO OK
+- [ ] Si orphelins → admin doit DELETE BD ou re-uploader
+
+### 8.3 Notifications mortes (phone manquant)
+
+Si `% users avec phone renseigné < 30%`, le canal SMS Orange est mort pour la majorité. Métrique à monitorer mensuellement.
+
+```sql
+SELECT
+  COUNT(*) FILTER (WHERE phone IS NOT NULL AND phone <> '') * 100.0 / COUNT(*) AS pct_phone,
+  COUNT(*) AS total
+FROM users;
+```
+
+- [ ] pct_phone ≥ 50% → canal SMS viable
+- [ ] Si < 50% → décision business : forcer phone à l'inscription OU
+  accepter coverage partiel
+
+---
+
+## 9. Mobile build prod (avant submission App Store / Play Store)
+
+Couvert sur le poste Flutter (Mac dev), pas sur le serveur. Mais critique
+avant `flutter build apk --release` / `flutter build ipa --release`.
+
+### 9.1 AppConfig dev → prod
+```bash
+# Sur mobile_app/ :
+grep -E "isProduction\s*=" lib/config/app_config.dart
+# Attendu : "static const bool isProduction = true;"
+
+grep -E "10\.\d+\.\d+\.\d+|172\.\d+|192\.168" lib/config/app_config.dart
+# Attendu : aucune occurrence (toutes les IPs LAN dev retirées)
+```
+
+- [ ] `AppConfig.isProduction = true`
+- [ ] Aucune IP LAN dev hardcodée dans le code (régression possible par patch
+  local pour tests émulateur — cf. mémoire [[mobile-apibaseurl-dart-define]])
+
+### 9.2 Permissions OS validées runtime (jamais testées en dev Android)
+
+Cf. mémoire [[mobile-ios-perms-test-pre-appstore]] :
+
+**iOS Simulator / device** :
+- [ ] `NSPhotoLibraryUsageDescription` : tap "Galerie" dans le wizard → dialog permission affiché en FR avec wording explicite
+- [ ] `NSCameraUsageDescription` : tap "Caméra" → dialog permission affiché en FR
+- [ ] `NSLocationWhenInUseUsageDescription` : tap "Utiliser ma position" → dialog permission affiché en FR
+
+**Android** : déjà validé en dev mais re-tester sur device physique différent du Mac de dev.
+
+### 9.3 Texte partage stores
+- [ ] `ShareService` partage encore le texte legacy "Télécharge l'app pour les
+  détails" — à enrichir avec URLs stores RÉELLES une fois publié (cf. mémoire
+  [[mobile-share-stores-urls-debt]]).
+
+### 9.4 minSdk Android
+```bash
+grep "minSdk" android/app/build.gradle.kts
+# Attendu : minSdk = 23 (cf. mémoire mobile-android-minsdk-23)
+```
+- [ ] minSdk = 23 préservé (pas écrasé par `flutter create .` ou regen Android)
+
+### 9.5 Android License acceptée
+```bash
+flutter doctor --android-licenses
+# Toutes acceptées ?
+```
+
+- [ ] Toutes les licences Android acceptées avant `flutter build`
+
+---
+
+## 10. Backlog dettes non bloquantes mais à traiter
 
 - [ ] Bug 401→503 quand service down (task #28) — fallback gateway à configurer
 - [ ] M2M token client_credentials (task #23 si elle revient) — UserLookupRepository
   a été supprimé, mais Feign reste sans interceptor JWT. Acceptable car `/user/getUser/**`
   reste permitAll côté userservice (cf. décision Option D).
+- [ ] Logback RollingFileAppender par service (cf. mémoire
+  [[logback-rolling-fileappender-debt]]) — déclencheur : 1er incident prod
+  nécessitant logs >7 jours
+- [ ] flutter_map_cache (cf. mémoire [[mobile-flutter-map-tiles-cache-debt]])
+  — déclencheur : plaintes UX lenteur cartes Conakry 3G
+- [ ] Mes annonces (cf. mémoire [[wizard-publication-brouillon-orpheline-debt]])
+  — déclencheur : 1er user qui demande "où sont mes annonces en attente ?"
 
 ---
 
-## 7. Quick rollback procedure
+## 11. Quick rollback procedure
 
 Si l'accès public casse après un redéploiement :
 
