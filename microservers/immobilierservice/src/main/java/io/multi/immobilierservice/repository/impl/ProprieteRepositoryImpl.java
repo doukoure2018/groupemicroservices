@@ -147,6 +147,22 @@ public class ProprieteRepositoryImpl implements ProprieteRepository {
     }
 
     @Override
+    public List<Propriete> findEnAttenteValidation(int limit, int offset) {
+        return jdbcClient.sql(ProprieteQuery.FIND_EN_ATTENTE_VALIDATION)
+                .param("limit", limit)
+                .param("offset", offset)
+                .query(proprieteRowMapper)
+                .list();
+    }
+
+    @Override
+    public long countEnAttenteValidation() {
+        return jdbcClient.sql(ProprieteQuery.COUNT_EN_ATTENTE_VALIDATION)
+                .query(Long.class)
+                .single();
+    }
+
+    @Override
     public Optional<Long> lookupLocalisationIdByUuid(String localisationUuid) {
         return jdbcClient.sql(ProprieteQuery.LOOKUP_LOCALISATION_ID)
                 .param("uuid", localisationUuid)

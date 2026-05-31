@@ -193,6 +193,18 @@ public class ProprieteServiceImpl implements ProprieteService {
     }
 
     @Override
+    public List<Propriete> findEnAttenteValidation(int limit, int offset) {
+        List<Propriete> list = proprieteRepository.findEnAttenteValidation(limit, offset);
+        list.forEach(this::enrich);
+        return list;
+    }
+
+    @Override
+    public long countEnAttenteValidation() {
+        return proprieteRepository.countEnAttenteValidation();
+    }
+
+    @Override
     @Transactional
     public Propriete publier(String proprieteUuid, Long userId) {
         Propriete p = proprieteRepository.findByUuid(proprieteUuid)

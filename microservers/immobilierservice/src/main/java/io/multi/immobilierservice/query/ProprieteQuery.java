@@ -181,6 +181,22 @@ public final class ProprieteQuery {
             """;
 
     /**
+     * Liste paginée des annonces en attente de validation (file d'attente
+     * modération admin). Tri FIFO sur created_at (date de soumission), pas
+     * date_publication qui peut être NULL pour ces annonces.
+     */
+    public static final String FIND_EN_ATTENTE_VALIDATION = """
+            SELECT * FROM immo_propriete
+            WHERE statut = 'EN_ATTENTE_VALIDATION'
+            ORDER BY created_at ASC
+            LIMIT :limit OFFSET :offset
+            """;
+
+    public static final String COUNT_EN_ATTENTE_VALIDATION = """
+            SELECT COUNT(*) FROM immo_propriete WHERE statut = 'EN_ATTENTE_VALIDATION'
+            """;
+
+    /**
      * Dédup vue par (propriete, user, jour calendaire) — Phase Dédup Vues.
      * INSERT-SELECT pour résoudre uuid→id en une seule requête. ON CONFLICT
      * DO NOTHING : 2e tentative dans la même journée → rowsAffected=0,

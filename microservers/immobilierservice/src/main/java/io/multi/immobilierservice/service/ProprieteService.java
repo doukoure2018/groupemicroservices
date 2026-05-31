@@ -51,6 +51,16 @@ public interface ProprieteService {
     /** Admin : rejette une annonce + motif. La passe en RETIRE. */
     Propriete rejeter(String proprieteUuid, String motif);
 
+    /**
+     * Admin : liste paginée des annonces en file de modération (FIFO sur
+     * created_at). Chaque propriete est enrichie avec ses photos et
+     * commodités pour preview sans N+1 côté UI.
+     */
+    java.util.List<Propriete> findEnAttenteValidation(int limit, int offset);
+
+    /** Admin : compteur total pour pagination "Modération". */
+    long countEnAttenteValidation();
+
     /** Owner : renouvelle son annonce (1-clic) pour {@code immo.expiration.duree-jours} jours. */
     Propriete renouveler(String proprieteUuid, Long userId);
 }

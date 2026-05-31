@@ -21,6 +21,12 @@ public interface ProprieteRepository {
 
     List<Propriete> findByProfil(Long profilId, int limit, int offset);
 
+    /** Liste paginée des annonces EN_ATTENTE_VALIDATION (file modération admin). */
+    List<Propriete> findEnAttenteValidation(int limit, int offset);
+
+    /** Compteur total pour pagination "Modération". */
+    long countEnAttenteValidation();
+
     void incrementVues(String proprieteUuid);
 
     /**

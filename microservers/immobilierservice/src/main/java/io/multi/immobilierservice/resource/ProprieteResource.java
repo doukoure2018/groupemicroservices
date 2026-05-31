@@ -199,6 +199,27 @@ public class ProprieteResource {
 
     // ---- Modération admin (Phase 9a) ----
 
+    /**
+     * Admin : file paginée des annonces EN_ATTENTE_VALIDATION (FIFO sur date
+     * de soumission). Chaque entrée est enrichie avec ses photos +
+     * commodités pour preview directe côté UI back-office, évite N+1.
+     *
+     * <p>SIRA Guinée back-office consomme cet endpoint pour afficher la
+     * liste à modérer + actions Valider/Rejeter dans la même vue.
+     */
+    @GetMapping("/moderation")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<Response> findEnAttenteModeration(
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(defaultValue = "0") int offset,
+            HttpServletRequest http) {
+        List<Propriete> list = proprieteService.findEnAttenteValidation(limit, offset);
+        long total = proprieteService.countEnAttenteValidation();
+        return ResponseEntity.ok(RequestUtils.getResponse(http,
+                Map.of("proprietes", list, "total", total, "limit", limit, "offset", offset),
+                "Annonces en attente de modération", HttpStatus.OK));
+    }
+
     @PatchMapping("/{proprieteUuid}/valider")
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> valider(@PathVariable String proprieteUuid,
