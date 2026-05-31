@@ -31,6 +31,8 @@ export class AppMenu {
     private initializeMenu() {
         if (this.user?.role === 'SUPER_ADMIN') {
             this.model = this.getSuperAdminMenu();
+        } else if (this.user?.role === 'ADMIN') {
+            this.model = this.getAdminMenu();
         } else if (this.user?.role === 'AGENT_CREDIT') {
             this.model = this.getAgentCreditMenu();
         } else if (this.user?.role === 'MANAGER') {
@@ -165,6 +167,43 @@ export class AppMenu {
                         label: 'Créer un Utilisateur',
                         icon: 'pi pi-fw pi-user-plus',
                         routerLink: ['/dashboards/admin/utilisateurs/create']
+                    }
+                ]
+            },
+            {
+                label: '7. Immobilier (SIRA Guinée)',
+                icon: 'pi pi-fw pi-building',
+                items: [
+                    {
+                        label: 'Modération des annonces',
+                        icon: 'pi pi-fw pi-check-circle',
+                        routerLink: ['/dashboards/admin/immobilier/moderation']
+                    }
+                ]
+            }
+        ];
+    }
+
+    private getAdminMenu(): MenuItem[] {
+        return [
+            {
+                label: 'Tableau de bord',
+                items: [
+                    {
+                        label: 'Tableau de bord',
+                        icon: 'pi pi-fw pi-th-large',
+                        routerLink: ['/dashboards']
+                    }
+                ]
+            },
+            {
+                label: 'Immobilier (SIRA Guinée)',
+                icon: 'pi pi-fw pi-building',
+                items: [
+                    {
+                        label: 'Modération des annonces',
+                        icon: 'pi pi-fw pi-check-circle',
+                        routerLink: ['/dashboards/admin/immobilier/moderation']
                     }
                 ]
             }

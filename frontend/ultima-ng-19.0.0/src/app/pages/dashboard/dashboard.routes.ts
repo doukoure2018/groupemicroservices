@@ -111,6 +111,13 @@ export default [
         loadComponent: () => import('./admin/create-user/create-user.component').then((c) => c.CreateUserComponent)
     },
 
+    // 7. Immobilier (SIRA Guinée)
+    {
+        path: 'admin/immobilier/moderation',
+        data: { breadcrumb: 'Modération Immobilière' },
+        loadComponent: () => import('./admin/immobilier/moderation/moderation.component').then((c) => c.ImmobilierModerationComponent)
+    },
+
     // ===== AUTRES ROUTES =====
     {
         path: 'createUser',

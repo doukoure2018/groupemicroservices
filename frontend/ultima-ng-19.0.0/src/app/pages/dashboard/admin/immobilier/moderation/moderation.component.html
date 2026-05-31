@@ -1,0 +1,152 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="moderation-container">
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Modération des annonces immobilières</h1>
+            <p class="subtitle">SIRA Guinée — Validation des annonces en attente avant publication publique</p>
+        </div>
+        <p-button icon="pi pi-refresh" label="Actualiser" [outlined]="true" [loading]="loading()" (onClick)="loadModeration()">
+        </p-button>
+    </div>
+
+    <div class="counter-bar">
+        <p-tag [value]="total() + ' en attente'" severity="warn" icon="pi pi-clock"></p-tag>
+    </div>
+
+    <p-card>
+        @if (loading() && proprietes().length === 0) {
+            <div class="loading-container">
+                <p-progressSpinner strokeWidth="4" ariaLabel="Chargement"></p-progressSpinner>
+                <span>Chargement des annonces en attente…</span>
+            </div>
+        } @else {
+            <p-table
+                [value]="proprietes()"
+                [paginator]="true"
+                [rows]="10"
+                [rowsPerPageOptions]="[10, 25, 50]"
+                [showCurrentPageReport]="true"
+                currentPageReportTemplate="{first} à {last} sur {totalRecords} annonces"
+                styleClass="p-datatable-sm p-datatable-striped"
+                [tableStyle]="{ 'min-width': '60rem' }"
+            >
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 90px">Photo</th>
+                        <th pSortableColumn="titre">Titre <p-sortIcon field="titre"></p-sortIcon></th>
+                        <th>Type</th>
+                        <th>Prix</th>
+                        <th>Localisation</th>
+                        <th pSortableColumn="createdAt">Créée le <p-sortIcon field="createdAt"></p-sortIcon></th>
+                        <th style="width: 180px">Actions</th>
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="body" let-p>
+                    <tr>
+                        <td>
+                            @if (photoUrl(p)) {
+                                <img [src]="photoUrl(p)" alt="" class="thumbnail" />
+                            } @else {
+                                <div class="thumbnail no-photo">
+                                    <i class="pi pi-image"></i>
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            <div class="title-cell">
+                                <span class="title">{{ p.titre }}</span>
+                                <span class="ref">{{ p.reference }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <p-tag [value]="p.typeAnnonce" [severity]="p.typeAnnonce === 'VENTE' ? 'info' : 'success'"></p-tag>
+                        </td>
+                        <td class="price">{{ formatPrix(p) }}</td>
+                        <td>{{ p.adresseComplete || '—' }}</td>
+                        <td>{{ p.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                        <td>
+                            <div class="actions-cell">
+                                <p-button
+                                    icon="pi pi-check"
+                                    label="Valider"
+                                    severity="success"
+                                    [text]="false"
+                                    size="small"
+                                    (onClick)="confirmValider(p)"
+                                    pTooltip="Publier publiquement + notifier l'annonceur"
+                                    tooltipPosition="top"
+                                ></p-button>
+                                <p-button
+                                    icon="pi pi-times"
+                                    severity="danger"
+                                    [text]="true"
+                                    [rounded]="true"
+                                    (onClick)="openRejectDialog(p)"
+                                    pTooltip="Rejeter avec motif"
+                                    tooltipPosition="top"
+                                ></p-button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <i class="pi pi-check-circle"></i>
+                                <p>Aucune annonce en attente de modération</p>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        }
+    </p-card>
+</div>
+
+<p-dialog
+    header="Rejeter l'annonce"
+    [(visible)]="state().isRejectDialogOpen"
+    [modal]="true"
+    [style]="{ width: '560px' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="closeRejectDialog()"
+>
+    @if (selected(); as p) {
+        <div class="reject-preview">
+            <span class="ref">{{ p.reference }}</span>
+            <span class="title">{{ p.titre }}</span>
+        </div>
+
+        <form [formGroup]="rejectForm" (ngSubmit)="onRejectSubmit()">
+            <div class="form-field">
+                <label for="motif">Motif du rejet *</label>
+                <p class="hint">
+                    Ce message sera envoyé par email à l'annonceur. Restez constructif et précis pour qu'il puisse corriger.
+                </p>
+                <textarea
+                    pInputTextarea
+                    id="motif"
+                    formControlName="motif"
+                    rows="6"
+                    [placeholder]="motifPlaceholder"
+                    [class.ng-invalid]="isMotifInvalid()"
+                    [class.ng-dirty]="isMotifInvalid()"
+                ></textarea>
+                @if (isMotifInvalid()) {
+                    <small class="p-error">{{ motifError() }}</small>
+                }
+            </div>
+
+            <div class="dialog-footer">
+                <p-button label="Annuler" [outlined]="true" severity="secondary" (onClick)="closeRejectDialog()"></p-button>
+                <p-button label="Rejeter et notifier" severity="danger" icon="pi pi-send" type="submit" [loading]="loading()"></p-button>
+            </div>
+        </form>
+    }
+</p-dialog>

@@ -11,6 +11,9 @@ import { Site } from './site.model';
 import { Depart } from './depart.model';
 import { Arrivee } from './arrivee.model';
 
+// Immobilier (SIRA Guinée)
+import { IPropriete } from './propriete';
+
 export interface IResponse {
     time: Date | string;
     code: number;
@@ -44,6 +47,12 @@ export interface IResponse {
         departs?: Depart[];
         arrivee?: Arrivee;
         arrivees?: Arrivee[];
+
+        // Immobilier (SIRA Guinée)
+        propriete?: IPropriete;
+        proprietes?: IPropriete[];
+        limit?: number;
+        offset?: number;
 
         // Métadonnées
         total?: number;
