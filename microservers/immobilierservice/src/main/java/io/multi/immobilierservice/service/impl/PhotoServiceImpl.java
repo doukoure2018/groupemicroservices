@@ -15,7 +15,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,8 +35,7 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     @Transactional
-    public Photo uploadPhotoPropriete(String proprieteUuid, byte[] data, String filename,
-                                      String contentType, Long userId) {
+    public Photo uploadPhotoPropriete(String proprieteUuid, MultipartFile file, Long userId) throws IOException {
         Propriete propriete = proprieteRepository.findByUuid(proprieteUuid)
                 .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
         ensureOwner(propriete, userId);
@@ -44,7 +45,7 @@ public class PhotoServiceImpl implements PhotoService {
             throw new ApiException("Nombre maximum de photos atteint (" + MAX_PHOTOS_PAR_PROPRIETE + ")");
         }
 
-        UploadResult uploaded = photoStorageService.uploadPhoto(data, filename, contentType);
+        UploadResult uploaded = photoStorageService.uploadPhoto(file);
 
         boolean isFirst = existing == 0;
         Photo toSave = Photo.builder()

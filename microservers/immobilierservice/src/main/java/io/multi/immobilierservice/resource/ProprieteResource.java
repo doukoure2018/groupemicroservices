@@ -246,9 +246,10 @@ public class ProprieteResource {
                                                 @AuthenticationPrincipal Jwt jwt,
                                                 HttpServletRequest http) throws IOException {
         Long userId = jwtUtils.extractUserId(jwt);
-        Photo photo = photoService.uploadPhotoPropriete(
-                proprieteUuid, file.getBytes(), file.getOriginalFilename(),
-                file.getContentType(), userId);
+        // Streaming via fichier temp côté PhotoStorageService — file.getBytes()
+        // évité pour ne pas charger 10MB en heap (cf. fix multipart streaming
+        // pre-prod hardening).
+        Photo photo = photoService.uploadPhotoPropriete(proprieteUuid, file, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 RequestUtils.getResponse(http, Map.of("photo", photo),
                         "Photo ajoutée", HttpStatus.CREATED));

@@ -144,8 +144,8 @@ public class PhotoResource {
     @PostMapping(value = "/test-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Response> testUpload(@RequestParam("file") MultipartFile file,
                                                HttpServletRequest request) throws IOException {
-        UploadResult result = photoStorageService.uploadPhoto(
-                file.getBytes(), file.getOriginalFilename(), file.getContentType());
+        // Streaming via fichier temp — pas de file.getBytes() (fix pre-prod).
+        UploadResult result = photoStorageService.uploadPhoto(file);
         return ResponseEntity.ok(RequestUtils.getResponse(request,
                 Map.of("upload", result), "Photo uploadée", HttpStatus.OK));
     }

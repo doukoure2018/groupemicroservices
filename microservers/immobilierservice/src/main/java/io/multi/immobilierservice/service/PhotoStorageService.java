@@ -4,6 +4,8 @@ import io.multi.immobilierservice.dto.UploadResult;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
+import java.io.IOException;
+
 /**
  * Service de stockage des photos (et autres fichiers) sur MinIO via l'API S3.
  *
@@ -13,14 +15,21 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 public interface PhotoStorageService {
 
     /**
-     * Upload d'une photo + génération d'une miniature.
+     * Upload d'une photo + génération d'une miniature, streaming via fichier
+     * temp disque (pas de byte[] en heap pour l'original).
      *
-     * @param data            contenu binaire du fichier
-     * @param originalFilename nom original (utilisé pour l'extension)
-     * @param contentType     ex. "image/jpeg" — doit commencer par "image/"
+     * <p>Pre-prod hardening : éviter OOM sous trafic concurrent. Le fichier
+     * passé via {@code MultipartFile.transferTo(tempFile)} est traité sur
+     * disque pour validation+dimensions+upload S3+génération thumbnail. La
+     * thumbnail (~33KB) reste en byte[] (acceptable, petit). Le tempFile est
+     * supprimé en finally.
+     *
+     * @param file fichier multipart Spring (DOIT être une image — contentType
+     *             contrôlé "image/...")
      * @return objet contenant URL publique, URL thumbnail, clés S3, dimensions
+     * @throws IOException si transfert vers tempFile échoue (disque plein, etc.)
      */
-    UploadResult uploadPhoto(byte[] data, String originalFilename, String contentType);
+    UploadResult uploadPhoto(org.springframework.web.multipart.MultipartFile file) throws IOException;
 
     /**
      * Upload d'un document arbitraire (PDF, image KYC) sans génération de thumbnail.

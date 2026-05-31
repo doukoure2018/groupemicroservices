@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -18,7 +19,9 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -62,45 +65,62 @@ public class PhotoStorageServiceImpl implements PhotoStorageService {
     }
 
     @Override
-    public UploadResult uploadPhoto(byte[] data, String originalFilename, String contentType) {
-        validateImage(data, contentType);
+    public UploadResult uploadPhoto(MultipartFile file) throws IOException {
+        // Pre-prod hardening : streaming via fichier temp disque au lieu de
+        // charger byte[] en heap. Évite OOM sous trafic concurrent (5 uploads
+        // 10MB = 50MB heap au lieu de 0 avec cette approche). Le tempFile est
+        // supprimé en finally — best-effort, l'OS nettoie /tmp si besoin.
+        final String contentType = file.getContentType();
+        final String originalFilename = file.getOriginalFilename();
+        final long size = file.getSize();
 
-        String extension = extractExtension(originalFilename, contentType);
-        String objectKey = generateKey(extension);
-        String objectKeyThumb = generateKey("jpg"); // thumbnails toujours en JPEG
+        validateSize(size, contentType);
 
-        // 1. Lire les dimensions de l'original
-        Integer largeur = null, hauteur = null;
+        File tempFile = Files.createTempFile("immo-photo-", ".tmp").toFile();
         try {
-            BufferedImage original = ImageIO.read(new ByteArrayInputStream(data));
-            if (original != null) {
-                largeur = original.getWidth();
-                hauteur = original.getHeight();
+            file.transferTo(tempFile);
+
+            String extension = extractExtension(originalFilename, contentType);
+            String objectKey = generateKey(extension);
+            String objectKeyThumb = generateKey("jpg"); // thumbnails toujours en JPEG
+
+            // 1. Lire les dimensions de l'original (depuis le tempFile, pas heap)
+            Integer largeur = null, hauteur = null;
+            try {
+                BufferedImage original = ImageIO.read(tempFile);
+                if (original != null) {
+                    largeur = original.getWidth();
+                    hauteur = original.getHeight();
+                }
+            } catch (IOException e) {
+                log.warn("Lecture dimensions image échouée : {}", e.getMessage());
             }
-        } catch (IOException e) {
-            log.warn("Lecture dimensions image échouée : {}", e.getMessage());
+
+            // 2. Upload original (streaming via tempFile)
+            putObjectFromFile(bucketPhotos, objectKey, contentType, tempFile);
+
+            // 3. Générer + uploader thumbnail (thumb reste petit ~33KB, byte[] OK)
+            byte[] thumbData = generateThumbnailFromFile(tempFile);
+            putObject(bucketThumbnails, objectKeyThumb, "image/jpeg", thumbData);
+
+            log.info("Photo uploadée (streaming) : key={} ({} octets), thumb={} ({} octets)",
+                    objectKey, size, objectKeyThumb, thumbData.length);
+
+            return UploadResult.builder()
+                    .url(buildPublicUrl(bucketPhotos, objectKey))
+                    .urlThumbnail(buildPublicUrl(bucketThumbnails, objectKeyThumb))
+                    .objectKey(objectKey)
+                    .objectKeyThumbnail(objectKeyThumb)
+                    .sizeOctets(size)
+                    .contentType(contentType)
+                    .largeur(largeur)
+                    .hauteur(hauteur)
+                    .build();
+        } finally {
+            if (!tempFile.delete()) {
+                log.debug("tempFile {} non supprimé (OS s'en chargera)", tempFile);
+            }
         }
-
-        // 2. Upload original
-        putObject(bucketPhotos, objectKey, contentType, data);
-
-        // 3. Générer + uploader thumbnail
-        byte[] thumbData = generateThumbnail(data);
-        putObject(bucketThumbnails, objectKeyThumb, "image/jpeg", thumbData);
-
-        log.info("Photo uploadée : key={} ({} octets), thumb={} ({} octets)",
-                objectKey, data.length, objectKeyThumb, thumbData.length);
-
-        return UploadResult.builder()
-                .url(buildPublicUrl(bucketPhotos, objectKey))
-                .urlThumbnail(buildPublicUrl(bucketThumbnails, objectKeyThumb))
-                .objectKey(objectKey)
-                .objectKeyThumbnail(objectKeyThumb)
-                .sizeOctets((long) data.length)
-                .contentType(contentType)
-                .largeur(largeur)
-                .hauteur(hauteur)
-                .build();
     }
 
     @Override
@@ -179,9 +199,42 @@ public class PhotoStorageServiceImpl implements PhotoStorageService {
         }
     }
 
+    /**
+     * Validation pré-transfert (pas besoin de charger les bytes pour vérifier
+     * size+contentType). Utilisée par le path streaming MultipartFile.
+     */
+    private void validateSize(long size, String contentType) {
+        if (size <= 0) {
+            throw new ApiException("Fichier vide");
+        }
+        if (size > MAX_SIZE_OCTETS) {
+            throw new ApiException("Image trop volumineuse (max " + (MAX_SIZE_OCTETS / 1024 / 1024) + " MB)");
+        }
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new ApiException("Type non supporté : " + contentType + " (attendu image/*)");
+        }
+    }
+
     private byte[] generateThumbnail(byte[] data) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Thumbnails.of(new ByteArrayInputStream(data))
+                    .size(thumbWidth, thumbHeight)
+                    .outputQuality(thumbQuality)
+                    .outputFormat("jpg")
+                    .toOutputStream(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new ApiException("Erreur génération thumbnail : " + e.getMessage());
+        }
+    }
+
+    /**
+     * Génération thumbnail depuis fichier disque (path streaming). Le thumb
+     * reste petit (~33KB JPEG), retour en byte[] acceptable mémoire.
+     */
+    private byte[] generateThumbnailFromFile(File source) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Thumbnails.of(source)
                     .size(thumbWidth, thumbHeight)
                     .outputQuality(thumbQuality)
                     .outputFormat("jpg")
@@ -201,6 +254,23 @@ public class PhotoStorageServiceImpl implements PhotoStorageService {
                         .contentLength((long) data.length)
                         .build(),
                 RequestBody.fromBytes(data)
+        );
+    }
+
+    /**
+     * Upload S3 streaming depuis un fichier disque — pas de chargement en heap
+     * de l'original. Utilisé par {@link #uploadPhoto(MultipartFile)} pour
+     * éviter OOM sous trafic concurrent.
+     */
+    private void putObjectFromFile(String bucket, String key, String contentType, File source) {
+        s3Client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(key)
+                        .contentType(contentType)
+                        .contentLength(source.length())
+                        .build(),
+                RequestBody.fromFile(source)
         );
     }
 
