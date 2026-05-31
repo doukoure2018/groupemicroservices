@@ -12,6 +12,7 @@ import '../services/propriete_service.dart';
 import '../widgets/filtres_sheet.dart';
 import '../widgets/propriete_card.dart';
 import 'fiche_propriete_screen.dart';
+import 'wizard/wizard_publication_screen.dart';
 
 /// Écran de recherche immobilier (15.2c). Liste de [Propriete] paginée avec
 /// filtres exposés via bottom sheet ([FiltresSheet]).
@@ -162,6 +163,15 @@ class _RechercheScreenState extends State<RechercheScreen> {
     ));
   }
 
+  Future<void> _openWizard() async {
+    // Pas de refresh search au retour : l'annonce publiée passe par EN_ATTENTE
+    // (modération admin), donc invisible dans la recherche publique tant que
+    // pas validée — un refresh ne montrerait rien de neuf.
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => const WizardPublicationScreen(),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -181,6 +191,11 @@ class _RechercheScreenState extends State<RechercheScreen> {
         ],
       ),
       body: _buildBody(),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openWizard,
+        icon: const Icon(Icons.add),
+        label: const Text('Publier'),
+      ),
     );
   }
 

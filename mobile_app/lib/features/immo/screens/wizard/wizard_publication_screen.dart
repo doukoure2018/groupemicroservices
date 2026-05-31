@@ -10,7 +10,7 @@ import '../../services/brouillon_service.dart';
 import 'step_infos.dart';
 import 'step_photos.dart';
 import 'step_profil.dart';
-import 'step_validation_placeholder.dart';
+import 'step_validation_publication.dart';
 
 /// Wizard publication d'annonce immobilière (Phase 15.2e-2 — squelette).
 ///
@@ -165,20 +165,29 @@ class _WizardPublicationScreenState extends State<WizardPublicationScreen> {
 
   Future<void> _goNext() async {
     if (_currentStep == 2) {
-      // Validation + collecte de l'étape Infos avant save.
+      // Validation + collecte de l'étape Infos avant save. Le `collect()`
+      // retourne 4 sous-maps {etape1, etape2, etape3, etape4} conformes au
+      // contrat backend `BrouillonServiceImpl.toCreateRequest`. On merge
+      // CHAQUE clé à la racine de _donneesJson — PAS sous un wrapper
+      // "infosBien", sinon materialiser() renvoie "Champ obligatoire
+      // manquant : etape1.typeAnnonce".
       final state = _stepInfosKey.currentState;
       if (state == null || !state.validate()) return;
-      _donneesJson['infosBien'] = state.collect();
+      final collected = state.collect();
+      for (final entry in collected.entries) {
+        _donneesJson[entry.key] = entry.value;
+      }
     } else if (_currentStep == 3) {
-      // Validation + collecte de l'étape Photos. La liste est sérialisée en
-      // List<Map> (LocalPhoto.toJson) — le brouillon stocke les paths
-      // permanents pour reprise post-kill.
+      // Étape Photos : la liste est sérialisée en List<Map> et rangée sous
+      // donneesJson.photos. Le backend l'ignore lors de materialiser (les
+      // vraies photos sont uploadées via POST /immo/proprietes/{uuid}/photos
+      // en étape 4), c'est juste pour la persistence brouillon mobile-side.
       final state = _stepPhotosKey.currentState;
       if (state == null || !state.validate()) return;
       _donneesJson['photos'] = state.collect().map((p) => p.toJson()).toList();
     }
     // Étape 1 (profil) : pas de validation custom — le widget appelle déjà
-    // onReady. Étape 4 (placeholder) : pas de save spécifique en 15.2e-3.
+    // onReady. Étape 4 (validation) : le bouton Publier est dans la step.
 
     final next = (_currentStep + 1).clamp(1, _totalSteps);
     await _persistAndGoTo(next);
@@ -322,11 +331,16 @@ class _WizardPublicationScreenState extends State<WizardPublicationScreen> {
               }),
               StepInfos(
                 stepKey: _stepInfosKey,
-                initialValues: (_donneesJson['infosBien'] as Map<String, dynamic>?) ?? const {},
-                onChanged: (infos) {
+                // initialValues = _donneesJson complet pour que StepInfos
+                // lise etape1/2/3/4 directement (contrat backend).
+                initialValues: _donneesJson,
+                onChanged: (collected) {
                   // Pas de save réseau à chaque keystroke — juste l'état local
-                  // sera collecté au moment du Next.
-                  _donneesJson['infosBien'] = infos;
+                  // sera collecté au moment du Next. Merge des 4 sous-maps
+                  // à la racine.
+                  for (final entry in collected.entries) {
+                    _donneesJson[entry.key] = entry.value;
+                  }
                 },
               ),
               StepPhotos(
@@ -338,7 +352,24 @@ class _WizardPublicationScreenState extends State<WizardPublicationScreen> {
                   _donneesJson['photos'] = photos.map((p) => p.toJson()).toList();
                 },
               ),
-              const StepValidationPlaceholder(),
+              StepValidationPublication(
+                brouillonUuid: _brouillonUuid,
+                donneesJson: _donneesJson,
+                onCompleted: () {
+                  // Le wizard est terminé (succès ou message "brouillon
+                  // sauvegardé"). On ferme l'écran et on revient à la recherche.
+                  if (mounted) Navigator.of(context).pop();
+                },
+                onRetourPhotos: () {
+                  // Retour à l'étape Photos suite à 0 upload réussi.
+                  setState(() => _currentStep = 3);
+                  _pageController.animateToPage(
+                    2,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -348,6 +379,8 @@ class _WizardPublicationScreenState extends State<WizardPublicationScreen> {
   }
 
   Widget _bottomActions() {
+    // Sur l'étape 4 (Validation), le bouton "Publier" est intégré DANS la step
+    // — la bottom bar ne propose que "Précédent" pour repartir corriger.
     final isLast = _currentStep == _totalSteps;
     return SafeArea(
       child: Padding(
@@ -363,15 +396,16 @@ class _WizardPublicationScreenState extends State<WizardPublicationScreen> {
                   style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                 ),
               ),
-            if (_currentStep > 1) const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: (_stepActionLoading || _currentStep == 1) ? null : _goNext,
-                icon: Icon(isLast ? Icons.check : Icons.arrow_forward),
-                label: Text(isLast ? 'Terminer (15.2e-4)' : 'Suivant'),
-                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            if (_currentStep > 1 && !isLast) const SizedBox(width: 12),
+            if (!isLast)
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: (_stepActionLoading || _currentStep == 1) ? null : _goNext,
+                  icon: const Icon(Icons.arrow_forward),
+                  label: const Text('Suivant'),
+                  style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                ),
               ),
-            ),
           ],
         ),
       ),

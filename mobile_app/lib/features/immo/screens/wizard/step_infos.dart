@@ -42,16 +42,28 @@ class StepInfosState extends State<StepInfos>
   final _service = ProprieteService();
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
-  late final _titreController = TextEditingController(text: widget.initialValues['titre'] as String? ?? '');
-  late final _descriptionController = TextEditingController(text: widget.initialValues['description'] as String? ?? '');
-  late final _prixController = TextEditingController(text: (widget.initialValues['prix'] as num?)?.toString() ?? '');
-  late final _surfaceController = TextEditingController(text: (widget.initialValues['surfaceM2'] as num?)?.toString() ?? '');
-  late final _adresseController = TextEditingController(text: widget.initialValues['adresseComplete'] as String? ?? '');
-  late final _nomContactController = TextEditingController(text: widget.initialValues['nomContactPublic'] as String? ?? '');
-  late final _telephoneController = TextEditingController(text: widget.initialValues['telephoneContact'] as String? ?? '');
-  late final _latitudeController = TextEditingController(text: (widget.initialValues['latitude'] as num?)?.toString() ?? '');
-  late final _longitudeController = TextEditingController(text: (widget.initialValues['longitude'] as num?)?.toString() ?? '');
+  // Helpers de lecture des étapes structurées (contrat backend
+  // BrouillonServiceImpl.toCreateRequest). Si une étape est absente —
+  // brouillon neuf — on retombe sur une map vide.
+  Map<String, dynamic> get _e1 =>
+      (widget.initialValues['etape1'] as Map<String, dynamic>?) ?? const {};
+  Map<String, dynamic> get _e2 =>
+      (widget.initialValues['etape2'] as Map<String, dynamic>?) ?? const {};
+  Map<String, dynamic> get _e3 =>
+      (widget.initialValues['etape3'] as Map<String, dynamic>?) ?? const {};
+  Map<String, dynamic> get _e4 =>
+      (widget.initialValues['etape4'] as Map<String, dynamic>?) ?? const {};
+
+  // Controllers — préfèrent l'init depuis le brouillon structuré, sinon vides.
+  late final _titreController = TextEditingController(text: _e4['titre'] as String? ?? '');
+  late final _descriptionController = TextEditingController(text: _e4['description'] as String? ?? '');
+  late final _prixController = TextEditingController(text: (_e3['prix'] as num?)?.toString() ?? '');
+  late final _surfaceController = TextEditingController(text: (_e3['surfaceM2'] as num?)?.toString() ?? '');
+  late final _adresseController = TextEditingController(text: _e2['adresseComplete'] as String? ?? '');
+  late final _nomContactController = TextEditingController(text: _e4['nomContactPublic'] as String? ?? '');
+  late final _telephoneController = TextEditingController(text: _e4['telephoneContact'] as String? ?? '');
+  late final _latitudeController = TextEditingController(text: (_e2['latitude'] as num?)?.toString() ?? '');
+  late final _longitudeController = TextEditingController(text: (_e2['longitude'] as num?)?.toString() ?? '');
 
   // State champs select
   String _typeAnnonce = 'LOCATION';
@@ -79,25 +91,28 @@ class StepInfosState extends State<StepInfos>
   @override
   void initState() {
     super.initState();
-    final init = widget.initialValues;
-    _typeAnnonce = init['typeAnnonce'] as String? ?? 'LOCATION';
-    _dureeLocation = init['dureeLocation'] as String?;
-    _typeBienCode = init['typeBienCode'] as String?;
-    _devise = init['devise'] as String? ?? 'GNF';
-    _periode = init['periode'] as String?;
-    _prixSurDemande = init['prixSurDemande'] as bool? ?? false;
-    _prixNegociable = init['prixNegociable'] as bool? ?? false;
-    _nombreChambres = init['nombreChambres'] as int? ?? 1;
-    _nombreSallesBain = init['nombreSallesBain'] as int? ?? 1;
-    final dispo = init['dateDisponibilite'] as String?;
+    _typeAnnonce = _e1['typeAnnonce'] as String? ?? 'LOCATION';
+    _dureeLocation = _e1['dureeLocation'] as String?;
+    _typeBienCode = _e1['typeBienCode'] as String?;
+    _devise = _e3['devise'] as String? ?? 'GNF';
+    // Défaut PAR_MOIS pour LOCATION (le plus courant). Bug 15.2e-4 : sans
+    // le `??`, le brouillon neuf qui n'a pas encore de periode écrasait le
+    // default UI 'PAR_MOIS' par null → backend rejette "periode est requise
+    // pour une location" à materialiser.
+    _periode = _e3['periode'] as String? ?? (_typeAnnonce == 'VENTE' ? 'UNIQUE' : 'PAR_MOIS');
+    _prixSurDemande = _e3['prixSurDemande'] as bool? ?? false;
+    _prixNegociable = _e3['prixNegociable'] as bool? ?? false;
+    _nombreChambres = _e3['nombreChambres'] as int? ?? 1;
+    _nombreSallesBain = _e3['nombreSallesBain'] as int? ?? 1;
+    final dispo = _e3['dateDisponibilite'] as String?;
     if (dispo != null) {
       try { _dateDisponibilite = DateTime.parse(dispo); } catch (_) {}
     }
-    final commoditesInit = init['commoditesCodes'] as List<dynamic>?;
+    final commoditesInit = _e3['commoditesCodes'] as List<dynamic>?;
     if (commoditesInit != null) {
       _selectedCommodites = commoditesInit.map((e) => e as String).toSet();
     }
-    _geoActive = init['latitude'] != null || init['longitude'] != null;
+    _geoActive = _e2['latitude'] != null || _e2['longitude'] != null;
     _loadRefs();
   }
 
@@ -159,40 +174,51 @@ class StepInfosState extends State<StepInfos>
     return true;
   }
 
-  /// Snapshot des valeurs sous forme d'un Map prêt à être rangé dans
-  /// `brouillon.donneesJson.infosBien`. Le coordinateur n'inspecte pas le
-  /// contenu — il le persiste tel quel.
+  /// Snapshot structuré conforme au contrat backend `BrouillonServiceImpl.
+  /// toCreateRequest` (lit `donneesJson.etape1/2/3/4`). Le coordinateur
+  /// merge directement ces 4 sous-maps à la racine de `donneesJson` —
+  /// PAS sous un wrapper "infosBien", sinon `materialiser()` renvoie
+  /// "Champ obligatoire manquant : etape1.typeAnnonce".
   Map<String, dynamic> collect() {
     return {
-      'typeAnnonce': _typeAnnonce,
-      if (_dureeLocation != null) 'dureeLocation': _dureeLocation,
-      if (_typeBienCode != null) 'typeBienCode': _typeBienCode,
-      if (_titreController.text.trim().isNotEmpty) 'titre': _titreController.text.trim(),
-      if (_descriptionController.text.trim().isNotEmpty) 'description': _descriptionController.text.trim(),
-      if (!_prixSurDemande && _prixController.text.trim().isNotEmpty)
-        'prix': double.tryParse(_prixController.text.trim()) ?? 0,
-      'devise': _devise,
-      if (_periode != null && _typeAnnonce == 'LOCATION') 'periode': _periode,
-      'prixSurDemande': _prixSurDemande,
-      'prixNegociable': _prixNegociable,
-      'nombreChambres': _nombreChambres,
-      'nombreSallesBain': _nombreSallesBain,
-      if (_surfaceController.text.trim().isNotEmpty)
-        'surfaceM2': double.tryParse(_surfaceController.text.trim()) ?? 0,
-      if (_adresseController.text.trim().isNotEmpty)
-        'adresseComplete': _adresseController.text.trim(),
-      if (_dateDisponibilite != null)
-        'dateDisponibilite': _formatDate(_dateDisponibilite!),
-      if (_nomContactController.text.trim().isNotEmpty)
-        'nomContactPublic': _nomContactController.text.trim(),
-      if (_telephoneController.text.trim().isNotEmpty)
-        'telephoneContact': _telephoneController.text.trim(),
-      if (_selectedCommodites.isNotEmpty)
-        'commoditesCodes': _selectedCommodites.toList(),
-      if (_geoActive && _latitudeController.text.trim().isNotEmpty)
-        'latitude': double.tryParse(_latitudeController.text.trim()),
-      if (_geoActive && _longitudeController.text.trim().isNotEmpty)
-        'longitude': double.tryParse(_longitudeController.text.trim()),
+      'etape1': {
+        'typeAnnonce': _typeAnnonce,
+        if (_dureeLocation != null) 'dureeLocation': _dureeLocation,
+        if (_typeBienCode != null) 'typeBienCode': _typeBienCode,
+      },
+      'etape2': {
+        if (_adresseController.text.trim().isNotEmpty)
+          'adresseComplete': _adresseController.text.trim(),
+        if (_geoActive && _latitudeController.text.trim().isNotEmpty)
+          'latitude': double.tryParse(_latitudeController.text.trim()),
+        if (_geoActive && _longitudeController.text.trim().isNotEmpty)
+          'longitude': double.tryParse(_longitudeController.text.trim()),
+      },
+      'etape3': {
+        if (!_prixSurDemande && _prixController.text.trim().isNotEmpty)
+          'prix': double.tryParse(_prixController.text.trim()) ?? 0,
+        'devise': _devise,
+        if (_periode != null && _typeAnnonce == 'LOCATION') 'periode': _periode,
+        'prixSurDemande': _prixSurDemande,
+        'prixNegociable': _prixNegociable,
+        'nombreChambres': _nombreChambres,
+        'nombreSallesBain': _nombreSallesBain,
+        if (_surfaceController.text.trim().isNotEmpty)
+          'surfaceM2': double.tryParse(_surfaceController.text.trim()) ?? 0,
+        if (_dateDisponibilite != null)
+          'dateDisponibilite': _formatDate(_dateDisponibilite!),
+        if (_selectedCommodites.isNotEmpty)
+          'commoditesCodes': _selectedCommodites.toList(),
+      },
+      'etape4': {
+        if (_titreController.text.trim().isNotEmpty) 'titre': _titreController.text.trim(),
+        if (_descriptionController.text.trim().isNotEmpty)
+          'description': _descriptionController.text.trim(),
+        if (_nomContactController.text.trim().isNotEmpty)
+          'nomContactPublic': _nomContactController.text.trim(),
+        if (_telephoneController.text.trim().isNotEmpty)
+          'telephoneContact': _telephoneController.text.trim(),
+      },
     };
   }
 
