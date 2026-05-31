@@ -2,6 +2,12 @@
     <!-- Internet permission for API calls -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- Phase Géoloc-1 : géolocalisation pour wizard publication (auto-fill lat/lng)
+         + filtre "Près de moi" recherche (Géoloc-2). FINE = GPS précis (~10m outdoor),
+         COARSE = fallback cell tower / WiFi (~100-1000m) si l'user refuse le fine. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
     <application
         android:label="Billetterie GN"
         android:name="${applicationName}"

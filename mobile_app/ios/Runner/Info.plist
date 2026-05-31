@@ -50,6 +50,9 @@
 	<string>L'application a besoin d'accéder à votre galerie pour vous permettre de joindre des photos à votre annonce immobilière.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>L'application a besoin d'accéder à votre caméra pour vous permettre de prendre des photos pour votre annonce immobilière.</string>
+	<!-- Phase Géoloc-1 — geolocator (auto-fill lat/lng wizard + filtre "Près de moi" recherche) -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>YIGUI utilise votre position pour vous proposer des propriétés à proximité et faciliter la saisie de l'adresse de votre annonce.</string>
 	<!-- OAuth2 Deep Link / URL Scheme -->
 	<key>CFBundleURLTypes</key>
 	<array>

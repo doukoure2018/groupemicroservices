@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../../../shared/http/api_exception.dart';
 import '../../../../shared/theme/app_colors.dart';
@@ -78,6 +81,7 @@ class StepInfosState extends State<StepInfos>
   DateTime? _dateDisponibilite;
   Set<String> _selectedCommodites = {};
   bool _geoActive = false;
+  bool _gpsLoading = false;
 
   // Référentiels (chargés une fois, asynchrones, en parallèle)
   bool _refsLoading = true;
@@ -498,9 +502,21 @@ class StepInfosState extends State<StepInfos>
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _gpsLoading ? null : _useMyLocation,
+                icon: _gpsLoading
+                    ? const SizedBox(
+                        width: 18, height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.my_location),
+                label: const Text('Utiliser ma position'),
+                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+              ),
               const SizedBox(height: 4),
               Text(
-                'GPS auto (geolocator) à venir — saisie manuelle pour l\'instant.',
+                'La position GPS s\'auto-remplit. Vous pouvez ajuster manuellement lat/lng si besoin (précision GPS variable selon environnement).',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.onBackground,
                       fontStyle: FontStyle.italic,
@@ -555,6 +571,125 @@ class StepInfosState extends State<StepInfos>
         padding: const EdgeInsets.only(top: 20, bottom: 8),
         child: Text(t, style: Theme.of(context).textTheme.titleSmall),
       );
+
+  // ============================================================
+  // Auto-GPS (Géoloc-1)
+  // ============================================================
+
+  /// Tente de récupérer la position GPS courante et auto-remplit les
+  /// TextFields lat/lng. Les valeurs restent éditables manuellement après
+  /// — l'utilisateur peut ajuster si la précision GPS est faible (indoor
+  /// profond, signal masqué).
+  ///
+  /// Gestion des 3+1 cas de refus (pattern just-in-time prompt) :
+  ///   1. Service location OS désactivé → SnackBar + bouton "Activer"
+  ///   2. Permission refusée 1× → SnackBar "Réessayer", re-tap re-prompt
+  ///   3. Permission refusée définitivement → SnackBar + bouton "Paramètres"
+  ///   4. Timeout 15s → SnackBar simple, l'user peut re-tap ou saisir manuel
+  Future<void> _useMyLocation() async {
+    setState(() => _gpsLoading = true);
+    try {
+      // === 1. Service location activé OS ? ===
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        if (!mounted) return;
+        _showLocationServiceDisabled();
+        return;
+      }
+
+      // === 2. Permission ===
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (!mounted) return;
+      if (permission == LocationPermission.deniedForever) {
+        _showPermissionDeniedForever();
+        return;
+      }
+      if (permission == LocationPermission.denied) {
+        _showPermissionDenied();
+        return;
+      }
+
+      // === 3. Récupérer position avec timeout ===
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 15),
+        ),
+      );
+      if (!mounted) return;
+      setState(() {
+        _latitudeController.text = pos.latitude.toStringAsFixed(6);
+        _longitudeController.text = pos.longitude.toStringAsFixed(6);
+      });
+      _notifyChanged();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+          'Position obtenue (±${pos.accuracy.toStringAsFixed(0)}m)',
+        ),
+        backgroundColor: AppColors.success,
+      ));
+    } on TimeoutException {
+      if (mounted) _showTimeout();
+    } catch (e) {
+      if (mounted) _showGenericError(e.toString());
+    } finally {
+      if (mounted) setState(() => _gpsLoading = false);
+    }
+  }
+
+  void _showLocationServiceDisabled() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: const Text('La localisation est désactivée sur votre appareil.'),
+      backgroundColor: AppColors.error,
+      duration: const Duration(seconds: 6),
+      action: SnackBarAction(
+        label: 'Activer',
+        onPressed: () => Geolocator.openLocationSettings(),
+      ),
+    ));
+  }
+
+  void _showPermissionDenied() {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text(
+        'Permission refusée. Cliquez à nouveau sur "Utiliser ma position" pour réessayer.',
+      ),
+      backgroundColor: AppColors.error,
+      duration: Duration(seconds: 5),
+    ));
+  }
+
+  void _showPermissionDeniedForever() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: const Text(
+        'Permission refusée définitivement. Activez la géoloc dans les paramètres de l\'app.',
+      ),
+      backgroundColor: AppColors.error,
+      duration: const Duration(seconds: 6),
+      action: SnackBarAction(
+        label: 'Paramètres',
+        onPressed: () => Geolocator.openAppSettings(),
+      ),
+    ));
+  }
+
+  void _showTimeout() {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text(
+        'Impossible d\'obtenir la position (timeout). Réessayez ou saisissez manuellement.',
+      ),
+      backgroundColor: AppColors.error,
+    ));
+  }
+
+  void _showGenericError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Erreur GPS : $msg'),
+      backgroundColor: AppColors.error,
+    ));
+  }
 
   Widget _stepperRow(String label, int value, int min, int max, ValueChanged<int> onChanged) {
     return Padding(
