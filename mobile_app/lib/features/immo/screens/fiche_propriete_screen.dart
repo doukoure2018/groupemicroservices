@@ -12,8 +12,10 @@ import '../models/commodite.dart';
 import '../models/photo.dart';
 import '../models/propriete.dart';
 import '../models/type_bien.dart';
+import '../services/favori_service.dart';
 import '../services/propriete_service.dart';
 import '../widgets/contacter_sheet.dart';
+import '../widgets/favori_star_button.dart';
 import '../widgets/visite_sheet.dart';
 
 /// Écran fiche détaillée d'une propriété (Phase 15.2d, finalisée en 15.2d-3).
@@ -35,7 +37,16 @@ import '../widgets/visite_sheet.dart';
 class FicheProprieteScreen extends StatefulWidget {
   final String proprieteUuid;
 
-  const FicheProprieteScreen({super.key, required this.proprieteUuid});
+  /// État favori hérité de la card recherche (si on arrive depuis une liste).
+  /// Permet d'afficher l'étoile correcte AVANT le retour du check() parallèle
+  /// — pas de flicker. Si null (deep-link futur), on attend le check.
+  final bool? initialIsFavorite;
+
+  const FicheProprieteScreen({
+    super.key,
+    required this.proprieteUuid,
+    this.initialIsFavorite,
+  });
 
   @override
   State<FicheProprieteScreen> createState() => _FicheProprieteScreenState();
@@ -43,15 +54,18 @@ class FicheProprieteScreen extends StatefulWidget {
 
 class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
   final _service = ProprieteService();
+  final _favoriService = FavoriService();
 
   bool _loading = true;
   AppException? _error;
   Propriete? _propriete;
   Map<int, TypeBien> _typesById = const {};
+  bool? _isFavorite;
 
   @override
   void initState() {
     super.initState();
+    _isFavorite = widget.initialIsFavorite; // valeur héritée, sera resync
     _load();
   }
 
@@ -61,18 +75,22 @@ class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
       _error = null;
     });
     try {
-      // 2 requêtes parallèles : fiche détail + référentiel types-bien.
-      // types-bien sert à afficher le libellé du typeBienId — backend ne le
-      // populate pas dans la réponse fiche (cf. Propriete.dart doc).
+      // 3 requêtes parallèles : fiche détail + référentiel types-bien +
+      // état favori frais. Le check() compense que GET /immo/proprietes/{uuid}
+      // ne fait PAS le JOIN immo_favori (contrairement à la recherche).
+      // Robuste aux deep-links futurs (WhatsApp share) où on n'a pas
+      // initialIsFavorite.
       final results = await Future.wait([
         _service.findByUuid(widget.proprieteUuid),
         _service.listTypesBien(),
+        _favoriService.check(widget.proprieteUuid).catchError((_) => false),
       ]);
       if (!mounted) return;
       setState(() {
         _propriete = results[0] as Propriete;
         final types = results[1] as List<TypeBien>;
         _typesById = {for (final t in types) t.typeBienId: t};
+        _isFavorite = results[2] as bool;
         _loading = false;
       });
     } on AppException catch (e) {
@@ -97,7 +115,17 @@ class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
     }
     final p = _propriete!;
     final typeBien = _typesById[p.typeBienId];
-    return Scaffold(
+    return PopScope(
+      // Quand l'utilisateur pop la fiche, on retourne l'état favori final
+      // au caller (RechercheScreen ou MesFavorisScreen) pour patch local
+      // sans refetch.
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        // didPop true = pop déjà effectué par le système. On ne peut plus
+        // injecter un résultat ici. On gère via Navigator.pop explicite plus
+        // bas si besoin — ici PopScope sert juste de hook pour la sémantique.
+      },
+      child: Scaffold(
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -106,6 +134,21 @@ class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
             backgroundColor: AppColors.surface,
             iconTheme: const IconThemeData(color: AppColors.onSurface),
             title: Text(p.titre, maxLines: 1, overflow: TextOverflow.ellipsis),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.of(context).pop<bool?>(_isFavorite),
+            ),
+            actions: [
+              FavoriStarButton(
+                proprieteUuid: p.proprieteUuid,
+                isFavorite: _isFavorite ?? false,
+                onChanged: (nouveau) {
+                  // Met à jour le state local pour que le pop retourne la
+                  // dernière valeur.
+                  if (mounted) setState(() => _isFavorite = nouveau);
+                },
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: _GalerieHeader(photos: p.photos),
             ),
@@ -113,6 +156,8 @@ class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
           SliverList(
             delegate: SliverChildListDelegate([
               _SectionPrixTitre(propriete: p),
+              const _Divider(),
+              _SectionMeta(propriete: p),
               const _Divider(),
               _SectionSpecs(propriete: p, typeBien: typeBien),
               if (p.adresseComplete != null) ...[
@@ -159,6 +204,7 @@ class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -409,6 +455,38 @@ class _SectionPrixTitre extends StatelessWidget {
       case 'PAR_AN': return '/an';
       default: return '';
     }
+  }
+}
+
+class _SectionMeta extends StatelessWidget {
+  final Propriete propriete;
+  const _SectionMeta({required this.propriete});
+
+  @override
+  Widget build(BuildContext context) {
+    // Compteur de vues affiché en lecture pure. Backend : incrément naïf
+    // monotone à chaque GET /immo/proprietes/{uuid}, pas de dédup par
+    // user/IP (dette MVP tracée).
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          const Icon(Icons.visibility_outlined, size: 16, color: AppColors.onBackground),
+          const SizedBox(width: 6),
+          Text(
+            '${propriete.nombreVues} vue${propriete.nombreVues > 1 ? 's' : ''}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(width: 16),
+          const Icon(Icons.favorite_outline, size: 16, color: AppColors.onBackground),
+          const SizedBox(width: 6),
+          Text(
+            '${propriete.nombreFavoris}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -16,13 +16,18 @@ import 'photo.dart';
 /// (téléphone/email PAS exposés direct — passe par bottom sheets Contact/Visite,
 /// RGPD).
 ///
+/// `isFavorite` (ajouté Phase Favoris) — tri-état théorique côté backend :
+/// `null` = requête anonyme (pas de JWT), `true`/`false` = user connecté.
+/// L'app mobile actuelle force le login avant HubScreen, donc `null` n'est
+/// jamais reçu en pratique. UI traite `null` comme `false` par défaut.
+///
 /// Champs backend ignorés (à ajouter si un usage UI les requiert) :
 /// proprieteId, profilId, agenceId, nombreEtages, etageSituation,
 /// anneeConstruction, moisCaution/Avance/Honoraire, localisationId,
 /// afficherAdresseExacte, dateDisponibilite, dateExpiration,
 /// nombreRenouvellements, motifRejet, telephoneContact,
 /// premium, datePremiumFin, createdAt, updatedAt,
-/// rappelExpirationEnvoyeAt, distanceM, isFavorite,
+/// rappelExpirationEnvoyeAt, distanceM,
 /// typeBien (toujours null aujourd'hui).
 class Propriete {
   final String proprieteUuid;
@@ -52,6 +57,7 @@ class Propriete {
   final List<Photo> photos;
   final Photo? photoCouverture;
   final List<Commodite> commodites;
+  final bool? isFavorite;
 
   const Propriete({
     required this.proprieteUuid,
@@ -81,7 +87,42 @@ class Propriete {
     this.photos = const [],
     this.photoCouverture,
     this.commodites = const [],
+    this.isFavorite,
   });
+
+  /// Retourne une copie de la propriété avec `isFavorite` patché. Utilisé
+  /// par les écrans pour propager un toggle local sans refetch — tous les
+  /// autres champs sont préservés.
+  Propriete withFavorite(bool? newValue) => Propriete(
+        proprieteUuid: proprieteUuid,
+        reference: reference,
+        typeAnnonce: typeAnnonce,
+        dureeLocation: dureeLocation,
+        typeBienId: typeBienId,
+        titre: titre,
+        description: description,
+        prix: prix,
+        devise: devise,
+        periode: periode,
+        prixSurDemande: prixSurDemande,
+        prixNegociable: prixNegociable,
+        nombreChambres: nombreChambres,
+        nombreSallesBain: nombreSallesBain,
+        surfaceM2: surfaceM2,
+        adresseComplete: adresseComplete,
+        latitude: latitude,
+        longitude: longitude,
+        statut: statut,
+        datePublication: datePublication,
+        nombreVues: nombreVues,
+        nombreFavoris: nombreFavoris,
+        nombreContacts: nombreContacts,
+        nomContactPublic: nomContactPublic,
+        photos: photos,
+        photoCouverture: photoCouverture,
+        commodites: commodites,
+        isFavorite: newValue,
+      );
 
   factory Propriete.fromJson(Map<String, dynamic> json) => Propriete(
         proprieteUuid: json['proprieteUuid'] as String,
@@ -119,5 +160,6 @@ class Propriete {
                 ?.map((e) => Commodite.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             const [],
+        isFavorite: json['isFavorite'] as bool?,
       );
 }

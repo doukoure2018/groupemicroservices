@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../screens/main_screen.dart';
 import '../../shared/theme/app_colors.dart';
 import '../../shared/theme/app_theme.dart';
-import '../../shared/widgets/app_empty_state.dart';
+import '../immo/screens/mes_favoris_screen.dart';
 import '../immo/screens/recherche_screen.dart';
 
 /// Hub d'accueil YIGUI — point d'entrée pour l'utilisateur authentifié.
@@ -69,6 +69,10 @@ class _HubScreenState extends State<HubScreen> {
   }
 }
 
+/// Placeholder Profil — devient un menu extensible. En MVP : un seul item
+/// "Mes favoris" (Phase Favoris). Items futurs prévus : "Mes annonces"
+/// (15.2f), "Mes contacts envoyés", "Mes demandes de visite", "Mon profil
+/// vendeur" (édition), "Déconnexion".
 class _ProfilPlaceholder extends StatelessWidget {
   const _ProfilPlaceholder();
 
@@ -76,10 +80,20 @@ class _ProfilPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Profil')),
-      body: const AppEmptyState(
-        icon: Icons.person_outline,
-        title: 'Section Profil',
-        subtitle: 'Bientôt disponible.',
+      body: ListView(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.favorite_outline, color: AppColors.primary),
+            title: const Text('Mes favoris'),
+            subtitle: const Text('Annonces que vous avez sauvegardées'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const MesFavorisScreen()),
+            ),
+          ),
+          const Divider(height: 1),
+          // Items futurs : Mes annonces (15.2f), Mes contacts, etc.
+        ],
       ),
     );
   }

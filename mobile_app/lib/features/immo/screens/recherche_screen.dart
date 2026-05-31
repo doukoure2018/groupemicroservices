@@ -157,10 +157,31 @@ class _RechercheScreenState extends State<RechercheScreen> {
     _loadInitial();
   }
 
-  void _onTapCard(Propriete p) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => FicheProprieteScreen(proprieteUuid: p.proprieteUuid),
+  Future<void> _onTapCard(Propriete p) async {
+    // Le pop de la fiche peut retourner le nouvel état isFavorite si l'user
+    // l'a toggleé pendant la consultation. On patche alors l'item local
+    // pour éviter un refetch complet de la liste.
+    final result = await Navigator.of(context).push<bool?>(MaterialPageRoute(
+      builder: (_) => FicheProprieteScreen(
+        proprieteUuid: p.proprieteUuid,
+        initialIsFavorite: p.isFavorite,
+      ),
     ));
+    if (result != null && mounted) {
+      _patchFavori(p.proprieteUuid, result);
+    }
+  }
+
+  void _onFavoriToggledFromCard(Propriete p, bool nouveau) {
+    _patchFavori(p.proprieteUuid, nouveau);
+  }
+
+  void _patchFavori(String uuid, bool isFavorite) {
+    final idx = _items.indexWhere((e) => e.proprieteUuid == uuid);
+    if (idx < 0) return;
+    setState(() {
+      _items[idx] = _items[idx].withFavorite(isFavorite);
+    });
   }
 
   Future<void> _openWizard() async {
@@ -260,6 +281,7 @@ class _RechercheScreenState extends State<RechercheScreen> {
             propriete: p,
             typeBien: _typesById[p.typeBienId],
             onTap: () => _onTapCard(p),
+            onFavoriToggled: (nouveau) => _onFavoriToggledFromCard(p, nouveau),
           );
         },
       ),

@@ -5,6 +5,7 @@ import '../../../shared/theme/app_colors.dart';
 import '../../../shared/utils/currency_formatter.dart';
 import '../models/propriete.dart';
 import '../models/type_bien.dart';
+import 'favori_star_button.dart';
 
 /// Card d'une propriété dans la liste de recherche.
 /// - Photo couverture (CachedNetworkImage) ou placeholder gris si null.
@@ -20,11 +21,18 @@ class ProprieteCard extends StatelessWidget {
 
   final VoidCallback? onTap;
 
+  /// Notifié quand l'utilisateur toggle l'étoile sur la card. Le parent (ex:
+  /// RechercheScreen) doit patcher l'item dans sa liste locale pour refléter
+  /// le nouvel état sans refetch — `propriete.isFavorite` est immuable, on
+  /// récrée l'objet via copy logique côté parent.
+  final ValueChanged<bool>? onFavoriToggled;
+
   const ProprieteCard({
     super.key,
     required this.propriete,
     this.typeBien,
     this.onTap,
+    this.onFavoriToggled,
   });
 
   @override
@@ -114,27 +122,42 @@ class ProprieteCard extends StatelessWidget {
     final url = propriete.photoCouverture?.urlThumbnail ??
         propriete.photoCouverture?.url ??
         (propriete.photos.isNotEmpty ? propriete.photos.first.urlThumbnail : null);
-    if (url == null) {
-      return Container(
-        height: 180,
-        color: AppColors.divider,
-        alignment: Alignment.center,
-        child: const Icon(Icons.image_not_supported_outlined, size: 32, color: AppColors.onBackground),
-      );
-    }
-    return CachedNetworkImage(
-      imageUrl: url,
+    // Stack pour permettre l'overlay étoile favoris top-right sur la photo.
+    // L'IconButton du FavoriStarButton consomme le tap → ne bubble pas vers
+    // l'InkWell card (pas d'ouverture fiche par erreur).
+    return SizedBox(
       height: 180,
-      fit: BoxFit.cover,
-      placeholder: (_, __) => Container(
-        height: 180,
-        color: AppColors.divider,
-      ),
-      errorWidget: (_, __, ___) => Container(
-        height: 180,
-        color: AppColors.divider,
-        alignment: Alignment.center,
-        child: const Icon(Icons.broken_image_outlined, size: 32, color: AppColors.onBackground),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (url == null)
+            Container(
+              color: AppColors.divider,
+              alignment: Alignment.center,
+              child: const Icon(Icons.image_not_supported_outlined, size: 32, color: AppColors.onBackground),
+            )
+          else
+            CachedNetworkImage(
+              imageUrl: url,
+              fit: BoxFit.cover,
+              placeholder: (_, __) => Container(color: AppColors.divider),
+              errorWidget: (_, __, ___) => Container(
+                color: AppColors.divider,
+                alignment: Alignment.center,
+                child: const Icon(Icons.broken_image_outlined, size: 32, color: AppColors.onBackground),
+              ),
+            ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: FavoriStarButton(
+              proprieteUuid: propriete.proprieteUuid,
+              isFavorite: propriete.isFavorite ?? false,
+              light: true,
+              onChanged: onFavoriToggled,
+            ),
+          ),
+        ],
       ),
     );
   }
