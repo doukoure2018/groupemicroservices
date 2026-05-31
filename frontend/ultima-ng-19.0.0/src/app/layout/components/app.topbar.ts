@@ -27,8 +27,8 @@ import { UserService } from '@/service/user.service';
                         </svg>
                     </div>
                     <div style="display:flex;flex-direction:column;line-height:1.2;">
-                        <span style="font-size:16px;font-weight:700;color:var(--topbar-item-text-color);">Billetterie<span style="color:#f97316;">GN</span></span>
-                        <span style="font-size:9px;font-weight:500;letter-spacing:0.05em;opacity:0.6;color:var(--topbar-item-text-color);">TRANSPORT GUINEE</span>
+                        <span style="font-size:16px;font-weight:700;color:var(--topbar-item-text-color);">SIRA <span style="color:#f97316;">Guinée</span></span>
+                        <span style="font-size:9px;font-weight:500;letter-spacing:0.05em;opacity:0.6;color:var(--topbar-item-text-color);">TRANSPORT & IMMOBILIER</span>
                     </div>
                 </div>
                 <div class="layout-topbar-logo-slim" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#f97316,#ea580c);">
