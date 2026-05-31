@@ -51,6 +51,7 @@ export interface IResponse {
         // Immobilier (SIRA Guinée)
         propriete?: IPropriete;
         proprietes?: IPropriete[];
+        vendeur?: any;
         limit?: number;
         offset?: number;
 

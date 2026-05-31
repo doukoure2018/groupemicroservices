@@ -55,3 +55,26 @@ export interface IPropriete {
 export interface IRejeterRequest {
     motif: string;
 }
+
+export interface IVendeur {
+    profilId?: number;
+    profilUuid?: string;
+    typeProfil?: string;
+    statutVerification?: string;
+    noteMoyenne?: number;
+    nombreAvis?: number;
+    nombreProprietesActives?: number;
+    bio?: string;
+    telephoneContactProfil?: string;
+    userId?: number;
+    firstName?: string;
+    lastName?: string;
+    phone?: string | null;
+    email?: string;
+    userLookupError?: boolean;
+}
+
+export interface IProprieteDetail {
+    propriete: IPropriete;
+    vendeur: IVendeur;
+}

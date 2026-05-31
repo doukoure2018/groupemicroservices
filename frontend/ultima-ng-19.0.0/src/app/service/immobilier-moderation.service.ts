@@ -17,6 +17,9 @@ export class ImmobilierModerationService {
         return this.http.get<IResponse>(`${this.baseUrl}/moderation`, { params }).pipe(tap(console.log), catchError(this.handleError));
     };
 
+    getForModeration$ = (proprieteUuid: string): Observable<IResponse> =>
+        this.http.get<IResponse>(`${this.baseUrl}/moderation/${proprieteUuid}`).pipe(tap(console.log), catchError(this.handleError));
+
     valider$ = (proprieteUuid: string): Observable<IResponse> =>
         this.http.patch<IResponse>(`${this.baseUrl}/${proprieteUuid}/valider`, {}).pipe(tap(console.log), catchError(this.handleError));
 

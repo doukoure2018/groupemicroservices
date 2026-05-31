@@ -7,8 +7,7 @@
             <h1>Modération des annonces immobilières</h1>
             <p class="subtitle">SIRA Guinée — Validation des annonces en attente avant publication publique</p>
         </div>
-        <p-button icon="pi pi-refresh" label="Actualiser" [outlined]="true" [loading]="loading()" (onClick)="loadModeration()">
-        </p-button>
+        <p-button icon="pi pi-refresh" label="Actualiser" [outlined]="true" [loading]="loading()" (onClick)="loadModeration()"></p-button>
     </div>
 
     <div class="counter-bar">
@@ -40,7 +39,7 @@
                         <th>Prix</th>
                         <th>Localisation</th>
                         <th pSortableColumn="createdAt">Créée le <p-sortIcon field="createdAt"></p-sortIcon></th>
-                        <th style="width: 180px">Actions</th>
+                        <th style="width: 220px">Actions</th>
                     </tr>
                 </ng-template>
 
@@ -70,20 +69,29 @@
                         <td>
                             <div class="actions-cell">
                                 <p-button
-                                    icon="pi pi-check"
-                                    label="Valider"
-                                    severity="success"
-                                    [text]="false"
+                                    icon="pi pi-eye"
+                                    label="Voir détails"
+                                    severity="info"
                                     size="small"
-                                    (onClick)="confirmValider(p)"
-                                    pTooltip="Publier publiquement + notifier l'annonceur"
+                                    [outlined]="true"
+                                    (onClick)="openDetail(p)"
+                                    pTooltip="Galerie photos + profil vendeur"
+                                    tooltipPosition="top"
+                                ></p-button>
+                                <p-button
+                                    icon="pi pi-check"
+                                    severity="success"
+                                    [rounded]="true"
+                                    [text]="true"
+                                    (onClick)="confirmValiderInline(p)"
+                                    pTooltip="Valider rapidement"
                                     tooltipPosition="top"
                                 ></p-button>
                                 <p-button
                                     icon="pi pi-times"
                                     severity="danger"
-                                    [text]="true"
                                     [rounded]="true"
+                                    [text]="true"
                                     (onClick)="openRejectDialog(p)"
                                     pTooltip="Rejeter avec motif"
                                     tooltipPosition="top"
@@ -108,6 +116,214 @@
     </p-card>
 </div>
 
+<!-- ====== MODAL DÉTAIL ====== -->
+<p-dialog
+    [(visible)]="state().isDetailOpen"
+    [modal]="true"
+    [style]="{ width: '90vw', height: '90vh' }"
+    [draggable]="false"
+    [resizable]="false"
+    [maximizable]="true"
+    (onHide)="closeDetail()"
+    styleClass="detail-dialog"
+>
+    <ng-template pTemplate="header">
+        @if (detailPropriete(); as p) {
+            <div class="detail-header">
+                <div class="detail-header-titles">
+                    <div class="detail-header-row1">
+                        <p-tag [value]="p.typeAnnonce" [severity]="p.typeAnnonce === 'VENTE' ? 'info' : 'success'"></p-tag>
+                        <h2>{{ p.titre }}</h2>
+                    </div>
+                    <span class="ref">{{ p.reference }} · soumise le {{ p.createdAt | date: 'dd/MM/yyyy' }}</span>
+                </div>
+            </div>
+        } @else {
+            <h2>Chargement…</h2>
+        }
+    </ng-template>
+
+    @if (detailLoading()) {
+        <div class="loading-container">
+            <p-progressSpinner strokeWidth="4" ariaLabel="Chargement"></p-progressSpinner>
+            <span>Chargement du détail…</span>
+        </div>
+    } @else {
+        @if (detailPropriete(); as p) {
+        <div class="detail-body">
+            <!-- Galerie -->
+            @if (p.photos && p.photos.length > 0) {
+                <p-galleria
+                    [value]="p.photos"
+                    [numVisible]="5"
+                    [showThumbnails]="true"
+                    [showItemNavigators]="true"
+                    [showItemNavigatorsOnHover]="true"
+                    [showIndicators]="false"
+                    [containerStyle]="{ 'max-width': '100%' }"
+                >
+                    <ng-template pTemplate="item" let-item>
+                        <img [src]="item.url" [alt]="item.url" class="gallery-main" />
+                    </ng-template>
+                    <ng-template pTemplate="thumbnail" let-item>
+                        <img [src]="item.urlThumbnail || item.url" class="gallery-thumb" />
+                    </ng-template>
+                </p-galleria>
+            } @else {
+                <div class="no-photos-banner">
+                    <i class="pi pi-exclamation-triangle"></i>
+                    <span>Aucune photo fournie par le vendeur — à signaler dans le motif si vous rejetez</span>
+                </div>
+            }
+
+            <!-- Sections grid -->
+            <div class="sections-grid">
+                <!-- Prix & conditions -->
+                <section class="info-card">
+                    <h3>Prix & conditions</h3>
+                    <div class="info-row">
+                        <span class="label">Prix</span>
+                        <span class="value price">{{ formatPrix(p) }}</span>
+                    </div>
+                    @if (p.prixNegociable) {
+                        <p-tag value="Négociable" severity="info"></p-tag>
+                    }
+                    @if (p.typeAnnonce === 'LOCATION' && p.dureeLocation) {
+                        <div class="info-row">
+                            <span class="label">Durée</span>
+                            <span class="value">{{ p.dureeLocation }}</span>
+                        </div>
+                    }
+                </section>
+
+                <!-- Spécifications -->
+                <section class="info-card">
+                    <h3>Spécifications</h3>
+                    @if (p.nombreChambres != null) {
+                        <div class="info-row">
+                            <span class="label">Chambres</span>
+                            <span class="value">{{ p.nombreChambres }}</span>
+                        </div>
+                    }
+                    @if (p.nombreSallesBain != null) {
+                        <div class="info-row">
+                            <span class="label">Salles de bain</span>
+                            <span class="value">{{ p.nombreSallesBain }}</span>
+                        </div>
+                    }
+                    @if (p.surfaceM2 != null) {
+                        <div class="info-row">
+                            <span class="label">Surface</span>
+                            <span class="value">{{ p.surfaceM2 }} m²</span>
+                        </div>
+                    }
+                </section>
+
+                <!-- Localisation -->
+                <section class="info-card span-2">
+                    <h3>Localisation</h3>
+                    <div class="info-row">
+                        <span class="label">Adresse</span>
+                        <span class="value">{{ p.adresseComplete || '—' }}</span>
+                    </div>
+                    @if (p.latitude != null && p.longitude != null) {
+                        <div class="info-row">
+                            <span class="label">Coordonnées</span>
+                            <span class="value">
+                                {{ p.latitude }}, {{ p.longitude }}
+                                <a [href]="googleMapsLink(p)" target="_blank" rel="noopener" class="maps-link">
+                                    Voir sur Google Maps <i class="pi pi-external-link"></i>
+                                </a>
+                            </span>
+                        </div>
+                    }
+                </section>
+
+                <!-- Description -->
+                <section class="info-card span-2">
+                    <h3>Description</h3>
+                    <p class="description">{{ p.description || '—' }}</p>
+                </section>
+
+                <!-- Commodités -->
+                @if (p.commodites && p.commodites.length > 0) {
+                    <section class="info-card span-2">
+                        <h3>Commodités ({{ p.commodites.length }})</h3>
+                        <div class="chips-wrap">
+                            @for (c of p.commodites; track c.commoditeId) {
+                                <p-chip [label]="c.libelle" [icon]="'pi pi-' + (c.icone || 'tag')"></p-chip>
+                            }
+                        </div>
+                    </section>
+                }
+
+                <!-- Vendeur -->
+                @if (detailVendeur(); as v) {
+                    <section class="info-card span-2 vendor-card">
+                        <h3>Profil vendeur</h3>
+                        @if (v.userLookupError) {
+                            <div class="warning-banner">
+                                <i class="pi pi-exclamation-triangle"></i>
+                                <span>Informations utilisateur indisponibles (userservice injoignable au moment de la requête)</span>
+                            </div>
+                        }
+                        <div class="vendor-grid">
+                            <div class="info-row">
+                                <span class="label">Nom</span>
+                                <span class="value">{{ v.firstName || '—' }} {{ v.lastName || '' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">Type</span>
+                                <span class="value">{{ formatTypeProfil(v.typeProfil) }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">Email</span>
+                                <span class="value">{{ v.email || '—' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">Téléphone</span>
+                                <span class="value">{{ v.phone || v.telephoneContactProfil || 'Non renseigné' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">Profil vérifié</span>
+                                <span class="value">
+                                    <p-tag [value]="v.statutVerification || 'INCONNU'" [severity]="statutVerificationSeverity(v.statutVerification)"></p-tag>
+                                </span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">Annonces actives</span>
+                                <span class="value">{{ v.nombreProprietesActives ?? 0 }}</span>
+                            </div>
+                            @if (v.bio) {
+                                <div class="info-row span-2">
+                                    <span class="label">Bio</span>
+                                    <span class="value">{{ v.bio }}</span>
+                                </div>
+                            }
+                        </div>
+                        <div class="vendor-contact-display">
+                            <p-divider></p-divider>
+                            <span class="label">Contact affiché dans l'annonce</span>
+                            <div class="info-row">
+                                <span class="value">{{ p.nomContactPublic || '—' }} · {{ p.telephoneContact || '—' }}</span>
+                            </div>
+                        </div>
+                    </section>
+                }
+            </div>
+        </div>
+        }
+    }
+
+    <ng-template pTemplate="footer">
+        @if (detailPropriete(); as p) {
+            <p-button label="Rejeter" icon="pi pi-times" severity="danger" [outlined]="true" (onClick)="openRejectDialog(p)"></p-button>
+            <p-button label="Valider et publier" icon="pi pi-check" severity="success" (onClick)="confirmValiderFromDetail(p)"></p-button>
+        }
+    </ng-template>
+</p-dialog>
+
+<!-- ====== DIALOG MOTIF REJET (réutilisé liste ET détail) ====== -->
 <p-dialog
     header="Rejeter l'annonce"
     [(visible)]="state().isRejectDialogOpen"
@@ -126,9 +342,7 @@
         <form [formGroup]="rejectForm" (ngSubmit)="onRejectSubmit()">
             <div class="form-field">
                 <label for="motif">Motif du rejet *</label>
-                <p class="hint">
-                    Ce message sera envoyé par email à l'annonceur. Restez constructif et précis pour qu'il puisse corriger.
-                </p>
+                <p class="hint">Ce message sera envoyé par email à l'annonceur. Restez constructif et précis pour qu'il puisse corriger.</p>
                 <textarea
                     pInputTextarea
                     id="motif"
