@@ -205,6 +205,44 @@ public class ProprieteServiceImpl implements ProprieteService {
     }
 
     @Override
+    public Map<String, Object> getForModeration(String proprieteUuid) {
+        Propriete p = proprieteRepository.findByUuid(proprieteUuid)
+                .orElseThrow(() -> new io.multi.immobilierservice.exception.NotFoundException(
+                        "Annonce introuvable : " + proprieteUuid));
+        enrich(p);
+
+        Map<String, Object> vendeur = new HashMap<>();
+        ProfilImmo profil = profilImmoRepository.findById(p.getProfilId()).orElse(null);
+        if (profil != null) {
+            vendeur.put("profilId", profil.getProfilId());
+            vendeur.put("profilUuid", profil.getProfilUuid());
+            vendeur.put("typeProfil", profil.getTypeProfil());
+            vendeur.put("statutVerification", profil.getStatutVerification());
+            vendeur.put("noteMoyenne", profil.getNoteMoyenne());
+            vendeur.put("nombreAvis", profil.getNombreAvis());
+            vendeur.put("nombreProprietesActives", profil.getNombreProprietesActives());
+            vendeur.put("bio", profil.getBio());
+            vendeur.put("telephoneContactProfil", profil.getTelephoneContact());
+            try {
+                User u = userClient.getUserById(profil.getUserId());
+                vendeur.put("userId", u.getUserId());
+                vendeur.put("firstName", u.getFirstName());
+                vendeur.put("lastName", u.getLastName());
+                vendeur.put("phone", u.getPhone());
+                vendeur.put("email", u.getEmail());
+            } catch (Exception e) {
+                log.warn("Feign UserClient échec pour userId={}: {}", profil.getUserId(), e.getMessage());
+                vendeur.put("userLookupError", true);
+            }
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("propriete", p);
+        result.put("vendeur", vendeur);
+        return result;
+    }
+
+    @Override
     @Transactional
     public Propriete publier(String proprieteUuid, Long userId) {
         Propriete p = proprieteRepository.findByUuid(proprieteUuid)

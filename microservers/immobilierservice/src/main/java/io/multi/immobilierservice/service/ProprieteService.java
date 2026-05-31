@@ -58,6 +58,14 @@ public interface ProprieteService {
      */
     java.util.List<Propriete> findEnAttenteValidation(int limit, int offset);
 
+    /**
+     * Détail enrichi pour le back-office modération : propriété + photos +
+     * commodités + profil vendeur (firstName, lastName, phone, email, type,
+     * statutVerification). N'incrémente PAS le compteur de vues — l'admin
+     * n'est pas un visiteur. NotFoundException 404 si UUID inconnu.
+     */
+    java.util.Map<String, Object> getForModeration(String proprieteUuid);
+
     /** Admin : compteur total pour pagination "Modération". */
     long countEnAttenteValidation();
 

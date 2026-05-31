@@ -220,6 +220,20 @@ public class ProprieteResource {
                 "Annonces en attente de modération", HttpStatus.OK));
     }
 
+    /**
+     * Détail enrichi pour le modal du back-office modération : propriété
+     * complète + profil vendeur (firstName/lastName/phone/email/typeProfil/
+     * statutVerification). N'incrémente PAS le compteur de vues.
+     */
+    @GetMapping("/moderation/{proprieteUuid}")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<Response> getForModeration(@PathVariable String proprieteUuid,
+                                                     HttpServletRequest http) {
+        Map<String, Object> data = proprieteService.getForModeration(proprieteUuid);
+        return ResponseEntity.ok(RequestUtils.getResponse(http, data,
+                "Détail annonce pour modération", HttpStatus.OK));
+    }
+
     @PatchMapping("/{proprieteUuid}/valider")
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> valider(@PathVariable String proprieteUuid,
