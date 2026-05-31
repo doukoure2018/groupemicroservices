@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 
 import '../../../../shared/http/api_exception.dart';
 import '../../../../shared/theme/app_colors.dart';
@@ -9,6 +6,7 @@ import '../../../../shared/widgets/app_error.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../models/commodite.dart';
 import '../../models/type_bien.dart';
+import '../../services/geo_service.dart';
 import '../../services/propriete_service.dart';
 
 /// Étape 2 du wizard publication — Infos du bien.
@@ -573,7 +571,7 @@ class StepInfosState extends State<StepInfos>
       );
 
   // ============================================================
-  // Auto-GPS (Géoloc-1)
+  // Auto-GPS (Géoloc-1 — refactor 2A : délègue à GeoService)
   // ============================================================
 
   /// Tente de récupérer la position GPS courante et auto-remplit les
@@ -581,113 +579,26 @@ class StepInfosState extends State<StepInfos>
   /// — l'utilisateur peut ajuster si la précision GPS est faible (indoor
   /// profond, signal masqué).
   ///
-  /// Gestion des 3+1 cas de refus (pattern just-in-time prompt) :
-  ///   1. Service location OS désactivé → SnackBar + bouton "Activer"
-  ///   2. Permission refusée 1× → SnackBar "Réessayer", re-tap re-prompt
-  ///   3. Permission refusée définitivement → SnackBar + bouton "Paramètres"
-  ///   4. Timeout 15s → SnackBar simple, l'user peut re-tap ou saisir manuel
+  /// La logique permission/service/timeout est centralisée dans
+  /// [GeoService] (Géoloc-2A, partagée avec FiltresSheet et RechercheScreen).
+  /// Ici on consomme juste le `Position?` retourné — null = échec
+  /// silencieusement géré par GeoService (SnackBar déjà affiché).
   Future<void> _useMyLocation() async {
     setState(() => _gpsLoading = true);
-    try {
-      // === 1. Service location activé OS ? ===
-      if (!await Geolocator.isLocationServiceEnabled()) {
-        if (!mounted) return;
-        _showLocationServiceDisabled();
-        return;
-      }
-
-      // === 2. Permission ===
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (!mounted) return;
-      if (permission == LocationPermission.deniedForever) {
-        _showPermissionDeniedForever();
-        return;
-      }
-      if (permission == LocationPermission.denied) {
-        _showPermissionDenied();
-        return;
-      }
-
-      // === 3. Récupérer position avec timeout ===
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 15),
-        ),
-      );
-      if (!mounted) return;
-      setState(() {
-        _latitudeController.text = pos.latitude.toStringAsFixed(6);
-        _longitudeController.text = pos.longitude.toStringAsFixed(6);
-      });
-      _notifyChanged();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-          'Position obtenue (±${pos.accuracy.toStringAsFixed(0)}m)',
-        ),
-        backgroundColor: AppColors.success,
-      ));
-    } on TimeoutException {
-      if (mounted) _showTimeout();
-    } catch (e) {
-      if (mounted) _showGenericError(e.toString());
-    } finally {
-      if (mounted) setState(() => _gpsLoading = false);
+    final pos = await GeoService.getCurrentPosition(context);
+    if (!mounted) {
+      return;
     }
-  }
-
-  void _showLocationServiceDisabled() {
+    setState(() => _gpsLoading = false);
+    if (pos == null) return; // SnackBar déjà affiché par GeoService
+    setState(() {
+      _latitudeController.text = pos.latitude.toStringAsFixed(6);
+      _longitudeController.text = pos.longitude.toStringAsFixed(6);
+    });
+    _notifyChanged();
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: const Text('La localisation est désactivée sur votre appareil.'),
-      backgroundColor: AppColors.error,
-      duration: const Duration(seconds: 6),
-      action: SnackBarAction(
-        label: 'Activer',
-        onPressed: () => Geolocator.openLocationSettings(),
-      ),
-    ));
-  }
-
-  void _showPermissionDenied() {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text(
-        'Permission refusée. Cliquez à nouveau sur "Utiliser ma position" pour réessayer.',
-      ),
-      backgroundColor: AppColors.error,
-      duration: Duration(seconds: 5),
-    ));
-  }
-
-  void _showPermissionDeniedForever() {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: const Text(
-        'Permission refusée définitivement. Activez la géoloc dans les paramètres de l\'app.',
-      ),
-      backgroundColor: AppColors.error,
-      duration: const Duration(seconds: 6),
-      action: SnackBarAction(
-        label: 'Paramètres',
-        onPressed: () => Geolocator.openAppSettings(),
-      ),
-    ));
-  }
-
-  void _showTimeout() {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text(
-        'Impossible d\'obtenir la position (timeout). Réessayez ou saisissez manuellement.',
-      ),
-      backgroundColor: AppColors.error,
-    ));
-  }
-
-  void _showGenericError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Erreur GPS : $msg'),
-      backgroundColor: AppColors.error,
+      content: Text('Position obtenue (±${pos.accuracy.toStringAsFixed(0)}m)'),
+      backgroundColor: AppColors.success,
     ));
   }
 
