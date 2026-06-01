@@ -240,8 +240,19 @@ public class OrangeSmsServiceImpl implements OrangeSmsService {
             log.debug("👤 Sender name: '{}'", senderName);
             log.debug("📧 Raw sender address: '{}'", senderAddress);
 
-            // ✅ NETTOYER le senderAddress pour éviter le double "tel:"
-            String cleanedSenderAddress = senderAddress.startsWith("tel:") ? senderAddress : "tel:" + senderAddress;
+            // Format senderAddress selon la nature de la valeur :
+            //   tel:+224622459305 → laissé tel quel (déjà formaté E.164)
+            //   +224622459305    → préfixé en tel:+224622459305
+            //   224622459305     → préfixé en tel:224622459305
+            //   YIGUI, SIRA...   → Sender ID alphanumérique, envoyé sans préfixe tel:
+            String cleanedSenderAddress;
+            if (senderAddress.startsWith("tel:")) {
+                cleanedSenderAddress = senderAddress;
+            } else if (senderAddress.startsWith("+") || senderAddress.matches("^\\d.*")) {
+                cleanedSenderAddress = "tel:" + senderAddress;
+            } else {
+                cleanedSenderAddress = senderAddress;
+            }
             log.debug("🔧 Cleaned sender address: '{}'", cleanedSenderAddress);
 
             // Create the body of the request
