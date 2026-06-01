@@ -70,7 +70,7 @@ eureka:
 
 ui:
   app:
-    url: ${UI_APP_URL:https://guidipress-io.com}
+    url: ${UI_APP_URL:https://sira-guinee.com}
 
 key:
   private: private.key
@@ -104,7 +104,7 @@ sms:
       per:
         hour: 3
   sender:
-    name: Guidipress
+    name: ${SENDER_NAME:SIRA Guinée}
   primary:
     provider: orange
   fallback:

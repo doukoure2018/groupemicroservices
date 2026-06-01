@@ -68,7 +68,7 @@ eureka:
 
 ui:
   app:
-    url: ${UI_APP_URL:https://guidipress-io.com}
+    url: ${UI_APP_URL:https://sira-guinee.com}
 
 key:
   private: private.key

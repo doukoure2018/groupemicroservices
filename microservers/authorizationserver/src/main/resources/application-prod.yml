@@ -99,10 +99,10 @@ key:
 
 ui:
   app:
-    url: ${UI_APP_URL:https://guidipress-io.com}
+    url: ${UI_APP_URL:https://sira-guinee.com}
 
 oauth:
-  issuer: ${OAUTH_ISSUER:https://api.guidipress-io.com/authorization}
+  issuer: ${OAUTH_ISSUER:https://api.sira-guinee.com}
 
 google:
   client:

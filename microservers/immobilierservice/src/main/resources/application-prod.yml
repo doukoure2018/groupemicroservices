@@ -18,7 +18,7 @@ eureka:
 
 ui:
   app:
-    url: https://guidipress-io.com
+    url: ${UI_APP_URL:https://sira-guinee.com}
 
 jwks:
   uri: http://authorizationserver:8090/authorization/oauth2/jwks

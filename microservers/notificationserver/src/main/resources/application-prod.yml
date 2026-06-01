@@ -86,15 +86,15 @@ eureka:
 mail:
   from:
     email: ${GMAIL_USERNAME}
-    name: ${MAIL_FROM_NAME:Guidipress}
+    name: ${MAIL_FROM_NAME:SIRA Guinée}
 
 ui:
   app:
-    url: ${UI_APP_URL:https://guidipress-io.com}
+    url: ${UI_APP_URL:https://sira-guinee.com}
 
 verify:
   email:
-    host: ${UI_APP_URL:https://guidipress-io.com}
+    host: ${UI_APP_URL:https://sira-guinee.com}
 
 key:
   private: private.key
@@ -102,6 +102,10 @@ key:
 
 jwks:
   uri: ${JWKS_URI:http://authorizationserver:8090/authorization/oauth2/jwks}
+
+sms:
+  sender:
+    name: ${SENDER_NAME:YIGUI}
 
 logging:
   level:
