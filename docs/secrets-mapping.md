@@ -41,7 +41,7 @@ github.com/doukoure2018/groupemicroservices/settings/
 | `ORANGE_SENDER_ADDRESS` | (cf `.env.prod` local, format `tel:+224XXXXXXXXX`) | Numéro Orange Guinée E.164. Partagé. |
 | `GOOGLE_CLIENT_ID` | (placeholder ou désactivé) | **MVP SKIP** : décision user 2026-06-01, login Google reporté post-MVP. Mettre une valeur bidon (ex: `__GOOGLE_DISABLED__`) ou créer un secret vide. |
 | `GOOGLE_CLIENT_SECRET` | (placeholder) | Idem. |
-| ~~`SLACK_WEBHOOK_URL`~~ | (à supprimer) | Plus utilisé par les workflows refactorisés. Supprimer pour réduire la surface. |
+| `SLACK_WEBHOOK_URL` | (URL `hooks.slack.com/services/...`) | Notifications build/deploy (start, images pushed, success, failure) sur les 2 workflows backend-cd + frontend-cd. Régénérer dans l'app Slack si compromis. |
 | ~~`POSTGRES_PASSWORD`~~ (legacy) | (à supprimer) | Maintenant dans chaque Environment (POSTGRES_PASSWORD test ≠ prod). Supprimer cet ancien secret repo-level. |
 
 > ⚠️ Si tu n'as pas accès aux valeurs anciennes (DOCKERHUB_ACCESS_TOKEN, PROD_SSH_KEY) : régénérer côté source (Docker Hub UI, `ssh-keygen` + push public key sur OVH).
@@ -102,7 +102,7 @@ github.com/doukoure2018/groupemicroservices/settings/
 | `EUREKA_PASSWORD` | Hardcoded `manager2711` dans yml | Secret environment, fort | Ajouter par env |
 | `MINIO_ROOT_USER/PASSWORD` | Absent (default `minioadmin`) | Secret environment | Ajouter par env |
 | `PGADMIN_PASSWORD` | Repo-level basique | Secret environment | Migrer + roter |
-| `SLACK_WEBHOOK_URL` | Référencé partout | Plus utilisé | **Supprimer** |
+| `SLACK_WEBHOOK_URL` | Référencé partout | Conservé (notifs build/deploy SIRA Guinée) | Régénérer si compromis |
 | `GOOGLE_CLIENT_ID/SECRET` | Domain billetterie | MVP désactivé | Placeholder ou supprimer (`__GOOGLE_DISABLED__`) |
 | `GMAIL_*`, `ORANGE_*` | Repo-level | Repo-level (partagés test/prod MVP) | Mettre à jour les valeurs avec les nouvelles |
 | `SENDER_NAME` | Inexistant | Nouveau, par environment | Créer test=YIGUI, prod=YIGUI |
@@ -115,6 +115,7 @@ github.com/doukoure2018/groupemicroservices/settings/
 [ ] Repository secrets (12 entrées)
     [ ] DOCKERHUB_USERNAME, DOCKERHUB_ACCESS_TOKEN
     [ ] OVH_HOST, OVH_USER, PROD_SSH_KEY
+    [ ] SLACK_WEBHOOK_URL
     [ ] GMAIL_USERNAME, GMAIL_APP_PASSWORD
     [ ] ORANGE_API_CREDENTIALS, ORANGE_SENDER_ADDRESS
     [ ] GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (placeholders MVP)
@@ -124,7 +125,6 @@ github.com/doukoure2018/groupemicroservices/settings/
     [ ] PGADMIN_PASSWORD, SENDER_NAME
 [ ] Environment "prod" créé + Required reviewers ON + 6 secrets ajoutés (mêmes noms, valeurs prod)
 [ ] Anciens secrets supprimés :
-    [ ] SLACK_WEBHOOK_URL
     [ ] POSTGRES_PASSWORD (legacy repo-level)
 ```
 

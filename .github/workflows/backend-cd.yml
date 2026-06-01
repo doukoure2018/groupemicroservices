@@ -54,6 +54,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Notify Slack — build started
+        continue-on-error: true
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\":rocket: *SIRA Guinée* — backend build started\\n:link: <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>\"}" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}" || true
+
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -126,6 +133,13 @@ jobs:
             microservers/database-migrations
           docker push doukoure93/billetterie-flyway-migrations:${{ steps.build-number.outputs.BUILD_NUMBER }}
           docker push doukoure93/billetterie-flyway-migrations:latest
+
+      - name: Notify Slack — images pushed
+        continue-on-error: true
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\":whale: *SIRA Guinée* — 8 backend images pushed to Docker Hub\\n:label: Tag: \`${{ steps.build-number.outputs.BUILD_NUMBER }}\`\"}" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}" || true
 
   # ============================================================================
   # JOB 2 — Deploy TEST (auto push main + manual dispatch test)
@@ -276,6 +290,22 @@ jobs:
             sudo nginx -t && sudo systemctl reload nginx
 
             echo "Deployment TEST OK — https://test.sira-guinee.com"
+
+      - name: Notify Slack — deploy TEST success
+        if: success()
+        continue-on-error: true
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\":white_check_mark: *SIRA Guinée TEST* deployed\\n:test_tube: https://test.sira-guinee.com\\n:label: ${{ needs.build-and-push.outputs.build_number }}\"}" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}" || true
+
+      - name: Notify Slack — deploy TEST failure
+        if: failure()
+        continue-on-error: true
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\":rotating_light: *SIRA Guinée TEST* deployment FAILED\\n:link: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}" || true
 
   # ============================================================================
   # JOB 3 — Deploy PROD (workflow_dispatch only, gating manuel via environment)
@@ -428,3 +458,19 @@ jobs:
             sudo nginx -t && sudo systemctl reload nginx
 
             echo "Deployment PROD OK — https://sira-guinee.com"
+
+      - name: Notify Slack — deploy PROD success
+        if: success()
+        continue-on-error: true
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\":fire: *SIRA Guinée PROD* deployed\\n:globe_with_meridians: https://sira-guinee.com\\n:label: ${{ needs.build-and-push.outputs.build_number }}\"}" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}" || true
+
+      - name: Notify Slack — deploy PROD failure
+        if: failure()
+        continue-on-error: true
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\":rotating_light: *SIRA Guinée PROD* deployment FAILED\\n:link: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}" || true
