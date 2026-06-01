@@ -113,8 +113,9 @@ Cf. task #27 (vérifier emails BILLETTERIE en prod — jamais validé runtime).
 
 ```bash
 grep -E '^ORANGE_API_CREDENTIALS=|^ORANGE_SENDER_ADDRESS=' .env.prod
-# Le credentials Basic ne doit pas être la chaîne de .env.example :
-#   Basic VExqQ1BlQ1ZDdUxTRURLUjc2Z0RZcXo5QWw4a3h5M3A6...  ← placeholder
+# Le credentials Basic ne doit pas être la chaîne placeholder de .env.example
+# (forme `Basic <base64_PLACEHOLDER>` — vérifier que tu as remplacé par les
+# vrais creds Orange. Ne JAMAIS coller la vraie chaîne dans ce checklist).
 ```
 
 - [ ] `ORANGE_API_CREDENTIALS` ≠ placeholder

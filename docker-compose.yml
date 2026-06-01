@@ -1,22 +1,23 @@
-# Guidipress - Production Docker Compose
-# Domain: guidipress-io.com
+# =============================================================================
+# SIRA Guinée — Docker Compose (test + prod sur même VPS)
+# =============================================================================
+# Project name (test|prod) propagé via `docker compose -p sira-{env}` côté CLI.
+# Container names retirés pour permettre 2 stacks en parallèle sur le même VPS.
+# Tous les host ports sont paramétrés via env vars pour permettre les décalages
+# test (préfixe 1) vs prod (défauts).
+#
+# Workflow type :
+#   .env injecté par GitHub Actions au runtime (scp depuis runner) avec :
+#   - Profils SIRA prod ou test (URLs, secrets, ports)
+#   - Aucun fichier `.env*` n'est jamais committé dans le repo (gitignored).
+# =============================================================================
 
 services:
   # ==============================================
-  # DATABASE SERVICES
+  # DATABASE
   # ==============================================
   postgresdb:
-    container_name: billetterie-postgres
-    # PostGIS 16-3.4 (Debian-based, multi-arch amd64+arm64).
-    # La variante -alpine n'a pas de manifest arm64 (problématique sur Mac M-series).
-    # Compatible avec le format de données postgres:16-alpine (volume préservé).
     image: postgis/postgis:16-3.4
-    # Tuning aligné sur la limite container 1G — sans ça, postgres utilise ses
-    # defaults image (shared_buffers=128MB, work_mem=4MB) qui supposent un
-    # serveur dédié et ne tirent rien de la limite Docker.
-    # Cible : shared_buffers=25% RAM, effective_cache_size=75% RAM hypothèse
-    # cache OS, work_mem augmenté pour les requêtes spatiales PostGIS qui
-    # tendent à beaucoup trier (ST_Distance, ST_DWithin).
     command:
       - "postgres"
       - "-c"
@@ -35,15 +36,12 @@ services:
     expose:
       - 5433
     ports:
-      # Port host configurable (défaut 5435 pour éviter conflit avec un Postgres existant).
-      # Port interne conteneur reste 5433 → aucun changement côté réseau Docker.
-      # Binding 127.0.0.1: → loopback ONLY (jamais d'accès direct depuis internet,
-      # même si le firewall est mal configuré). Pour accès distant : tunnel SSH (ssh -L).
-      - "127.0.0.1:${POSTGRES_HOST_PORT:-5435}:5433"
+      # Loopback ONLY ; jamais public (firewall + binding 127.0.0.1).
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5433"
     volumes:
-      - billetterie_postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     networks:
-      - billetterie-network
+      - sira-network
     deploy:
       resources:
         limits:
@@ -61,10 +59,9 @@ services:
       retries: 5
       start_period: 60s
 
-  # Database Migration Service
+  # Migrations Flyway via image dédiée (SQL embarqués, zéro code sur VPS)
   flyway-migrations:
-    image: flyway/flyway:11.3.0
-    container_name: billetterie-flyway
+    image: doukoure93/billetterie-flyway-migrations:latest
     environment:
       FLYWAY_URL: "jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}"
       FLYWAY_USER: ${POSTGRES_USER}
@@ -76,11 +73,9 @@ services:
       FLYWAY_OUT_OF_ORDER: "false"
       FLYWAY_CLEAN_DISABLED: "true"
       FLYWAY_BASELINE_VERSION: "1"
-    volumes:
-      - ./microservers/database-migrations/src/main/resources/db/migration:/flyway/sql
     command: migrate
     networks:
-      - billetterie-network
+      - sira-network
     depends_on:
       postgresdb:
         condition: service_healthy
@@ -90,7 +85,6 @@ services:
       - full
 
   pgadmin:
-    container_name: billetterie-pgadmin
     image: dpage/pgadmin4:latest
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
@@ -99,12 +93,11 @@ services:
     depends_on:
       - postgresdb
     ports:
-      # Loopback ONLY : pgAdmin = panneau admin BDD, JAMAIS public. Accès dev via SSH tunnel.
-      - "127.0.0.1:7001:7001"
+      - "127.0.0.1:${PGADMIN_HOST_PORT:-7001}:7001"
     volumes:
-      - billetterie_pgadmin:/var/lib/pgadmin
+      - pgadmin_data:/var/lib/pgadmin
     networks:
-      - billetterie-network
+      - sira-network
     deploy:
       resources:
         limits:
@@ -119,27 +112,21 @@ services:
       - tools
 
   # ==============================================
-  # OBJECT STORAGE (MinIO - S3-compatible)
+  # OBJECT STORAGE (MinIO)
   # ==============================================
-  # Stockage des photos du module immobilierservice.
-  # API S3 exposée sur host:9100 (le port 9000 est pris par le gateway).
-  # Console web sur host:9101.
   minio:
     image: minio/minio:RELEASE.2024-12-18T13-15-44Z
-    container_name: billetterie-minio
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-siraadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-changez-moi}
     ports:
-      # Loopback ONLY : photos servies via gateway reverse-proxy (Phase 13b), pas direct.
-      # Console = admin, jamais public.
-      - "127.0.0.1:9100:9000"   # API S3
-      - "127.0.0.1:9101:9001"   # Console web
+      - "127.0.0.1:${MINIO_HOST_PORT:-9100}:9000"     # API S3
+      - "127.0.0.1:${MINIO_CONSOLE_HOST_PORT:-9101}:9001"  # Console web
     volumes:
-      - billetterie_minio_data:/data
+      - minio_data:/data
     networks:
-      - billetterie-network
+      - sira-network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
       interval: 15s
@@ -158,11 +145,8 @@ services:
         max-size: "10m"
         max-file: "5"
 
-  # Initialisation des buckets MinIO au démarrage (one-shot).
-  # Crée les buckets `immo-photos` et `immo-photos-thumbnails` + accès public en lecture.
   minio-init:
     image: minio/mc:RELEASE.2024-11-21T17-21-54Z
-    container_name: billetterie-minio-init
     depends_on:
       minio:
         condition: service_healthy
@@ -177,26 +161,24 @@ services:
       exit 0;
       "
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-siraadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-changez-moi}
     networks:
-      - billetterie-network
+      - sira-network
     restart: "no"
 
   # ==============================================
-  # MESSAGING SERVICES
+  # MESSAGING (Kafka + Zookeeper)
   # ==============================================
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
-    container_name: billetterie-zookeeper
     ports:
-      # Loopback ONLY : interne au cluster Kafka, aucun client externe.
-      - "127.0.0.1:2183:2183"
+      - "127.0.0.1:${ZOOKEEPER_HOST_PORT:-2183}:2183"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2183
       ZOOKEEPER_TICK_TIME: 2000
     networks:
-      - billetterie-network
+      - sira-network
     restart: unless-stopped
     deploy:
       resources:
@@ -211,10 +193,8 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
-    container_name: billetterie-kafka
     ports:
-      # Loopback ONLY : Kafka consommé par services internes via réseau Docker, pas client externe.
-      - "127.0.0.1:9093:9093"
+      - "127.0.0.1:${KAFKA_HOST_PORT:-9093}:9093"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2183
@@ -224,12 +204,11 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      # Kafka broker single-instance dev/MVP — heap modeste suffit.
       KAFKA_HEAP_OPTS: "-Xmx512M -Xms256M"
     depends_on:
       - zookeeper
     networks:
-      - billetterie-network
+      - sira-network
     restart: unless-stopped
     deploy:
       resources:
@@ -243,29 +222,22 @@ services:
         max-file: "5"
 
   # ==============================================
-  # MICROSERVICES
+  # MICROSERVICES JAVA
   # ==============================================
   discoveryserver:
     image: doukoure93/billetterie-discoveryserver:latest
-    container_name: billetterie-discoveryserver
     ports:
-      # Loopback ONLY : Eureka = annuaire interne services, JAMAIS public.
-      - "127.0.0.1:8761:8761"
+      - "127.0.0.1:${EUREKA_HOST_PORT:-8761}:8761"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       EUREKA_USER: ${EUREKA_USER:-manager}
-      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
-      # JVM modern (Java 17+) respecte cgroup container limit via
-      # UseContainerSupport (activé par défaut). Sans MaxRAMPercentage, le
-      # default conservateur 25% laisse les 75% restants à OS/threads. Cible
-      # ici : heap = 75% de la limite container, marge confortable pour
-      # metaspace + threads. UseG1GC = GC moderne adapté aux services HTTP.
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD}
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
     networks:
-      - billetterie-network
+      - sira-network
     depends_on:
       postgresdb:
         condition: service_healthy
@@ -289,22 +261,16 @@ services:
 
   gateway:
     image: doukoure93/billetterie-gateway:latest
-    container_name: billetterie-gateway
     ports:
-      # Loopback ONLY : nginx prod tape sur 127.0.0.1:9000 (cf. nginx/guidipress-io.conf
-      # server_name api.guidipress-io.com → proxy_pass http://127.0.0.1:9000).
-      # Plus aucune surface HTTP brute en bypass nginx — tout passe par HTTPS + SSL headers.
-      # ATTENTION : si conf nginx cassée → plateforme injoignable. Rollback isolé possible
-      # via git revert de ce commit seul.
-      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:${GATEWAY_HOST_PORT:-9000}:9000"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       EUREKA_USER: ${EUREKA_USER:-manager}
-      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD}
       JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
     networks:
-      - billetterie-network
+      - sira-network
     depends_on:
       discoveryserver:
         condition: service_healthy
@@ -328,21 +294,19 @@ services:
 
   authorizationserver:
     image: doukoure93/billetterie-authorizationserver:latest
-    container_name: billetterie-authorizationserver
     ports:
-      # Loopback ONLY : accédé via gateway (/authorization/**), pas direct.
-      - "127.0.0.1:8090:8090"
+      - "127.0.0.1:${AUTH_HOST_PORT:-8090}:8090"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       EUREKA_USER: ${EUREKA_USER:-manager}
-      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD}
       UI_APP_URL: ${UI_APP_URL}
       OAUTH_ISSUER: ${OAUTH_ISSUER}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-__GOOGLE_OAUTH_DISABLED__}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-__GOOGLE_OAUTH_DISABLED__}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
       SERVER_FORWARD_HEADERS_STRATEGY: NATIVE
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
@@ -350,7 +314,7 @@ services:
     volumes:
       - ./keys:/app/keys
     networks:
-      - billetterie-network
+      - sira-network
     depends_on:
       postgresdb:
         condition: service_healthy
@@ -378,28 +342,26 @@ services:
 
   userservice:
     image: doukoure93/billetterie-userservice:latest
-    container_name: billetterie-userservice
     ports:
-      # Loopback ONLY : accédé via gateway (/user/**) OU via Feign Eureka interne, jamais direct.
-      # NB : /user/getUser/** reste permitAll côté userservice (fuite RGPD #24 corrigée au gateway).
-      - "127.0.0.1:8091:8091"
+      - "127.0.0.1:${USER_HOST_PORT:-8091}:8091"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       EUREKA_USER: ${EUREKA_USER:-manager}
-      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD}
       JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
       ORANGE_API_CREDENTIALS: ${ORANGE_API_CREDENTIALS}
       ORANGE_SENDER_ADDRESS: ${ORANGE_SENDER_ADDRESS}
+      SENDER_NAME: ${SENDER_NAME:-SIRA Guinée}
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
     volumes:
       - ./keys:/app/keys
     networks:
-      - billetterie-network
+      - sira-network
     depends_on:
       postgresdb:
         condition: service_healthy
@@ -429,17 +391,15 @@ services:
 
   billetterieservice:
     image: doukoure93/billetterie-billetterieservice:latest
-    container_name: billetterie-billetterieservice
     ports:
-      # Loopback ONLY : accédé via gateway (/billetterie/**), pas direct.
-      - "127.0.0.1:8092:8092"
+      - "127.0.0.1:${BILLET_HOST_PORT:-8092}:8092"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       EUREKA_USER: ${EUREKA_USER:-manager}
-      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD}
       JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
@@ -447,7 +407,7 @@ services:
     volumes:
       - ./keys:/app/keys
     networks:
-      - billetterie-network
+      - sira-network
     depends_on:
       postgresdb:
         condition: service_healthy
@@ -477,28 +437,29 @@ services:
 
   notificationserver:
     image: doukoure93/billetterie-notificationserver:latest
-    container_name: billetterie-notificationserver
     ports:
-      # Loopback ONLY : accédé via gateway (/notification/**), pas direct.
-      - "127.0.0.1:8093:8093"
+      - "127.0.0.1:${NOTIF_HOST_PORT:-8093}:8093"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       EUREKA_USER: ${EUREKA_USER:-manager}
-      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD}
       JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       GMAIL_USERNAME: ${GMAIL_USERNAME}
       GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
-      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Guidipress}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-SIRA Guinée}
+      SENDER_NAME: ${SENDER_NAME:-SIRA Guinée}
+      ORANGE_API_CREDENTIALS: ${ORANGE_API_CREDENTIALS}
+      ORANGE_SENDER_ADDRESS: ${ORANGE_SENDER_ADDRESS}
       UI_APP_URL: ${UI_APP_URL}
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
     volumes:
       - ./keys:/app/keys
     networks:
-      - billetterie-network
+      - sira-network
     depends_on:
       postgresdb:
         condition: service_healthy
@@ -528,11 +489,8 @@ services:
 
   immobilierservice:
     image: doukoure93/billetterie-immobilierservice:latest
-    container_name: billetterie-immobilierservice
     ports:
-      # Loopback ONLY : accédé via gateway (/immo/**), pas direct. Photos servies en
-      # reverse-proxy par gateway (cf. Phase 13b), pas par accès MinIO direct.
-      - "127.0.0.1:8098:8098"
+      - "127.0.0.1:${IMMO_HOST_PORT:-8098}:8098"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5433/${POSTGRES_DB}
@@ -542,27 +500,20 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       EUREKA_USER: ${EUREKA_USER:-manager}
-      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-manager2711}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD}
       JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
       MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
-      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://localhost:9100}
-      # TZ explicite : sans ça, Java se base sur l'OS du conteneur (souvent UTC
-      # via /etc/timezone Debian/Alpine). Le @Scheduled utilise déjà zone=...
-      # dans application.yml, mais cette env var aligne aussi les logs.
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-siraadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-https://api.sira-guinee.com}
       TZ: ${TZ:-Africa/Conakry}
-      # Limite plus généreuse (768M vs 512M auth/user/billet) : photo upload
-      # multipart utilise un fichier temp disque depuis fix streaming
-      # (commit 4d5b075), mais les requêtes PostGIS ST_Distance/ST_DWithin
-      # peuvent consommer plus en peak.
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
     volumes:
       - ./keys:/app/keys
     networks:
-      - billetterie-network
+      - sira-network
     depends_on:
       postgresdb:
         condition: service_healthy
@@ -595,16 +546,18 @@ services:
   # ==============================================
   # FRONTEND
   # ==============================================
+  # Image variable selon environnement :
+  #   test  → doukoure93/billetterie-frontend:test-latest
+  #   prod  → doukoure93/billetterie-frontend:prod-latest
+  # Tag injecté par le workflow CI/CD via env var FRONTEND_IMAGE_TAG.
   frontend:
-    image: doukoure93/billetterie-frontend:latest
-    container_name: billetterie-frontend
+    image: doukoure93/billetterie-frontend:${FRONTEND_IMAGE_TAG:-prod-latest}
     ports:
-      # Loopback ONLY : nginx prod tape sur 127.0.0.1:4202 (cf. nginx/guidipress-io.conf).
-      - "127.0.0.1:4202:80"
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-4202}:80"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - billetterie-network
+      - sira-network
     depends_on:
       - gateway
     restart: unless-stopped
@@ -626,16 +579,16 @@ services:
       start_period: 30s
 
 # ==============================================
-# VOLUMES
+# VOLUMES (préfixés par docker compose -p sira-{env})
 # ==============================================
 volumes:
-  billetterie_postgres_data:
-  billetterie_pgadmin:
-  billetterie_minio_data:
+  postgres_data:
+  pgadmin_data:
+  minio_data:
 
 # ==============================================
-# NETWORKS
+# NETWORK (préfixé par docker compose -p sira-{env})
 # ==============================================
 networks:
-  billetterie-network:
+  sira-network:
     driver: bridge

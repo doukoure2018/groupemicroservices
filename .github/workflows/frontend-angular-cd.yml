@@ -1,10 +1,24 @@
-name: CD - Deploy Frontend to OVH
+name: CD - Build & Deploy Frontend SIRA Guinée
+
+# =============================================================================
+# 2 builds frontend (test + prod) avec build-args URLs distincts.
+# Pour MVP : on accepte 2 builds Docker car les URLs sont compile-time
+# (cf. dette frontend-fileutils-hardcoded-urls qui visera runtime config plus tard).
+# =============================================================================
 
 permissions:
-  contents: write
+  contents: read
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environnement cible'
+        type: choice
+        options:
+          - test
+          - prod
+        default: test
   push:
     branches:
       - main
@@ -12,18 +26,16 @@ on:
       - frontend/**
 
 jobs:
-  build-and-deploy:
+  # ============================================================================
+  # JOB 1 — Build & push 2 images frontend (test + prod tags séparés)
+  # ============================================================================
+  build-and-push:
     runs-on: ubuntu-latest
+    outputs:
+      build_number: ${{ steps.build-number.outputs.BUILD_NUMBER }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Notify deployment start
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":":angular: Guidipress Frontend deployment started\nCommit: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }} || true
+      - uses: actions/checkout@v4
 
       - name: Docker Hub login
         uses: docker/login-action@v3
@@ -35,106 +47,100 @@ jobs:
         id: build-number
         run: echo "BUILD_NUMBER=$(date '+%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
 
-      - name: Build and push frontend image
+      - name: Build & push frontend image TEST
         run: |
           cd frontend/ultima-ng-19.0.0
-
-          # Build with production URLs
           docker build \
-            -t doukoure93/billetterie-frontend:${{ steps.build-number.outputs.BUILD_NUMBER }} \
-            -t doukoure93/billetterie-frontend:latest \
-            --build-arg API_BASE_URL=https://api.guidipress-io.com \
-            --build-arg AUTH_SERVER_URL=https://api.guidipress-io.com/authorization \
-            --build-arg FRONTEND_URL=https://guidipress-io.com \
+            -t doukoure93/billetterie-frontend:test-${{ steps.build-number.outputs.BUILD_NUMBER }} \
+            -t doukoure93/billetterie-frontend:test-latest \
+            --build-arg API_BASE_URL=https://api-test.sira-guinee.com \
+            --build-arg AUTH_SERVER_URL=https://api-test.sira-guinee.com/authorization \
+            --build-arg FRONTEND_URL=https://test.sira-guinee.com \
             --file Dockerfile \
             .
+          docker push doukoure93/billetterie-frontend:test-${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker push doukoure93/billetterie-frontend:test-latest
 
-          # Push images
-          docker push doukoure93/billetterie-frontend:${{ steps.build-number.outputs.BUILD_NUMBER }}
-          docker push doukoure93/billetterie-frontend:latest
-
-      - name: Notify image pushed
+      - name: Build & push frontend image PROD
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":":whale: Guidipress Frontend image pushed!\nTag: ${{ steps.build-number.outputs.BUILD_NUMBER }}"}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }} || true
+          cd frontend/ultima-ng-19.0.0
+          docker build \
+            -t doukoure93/billetterie-frontend:prod-${{ steps.build-number.outputs.BUILD_NUMBER }} \
+            -t doukoure93/billetterie-frontend:prod-latest \
+            --build-arg API_BASE_URL=https://api.sira-guinee.com \
+            --build-arg AUTH_SERVER_URL=https://api.sira-guinee.com/authorization \
+            --build-arg FRONTEND_URL=https://sira-guinee.com \
+            --file Dockerfile \
+            .
+          docker push doukoure93/billetterie-frontend:prod-${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker push doukoure93/billetterie-frontend:prod-latest
 
-      - name: Deploy frontend to OVH server
+  # ============================================================================
+  # JOB 2 — Deploy TEST (re-pull image frontend test-latest sur stack test)
+  # ============================================================================
+  deploy-test:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'test')
+    environment: test
+
+    steps:
+      - name: Pull & restart frontend on TEST stack
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.OVH_HOST }}
           username: ${{ secrets.OVH_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
           script: |
-            # Remove old frontend container
-            sudo docker rm -f billetterie-frontend || true
+            set -e
+            cd ~/sira-guinee/test
 
-            # Ensure network exists
-            sudo docker network create billetterie-network 2>/dev/null || true
+            # Pull la nouvelle image frontend test-latest
+            sudo docker pull doukoure93/billetterie-frontend:test-latest
 
-            # Pull new image
-            sudo docker pull doukoure93/billetterie-frontend:latest
+            # Re-create uniquement le service frontend dans la stack test
+            sudo docker compose -p sira-test --env-file .env up -d --force-recreate --no-deps frontend
 
-            # Start frontend container with host access for API proxy
-            sudo docker run -d \
-              --name billetterie-frontend \
-              --network billetterie-network \
-              --add-host host.docker.internal:host-gateway \
-              -p 4202:80 \
-              --restart unless-stopped \
-              --memory 256m \
-              doukoure93/billetterie-frontend:latest
+            sleep 8
 
-            sleep 5
-
-            # Check if container is running
-            if sudo docker ps | grep -q billetterie-frontend; then
-              echo "Container is running"
-              sudo docker logs billetterie-frontend --tail=30
-            else
-              echo "Container failed to start!"
-              sudo docker logs billetterie-frontend --tail=50
+            # Health check container
+            if ! sudo docker compose -p sira-test --env-file .env ps frontend | grep -q running; then
+              echo "Frontend TEST KO"
+              sudo docker compose -p sira-test --env-file .env logs --tail=30 frontend
               exit 1
             fi
 
-      - name: Verify deployment health
+            echo "Frontend TEST deployed — https://test.sira-guinee.com"
+
+  # ============================================================================
+  # JOB 3 — Deploy PROD (workflow_dispatch only, gating manuel)
+  # ============================================================================
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'prod'
+    environment: prod
+
+    steps:
+      - name: Pull & restart frontend on PROD stack
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.OVH_HOST }}
           username: ${{ secrets.OVH_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
           script: |
-            max_attempts=30
-            attempt=0
+            set -e
+            cd ~/sira-guinee/prod
 
-            echo "Testing frontend availability..."
-            while [ $attempt -lt $max_attempts ]; do
-              if curl -f -s -o /dev/null -w "%{http_code}" http://localhost:4202 | grep -q "200"; then
-                echo "Frontend is responding correctly"
-                break
-              else
-                echo "Waiting for frontend... ($attempt/$max_attempts)"
-                sleep 2
-                attempt=$((attempt + 1))
-              fi
-            done
+            sudo docker pull doukoure93/billetterie-frontend:prod-latest
+            sudo docker compose -p sira-prod --env-file .env up -d --force-recreate --no-deps frontend
 
-            if [ $attempt -eq $max_attempts ]; then
-              echo "Frontend health check failed"
-              sudo docker logs billetterie-frontend --tail=50
+            sleep 8
+
+            if ! sudo docker compose -p sira-prod --env-file .env ps frontend | grep -q running; then
+              echo "Frontend PROD KO"
+              sudo docker compose -p sira-prod --env-file .env logs --tail=30 frontend
               exit 1
             fi
 
-      - name: Notify deployment success
-        if: success()
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":":white_check_mark: Guidipress Frontend deployed!\n:globe_with_meridians: https://guidipress-io.com\n:package: Version: ${{ steps.build-number.outputs.BUILD_NUMBER }}"}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }} || true
-
-      - name: Notify deployment failure
-        if: failure()
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":":rotating_light: Guidipress Frontend deployment FAILED!\n:link: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }} || true
+            echo "Frontend PROD deployed — https://sira-guinee.com"

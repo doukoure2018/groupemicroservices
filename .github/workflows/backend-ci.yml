@@ -66,6 +66,10 @@ jobs:
         working-directory: ./microservers/billetterieservice
         run: mvn -ntp -B verify
 
+      - name: Test Immobilier Service
+        working-directory: ./microservers/immobilierservice
+        run: mvn -ntp -B verify
+
       - name: Test Notification Server
         working-directory: ./microservers/notificationserver
         run: mvn -ntp -B verify

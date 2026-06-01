@@ -4,9 +4,14 @@
 > Pré-requis acquis : VPS provisionné, DNS propagé (`sira-guinee.com`, `www`, `api`), repo cloné dans `~/sira-guinee/prod`, `.env.prod` préparé localement.
 
 **Légende** :
-- 🖥️ = commande sur le **VPS OVH** (via SSH)
+- 🖥️ = commande sur le **VPS OVH** (via SSH user `ubuntu`)
 - 💻 = commande sur **ton Mac**
 - ⚠️ = step critique, vérifier avant de continuer
+
+> **Conventions VPS** :
+> - Toutes les commandes 🖥️ assument user `ubuntu` (image OVH Cloud standard).
+> - Préfixe `sudo` requis pour : `apt`, `systemctl`, `nginx`, `certbot`, `ln`, `mv`, `chown`, `chmod`, `mkdir` dans `/etc/` ou `/var/`.
+> - **Pas de `sudo` pour `docker`** une fois user dans group docker (étape 1.2).
 
 ---
 
@@ -56,7 +61,8 @@ git push origin main  # au cas où
 💻 :
 
 ```bash
-ssh root@51.255.203.214
+ssh ubuntu@51.255.203.214
+# (user ubuntu = standard image OVH Cloud. Si tu utilises un autre user, adapte.)
 ```
 
 ### 1.2 Mise à jour système + installation des paquets
@@ -64,9 +70,13 @@ ssh root@51.255.203.214
 🖥️ :
 
 ```bash
-apt update && apt upgrade -y
-apt install -y docker.io docker-compose-plugin nginx certbot python3-certbot-nginx ufw
-systemctl enable --now docker nginx
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y docker.io docker-compose-plugin nginx certbot python3-certbot-nginx ufw
+sudo systemctl enable --now docker nginx
+
+# Ajouter le user ubuntu au group docker pour éviter sudo sur docker
+sudo usermod -aG docker ubuntu
+newgrp docker  # ou reconnexion SSH pour activer
 ```
 
 ### 1.3 Firewall UFW (ports 22 / 80 / 443 uniquement)
@@ -74,12 +84,12 @@ systemctl enable --now docker nginx
 🖥️ :
 
 ```bash
-ufw default deny incoming
-ufw default allow outgoing
-ufw allow OpenSSH
-ufw allow 'Nginx Full'
-ufw --force enable
-ufw status verbose  # vérifier : 22 + 80 + 443 ALLOW
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow OpenSSH
+sudo ufw allow 'Nginx Full'
+sudo ufw --force enable
+sudo ufw status verbose  # vérifier : 22 + 80 + 443 ALLOW
 ```
 
 ⚠️ **Ne PAS exposer le 5433 (Postgres), 9100 (MinIO), 9000 (gateway), 8090 (auth)** — déjà bindés sur 127.0.0.1 par docker-compose, mais UFW est une 2e ligne de défense.
@@ -89,8 +99,8 @@ ufw status verbose  # vérifier : 22 + 80 + 443 ALLOW
 🖥️ :
 
 ```bash
-mkdir -p /var/www/certbot
-chown www-data:www-data /var/www/certbot
+sudo mkdir -p /var/www/certbot
+sudo chown www-data:www-data /var/www/certbot
 
 # Vérifier que le DNS pointe bien vers ce serveur
 dig +short sira-guinee.com         # → 51.255.203.214
@@ -116,7 +126,7 @@ scp ~/Projects/groupemicroservices/.env.prod root@51.255.203.214:~/sira-guinee/p
 
 ```bash
 cd ~/sira-guinee/prod
-chmod 600 .env  # secrets — lecture root only
+chmod 600 .env  # secrets — lecture user ubuntu only
 ls -la .env     # vérifier : -rw------- 1 root root ...
 ```
 
@@ -204,13 +214,13 @@ curl -s http://127.0.0.1:9100/minio/health/live       # minio
 🖥️ :
 
 ```bash
-ln -sf /etc/nginx/sites-available/sira-guinee.bootstrap /etc/nginx/sites-enabled/sira-guinee
+sudo ln -sf /etc/nginx/sites-available/sira-guinee.bootstrap /etc/nginx/sites-enabled/sira-guinee
 
 # Désactiver le default site si présent
-rm -f /etc/nginx/sites-enabled/default
+sudo rm -f /etc/nginx/sites-enabled/default
 
-nginx -t                # syntax check
-systemctl reload nginx
+sudo nginx -t                # syntax check
+sudo systemctl reload nginx
 ```
 
 ### 4.2 Obtenir les certificats Let's Encrypt
@@ -218,11 +228,13 @@ systemctl reload nginx
 🖥️ :
 
 ```bash
-certbot certonly --webroot \
+sudo certbot certonly --webroot \
   -w /var/www/certbot \
   -d sira-guinee.com \
   -d www.sira-guinee.com \
   -d api.sira-guinee.com \
+  -d test.sira-guinee.com \
+  -d api-test.sira-guinee.com \
   --email contact@sira-guinee.com \
   --agree-tos \
   --no-eff-email
@@ -235,9 +247,9 @@ certbot certonly --webroot \
 🖥️ :
 
 ```bash
-ln -sf /etc/nginx/sites-available/sira-guinee /etc/nginx/sites-enabled/sira-guinee
-nginx -t                # syntax check OK ?
-systemctl reload nginx
+sudo ln -sf /etc/nginx/sites-available/sira-guinee /etc/nginx/sites-enabled/sira-guinee
+sudo nginx -t                # syntax check OK ?
+sudo systemctl reload nginx
 ```
 
 ### 4.4 Renouvellement automatique
@@ -252,7 +264,7 @@ systemctl list-timers | grep certbot
 Test dry-run :
 
 ```bash
-certbot renew --dry-run  # ne doit pas afficher d'erreur
+sudo certbot renew --dry-run  # ne doit pas afficher d'erreur
 ```
 
 ---
@@ -327,9 +339,9 @@ Pour nginx :
 
 ```bash
 # Si config nginx cassée
-rm /etc/nginx/sites-enabled/sira-guinee
-ln -s /etc/nginx/sites-available/sira-guinee.bootstrap /etc/nginx/sites-enabled/sira-guinee
-nginx -t && systemctl reload nginx
+sudo rm /etc/nginx/sites-enabled/sira-guinee
+sudo ln -s /etc/nginx/sites-available/sira-guinee.bootstrap /etc/nginx/sites-enabled/sira-guinee
+sudo nginx -t && sudo systemctl reload nginx
 # Tu tombes sur "bootstrap nginx, SSL setup in progress" → temps de réparer
 ```
 

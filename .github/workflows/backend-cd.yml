@@ -1,10 +1,39 @@
-name: CD - Deploy Microservices to OVH
+name: CD - Build & Deploy SIRA Guinée
+
+# =============================================================================
+# Stratégie déploiement SIRA Guinée
+# =============================================================================
+#   push main      → build + push images Docker Hub → deploy auto sur TEST
+#   workflow_dispatch (env=test) → build + push → deploy TEST
+#   workflow_dispatch (env=prod) → build + push → deploy PROD (manual gating)
+#
+# Pré-requis VPS :
+#   - Docker installé
+#   - nginx + certbot configurés (1er deploy manuel cf docs/deploy-ovh-sira.md)
+#   - SSH key authorisée pour le user OVH_USER
+#   - Aucun code source du repo nécessaire (tout vient via scp + images Docker Hub)
+#
+# Secrets GitHub Actions (cf docs/secrets-mapping.md) :
+#   Niveau repo (communs) : DOCKERHUB_*, OVH_HOST, OVH_USER, PROD_SSH_KEY,
+#                           GMAIL_*, ORANGE_*, GOOGLE_* (placeholders MVP)
+#   Environment 'test'    : POSTGRES_PASSWORD, EUREKA_PASSWORD, MINIO_*,
+#                           PGADMIN_PASSWORD, SENDER_NAME, MAIL_FROM_NAME, etc.
+#   Environment 'prod'    : idem mais valeurs prod
+# =============================================================================
 
 permissions:
-  contents: write
+  contents: read
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environnement cible'
+        type: choice
+        options:
+          - test
+          - prod
+        default: test
   push:
     branches:
       - main
@@ -14,31 +43,16 @@ on:
       - '!microservers/**/test/**'
 
 jobs:
-  build-and-deploy:
+  # ============================================================================
+  # JOB 1 — Build & push toutes les images Docker Hub (7 services + flyway)
+  # ============================================================================
+  build-and-push:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: ci_user
-          POSTGRES_PASSWORD: ci_password
-          POSTGRES_DB: ci_db
-        ports:
-          - 5432:5432
-        options:
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    outputs:
+      build_number: ${{ steps.build-number.outputs.BUILD_NUMBER }}
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Notify deployment start
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":":rocket: Guidipress - Microservices deployment started\nCommit: https://github.com/${{ github.repository }}/commit/${{ github.sha }}"}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }} || true
 
       - uses: actions/setup-java@v4
         with:
@@ -71,58 +85,29 @@ jobs:
         id: build-number
         run: echo "BUILD_NUMBER=$(date '+%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
 
-      # Build all modules
-      - name: Install all modules
+      # Install parent pom modules (reactor) — couvre 6 services
+      - name: Install parent modules
         working-directory: ./microservers
         run: mvn -ntp -B install -DskipTests
 
-      # Build and push each microservice
-      - name: Build and push Discovery Server
-        working-directory: ./microservers/discoveryserver
+      # Build + push parent reactor microservices (6 services)
+      - name: Build & push parent-reactor services
+        working-directory: ./microservers
         run: |
-          mvn -ntp -B verify -DskipTests jib:dockerBuild
-          docker tag doukoure93/discoveryserver:0.0.1-SNAPSHOT doukoure93/billetterie-discoveryserver:${{ steps.build-number.outputs.BUILD_NUMBER }}
-          docker tag doukoure93/discoveryserver:0.0.1-SNAPSHOT doukoure93/billetterie-discoveryserver:latest
-          docker push doukoure93/billetterie-discoveryserver:${{ steps.build-number.outputs.BUILD_NUMBER }}
-          docker push doukoure93/billetterie-discoveryserver:latest
+          set -e
+          for svc in discoveryserver gateway authorizationserver userservice billetterieservice immobilierservice; do
+            echo "=== Building $svc ==="
+            cd "$svc"
+            mvn -ntp -B verify -DskipTests jib:dockerBuild
+            docker tag doukoure93/${svc}:0.0.1-SNAPSHOT doukoure93/billetterie-${svc}:${{ steps.build-number.outputs.BUILD_NUMBER }}
+            docker tag doukoure93/${svc}:0.0.1-SNAPSHOT doukoure93/billetterie-${svc}:latest
+            docker push doukoure93/billetterie-${svc}:${{ steps.build-number.outputs.BUILD_NUMBER }}
+            docker push doukoure93/billetterie-${svc}:latest
+            cd ..
+          done
 
-      - name: Build and push Gateway
-        working-directory: ./microservers/gateway
-        run: |
-          mvn -ntp -B verify -DskipTests jib:dockerBuild
-          docker tag doukoure93/gateway:0.0.1-SNAPSHOT doukoure93/billetterie-gateway:${{ steps.build-number.outputs.BUILD_NUMBER }}
-          docker tag doukoure93/gateway:0.0.1-SNAPSHOT doukoure93/billetterie-gateway:latest
-          docker push doukoure93/billetterie-gateway:${{ steps.build-number.outputs.BUILD_NUMBER }}
-          docker push doukoure93/billetterie-gateway:latest
-
-      - name: Build and push Authorization Server
-        working-directory: ./microservers/authorizationserver
-        run: |
-          mvn -ntp -B verify -DskipTests jib:dockerBuild
-          docker tag doukoure93/authorizationserver:0.0.1-SNAPSHOT doukoure93/billetterie-authorizationserver:${{ steps.build-number.outputs.BUILD_NUMBER }}
-          docker tag doukoure93/authorizationserver:0.0.1-SNAPSHOT doukoure93/billetterie-authorizationserver:latest
-          docker push doukoure93/billetterie-authorizationserver:${{ steps.build-number.outputs.BUILD_NUMBER }}
-          docker push doukoure93/billetterie-authorizationserver:latest
-
-      - name: Build and push User Service
-        working-directory: ./microservers/userservice
-        run: |
-          mvn -ntp -B verify -DskipTests jib:dockerBuild
-          docker tag doukoure93/userservice:0.0.1-SNAPSHOT doukoure93/billetterie-userservice:${{ steps.build-number.outputs.BUILD_NUMBER }}
-          docker tag doukoure93/userservice:0.0.1-SNAPSHOT doukoure93/billetterie-userservice:latest
-          docker push doukoure93/billetterie-userservice:${{ steps.build-number.outputs.BUILD_NUMBER }}
-          docker push doukoure93/billetterie-userservice:latest
-
-      - name: Build and push Billetterie Service
-        working-directory: ./microservers/billetterieservice
-        run: |
-          mvn -ntp -B verify -DskipTests jib:dockerBuild
-          docker tag doukoure93/billetterieservice:0.0.1-SNAPSHOT doukoure93/billetterie-billetterieservice:${{ steps.build-number.outputs.BUILD_NUMBER }}
-          docker tag doukoure93/billetterieservice:0.0.1-SNAPSHOT doukoure93/billetterie-billetterieservice:latest
-          docker push doukoure93/billetterie-billetterieservice:${{ steps.build-number.outputs.BUILD_NUMBER }}
-          docker push doukoure93/billetterie-billetterieservice:latest
-
-      - name: Build and push Notification Server
+      # notificationserver est orphelin du parent pom (dette historique) → build séparé
+      - name: Build & push notificationserver
         working-directory: ./microservers/notificationserver
         run: |
           mvn -ntp -B verify -DskipTests jib:dockerBuild
@@ -131,205 +116,315 @@ jobs:
           docker push doukoure93/billetterie-notificationserver:${{ steps.build-number.outputs.BUILD_NUMBER }}
           docker push doukoure93/billetterie-notificationserver:latest
 
-      - name: Notify images pushed
+      # Flyway migrations dans une image dédiée (SQL embarqués, zéro code VPS)
+      - name: Build & push flyway-migrations image
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":":whale: All Guidipress images pushed to DockerHub!\nTag: ${{ steps.build-number.outputs.BUILD_NUMBER }}"}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }} || true
+          docker build \
+            -t doukoure93/billetterie-flyway-migrations:${{ steps.build-number.outputs.BUILD_NUMBER }} \
+            -t doukoure93/billetterie-flyway-migrations:latest \
+            -f microservers/database-migrations/Dockerfile \
+            microservers/database-migrations
+          docker push doukoure93/billetterie-flyway-migrations:${{ steps.build-number.outputs.BUILD_NUMBER }}
+          docker push doukoure93/billetterie-flyway-migrations:latest
 
-      # Deploy to OVH server
-      - name: Generate .env.prod and deploy
+  # ============================================================================
+  # JOB 2 — Deploy TEST (auto push main + manual dispatch test)
+  # ============================================================================
+  deploy-test:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'test')
+    environment: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload docker-compose.yml + nginx config to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.OVH_HOST }}
+          username: ${{ secrets.OVH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          source: "docker-compose.yml,nginx/sira-guinee-test.conf"
+          target: "~/sira-guinee/test-deploy/"
+          strip_components: 0
+
+      - name: Deploy to TEST stack
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.OVH_HOST }}
           username: ${{ secrets.OVH_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
-          envs: POSTGRES_PASSWORD,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GMAIL_USERNAME,GMAIL_APP_PASSWORD,ORANGE_API_CREDENTIALS
+          envs: POSTGRES_PASSWORD,EUREKA_PASSWORD,MINIO_ROOT_USER,MINIO_ROOT_PASSWORD,PGADMIN_PASSWORD,GMAIL_USERNAME,GMAIL_APP_PASSWORD,ORANGE_API_CREDENTIALS,ORANGE_SENDER_ADDRESS,SENDER_NAME,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET
           script: |
             set -e
 
-            mkdir -p ~/billetterie
-            cd ~/billetterie
+            DEPLOY_DIR=~/sira-guinee/test
+            mkdir -p "$DEPLOY_DIR/keys"
+            cd "$DEPLOY_DIR"
 
-            # Sync repository
-            if [ -d ".git" ]; then
-              echo "Syncing with repository..."
-              git stash save "Auto-stash before deployment $(date)" || true
-              git fetch origin main
-              git reset --hard origin/main
-            else
-              echo "Cloning repository..."
-              git init
-              git remote add origin https://github.com/${{ github.repository }}.git
-              git fetch origin main
-              git checkout -f main
-            fi
+            # Récupère le compose + nginx déposés par scp
+            mv ~/sira-guinee/test-deploy/docker-compose.yml .
+            mv ~/sira-guinee/test-deploy/nginx/sira-guinee-test.conf .
+            rm -rf ~/sira-guinee/test-deploy
 
-            # Create directories
-            mkdir -p logs/{discoveryserver,gateway,authorizationserver,userservice,billetterieservice,notificationserver,frontend}
-            mkdir -p keys
+            # Génère .env TEST depuis les secrets de l'environment 'test'
+            cat > .env << ENVEOF
+            SPRING_PROFILES_ACTIVE=test
+            TZ=Africa/Conakry
 
-            # Generate .env.prod from GitHub Secrets
-            echo "Generating .env.prod..."
-            cat > .env.prod << ENVEOF
-            SPRING_PROFILES_ACTIVE=prod
-            POSTGRES_USER=billetterie_user
+            POSTGRES_USER=inno2711
             POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-            POSTGRES_DB=billetteriedb
-            DB_USERNAME=billetterie_user
+            POSTGRES_DB=innodb
+            DB_USERNAME=inno2711
             DB_PASSWORD=${POSTGRES_PASSWORD}
-            PGADMIN_EMAIL=admin@guidipress-io.com
-            PGADMIN_PASSWORD=${POSTGRES_PASSWORD}
-            UI_APP_URL=https://guidipress-io.com
-            BACKEND_APP_URL=https://api.guidipress-io.com
-            OAUTH_ISSUER=https://api.guidipress-io.com/authorization
-            OAUTH2_CLIENT_ID=client
-            OAUTH2_SCOPE=openid
-            OAUTH2_RESPONSE_TYPE=code
-            OAUTH2_CODE_CHALLENGE_METHOD=S256
+
+            POSTGRES_HOST_PORT=15433
+            PGADMIN_HOST_PORT=17001
+            MINIO_HOST_PORT=19100
+            MINIO_CONSOLE_HOST_PORT=19101
+            ZOOKEEPER_HOST_PORT=12183
+            KAFKA_HOST_PORT=19093
+            EUREKA_HOST_PORT=18761
+            GATEWAY_HOST_PORT=19000
+            AUTH_HOST_PORT=18090
+            USER_HOST_PORT=18091
+            BILLET_HOST_PORT=18092
+            NOTIF_HOST_PORT=18093
+            IMMO_HOST_PORT=18098
+            FRONTEND_HOST_PORT=14202
+
+            PGADMIN_EMAIL=admin-test@sira-guinee.com
+            PGADMIN_PASSWORD=${PGADMIN_PASSWORD}
+
+            EUREKA_USER=manager
+            EUREKA_PASSWORD=${EUREKA_PASSWORD}
+
+            UI_APP_URL=https://test.sira-guinee.com
+            OAUTH_ISSUER=https://api-test.sira-guinee.com
             SESSION_COOKIE_SECURE=true
+
             GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
             GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+
             GMAIL_USERNAME=${GMAIL_USERNAME}
             GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
-            MAIL_FROM_NAME=Guidipress
+            MAIL_FROM_NAME=SIRA Guinée TEST
+
             ORANGE_API_CREDENTIALS=${ORANGE_API_CREDENTIALS}
-            ORANGE_SENDER_ADDRESS=tel:+224XXXXXXXXX
-            KAFKA_BOOTSTRAP_SERVERS=kafka:29093
-            DOCKERHUB_USERNAME=doukoure93
-            EUREKA_USER=manager
-            EUREKA_PASSWORD=manager2711
+            ORANGE_SENDER_ADDRESS=${ORANGE_SENDER_ADDRESS}
+            SENDER_NAME=${SENDER_NAME}
+
+            MINIO_ROOT_USER=${MINIO_ROOT_USER}
+            MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+            MINIO_PUBLIC_URL=https://api-test.sira-guinee.com
+
+            FRONTEND_IMAGE_TAG=test-latest
             ENVEOF
 
-            # Remove leading spaces from heredoc
-            sed -i 's/^[[:space:]]*//' .env.prod
-            chmod 600 .env.prod
+            sed -i 's/^[[:space:]]*//' .env
+            chmod 600 .env
 
-            # Load environment
-            export $(cat .env.prod | grep -v '^#' | xargs)
+            # Stop test stack (volumes préservés)
+            sudo docker compose -p sira-test --env-file .env down --remove-orphans || true
 
-            # Backup database
-            echo "Creating pre-deployment backup..."
-            if sudo docker ps | grep -q billetterie-postgres; then
-              sudo docker exec billetterie-postgres pg_dumpall -U ${POSTGRES_USER} > ~/backup_$(date +%Y%m%d_%H%M%S).sql || echo "Backup failed"
-            fi
+            # Pull images
+            sudo docker compose -p sira-test --env-file .env pull
 
-            # Stop services
-            echo "Stopping services..."
-            sudo docker compose --env-file .env.prod down --remove-orphans || true
-
-            # Pull new images
-            echo "Pulling latest images..."
-            sudo docker compose --env-file .env.prod pull
-
-            # Clean old images
+            # Cleanup vieilles images dangling
             sudo docker image prune -f
 
-            # Start PostgreSQL
-            echo "Starting PostgreSQL..."
-            sudo docker compose --env-file .env.prod up -d postgresdb
+            # Démarre Postgres seul
+            sudo docker compose -p sira-test --env-file .env up -d postgresdb
             sleep 15
 
-            # Wait for PostgreSQL
-            echo "Waiting for PostgreSQL..."
+            # Attend Postgres
             count=0
-            until sudo docker exec billetterie-postgres pg_isready -U ${POSTGRES_USER} 2>/dev/null; do
-              if [ $count -eq 30 ]; then
-                echo "PostgreSQL failed to start!"
-                sudo docker logs billetterie-postgres --tail=30
-                exit 1
-              fi
-              sleep 3
-              count=$((count + 1))
+            until sudo docker compose -p sira-test --env-file .env exec -T postgresdb pg_isready -U inno2711 -p 5433 2>/dev/null; do
+              if [ $count -eq 30 ]; then echo "Postgres timeout"; exit 1; fi
+              sleep 3; count=$((count + 1))
             done
-            echo "PostgreSQL is ready"
 
-            # Start Kafka
-            echo "Starting Kafka..."
-            sudo docker compose --env-file .env.prod up -d zookeeper kafka
+            # Run migrations Flyway via image dédiée (zéro fichier SQL sur VPS)
+            NETWORK=$(sudo docker network ls --filter "name=sira-test_" --format '{{.Name}}' | head -1)
+            sudo docker run --rm --network "$NETWORK" \
+              -e FLYWAY_URL="jdbc:postgresql://postgresdb:5433/innodb" \
+              -e FLYWAY_USER="inno2711" \
+              -e FLYWAY_PASSWORD="${POSTGRES_PASSWORD}" \
+              doukoure93/billetterie-flyway-migrations:latest migrate
+
+            # Démarre kafka + zookeeper
+            sudo docker compose -p sira-test --env-file .env up -d zookeeper kafka
             sleep 10
 
-            # Run migrations using docker run (avoids compose profile networking issues)
-            echo "Running database migrations..."
-            NETWORK_NAME=$(sudo docker network ls --filter "name=billetterie_" --format '{{.Name}}' | head -1)
-            echo "Using network: $NETWORK_NAME"
-            sudo docker run --rm \
-              --network "$NETWORK_NAME" \
-              -v $(pwd)/microservers/database-migrations/src/main/resources/db/migration:/flyway/sql \
-              -e FLYWAY_URL="jdbc:postgresql://billetterie-postgres:5433/billetteriedb" \
-              -e FLYWAY_USER="${POSTGRES_USER}" \
-              -e FLYWAY_PASSWORD="${POSTGRES_PASSWORD}" \
-              -e FLYWAY_SCHEMAS=public \
-              -e FLYWAY_TABLE=flyway_schema_history \
-              -e FLYWAY_BASELINE_ON_MIGRATE=true \
-              -e FLYWAY_VALIDATE_ON_MIGRATE=true \
-              -e FLYWAY_CLEAN_DISABLED=true \
-              -e FLYWAY_BASELINE_VERSION=1 \
-              flyway/flyway:11.3.0 migrate
-
-            # Start services in order
-            echo "Starting Discovery Server..."
-            sudo docker compose --env-file .env.prod up -d discoveryserver
-            sleep 30
-
-            echo "Starting Gateway and Authorization Server..."
-            sudo docker compose --env-file .env.prod up -d gateway authorizationserver
-            sleep 20
-
-            # Remove standalone frontend container if it exists (managed by frontend CD workflow)
-            sudo docker rm -f billetterie-frontend || true
-
-            echo "Starting all services..."
-            sudo docker compose --env-file .env.prod up -d
-
-            echo "Waiting for services to stabilize..."
+            # Démarre tout
+            sudo docker compose -p sira-test --env-file .env up -d
             sleep 60
 
-            # Health check
-            echo "Checking services..."
-            services=("billetterie-postgres" "billetterie-kafka" "billetterie-discoveryserver" "billetterie-gateway" "billetterie-authorizationserver" "billetterie-userservice" "billetterie-billetterieservice" "billetterie-notificationserver" "billetterie-frontend")
-            all_healthy=true
-
-            for service in "${services[@]}"; do
-              if sudo docker ps | grep -q "$service"; then
-                echo "$service is running"
-              else
-                echo "$service is not running"
-                all_healthy=false
+            # Healthcheck services critiques
+            for svc in postgresdb minio gateway authorizationserver userservice immobilierservice frontend; do
+              if ! sudo docker compose -p sira-test --env-file .env ps "$svc" | grep -q running; then
+                echo "Service $svc not running"
+                sudo docker compose -p sira-test --env-file .env logs --tail=30 "$svc"
+                exit 1
               fi
             done
 
-            if [ "$all_healthy" = false ]; then
-              echo "Some services failed!"
-              sudo docker compose --env-file .env.prod logs --tail=20
-              exit 1
+            # Update nginx config (overwrite)
+            sudo mv sira-guinee-test.conf /etc/nginx/sites-available/sira-guinee-test
+            sudo ln -sf /etc/nginx/sites-available/sira-guinee-test /etc/nginx/sites-enabled/sira-guinee-test
+            sudo nginx -t && sudo systemctl reload nginx
+
+            echo "Deployment TEST OK — https://test.sira-guinee.com"
+
+  # ============================================================================
+  # JOB 3 — Deploy PROD (workflow_dispatch only, gating manuel via environment)
+  # ============================================================================
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'prod'
+    environment: prod  # Configurer review/approval dans Settings → Environments
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload docker-compose.yml + nginx config to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.OVH_HOST }}
+          username: ${{ secrets.OVH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          source: "docker-compose.yml,nginx/sira-guinee-prod.conf"
+          target: "~/sira-guinee/prod-deploy/"
+          strip_components: 0
+
+      - name: Deploy to PROD stack
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.OVH_HOST }}
+          username: ${{ secrets.OVH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          envs: POSTGRES_PASSWORD,EUREKA_PASSWORD,MINIO_ROOT_USER,MINIO_ROOT_PASSWORD,PGADMIN_PASSWORD,GMAIL_USERNAME,GMAIL_APP_PASSWORD,ORANGE_API_CREDENTIALS,ORANGE_SENDER_ADDRESS,SENDER_NAME,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET
+          script: |
+            set -e
+
+            DEPLOY_DIR=~/sira-guinee/prod
+            mkdir -p "$DEPLOY_DIR/keys"
+            cd "$DEPLOY_DIR"
+
+            mv ~/sira-guinee/prod-deploy/docker-compose.yml .
+            mv ~/sira-guinee/prod-deploy/nginx/sira-guinee-prod.conf .
+            rm -rf ~/sira-guinee/prod-deploy
+
+            mkdir -p ~/sira-guinee/backups
+
+            # Backup Postgres avant deploy prod — résolution dynamique du
+            # container via docker compose -p (pas de nom hardcodé qui casserait
+            # si Docker Compose change le suffixe -1, -2, etc.). Skip propre
+            # au 1er deploy quand .env ou container n'existent pas encore.
+            if [ -f .env ] && sudo docker compose -p sira-prod --env-file .env ps postgresdb --status running --quiet 2>/dev/null | grep -q .; then
+              echo "Pre-deploy Postgres backup..."
+              sudo docker compose -p sira-prod --env-file .env exec -T postgresdb \
+                pg_dumpall -U inno2711 \
+                > ~/sira-guinee/backups/prod_$(date +%Y%m%d_%H%M%S).sql || echo "Backup warning (non-blocking)"
+            else
+              echo "Skipping pre-deploy backup (first deploy or stack down)"
             fi
 
-            echo ""
-            echo "Deployment successful!"
-            echo "================================================"
-            echo "Services available at:"
-            echo "   Frontend: https://guidipress-io.com"
-            echo "   API: https://api.guidipress-io.com"
-            echo "================================================"
-        env:
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          ORANGE_API_CREDENTIALS: ${{ secrets.ORANGE_API_CREDENTIALS }}
+            # Génère .env PROD depuis les secrets de l'environment 'prod'
+            cat > .env << ENVEOF
+            SPRING_PROFILES_ACTIVE=prod
+            TZ=Africa/Conakry
 
-      - name: Notify deployment success
-        if: success()
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":":white_check_mark: Guidipress deployment complete!\n:globe_with_meridians: https://guidipress-io.com\n:rocket: Tag: ${{ steps.build-number.outputs.BUILD_NUMBER }}"}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }} || true
+            POSTGRES_USER=inno2711
+            POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            POSTGRES_DB=innodb
+            DB_USERNAME=inno2711
+            DB_PASSWORD=${POSTGRES_PASSWORD}
 
-      - name: Notify deployment failure
-        if: failure()
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":":rotating_light: Guidipress deployment FAILED!\n:link: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }} || true
+            POSTGRES_HOST_PORT=5433
+            PGADMIN_HOST_PORT=7001
+            MINIO_HOST_PORT=9100
+            MINIO_CONSOLE_HOST_PORT=9101
+            ZOOKEEPER_HOST_PORT=2183
+            KAFKA_HOST_PORT=9093
+            EUREKA_HOST_PORT=8761
+            GATEWAY_HOST_PORT=9000
+            AUTH_HOST_PORT=8090
+            USER_HOST_PORT=8091
+            BILLET_HOST_PORT=8092
+            NOTIF_HOST_PORT=8093
+            IMMO_HOST_PORT=8098
+            FRONTEND_HOST_PORT=4202
+
+            PGADMIN_EMAIL=admin@sira-guinee.com
+            PGADMIN_PASSWORD=${PGADMIN_PASSWORD}
+
+            EUREKA_USER=manager
+            EUREKA_PASSWORD=${EUREKA_PASSWORD}
+
+            UI_APP_URL=https://sira-guinee.com
+            OAUTH_ISSUER=https://api.sira-guinee.com
+            SESSION_COOKIE_SECURE=true
+
+            GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+            GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+
+            GMAIL_USERNAME=${GMAIL_USERNAME}
+            GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
+            MAIL_FROM_NAME=SIRA Guinée
+
+            ORANGE_API_CREDENTIALS=${ORANGE_API_CREDENTIALS}
+            ORANGE_SENDER_ADDRESS=${ORANGE_SENDER_ADDRESS}
+            SENDER_NAME=${SENDER_NAME}
+
+            MINIO_ROOT_USER=${MINIO_ROOT_USER}
+            MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+            MINIO_PUBLIC_URL=https://api.sira-guinee.com
+
+            FRONTEND_IMAGE_TAG=prod-latest
+            ENVEOF
+
+            sed -i 's/^[[:space:]]*//' .env
+            chmod 600 .env
+
+            sudo docker compose -p sira-prod --env-file .env down --remove-orphans || true
+            sudo docker compose -p sira-prod --env-file .env pull
+            sudo docker image prune -f
+
+            sudo docker compose -p sira-prod --env-file .env up -d postgresdb
+            sleep 15
+
+            count=0
+            until sudo docker compose -p sira-prod --env-file .env exec -T postgresdb pg_isready -U inno2711 -p 5433 2>/dev/null; do
+              if [ $count -eq 30 ]; then echo "Postgres timeout"; exit 1; fi
+              sleep 3; count=$((count + 1))
+            done
+
+            NETWORK=$(sudo docker network ls --filter "name=sira-prod_" --format '{{.Name}}' | head -1)
+            sudo docker run --rm --network "$NETWORK" \
+              -e FLYWAY_URL="jdbc:postgresql://postgresdb:5433/innodb" \
+              -e FLYWAY_USER="inno2711" \
+              -e FLYWAY_PASSWORD="${POSTGRES_PASSWORD}" \
+              doukoure93/billetterie-flyway-migrations:latest migrate
+
+            sudo docker compose -p sira-prod --env-file .env up -d zookeeper kafka
+            sleep 10
+
+            sudo docker compose -p sira-prod --env-file .env up -d
+            sleep 60
+
+            for svc in postgresdb minio gateway authorizationserver userservice immobilierservice frontend; do
+              if ! sudo docker compose -p sira-prod --env-file .env ps "$svc" | grep -q running; then
+                echo "Service $svc not running"
+                sudo docker compose -p sira-prod --env-file .env logs --tail=30 "$svc"
+                exit 1
+              fi
+            done
+
+            sudo mv sira-guinee-prod.conf /etc/nginx/sites-available/sira-guinee-prod
+            sudo ln -sf /etc/nginx/sites-available/sira-guinee-prod /etc/nginx/sites-enabled/sira-guinee-prod
+            sudo nginx -t && sudo systemctl reload nginx
+
+            echo "Deployment PROD OK — https://sira-guinee.com"
