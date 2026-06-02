@@ -37,13 +37,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Notify Slack — frontend build started
-        continue-on-error: true
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\":angular: *SIRA Guinée* — frontend build started (test + prod)\\n:link: <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>\"}" \
-            "${{ secrets.SLACK_WEBHOOK_URL }}" || true
-
       - name: Docker Hub login
         uses: docker/login-action@v3
         with:
@@ -82,13 +75,6 @@ jobs:
           docker push doukoure93/billetterie-frontend:prod-${{ steps.build-number.outputs.BUILD_NUMBER }}
           docker push doukoure93/billetterie-frontend:prod-latest
 
-      - name: Notify Slack — frontend images pushed
-        continue-on-error: true
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\":whale: *SIRA Guinée* — 2 frontend images pushed (test-latest + prod-latest)\\n:label: Tag: \`${{ steps.build-number.outputs.BUILD_NUMBER }}\`\"}" \
-            "${{ secrets.SLACK_WEBHOOK_URL }}" || true
-
   # ============================================================================
   # JOB 2 — Deploy TEST (re-pull image frontend test-latest sur stack test)
   # ============================================================================
@@ -126,22 +112,6 @@ jobs:
 
             echo "Frontend TEST deployed — https://test.sira-guinee.com"
 
-      - name: Notify Slack — frontend TEST success
-        if: success()
-        continue-on-error: true
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\":white_check_mark: *SIRA Guinée TEST* frontend deployed\\n:test_tube: https://test.sira-guinee.com\"}" \
-            "${{ secrets.SLACK_WEBHOOK_URL }}" || true
-
-      - name: Notify Slack — frontend TEST failure
-        if: failure()
-        continue-on-error: true
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\":rotating_light: *SIRA Guinée TEST* frontend deployment FAILED\\n:link: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
-            "${{ secrets.SLACK_WEBHOOK_URL }}" || true
-
   # ============================================================================
   # JOB 3 — Deploy PROD (workflow_dispatch only, gating manuel)
   # ============================================================================
@@ -174,19 +144,3 @@ jobs:
             fi
 
             echo "Frontend PROD deployed — https://sira-guinee.com"
-
-      - name: Notify Slack — frontend PROD success
-        if: success()
-        continue-on-error: true
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\":fire: *SIRA Guinée PROD* frontend deployed\\n:globe_with_meridians: https://sira-guinee.com\"}" \
-            "${{ secrets.SLACK_WEBHOOK_URL }}" || true
-
-      - name: Notify Slack — frontend PROD failure
-        if: failure()
-        continue-on-error: true
-        run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\":rotating_light: *SIRA Guinée PROD* frontend deployment FAILED\\n:link: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
-            "${{ secrets.SLACK_WEBHOOK_URL }}" || true
