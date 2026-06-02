@@ -117,8 +117,10 @@ jobs:
 
             sleep 8
 
-            # Health check container
-            if ! sudo docker compose -p sira-test --env-file .env ps frontend | grep -q running; then
+            # Check via --status running --services : `docker compose ps` standard
+            # n'affiche pas "running" mais "Up X seconds" → l'ancien grep produisait
+            # des faux négatifs même quand le container fonctionnait normalement.
+            if ! sudo docker compose -p sira-test --env-file .env ps --status running --services | grep -qx frontend; then
               echo "Frontend TEST KO"
               sudo docker compose -p sira-test --env-file .env logs --tail=30 frontend
               exit 1
@@ -167,7 +169,7 @@ jobs:
 
             sleep 8
 
-            if ! sudo docker compose -p sira-prod --env-file .env ps frontend | grep -q running; then
+            if ! sudo docker compose -p sira-prod --env-file .env ps --status running --services | grep -qx frontend; then
               echo "Frontend PROD KO"
               sudo docker compose -p sira-prod --env-file .env logs --tail=30 frontend
               exit 1

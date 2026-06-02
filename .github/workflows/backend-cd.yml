@@ -275,9 +275,12 @@ jobs:
             sudo docker compose -p sira-test --env-file .env up -d
             sleep 60
 
-            # Healthcheck services critiques
+            # Healthcheck services critiques via --status running --services
+            # (docker compose ps standard ne contient pas "running" mais "Up X
+            # seconds" → l'ancien grep -q running produisait des faux négatifs).
+            RUNNING_SERVICES=$(sudo docker compose -p sira-test --env-file .env ps --status running --services)
             for svc in postgresdb minio gateway authorizationserver userservice immobilierservice frontend; do
-              if ! sudo docker compose -p sira-test --env-file .env ps "$svc" | grep -q running; then
+              if ! echo "$RUNNING_SERVICES" | grep -qx "$svc"; then
                 echo "Service $svc not running"
                 sudo docker compose -p sira-test --env-file .env logs --tail=30 "$svc"
                 exit 1
@@ -445,8 +448,9 @@ jobs:
             sudo docker compose -p sira-prod --env-file .env up -d
             sleep 60
 
+            RUNNING_SERVICES_PROD=$(sudo docker compose -p sira-prod --env-file .env ps --status running --services)
             for svc in postgresdb minio gateway authorizationserver userservice immobilierservice frontend; do
-              if ! sudo docker compose -p sira-prod --env-file .env ps "$svc" | grep -q running; then
+              if ! echo "$RUNNING_SERVICES_PROD" | grep -qx "$svc"; then
                 echo "Service $svc not running"
                 sudo docker compose -p sira-prod --env-file .env logs --tail=30 "$svc"
                 exit 1
