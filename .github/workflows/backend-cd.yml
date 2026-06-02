@@ -165,6 +165,19 @@ jobs:
 
       - name: Deploy to TEST stack
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          EUREKA_PASSWORD: ${{ secrets.EUREKA_PASSWORD }}
+          MINIO_ROOT_USER: ${{ secrets.MINIO_ROOT_USER }}
+          MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
+          PGADMIN_PASSWORD: ${{ secrets.PGADMIN_PASSWORD }}
+          GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ORANGE_API_CREDENTIALS: ${{ secrets.ORANGE_API_CREDENTIALS }}
+          ORANGE_SENDER_ADDRESS: ${{ secrets.ORANGE_SENDER_ADDRESS }}
+          SENDER_NAME: ${{ secrets.SENDER_NAME }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         with:
           host: ${{ secrets.OVH_HOST }}
           username: ${{ secrets.OVH_USER }}
@@ -334,6 +347,19 @@ jobs:
 
       - name: Deploy to PROD stack
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          EUREKA_PASSWORD: ${{ secrets.EUREKA_PASSWORD }}
+          MINIO_ROOT_USER: ${{ secrets.MINIO_ROOT_USER }}
+          MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
+          PGADMIN_PASSWORD: ${{ secrets.PGADMIN_PASSWORD }}
+          GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ORANGE_API_CREDENTIALS: ${{ secrets.ORANGE_API_CREDENTIALS }}
+          ORANGE_SENDER_ADDRESS: ${{ secrets.ORANGE_SENDER_ADDRESS }}
+          SENDER_NAME: ${{ secrets.SENDER_NAME }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         with:
           host: ${{ secrets.OVH_HOST }}
           username: ${{ secrets.OVH_USER }}
