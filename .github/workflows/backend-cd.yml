@@ -196,8 +196,13 @@ jobs:
             rm -rf ~/sira-guinee/test-deploy
 
             # Génère .env TEST depuis les secrets de l'environment 'test'
+            # SPRING_PROFILES_ACTIVE=prod intentionnel pour la stack TEST :
+            # aucun service Spring n'a de fichier `application-test.yml`. Les
+            # différences test/prod (URLs sira-guinee.com vs test.sira-guinee.com,
+            # ports, mots de passe) viennent uniquement de ce `.env` qui override
+            # les `${VAR:default}` du application-prod.yml.
             cat > .env << ENVEOF
-            SPRING_PROFILES_ACTIVE=test
+            SPRING_PROFILES_ACTIVE=prod
             TZ=Africa/Conakry
 
             POSTGRES_USER=inno2711
