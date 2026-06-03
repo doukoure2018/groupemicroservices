@@ -12,22 +12,33 @@ spring:
     gateway:
       mvc:
         routes:
+          # MVP : routes statiques directes (DNS Docker network) au lieu de
+          # `lb://SERVICE` qui dépend du registry Eureka. Eureka client/server
+          # ont un bug Content-Type "application/octet-stream" en Spring Cloud
+          # 4.2.0 → registry pas peuplé → routing fail → 500 sur tous les
+          # endpoints OAuth/API. Single-instance MVP, pas de load balancing
+          # nécessaire pour l'instant. Cf [[gateway-eureka-bypass-debt]].
           - id: authorization-server
-            uri: lb://AUTHORIZATIONSERVER
+            uri: http://authorizationserver:8090
             predicates:
               - Path=/authorization/**
           - id: user-service
-            uri: lb://USERSERVICE
+            uri: http://userservice:8091
             predicates:
               - Path=/user/**
           - id: billetterie-service
-            uri: lb://BILLETTERIESERVICE
+            uri: http://billetterieservice:8092
             predicates:
               - Path=/billetterie/**
           - id: notification-service
-            uri: lb://NOTIFICATIONSERVER
+            uri: http://notificationserver:8093
             predicates:
               - Path=/notification/**
+          # immobilierservice était absent en prod → ajouté pour SIRA Guinée
+          - id: immobilier-service
+            uri: http://immobilierservice:8098
+            predicates:
+              - Path=/immo/**
 
 eureka:
   client:

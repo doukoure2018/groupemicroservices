@@ -245,7 +245,11 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
+          # 512M (vs 256M historique) car JVM Java 21 + Spring Boot 3.4 +
+          # Eureka Server + Spring Security + Spring Cloud consomme ~260-310M
+          # RSS au startup → OOM kill confirmé sur prod TEST 2026-06-03 :
+          # "Memory cgroup out of memory: Killed process (java) anon-rss:259320kB"
+          memory: 512M
           cpus: '0.5'
     logging:
       driver: "json-file"
