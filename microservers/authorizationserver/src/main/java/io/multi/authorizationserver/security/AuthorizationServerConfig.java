@@ -496,15 +496,22 @@ public class AuthorizationServerConfig {
         var corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setAllowedOrigins(List.of(
+                // Dev local
                 "http://localhost:4202",
-                "https://guidipress-io.com",
-                "https://www.guidipress-io.com",
-                "http://guidipress-io.com",
-                "http://www.guidipress-io.com",
-                // Add mobile origins
-                "http://localhost", // For local mobile testing
+                "http://localhost:4200",
+                // SIRA Guinée prod
+                "https://sira-guinee.com",
+                "https://www.sira-guinee.com",
+                // SIRA Guinée test (env CI/CD)
+                "https://test.sira-guinee.com",
+                // API SIRA Guinée (pour appels API directs depuis api.sira-guinee.com vers auth)
+                "https://api.sira-guinee.com",
+                "https://api-test.sira-guinee.com",
+                // Mobile origins (YIGUI / SIRA Guinée app)
+                "http://localhost",
                 "capacitor://localhost",
-                "com.billetterie.gn://"  // Mobile app scheme
+                "yigui://",
+                "com.sira.guinee://"
         ));
         corsConfiguration.setAllowedHeaders(Arrays.asList(
                 ORIGIN, ACCESS_CONTROL_ALLOW_ORIGIN, CONTENT_TYPE,
