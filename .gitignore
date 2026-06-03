@@ -69,3 +69,4 @@ nul
 
 # Template files (v0.dev design references)
 template/
+docker-compose.override.yml

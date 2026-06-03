@@ -96,7 +96,16 @@ public class ResourceServerConfig {
     {
         var corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowCredentials(true);
-        corsConfiguration.setAllowedOrigins(List.of( "http://localhost:3000","http://localhost:4202","https://guidipress-io.com","https://www.guidipress-io.com","http://guidipress-io.com"));
+        corsConfiguration.setAllowedOrigins(List.of(
+                "http://localhost:3000",
+                "http://localhost:4200",
+                "http://localhost:4202",
+                "https://sira-guinee.com",
+                "https://www.sira-guinee.com",
+                "https://test.sira-guinee.com",
+                "https://api.sira-guinee.com",
+                "https://api-test.sira-guinee.com"
+        ));
         corsConfiguration.setAllowedHeaders(Arrays.asList(ORIGIN, ACCESS_CONTROL_ALLOW_ORIGIN, CONTENT_TYPE, ACCEPT, AUTHORIZATION, X_REQUESTED_WITH, ACCESS_CONTROL_REQUEST_METHOD, ACCESS_CONTROL_REQUEST_HEADERS, ACCESS_CONTROL_ALLOW_CREDENTIALS));
         corsConfiguration.setExposedHeaders(Arrays.asList(ORIGIN, ACCESS_CONTROL_ALLOW_ORIGIN, CONTENT_TYPE, ACCEPT, AUTHORIZATION, X_REQUESTED_WITH, ACCESS_CONTROL_REQUEST_METHOD, ACCESS_CONTROL_REQUEST_HEADERS, ACCESS_CONTROL_ALLOW_CREDENTIALS));
         corsConfiguration.setAllowedMethods(Arrays.asList(GET.name(), POST.name(), PUT.name(), PATCH.name(), DELETE.name(), OPTIONS.name()));

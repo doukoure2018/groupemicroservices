@@ -90,9 +90,9 @@ public class MobileOAuthSessionFilter implements Filter {
             log.info("Client ID: {}", clientId);
             log.info("Redirect URI: {}", redirectUri);
 
-            // Détecter requête mobile
+            // Détecter requête mobile (scheme yigui:// pour SIRA Guinée)
             boolean isMobileRequest = MOBILE_CLIENT_ID.equals(clientId) ||
-                    (redirectUri != null && redirectUri.startsWith("com.billetterie.gn://"));
+                    (redirectUri != null && redirectUri.startsWith("yigui://"));
 
             if (isMobileRequest) {
                 log.info("📱 MOBILE REQUEST DETECTED");
