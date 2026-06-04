@@ -6,7 +6,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 
-@FeignClient("userservice")
+// URL directe Docker DNS (workaround bug Eureka Spring Cloud 4.2.0 Content-Type
+// octet-stream — registry jamais peuplé). Override par USERSERVICE_URL en docker
+// compose, fallback localhost:8095 pour dev local Mac.
+// Convention projet : tout nouveau @FeignClient doit suivre ce pattern. Cf dette
+// feign-eureka-bypass-debt.
+@FeignClient(name = "userservice", url = "${userservice.url:http://localhost:8095}")
 public interface UserClient {
 
     /**

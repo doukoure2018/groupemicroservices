@@ -412,6 +412,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       EUREKA_USER: ${EUREKA_USER:-manager}
       EUREKA_PASSWORD: ${EUREKA_PASSWORD}
+      # Feign UserClient en URL directe (cf dette feign-eureka-bypass-debt).
+      USERSERVICE_URL: http://userservice:8095
       JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
@@ -516,6 +518,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       EUREKA_USER: ${EUREKA_USER:-manager}
       EUREKA_PASSWORD: ${EUREKA_PASSWORD}
+      # Feign UserClient en URL directe (cf dette feign-eureka-bypass-debt).
+      USERSERVICE_URL: http://userservice:8095
       JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
