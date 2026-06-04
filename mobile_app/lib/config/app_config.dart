@@ -1,51 +1,113 @@
+/// Configuration mobile SIRA Guinée — sélection de l'environnement par
+/// `--dart-define=ENV=...` au build/run.
+///
+/// 3 environnements supportés :
+///   - `dev`  : développement local (Mac IP LAN, HTTP, OAuth localhost)
+///   - `test` : env TEST SIRA Guinée CI/CD (test.sira-guinee.com, HTTPS)
+///   - `prod` : env PRODUCTION SIRA Guinée (sira-guinee.com, HTTPS) — DÉFAUT
+///
+/// Exemples d'usage :
+///
+///   # APK release prod (défaut, pas besoin de --dart-define)
+///   flutter build apk --release
+///
+///   # APK release TEST (smoke tests sur test.sira-guinee.com avant publier)
+///   flutter build apk --release --dart-define=ENV=test
+///
+///   # Run sur émulateur/phone pointant vers Mac LAN (dev local)
+///   flutter run --dart-define=ENV=dev
+///
+/// Ferme la dette [[mobile-apibaseurl-dart-define]] : plus aucune URL
+/// hardcodée à patcher manuellement par env, on switche via une seule var.
 class AppConfig {
-  // Environment flag - set to true for production builds
-  static const bool isProduction = true;
+  // Lecture de l'env depuis `--dart-define=ENV=test`, défaut `prod`.
+  static const String env = String.fromEnvironment('ENV', defaultValue: 'prod');
 
-  // OAuth2 Configuration
+  // Flags dérivés (rétrocompat avec ancien code qui lit isProduction).
+  static const bool isProduction = env == 'prod';
+  static const bool isTest = env == 'test';
+  static const bool isDev = env == 'dev';
+
+  // ===========================================================================
+  // Bases — UNE URL par env, le reste est dérivé
+  // ===========================================================================
+  // IP LAN Mac dev : à adapter au besoin (ifconfig en0 → inet ...). Pour MVP,
+  // cette valeur n'a pas vocation à changer souvent (réseau WiFi maison).
+  static const String _devApiBase = 'http://172.20.10.6:9000';
+  static const String _devAuthBase = 'http://172.20.10.6:8090';
+
+  static const String _testApiBase = 'https://api-test.sira-guinee.com';
+  // En test/prod, le authorizationserver est routé via la gateway :
+  //   - api-test.sira-guinee.com/authorization/** → authorizationserver
+  static const String _testAuthBase = 'https://api-test.sira-guinee.com/authorization';
+
+  static const String _prodApiBase = 'https://api.sira-guinee.com';
+  static const String _prodAuthBase = 'https://api.sira-guinee.com/authorization';
+
+  // ===========================================================================
+  // Endpoints actifs (ternaires const, résolus à compile-time)
+  // ===========================================================================
+  static const String apiBaseUrl = isProduction
+      ? _prodApiBase
+      : (isTest ? _testApiBase : _devApiBase);
+
+  static const String issuer = isProduction
+      ? _prodAuthBase
+      : (isTest ? _testAuthBase : _devAuthBase);
+
   static const String authorizationEndpoint = isProduction
-      ? 'https://api.guidipress-io.com/authorization/oauth2/authorize'
-      : 'http://10.13.229.58:8090/oauth2/authorize';
+      ? '$_prodAuthBase/oauth2/authorize'
+      : (isTest ? '$_testAuthBase/oauth2/authorize' : '$_devAuthBase/oauth2/authorize');
 
   static const String tokenEndpoint = isProduction
-      ? 'https://api.guidipress-io.com/authorization/oauth2/token'
-      : 'http://10.13.229.58:8090/oauth2/token';
+      ? '$_prodAuthBase/oauth2/token'
+      : (isTest ? '$_testAuthBase/oauth2/token' : '$_devAuthBase/oauth2/token');
 
   static const String endSessionEndpoint = isProduction
-      ? 'https://api.guidipress-io.com/authorization/logout'
-      : 'http://10.13.229.58:8090/logout';
+      ? '$_prodAuthBase/logout'
+      : (isTest ? '$_testAuthBase/logout' : '$_devAuthBase/logout');
 
   static const String userInfoEndpoint = isProduction
-      ? 'https://api.guidipress-io.com/authorization/userinfo'
-      : 'http://10.13.229.58:8090/userinfo';
+      ? '$_prodAuthBase/userinfo'
+      : (isTest ? '$_testAuthBase/userinfo' : '$_devAuthBase/userinfo');
 
-  static const String clientId = 'mobile-app-client';
-  static const String redirectUri = 'com.billetterie.gn://oauth2redirect';
-  static const String postLogoutRedirectUri =
-      'com.billetterie.gn://oauth2redirect';
-
-  static const List<String> scopes = ['openid', 'profile', 'email'];
-
-  // API Base URL (through gateway)
-  static const String apiBaseUrl = isProduction
-      ? 'https://api.guidipress-io.com'
-      : 'http://10.13.229.58:9000';
-
-  // Issuer (for discovery)
-  static const String issuer = isProduction
-      ? 'https://api.guidipress-io.com/authorization'
-      : 'http://10.13.229.58:8090';
-
-  // Allow insecure connections only in dev
-  static const bool allowInsecureConnections = !isProduction;
-
-  // Mobile Auth REST endpoints (direct login, no browser redirect)
+  // Mobile Auth REST endpoints (direct login email/password, pas le flow OAuth2)
   static const String authBaseUrl = isProduction
-      ? 'https://api.guidipress-io.com/authorization/api/auth'
-      : 'http://10.13.229.58:8090/api/auth';
+      ? '$_prodAuthBase/api/auth'
+      : (isTest ? '$_testAuthBase/api/auth' : '$_devAuthBase/api/auth');
 
   static const String loginUrl = '$authBaseUrl/token';
   static const String registerUrl = '$authBaseUrl/register';
   static const String googleLoginUrl = '$authBaseUrl/google';
   static const String refreshUrl = '$authBaseUrl/refresh';
+
+  // ===========================================================================
+  // OAuth2 client + scheme custom
+  // ===========================================================================
+  static const String clientId = 'mobile-app-client';
+
+  // Scheme custom rebrand SIRA Guinée (yigui:// matche le Sender ID Orange
+  // actuel et la config OAuth2 backend Java V23+). Doit aussi être déclaré
+  // dans :
+  //   - mobile_app/android/app/src/main/AndroidManifest.xml (data android:scheme)
+  //   - mobile_app/ios/Runner/Info.plist (CFBundleURLSchemes)
+  static const String redirectUri = 'yigui://oauth2redirect';
+  static const String postLogoutRedirectUri = 'yigui://oauth2redirect';
+
+  static const List<String> scopes = ['openid', 'profile', 'email'];
+
+  // ===========================================================================
+  // Misc
+  // ===========================================================================
+  // HTTP autorisé seulement en dev (localhost LAN). HTTPS strict en test/prod.
+  static const bool allowInsecureConnections = isDev;
+
+  // ===========================================================================
+  // Feature flags
+  // ===========================================================================
+  // Google Sign-In désactivé MVP (Google OAuth backend = __GOOGLE_DISABLED__).
+  // Pour réactiver : créer un OAuth Client iOS sur console.cloud.google.com,
+  // remplacer GIDClientID dans mobile_app/ios/Runner/Info.plist par le vrai,
+  // puis passer ce flag à `true`.
+  static const bool enableGoogleSignIn = false;
 }

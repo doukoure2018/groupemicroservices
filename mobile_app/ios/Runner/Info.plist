@@ -2,10 +2,19 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<!-- GIDClientID placeholder : MVP n'utilise pas Google Sign-In côté mobile
+	     (Google OAuth est __GOOGLE_DISABLED__ côté backend). Cette valeur évite
+	     juste le crash au lancement du plugin google_sign_in. À remplacer par
+	     un vrai Client ID iOS (Google Cloud Console) si on active Sign in with
+	     Google plus tard. -->
+	<key>GIDClientID</key>
+	<string>000000000000-placeholder.apps.googleusercontent.com</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Billetterie GN</string>
+	<string>SIRA Guinée</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,16 +22,58 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Billetterie GN</string>
+	<string>SIRA Guinée</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.sira.guinee</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>yigui</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>L'application a besoin d'accéder à votre caméra pour vous permettre de prendre des photos pour votre annonce immobilière.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>YIGUI utilise votre position pour vous proposer des propriétés à proximité et faciliter la saisie de l'adresse de votre annonce.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>L'application a besoin d'accéder à votre galerie pour vous permettre de joindre des photos à votre annonce immobilière.</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneClassName</key>
+					<string>UIWindowScene</string>
+					<key>UISceneConfigurationName</key>
+					<string>flutter</string>
+					<key>UISceneDelegateClassName</key>
+					<string>FlutterSceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
@@ -40,32 +91,6 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<!-- Phase 15.2e-3 — image_picker (wizard publication étape Photos) -->
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>L'application a besoin d'accéder à votre galerie pour vous permettre de joindre des photos à votre annonce immobilière.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>L'application a besoin d'accéder à votre caméra pour vous permettre de prendre des photos pour votre annonce immobilière.</string>
-	<!-- Phase Géoloc-1 — geolocator (auto-fill lat/lng wizard + filtre "Près de moi" recherche) -->
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>YIGUI utilise votre position pour vous proposer des propriétés à proximité et faciliter la saisie de l'adresse de votre annonce.</string>
-	<!-- OAuth2 Deep Link / URL Scheme -->
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>com.billetterie.gn</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.billetterie.gn</string>
-			</array>
-		</dict>
 	</array>
 </dict>
 </plist>

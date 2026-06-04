@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
+import '../config/app_config.dart';
 import '../presentation/resource/color_manager.dart';
 import '../providers/auth_provider.dart';
 
@@ -780,6 +781,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   Widget _buildSocialRow() {
+    // Bouton Google caché en MVP (cf AppConfig.enableGoogleSignIn).
+    // Le backend OAuth Google est désactivé (__GOOGLE_DISABLED__) et iOS
+    // n'a qu'un GIDClientID placeholder qui ferait crash le sign-in flow.
+    if (!AppConfig.enableGoogleSignIn) return const SizedBox.shrink();
     return _buildSocialIcon(
       onTap: _isLoading ? null : _handleGoogleSignIn,
       child: SvgPicture.asset('assets/icons/google.svg', width: 24, height: 24),
