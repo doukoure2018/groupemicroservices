@@ -413,7 +413,9 @@ services:
       EUREKA_USER: ${EUREKA_USER:-manager}
       EUREKA_PASSWORD: ${EUREKA_PASSWORD}
       # Feign UserClient en URL directe (cf dette feign-eureka-bypass-debt).
-      USERSERVICE_URL: http://userservice:8095
+      # Port 8091 = port interne userservice en profile prod (cf userservice/application-prod.yml).
+      # NB: dev local default profile écoute 8095 (cf userservice/application.yml).
+      USERSERVICE_URL: http://userservice:8091
       JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
@@ -519,7 +521,9 @@ services:
       EUREKA_USER: ${EUREKA_USER:-manager}
       EUREKA_PASSWORD: ${EUREKA_PASSWORD}
       # Feign UserClient en URL directe (cf dette feign-eureka-bypass-debt).
-      USERSERVICE_URL: http://userservice:8095
+      # Port 8091 = port interne userservice en profile prod (cf userservice/application-prod.yml).
+      # NB: dev local default profile écoute 8095 (cf userservice/application.yml).
+      USERSERVICE_URL: http://userservice:8091
       JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
