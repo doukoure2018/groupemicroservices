@@ -277,7 +277,12 @@ jobs:
               sleep 3; count=$((count + 1))
             done
 
-            # Run migrations Flyway via image dédiée (zéro fichier SQL sur VPS)
+            # Run migrations Flyway via image dédiée (zéro fichier SQL sur VPS).
+            # `docker pull` explicite AVANT le run : sinon `docker run` utilise
+            # l'image en cache local, qui peut être périmée si le job précédent
+            # ne l'a pas pull. Bug réel détecté 2026-06-06 : V24 + V25 ratées
+            # silencieusement sur TEST jusqu'au pull manuel.
+            sudo docker pull doukoure93/billetterie-flyway-migrations:latest
             NETWORK=$(sudo docker network ls --filter "name=sira-test_" --format '{{.Name}}' | head -1)
             sudo docker run --rm --network "$NETWORK" \
               -e FLYWAY_URL="jdbc:postgresql://postgresdb:5433/innodb" \
@@ -466,6 +471,8 @@ jobs:
               sleep 3; count=$((count + 1))
             done
 
+            # Pull explicite avant run (cf bug 2026-06-06 sur sira-test).
+            sudo docker pull doukoure93/billetterie-flyway-migrations:latest
             NETWORK=$(sudo docker network ls --filter "name=sira-prod_" --format '{{.Name}}' | head -1)
             sudo docker run --rm --network "$NETWORK" \
               -e FLYWAY_URL="jdbc:postgresql://postgresdb:5433/innodb" \
