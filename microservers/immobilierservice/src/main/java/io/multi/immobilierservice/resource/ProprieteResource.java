@@ -237,8 +237,10 @@ public class ProprieteResource {
     @PatchMapping("/{proprieteUuid}/valider")
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> valider(@PathVariable String proprieteUuid,
+                                            @AuthenticationPrincipal Jwt jwt,
                                             HttpServletRequest http) {
-        Propriete p = proprieteService.valider(proprieteUuid);
+        Long adminUserId = jwtUtils.extractUserId(jwt);
+        Propriete p = proprieteService.valider(proprieteUuid, adminUserId);
         return ResponseEntity.ok(RequestUtils.getResponse(http,
                 Map.of("propriete", p), "Annonce validée et publiée", HttpStatus.OK));
     }
@@ -247,8 +249,10 @@ public class ProprieteResource {
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> rejeter(@PathVariable String proprieteUuid,
                                             @Valid @RequestBody RejeterRequest req,
+                                            @AuthenticationPrincipal Jwt jwt,
                                             HttpServletRequest http) {
-        Propriete p = proprieteService.rejeter(proprieteUuid, req.getMotif());
+        Long adminUserId = jwtUtils.extractUserId(jwt);
+        Propriete p = proprieteService.rejeter(proprieteUuid, req.getMotif(), adminUserId);
         return ResponseEntity.ok(RequestUtils.getResponse(http,
                 Map.of("propriete", p), "Annonce rejetée", HttpStatus.OK));
     }

@@ -1,5 +1,6 @@
 package io.multi.immobilierservice.service.impl;
 
+import io.multi.immobilierservice.domain.AdminAction;
 import io.multi.immobilierservice.domain.Commodite;
 import io.multi.immobilierservice.domain.ProfilImmo;
 import io.multi.immobilierservice.domain.Photo;
@@ -38,6 +39,7 @@ public class ProprieteServiceImpl implements ProprieteService {
     private final TypeBienRepository typeBienRepository;
     private final CommoditeRepository commoditeRepository;
     private final ProfilImmoRepository profilImmoRepository;
+    private final AdminActionRepository adminActionRepository;
     private final ImmoProperties immoProperties;
     private final ImmoNotificationProducer notificationProducer;
     private final UserClient userClient;
@@ -349,7 +351,7 @@ public class ProprieteServiceImpl implements ProprieteService {
 
     @Override
     @Transactional
-    public Propriete valider(String proprieteUuid) {
+    public Propriete valider(String proprieteUuid, Long adminUserId) {
         Propriete p = proprieteRepository.findByUuid(proprieteUuid)
                 .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
         if (!"EN_ATTENTE_VALIDATION".equals(p.getStatut())) {
@@ -358,7 +360,18 @@ public class ProprieteServiceImpl implements ProprieteService {
         }
         Propriete updated = proprieteRepository.updateStatut(proprieteUuid, "PUBLIE")
                 .orElseThrow(() -> new ApiException("Échec validation"));
-        log.info("Admin validation : propriete {} → PUBLIE", proprieteUuid);
+
+        // Audit log dans la même transaction — rollback si l'INSERT foire
+        // (cohérence avec UPDATE statut). Cf dette audit-log-moderation-admin
+        // fermée par ce commit.
+        adminActionRepository.save(AdminAction.builder()
+                .adminUserId(adminUserId)
+                .proprieteUuid(proprieteUuid)
+                .action("VALIDER")
+                .motif(null)
+                .build());
+
+        log.info("Admin validation : propriete {} → PUBLIE (admin_user_id={})", proprieteUuid, adminUserId);
         publishAnnonceValidee(updated);
         return enrich(updated);
     }
@@ -383,7 +396,7 @@ public class ProprieteServiceImpl implements ProprieteService {
 
     @Override
     @Transactional
-    public Propriete rejeter(String proprieteUuid, String motif) {
+    public Propriete rejeter(String proprieteUuid, String motif, Long adminUserId) {
         Propriete p = proprieteRepository.findByUuid(proprieteUuid)
                 .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
         if (!"EN_ATTENTE_VALIDATION".equals(p.getStatut())) {
@@ -395,7 +408,21 @@ public class ProprieteServiceImpl implements ProprieteService {
         }
         Propriete updated = proprieteRepository.rejeter(proprieteUuid, motif)
                 .orElseThrow(() -> new ApiException("Échec rejet"));
-        log.info("Admin rejet : propriete {} → RETIRE (motif={})", proprieteUuid, motif);
+
+        // Audit log dans la même transaction. La CHECK constraint BD
+        // chk_motif_business_rule requiert motif ≥15 chars pour REJETER — la
+        // validation Java au-dessus (motif null/blank) doit être renforcée si
+        // on veut bloquer aussi côté Java les motifs <15 chars. Pour MVP, on
+        // s'appuie sur la validation @Size(min=15) du DTO RejeterRequest +
+        // double safety net de la CHECK SQL.
+        adminActionRepository.save(AdminAction.builder()
+                .adminUserId(adminUserId)
+                .proprieteUuid(proprieteUuid)
+                .action("REJETER")
+                .motif(motif)
+                .build());
+
+        log.info("Admin rejet : propriete {} → RETIRE (admin_user_id={}, motif={})", proprieteUuid, adminUserId, motif);
         publishAnnonceRejetee(updated, motif);
         return enrich(updated);
     }

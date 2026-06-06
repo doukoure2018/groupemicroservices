@@ -45,11 +45,21 @@ public interface ProprieteService {
 
     void supprimer(String proprieteUuid, Long userId);
 
-    /** Admin : valide une annonce en EN_ATTENTE_VALIDATION → PUBLIE. */
-    Propriete valider(String proprieteUuid);
+    /**
+     * Admin : valide une annonce en EN_ATTENTE_VALIDATION → PUBLIE.
+     * Persiste un audit log {@code immo_admin_action} dans la même transaction.
+     *
+     * @param adminUserId user_id de l'admin qui effectue l'action (claim sub du JWT)
+     */
+    Propriete valider(String proprieteUuid, Long adminUserId);
 
-    /** Admin : rejette une annonce + motif. La passe en RETIRE. */
-    Propriete rejeter(String proprieteUuid, String motif);
+    /**
+     * Admin : rejette une annonce + motif. La passe en RETIRE.
+     * Persiste un audit log {@code immo_admin_action} dans la même transaction.
+     *
+     * @param adminUserId user_id de l'admin qui effectue l'action (claim sub du JWT)
+     */
+    Propriete rejeter(String proprieteUuid, String motif, Long adminUserId);
 
     /**
      * Admin : liste paginée des annonces en file de modération (FIFO sur
