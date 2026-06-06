@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 
 import '../../../shared/http/api_client.dart';
+import '../../../shared/http/api_exception.dart';
 import '../models/photo.dart';
 
 /// Service d'upload des photos vers MinIO via le backend immobilier.
@@ -35,21 +36,37 @@ class PhotoUploadService {
       'file': await MultipartFile.fromFile(file.path, filename: filename),
     });
 
-    final response = await _api.dio.post(
-      '/immo/proprietes/$proprieteUuid/photos',
-      data: formData,
-      options: Options(
-        // Dio gère lui-même le Content-Type multipart avec FormData ;
-        // on lève l'override JSON de l'ApiClient.
-        contentType: 'multipart/form-data',
-      ),
-      onSendProgress: onProgress == null
-          ? null
-          : (sent, total) {
-              if (total > 0) onProgress(sent / total);
-            },
-    );
-    final data = response.data['data'] as Map<String, dynamic>;
-    return Photo.fromJson(data['photo'] as Map<String, dynamic>);
+    try {
+      final response = await _api.dio.post(
+        '/immo/proprietes/$proprieteUuid/photos',
+        data: formData,
+        options: Options(
+          // Dio gère lui-même le Content-Type multipart avec FormData ;
+          // on lève l'override JSON de l'ApiClient.
+          contentType: 'multipart/form-data',
+        ),
+        onSendProgress: onProgress == null
+            ? null
+            : (sent, total) {
+                if (total > 0) onProgress(sent / total);
+              },
+      );
+      final data = response.data['data'] as Map<String, dynamic>;
+      return Photo.fromJson(data['photo'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      // L'appel bypass ApiClient.post() (on utilise _api.dio.post directement
+      // pour le multipart) donc ApiClient._mapError() n'est pas invoqué.
+      // On mappe ici les erreurs réseau spécifiques upload avec un message
+      // contextualisé. Cf BaseOptions.sendTimeout=60s côté ApiClient.
+      if (e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        throw const NetworkException(
+          'Upload trop long, vérifiez votre connexion et réessayez.',
+        );
+      }
+      rethrow;
+    }
   }
 }

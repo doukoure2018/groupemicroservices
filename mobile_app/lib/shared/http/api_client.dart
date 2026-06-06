@@ -25,7 +25,14 @@ class ApiClient {
       : _authService = authService ?? AuthService(),
         _dio = Dio(BaseOptions(
           baseUrl: AppConfig.apiBaseUrl,
-          connectTimeout: const Duration(seconds: 30),
+          // 15s : tolère retransmission TCP 3G Conakry (ping 200-400ms + jitter)
+          // sans hang trop long si serveur down. 30s historique = trop long UX.
+          connectTimeout: const Duration(seconds: 15),
+          // 60s : upload multipart 1-3MB sur 3G à 50-100 KB/s = ~10-30s normal,
+          // ×2 marge pour pics d'instabilité. Sans ce timeout (default = infini)
+          // Dio hang sans erreur si la connexion drop pendant un upload photo.
+          // Cf dette dio-multipart-no-receive-timeout-debt (fermée par ce commit).
+          sendTimeout: const Duration(seconds: 60),
           receiveTimeout: const Duration(seconds: 30),
           headers: {
             'Content-Type': 'application/json',
