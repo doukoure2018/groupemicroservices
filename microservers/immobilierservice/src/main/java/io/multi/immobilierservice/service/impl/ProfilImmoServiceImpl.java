@@ -7,6 +7,7 @@ import io.multi.immobilierservice.domain.ProfilImmo;
 import io.multi.immobilierservice.dto.ProfilImmoRequest;
 import io.multi.immobilierservice.exception.ApiException;
 import io.multi.immobilierservice.exception.ForbiddenException;
+import io.multi.immobilierservice.exception.NotFoundException;
 import io.multi.immobilierservice.repository.AgenceRepository;
 import io.multi.immobilierservice.repository.ProfilImmoRepository;
 import io.multi.immobilierservice.service.ProfilImmoService;
@@ -45,7 +46,7 @@ public class ProfilImmoServiceImpl implements ProfilImmoService {
                 throw new ApiException("agenceUuid est requis pour type_profil=AGENT_AGENCE");
             }
             Agence agence = agenceRepository.findByUuid(request.getAgenceUuid())
-                    .orElseThrow(() -> new ApiException("Agence introuvable : " + request.getAgenceUuid()));
+                    .orElseThrow(() -> new NotFoundException("Agence introuvable : " + request.getAgenceUuid()));
             agenceId = agence.getAgenceId();
         } else if (request.getAgenceUuid() != null) {
             throw new ApiException("agenceUuid ne doit être fourni que pour type_profil=AGENT_AGENCE");
@@ -79,20 +80,20 @@ public class ProfilImmoServiceImpl implements ProfilImmoService {
     @Override
     public ProfilImmo getByUuid(String profilUuid) {
         return profilImmoRepository.findByUuid(profilUuid)
-                .orElseThrow(() -> new ApiException("Profil introuvable : " + profilUuid));
+                .orElseThrow(() -> new NotFoundException("Profil introuvable : " + profilUuid));
     }
 
     @Override
     public ProfilImmo getByUserId(Long userId) {
         return profilImmoRepository.findByUserId(userId)
-                .orElseThrow(() -> new ApiException("Aucun profil immobilier pour user " + userId));
+                .orElseThrow(() -> new NotFoundException("Aucun profil immobilier pour user " + userId));
     }
 
     @Override
     @Transactional
     public ProfilImmo verifier(String profilUuid, String statut) {
         return profilImmoRepository.updateStatutVerification(profilUuid, statut)
-                .orElseThrow(() -> new ApiException("Profil introuvable : " + profilUuid));
+                .orElseThrow(() -> new NotFoundException("Profil introuvable : " + profilUuid));
     }
 
     @Override
@@ -114,7 +115,7 @@ public class ProfilImmoServiceImpl implements ProfilImmoService {
         try {
             User user = userClient.getUserById(userId);
             if (user == null || user.getUserId() == null) {
-                throw new ApiException("Utilisateur introuvable : " + userId);
+                throw new NotFoundException("Utilisateur introuvable : " + userId);
             }
             return user;
         } catch (Exception e) {

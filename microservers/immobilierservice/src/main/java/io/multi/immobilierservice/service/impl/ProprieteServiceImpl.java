@@ -12,6 +12,7 @@ import io.multi.immobilierservice.config.ImmoProperties;
 import io.multi.immobilierservice.event.EventType;
 import io.multi.immobilierservice.exception.ApiException;
 import io.multi.immobilierservice.exception.ForbiddenException;
+import io.multi.immobilierservice.exception.NotFoundException;
 import io.multi.clients.UserClient;
 import io.multi.clients.domain.User;
 import io.multi.immobilierservice.repository.*;
@@ -70,7 +71,7 @@ public class ProprieteServiceImpl implements ProprieteService {
         Long localisationId = null;
         if (req.getLocalisationUuid() != null && !req.getLocalisationUuid().isBlank()) {
             localisationId = proprieteRepository.lookupLocalisationIdByUuid(req.getLocalisationUuid())
-                    .orElseThrow(() -> new ApiException("Localisation introuvable : " + req.getLocalisationUuid()));
+                    .orElseThrow(() -> new NotFoundException("Localisation introuvable : " + req.getLocalisationUuid()));
         }
 
         Propriete toSave = Propriete.builder()
@@ -119,13 +120,13 @@ public class ProprieteServiceImpl implements ProprieteService {
     @Transactional
     public Propriete update(String proprieteUuid, ProprieteUpdateRequest req, Long userId) {
         Propriete existing = proprieteRepository.findByUuid(proprieteUuid)
-                .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
+                .orElseThrow(() -> new NotFoundException("Propriété introuvable : " + proprieteUuid));
         ensureOwner(existing, userId);
 
         Long localisationId = null;
         if (req.getLocalisationUuid() != null && !req.getLocalisationUuid().isBlank()) {
             localisationId = proprieteRepository.lookupLocalisationIdByUuid(req.getLocalisationUuid())
-                    .orElseThrow(() -> new ApiException("Localisation introuvable : " + req.getLocalisationUuid()));
+                    .orElseThrow(() -> new NotFoundException("Localisation introuvable : " + req.getLocalisationUuid()));
         }
 
         Propriete updates = Propriete.builder()
@@ -182,7 +183,7 @@ public class ProprieteServiceImpl implements ProprieteService {
             }
         }
         Propriete propriete = proprieteRepository.findByUuid(proprieteUuid)
-                .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
+                .orElseThrow(() -> new NotFoundException("Propriété introuvable : " + proprieteUuid));
         return enrich(propriete);
     }
 
@@ -248,7 +249,7 @@ public class ProprieteServiceImpl implements ProprieteService {
     @Transactional
     public Propriete publier(String proprieteUuid, Long userId) {
         Propriete p = proprieteRepository.findByUuid(proprieteUuid)
-                .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
+                .orElseThrow(() -> new NotFoundException("Propriété introuvable : " + proprieteUuid));
         ensureOwner(p, userId);
         // Transitions autorisées vers une demande de publication
         List<String> statutsAutorises = List.of("BROUILLON", "EN_ATTENTE_VALIDATION", "RETIRE");
@@ -257,7 +258,7 @@ public class ProprieteServiceImpl implements ProprieteService {
         }
 
         ProfilImmo profil = profilImmoRepository.findByUserId(userId)
-                .orElseThrow(() -> new ApiException("Profil introuvable"));
+                .orElseThrow(() -> new NotFoundException("Profil introuvable"));
 
         // ---- Vérification de la limite d'annonces actives ----
         int limite = immoProperties.getLimites().forType(profil.getTypeProfil());
@@ -319,7 +320,7 @@ public class ProprieteServiceImpl implements ProprieteService {
     @Transactional
     public Propriete marquerVendu(String proprieteUuid, Long userId) {
         Propriete p = proprieteRepository.findByUuid(proprieteUuid)
-                .orElseThrow(() -> new ApiException("Propriété introuvable"));
+                .orElseThrow(() -> new NotFoundException("Propriété introuvable"));
         if (!"VENTE".equals(p.getTypeAnnonce())) {
             throw new ApiException("Seules les annonces de type VENTE peuvent être marquées vendues");
         }
@@ -330,7 +331,7 @@ public class ProprieteServiceImpl implements ProprieteService {
     @Transactional
     public Propriete marquerLoue(String proprieteUuid, Long userId) {
         Propriete p = proprieteRepository.findByUuid(proprieteUuid)
-                .orElseThrow(() -> new ApiException("Propriété introuvable"));
+                .orElseThrow(() -> new NotFoundException("Propriété introuvable"));
         if (!"LOCATION".equals(p.getTypeAnnonce())) {
             throw new ApiException("Seules les annonces de type LOCATION peuvent être marquées louées");
         }
@@ -341,7 +342,7 @@ public class ProprieteServiceImpl implements ProprieteService {
     @Transactional
     public void supprimer(String proprieteUuid, Long userId) {
         Propriete p = proprieteRepository.findByUuid(proprieteUuid)
-                .orElseThrow(() -> new ApiException("Propriété introuvable"));
+                .orElseThrow(() -> new NotFoundException("Propriété introuvable"));
         ensureOwner(p, userId);
         // Soft delete : statut RETIRE. La suppression physique reste rare (FK CASCADE).
         proprieteRepository.updateStatut(proprieteUuid, "RETIRE");
@@ -353,7 +354,7 @@ public class ProprieteServiceImpl implements ProprieteService {
     @Transactional
     public Propriete valider(String proprieteUuid, Long adminUserId) {
         Propriete p = proprieteRepository.findByUuid(proprieteUuid)
-                .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
+                .orElseThrow(() -> new NotFoundException("Propriété introuvable : " + proprieteUuid));
         if (!"EN_ATTENTE_VALIDATION".equals(p.getStatut())) {
             throw new ApiException("Seules les annonces EN_ATTENTE_VALIDATION peuvent être validées (état actuel : "
                     + p.getStatut() + ")");
@@ -380,7 +381,7 @@ public class ProprieteServiceImpl implements ProprieteService {
     @Transactional
     public Propriete renouveler(String proprieteUuid, Long userId) {
         Propriete p = proprieteRepository.findByUuid(proprieteUuid)
-                .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
+                .orElseThrow(() -> new NotFoundException("Propriété introuvable : " + proprieteUuid));
         ensureOwner(p, userId);
         if (!List.of("PUBLIE", "RETIRE").contains(p.getStatut())) {
             throw new ApiException("Renouvellement autorisé seulement depuis PUBLIE ou RETIRE (état actuel : "
@@ -398,7 +399,7 @@ public class ProprieteServiceImpl implements ProprieteService {
     @Transactional
     public Propriete rejeter(String proprieteUuid, String motif, Long adminUserId) {
         Propriete p = proprieteRepository.findByUuid(proprieteUuid)
-                .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
+                .orElseThrow(() -> new NotFoundException("Propriété introuvable : " + proprieteUuid));
         if (!"EN_ATTENTE_VALIDATION".equals(p.getStatut())) {
             throw new ApiException("Seules les annonces EN_ATTENTE_VALIDATION peuvent être rejetées (état actuel : "
                     + p.getStatut() + ")");
@@ -480,7 +481,7 @@ public class ProprieteServiceImpl implements ProprieteService {
 
     private Propriete changeStatut(String proprieteUuid, Long userId, String nouveauStatut, List<String> statutsAutorises) {
         Propriete p = proprieteRepository.findByUuid(proprieteUuid)
-                .orElseThrow(() -> new ApiException("Propriété introuvable : " + proprieteUuid));
+                .orElseThrow(() -> new NotFoundException("Propriété introuvable : " + proprieteUuid));
         ensureOwner(p, userId);
         if (!statutsAutorises.contains(p.getStatut())) {
             throw new ApiException("Transition interdite depuis le statut " + p.getStatut()
