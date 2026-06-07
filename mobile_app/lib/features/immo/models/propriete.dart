@@ -139,7 +139,11 @@ class Propriete {
         typeBienId: json['typeBienId'] as int,
         titre: json['titre'] as String,
         description: json['description'] as String?,
-        prix: (json['prix'] as num).toDouble(),
+        // Fallback 0.0 si prix null : cas brouillon matérialisé sans prix
+        // renseigné côté wizard. Évite TypeError Dart non-catchable qui hang
+        // le wizard sur "Création annonce…". Cf dette
+        // mobile-brouillon-prix-null-fallback-zero pour fix racine (double?).
+        prix: (json['prix'] as num?)?.toDouble() ?? 0.0,
         devise: json['devise'] as String,
         periode: json['periode'] as String?,
         prixSurDemande: json['prixSurDemande'] as bool? ?? false,
