@@ -49,7 +49,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>L'application a besoin d'accéder à votre caméra pour vous permettre de prendre des photos pour votre annonce immobilière.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>YIGUI utilise votre position pour vous proposer des propriétés à proximité et faciliter la saisie de l'adresse de votre annonce.</string>
+	<string>SIRA Guinée utilise votre position pour vous proposer des propriétés à proximité et faciliter la saisie de l'adresse de votre annonce.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>L'application a besoin d'accéder à votre galerie pour vous permettre de joindre des photos à votre annonce immobilière.</string>
 	<key>UIApplicationSceneManifest</key>

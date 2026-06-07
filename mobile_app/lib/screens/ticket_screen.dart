@@ -56,7 +56,7 @@ class TicketScreen extends StatelessWidget {
             icon: const Icon(Icons.share, color: ColorManager.accent),
             onPressed: () async {
               await Share.share(
-                'Mon billet YIGUI\n'
+                'Mon billet SIRA Guinée\n'
                 'Code: ${billet.codeBillet}\n'
                 'Trajet: $departure - $destination\n'
                 'Date: $_formattedDate a $time\n'
@@ -99,7 +99,7 @@ class TicketScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         Text(
-                          'YIGUI',
+                          'SIRA Guinée',
                           style: getBoldStyle(
                             color: ColorManager.white,
                             fontSize: FontSize.s18,

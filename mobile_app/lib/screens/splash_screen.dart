@@ -102,12 +102,12 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
                 const SizedBox(height: 32),
-                // Logo text: "Billetterie" in navy + "GN" in orange
+                // Logo text: "SIRA" in navy + " Guinée" in orange
                 RichText(
                   text: const TextSpan(
                     children: [
                       TextSpan(
-                        text: 'Billetterie',
+                        text: 'SIRA',
                         style: TextStyle(
                           fontSize: 38,
                           fontWeight: FontWeight.bold,
@@ -115,7 +115,7 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
                       TextSpan(
-                        text: 'GN',
+                        text: ' Guinée',
                         style: TextStyle(
                           fontSize: 38,
                           fontWeight: FontWeight.bold,

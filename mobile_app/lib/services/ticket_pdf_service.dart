@@ -66,7 +66,7 @@ class TicketPdfService {
                   ),
                   child: pw.Column(
                     children: [
-                      pw.Text('YIGUI',
+                      pw.Text('SIRA Guinée',
                           style: pw.TextStyle(
                             font: fontBold,
                             color: PdfColors.white,

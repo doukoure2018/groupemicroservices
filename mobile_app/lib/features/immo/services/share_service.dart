@@ -15,7 +15,7 @@ import '../models/propriete.dart';
 /// Format texte V1 (PAS de deep-link `yigui://` car scheme non configuré
 /// — décision Phase Partage C) :
 ///
-///   "Découvre cette propriété sur YIGUI : {titre} — {prix formaté}.
+///   "Découvre cette propriété sur SIRA Guinée : {titre} — {prix formaté}.
 ///    Télécharge l'app pour les détails."
 ///
 /// Cas dégradés (silencieux, pas de dialog erreur) :
@@ -31,7 +31,7 @@ class ShareService {
   /// erreur. Toujours `Future<void>` — pas de retour à gérer côté caller.
   static Future<void> sharePropriete(Propriete propriete) async {
     final text = _formatText(propriete);
-    final subject = 'YIGUI — ${propriete.titre}';
+    final subject = 'SIRA Guinée — ${propriete.titre}';
     final imageUrl = _coverUrl(propriete);
 
     if (imageUrl == null) {
@@ -59,7 +59,7 @@ class ShareService {
   /// de ProprieteCard / FicheProprieteScreen (3e usage maintenant —
   /// candidat refactor `prix_formatter.dart` en lib utils, dette tracée).
   static String _formatText(Propriete p) {
-    return 'Découvre cette propriété sur YIGUI : ${p.titre} — ${_formatPrix(p)}.\n'
+    return 'Découvre cette propriété sur SIRA Guinée : ${p.titre} — ${_formatPrix(p)}.\n'
         'Télécharge l\'app pour les détails.';
   }
 

@@ -1,10 +1,10 @@
 class AppStrings {
   // App
-  static const String appName = "Billetterie GN";
-  static const String appSlogan = "Billetterie Guinée";
+  static const String appName = "SIRA Guinée";
+  static const String appSlogan = "SIRA Guinée — Transport & Immobilier";
 
   // Onboarding
-  static const String onBoardingTitle1 = "Bienvenue sur Billetterie GN";
+  static const String onBoardingTitle1 = "Bienvenue sur SIRA Guinée";
   static const String onBoardingTitle2 = "Gérez vos finances";
   static const String onBoardingTitle3 = "Accédez à vos services";
   static const String onBoardingSubTitle1 = "Votre application de gestion financière rurale";
@@ -73,7 +73,7 @@ class AppStrings {
   static const String submit = "Soumettre";
   static const String refresh = "Actualiser";
   static const String seeMore = "Voir plus";
-  static const String poweredBy = "Propulsé par Billetterie GN";
+  static const String poweredBy = "Propulsé par SIRA Guinée";
 
   // Errors
   static const String errorOccurred = "Une erreur est survenue";

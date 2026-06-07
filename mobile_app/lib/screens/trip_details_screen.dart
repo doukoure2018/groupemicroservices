@@ -784,7 +784,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   String _buildShareText(TripOffer offer) {
     final price = _formatPrice(offer.price);
     final buf = StringBuffer()
-      ..writeln('Offre de transport - Billetterie GN')
+      ..writeln('Offre de transport - SIRA Guinée')
       ..writeln()
       ..writeln('${offer.departureCity} -> ${offer.arrivalCity}')
       ..writeln(
@@ -802,7 +802,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       buf.writeln('Rendez-vous : ${offer.meetingPoint}');
     }
     buf.writeln();
-    buf.writeln('Reservez sur Billetterie GN !');
+    buf.writeln('Reservez sur SIRA Guinée !');
     return buf.toString();
   }
 
@@ -813,7 +813,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       final result = await Share.share(
         content,
         subject:
-            '${offer.departureCity} -> ${offer.arrivalCity} - Billetterie GN',
+            '${offer.departureCity} -> ${offer.arrivalCity} - SIRA Guinée',
       );
       debugPrint('Share result: ${result.status}');
       if (result.status == ShareResultStatus.unavailable) {

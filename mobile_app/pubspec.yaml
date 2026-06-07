@@ -63,9 +63,9 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/logo-billetterie-gn.jpg"
+  image_path: "assets/images/icon.jpeg"
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/logo-billetterie-gn.jpg"
+  adaptive_icon_foreground: "assets/images/icon.jpeg"
 
 flutter:
   uses-material-design: true
