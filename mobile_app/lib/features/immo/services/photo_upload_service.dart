@@ -69,4 +69,16 @@ class PhotoUploadService {
       rethrow;
     }
   }
+
+  /// `DELETE /immo/photos/{photoUuid}` — supprime une photo backend.
+  /// Utilisé par le wizard reprise REJETE (T3b) pour permettre au vendeur
+  /// de retirer une photo floue/inadaptée avant re-soumission.
+  ///
+  /// Backend (PhotoResource) :
+  /// - Auth requise (JWT, géré par ApiClient)
+  /// - Vérifie que l'user est propriétaire de la propriété parente
+  /// - Supprime aussi les fichiers MinIO (original + thumbnail)
+  Future<void> deletePhoto(String photoUuid) async {
+    await _api.delete('/immo/photos/$photoUuid');
+  }
 }

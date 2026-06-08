@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../screens/main_screen.dart';
 import '../../shared/theme/app_colors.dart';
 import '../../shared/theme/app_theme.dart';
+import '../immo/screens/mes_annonces_screen.dart';
 import '../immo/screens/mes_favoris_screen.dart';
 import '../immo/screens/recherche_screen.dart';
 
@@ -32,6 +33,7 @@ class _HubScreenState extends State<HubScreen> {
   late final List<Widget> _tabs = [
     const MainScreen(embedded: true), // tab 0 : palette orange legacy intacte
     Theme(data: AppTheme.light(), child: const RechercheScreen()),
+    Theme(data: AppTheme.light(), child: const MesAnnoncesScreen()),
     Theme(data: AppTheme.light(), child: const _ProfilPlaceholder()),
   ];
 
@@ -57,6 +59,11 @@ class _HubScreenState extends State<HubScreen> {
             icon: Icon(Icons.apartment_outlined),
             selectedIcon: Icon(Icons.apartment, color: AppColors.primary),
             label: 'Immobilier',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.list_alt_outlined),
+            selectedIcon: Icon(Icons.list_alt, color: AppColors.primary),
+            label: 'Mes annonces',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

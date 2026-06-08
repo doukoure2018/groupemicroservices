@@ -3,9 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../config/app_config.dart';
+import '../../../../shared/http/api_exception.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../models/local_photo.dart';
+import '../../models/photo.dart';
 import '../../services/local_photo_storage_service.dart';
+import '../../services/photo_upload_service.dart';
 
 /// Étape 3 du wizard publication — sélection et organisation des photos.
 ///
@@ -26,10 +30,22 @@ class StepPhotos extends StatefulWidget {
   final Map<String, dynamic> initialValues;
   final void Function(List<LocalPhoto> photos) onChanged;
 
+  /// Mode reprise REJETE (T3a) : photos déjà uploadées sur MinIO, affichées
+  /// EN READ-ONLY au-dessus de la galerie LocalPhoto. Si non-vide, l'user
+  /// voit qu'il a déjà des photos sur le backend ; il peut ajouter des
+  /// nouvelles photos LOCAL via les boutons Galerie/Caméra (uploadées au
+  /// submit final).
+  ///
+  /// En T3b (bonus si temps), permettra add/remove actif. Pour T3a strict :
+  /// affichage seulement, suppression désactivée (créer nouvelle annonce
+  /// pour changer photos — cf bandeau d'info).
+  final List<Photo>? remotePhotos;
+
   StepPhotos({
     required this.stepKey,
     required this.initialValues,
     required this.onChanged,
+    this.remotePhotos,
   }) : super(key: stepKey);
 
   @override
@@ -43,9 +59,17 @@ class StepPhotosState extends State<StepPhotos>
 
   final _picker = ImagePicker();
   final _storage = LocalPhotoStorageService();
+  final _photoUploadService = PhotoUploadService();
 
   List<LocalPhoto> _photos = [];
   bool _pickingLoading = false;
+
+  /// T3b : copie locale mutable des photos remote pour permettre suppression
+  /// en live. Initialisée depuis widget.remotePhotos au mount. Au moment du
+  /// submit final (T4), le wizard inspectera ce state pour savoir quelles
+  /// photos backend doivent rester (les autres ont été DELETE en live).
+  List<Photo> _remotePhotos = [];
+  final Set<String> _remoteDeletingUuids = {};
 
   @override
   bool get wantKeepAlive => true;
@@ -53,8 +77,12 @@ class StepPhotosState extends State<StepPhotos>
   @override
   void initState() {
     super.initState();
+    _remotePhotos = List<Photo>.from(widget.remotePhotos ?? const <Photo>[]);
     _loadInitial();
   }
+
+  /// T4 hook : expose les photos remote restantes (non supprimées).
+  List<Photo> get remainingRemotePhotos => List.unmodifiable(_remotePhotos);
 
   Future<void> _loadInitial() async {
     final raw = widget.initialValues['photos'] as List<dynamic>?;
@@ -252,8 +280,13 @@ class StepPhotosState extends State<StepPhotos>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final hasRemote = _remotePhotos.isNotEmpty;
+
     return Column(
       children: [
+        // T3b : section interactive (preview + delete) des photos remote
+        // en mode reprise REJETE. Vide sinon (flow normal).
+        if (hasRemote) _remotePhotosSection(),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Row(
@@ -262,7 +295,7 @@ class StepPhotosState extends State<StepPhotos>
                 child: OutlinedButton.icon(
                   onPressed: _pickingLoading ? null : _pickFromGallery,
                   icon: const Icon(Icons.photo_library_outlined),
-                  label: const Text('Galerie'),
+                  label: Text(hasRemote ? 'Ajouter (galerie)' : 'Galerie'),
                   style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                 ),
               ),
@@ -271,7 +304,7 @@ class StepPhotosState extends State<StepPhotos>
                 child: OutlinedButton.icon(
                   onPressed: _pickingLoading ? null : _pickFromCamera,
                   icon: const Icon(Icons.photo_camera_outlined),
-                  label: const Text('Caméra'),
+                  label: Text(hasRemote ? 'Ajouter (caméra)' : 'Caméra'),
                   style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                 ),
               ),
@@ -301,13 +334,276 @@ class StepPhotosState extends State<StepPhotos>
     );
   }
 
+  /// Résout l'URL d'une photo backend. Le getter Photo.getUrl() côté Java
+  /// est censé retourner du RELATIF ("/immo/photos/{uuid}") mais peut parfois
+  /// renvoyer du absolu (cas historiques, fallback sur champ `url` BD). Ce
+  /// helper gère les 2 cas : si déjà absolu, on l'utilise tel quel.
+  String _resolvePhotoUrl(String url) {
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return '${AppConfig.apiBaseUrl}$url';
+  }
+
+  /// T3b : section interactive des photos déjà uploadées (mode reprise REJETE).
+  /// Tap = preview fullscreen avec pinch-zoom. Bouton X = DELETE backend.
+  /// Suppression IMMÉDIATE côté backend (pas de tracking pour rollback).
+  Widget _remotePhotosSection() {
+    final remote = _remotePhotos;
+    return Container(
+      width: double.infinity,
+      // Padding réduit pour éviter overflow 8px sur petits écrans.
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      color: AppColors.primaryContainer.withValues(alpha: 0.3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.cloud_done_outlined, size: 18, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                'Photos actuelles (${remote.length})',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 100,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: remote.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, i) {
+                final p = remote[i];
+                final url = _resolvePhotoUrl(p.url);
+                final isDeleting = _remoteDeletingUuids.contains(p.photoUuid);
+                return _remotePhotoTile(p, url, isDeleting);
+              },
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Tapez pour agrandir · ✕ pour supprimer. Vous pouvez ajouter de '
+            'nouvelles photos ci-dessous.',
+            style: TextStyle(
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+              color: AppColors.onBackground,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _remotePhotoTile(Photo p, String url, bool isDeleting) {
+    return GestureDetector(
+      onTap: isDeleting ? null : () => _previewRemote(url, p.estCouverture == true),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              url,
+              width: 88,
+              height: 88,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                width: 88,
+                height: 88,
+                color: AppColors.divider,
+                child: const Icon(
+                  Icons.broken_image_outlined,
+                  color: AppColors.onBackground,
+                ),
+              ),
+            ),
+          ),
+          if (p.estCouverture == true)
+            Positioned(
+              top: 4,
+              left: 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.star, size: 12, color: Colors.white),
+                    SizedBox(width: 2),
+                    Text(
+                      'Cover',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: isDeleting ? null : () => _deleteRemotePhoto(p),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: isDeleting
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.close, size: 14, color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _previewRemote(String url, bool isCover) {
+    return showDialog<void>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                minScale: 1,
+                maxScale: 4,
+                child: Image.network(url, fit: BoxFit.contain),
+              ),
+            ),
+            if (isCover)
+              Positioned(
+                top: MediaQuery.of(ctx).padding.top + 12,
+                left: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.star, size: 14, color: Colors.white),
+                      SizedBox(width: 4),
+                      Text(
+                        'Couverture',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            Positioned(
+              top: MediaQuery.of(ctx).padding.top + 8,
+              right: 8,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.of(ctx).pop(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteRemotePhoto(Photo p) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer cette photo ?'),
+        content: const Text(
+          'La photo sera définitivement supprimée du serveur. '
+          'Cette action est irréversible.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    if (!mounted) return;
+
+    setState(() => _remoteDeletingUuids.add(p.photoUuid));
+    try {
+      await _photoUploadService.deletePhoto(p.photoUuid);
+      if (!mounted) return;
+      setState(() {
+        _remotePhotos.removeWhere((x) => x.photoUuid == p.photoUuid);
+        _remoteDeletingUuids.remove(p.photoUuid);
+      });
+    } on AppException catch (e) {
+      if (!mounted) return;
+      setState(() => _remoteDeletingUuids.remove(p.photoUuid));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Suppression échouée : ${e.message}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _remoteDeletingUuids.remove(p.photoUuid));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Suppression échouée : $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   Widget _buildList() {
     if (_photos.isEmpty) {
+      // Mode reprise REJETE : si l'user a des photos remote en haut, pas
+      // d'empty state ici (sinon overflow + UX bizarre "Aucune photo" alors
+      // qu'il en a). Just shrink — les boutons Galerie/Caméra sont visibles
+      // au-dessus et suffisent pour ajouter.
+      if (_remotePhotos.isNotEmpty) {
+        return const SizedBox.shrink();
+      }
+      // Mode normal : grand placeholder "Aucune photo".
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.photo_library_outlined, size: 64, color: AppColors.onBackground),
               const SizedBox(height: 12),

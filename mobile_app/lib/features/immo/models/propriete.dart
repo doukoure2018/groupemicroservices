@@ -63,6 +63,9 @@ class Propriete {
   final List<Commodite> commodites;
   final bool? isFavorite;
   final double? distanceM;
+  /// Renseigné quand un admin rejette l'annonce (statut RETIRE). Null sinon.
+  /// Affiché sur l'écran "Mes annonces" pour permettre au vendeur de corriger.
+  final String? motifRejet;
 
   const Propriete({
     required this.proprieteUuid,
@@ -94,6 +97,7 @@ class Propriete {
     this.commodites = const [],
     this.isFavorite,
     this.distanceM,
+    this.motifRejet,
   });
 
   /// Retourne une copie de la propriété avec `isFavorite` patché. Utilisé
@@ -129,6 +133,7 @@ class Propriete {
         commodites: commodites,
         isFavorite: newValue,
         distanceM: distanceM,
+        motifRejet: motifRejet,
       );
 
   factory Propriete.fromJson(Map<String, dynamic> json) => Propriete(
@@ -173,5 +178,6 @@ class Propriete {
             const [],
         isFavorite: json['isFavorite'] as bool?,
         distanceM: (json['distanceM'] as num?)?.toDouble(),
+        motifRejet: json['motifRejet'] as String?,
       );
 }

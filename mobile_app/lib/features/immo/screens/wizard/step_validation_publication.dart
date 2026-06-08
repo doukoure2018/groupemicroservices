@@ -12,6 +12,7 @@ import '../../services/brouillon_service.dart';
 import '../../services/local_photo_storage_service.dart';
 import '../../services/photo_upload_service.dart';
 import '../../services/propriete_publication_service.dart';
+import '../../services/propriete_service.dart';
 
 /// Étape 4 du wizard publication — Validation + Publication.
 ///
@@ -45,12 +46,22 @@ class StepValidationPublication extends StatefulWidget {
   /// et user choisit "Retour aux photos").
   final VoidCallback onRetourPhotos;
 
+  /// T4 mode reprise REJETE : uuid de la Propriete existante (statut RETIRE)
+  /// à re-publier. Si non-null :
+  ///   - SKIP matérialiser brouillon (la Propriete existe déjà)
+  ///   - Photos LocalPhoto sont uploadées sur cette Propriete
+  ///   - Étape "Publier" = updateAndPublier (PUT champs + PATCH publier) au
+  ///     lieu de publier seul → champs métier modifiés au passage
+  ///   - Cleanup : brouillon temporaire supprimé après succès
+  final String? repriseDepuisRejetUuid;
+
   const StepValidationPublication({
     super.key,
     required this.brouillonUuid,
     required this.donneesJson,
     required this.onCompleted,
     required this.onRetourPhotos,
+    this.repriseDepuisRejetUuid,
   });
 
   @override
@@ -62,6 +73,7 @@ class _StepValidationPublicationState extends State<StepValidationPublication>
   final _brouillonService = BrouillonService();
   final _photoUploadService = PhotoUploadService();
   final _publicationService = ProprietePublicationService();
+  final _proprieteService = ProprieteService();
   final _storage = LocalPhotoStorageService();
 
   bool _termsAccepted = false;
@@ -273,28 +285,38 @@ class _StepValidationPublicationState extends State<StepValidationPublication>
 
   Future<void> _publish() async {
     if (widget.brouillonUuid == null) return;
+    final isReprise = widget.repriseDepuisRejetUuid != null;
     setState(() {
       _publishing = true;
-      _publishStatus = 'Création de l\'annonce…';
+      _publishStatus = isReprise
+          ? 'Préparation de la mise à jour…'
+          : 'Création de l\'annonce…';
       _photoProgress = null;
       _skippedPhotos = 0;
     });
 
-    // === 1. Materialiser brouillon → Propriete BROUILLON ===
-    Propriete? propriete;
-    try {
-      propriete = await _brouillonService.materialiser(widget.brouillonUuid!);
-    } on AppException catch (e) {
-      if (!mounted) return;
-      setState(() => _publishing = false);
-      await _showErrorDialog(
-        title: 'Création annonce échouée',
-        message: e.message,
-        retry: true,
-      );
-      return;
+    // === 1. Résoudre proprieteUuid ===
+    // Mode reprise REJETE : on travaille sur la Propriete existante, pas
+    // de matérialisation. Mode normal : materialiser brouillon.
+    String proprieteUuid;
+    if (isReprise) {
+      proprieteUuid = widget.repriseDepuisRejetUuid!;
+    } else {
+      Propriete? propriete;
+      try {
+        propriete = await _brouillonService.materialiser(widget.brouillonUuid!);
+      } on AppException catch (e) {
+        if (!mounted) return;
+        setState(() => _publishing = false);
+        await _showErrorDialog(
+          title: 'Création annonce échouée',
+          message: e.message,
+          retry: true,
+        );
+        return;
+      }
+      proprieteUuid = propriete.proprieteUuid;
     }
-    final proprieteUuid = propriete.proprieteUuid;
 
     // === 2. Boucle upload photos ===
     final photosRaw = (widget.donneesJson['photos'] as List<dynamic>?) ?? const [];
@@ -381,15 +403,24 @@ class _StepValidationPublicationState extends State<StepValidationPublication>
       }
     }
 
-    // === 5. Publier (BROUILLON → EN_ATTENTE) ===
+    // === 5. Publier ===
+    // Mode reprise REJETE : updateAndPublier (PUT champs métier + PATCH publier).
+    // Mode normal : publier (BROUILLON → EN_ATTENTE).
     if (!mounted) return;
     setState(() {
-      _publishStatus = 'Publication…';
+      _publishStatus = isReprise ? 'Mise à jour et publication…' : 'Publication…';
       _photoProgress = null;
     });
 
     try {
-      await _publicationService.publier(proprieteUuid);
+      if (isReprise) {
+        await _proprieteService.updateAndPublier(
+          proprieteUuid,
+          _buildUpdatePayload(),
+        );
+      } else {
+        await _publicationService.publier(proprieteUuid);
+      }
     } on AppException catch (e) {
       if (!mounted) return;
       setState(() => _publishing = false);
@@ -403,11 +434,55 @@ class _StepValidationPublicationState extends State<StepValidationPublication>
       await _storage.deletePhoto(p.path);
     }
 
+    // === 6b. Mode reprise : cleanup brouillon temporaire ===
+    // Le brouillon a été créé au mount du wizard pour permettre le flow
+    // existant (steps + save intermédiaires). Il devient orphelin une fois
+    // l'annonce republiée — on le supprime pour qu'il n'apparaisse pas dans
+    // "Mes annonces > Brouillons" après coup.
+    if (isReprise && widget.brouillonUuid != null) {
+      try {
+        await _brouillonService.supprimer(widget.brouillonUuid!);
+      } on AppException {
+        // best-effort : le brouillon orphelin sera juste visible dans Mes
+        // annonces > Brouillons jusqu'à suppression manuelle, pas bloquant.
+      }
+    }
+
     // === 7. Dialog succès EN_ATTENTE ===
     if (!mounted) return;
     setState(() => _publishing = false);
     await _showSuccessDialog();
     widget.onCompleted();
+  }
+
+  /// Mode reprise REJETE : applatit donneesJson (etape1/2/3/4) en payload
+  /// compatible ProprieteUpdateRequest backend (cf ProprieteUpdateRequest.java).
+  /// On envoie uniquement les champs renseignés ; les `null` sont omis pour ne
+  /// pas écraser des valeurs côté serveur.
+  Map<String, dynamic> _buildUpdatePayload() {
+    final e1 = (widget.donneesJson['etape1'] as Map<String, dynamic>?) ?? const {};
+    final e2 = (widget.donneesJson['etape2'] as Map<String, dynamic>?) ?? const {};
+    final e3 = (widget.donneesJson['etape3'] as Map<String, dynamic>?) ?? const {};
+    final e4 = (widget.donneesJson['etape4'] as Map<String, dynamic>?) ?? const {};
+    return <String, dynamic>{
+      if (e4['titre'] != null) 'titre': e4['titre'],
+      if (e4['description'] != null) 'description': e4['description'],
+      if (e1['dureeLocation'] != null) 'dureeLocation': e1['dureeLocation'],
+      if (e3['prix'] != null) 'prix': e3['prix'],
+      if (e3['devise'] != null) 'devise': e3['devise'],
+      if (e3['periode'] != null) 'periode': e3['periode'],
+      if (e3['prixSurDemande'] != null) 'prixSurDemande': e3['prixSurDemande'],
+      if (e3['prixNegociable'] != null) 'prixNegociable': e3['prixNegociable'],
+      if (e3['nombreChambres'] != null) 'nombreChambres': e3['nombreChambres'],
+      if (e3['nombreSallesBain'] != null) 'nombreSallesBain': e3['nombreSallesBain'],
+      if (e3['surfaceM2'] != null) 'surfaceM2': e3['surfaceM2'],
+      if (e2['adresseComplete'] != null) 'adresseComplete': e2['adresseComplete'],
+      if (e2['latitude'] != null) 'latitude': e2['latitude'],
+      if (e2['longitude'] != null) 'longitude': e2['longitude'],
+      if (e4['nomContactPublic'] != null) 'nomContactPublic': e4['nomContactPublic'],
+      if (e4['telephoneContact'] != null) 'telephoneContact': e4['telephoneContact'],
+      if (e3['commoditesCodes'] != null) 'commoditesCodes': e3['commoditesCodes'],
+    };
   }
 
   // ============================================================

@@ -6,7 +6,9 @@ import '../../../../shared/widgets/app_error.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../models/brouillon.dart';
 import '../../models/brouillon_save_request.dart';
+import '../../models/propriete.dart';
 import '../../services/brouillon_service.dart';
+import '../../services/propriete_service.dart';
 import 'step_infos.dart';
 import 'step_photos.dart';
 import 'step_profil.dart';
@@ -32,7 +34,13 @@ import 'step_validation_publication.dart';
 /// AppBar back button : confirmation "Quitter sans publier ?" — le brouillon
 /// reste en BD, l'utilisateur peut le reprendre plus tard.
 class WizardPublicationScreen extends StatefulWidget {
-  const WizardPublicationScreen({super.key});
+  /// Si non-null, le wizard démarre en mode "reprise d'annonce rejetée" :
+  /// - skip dialog "Reprendre / Nouveau" (on travaille sur cette propriété)
+  /// - pré-remplit les 4 étapes depuis [repriseDepuisRejet] (T2)
+  /// - à l'étape finale, appelle `updateAndPublier` au lieu de matérialiser (T4)
+  final Propriete? repriseDepuisRejet;
+
+  const WizardPublicationScreen({super.key, this.repriseDepuisRejet});
 
   @override
   State<WizardPublicationScreen> createState() => _WizardPublicationScreenState();
@@ -42,6 +50,7 @@ class _WizardPublicationScreenState extends State<WizardPublicationScreen> {
   static const int _totalSteps = 4;
 
   final _brouillonService = BrouillonService();
+  final _proprieteService = ProprieteService();
   final _pageController = PageController();
   final _stepInfosKey = GlobalKey<StepInfosState>();
   final _stepPhotosKey = GlobalKey<StepPhotosState>();
@@ -50,6 +59,11 @@ class _WizardPublicationScreenState extends State<WizardPublicationScreen> {
   int _currentStep = 1;
   String? _brouillonUuid;
   Map<String, dynamic> _donneesJson = {};
+
+  /// Mode reprise REJETE : uuid de la Propriete sur laquelle re-publier à
+  /// l'étape finale (cf T4 updateAndPublier vs matérialiser). Null en flow
+  /// normal "création d'annonce".
+  String? _repriseDepuisRejetUuid;
 
   // UI states
   bool _bootLoading = true;
@@ -78,26 +92,11 @@ class _WizardPublicationScreenState extends State<WizardPublicationScreen> {
       _bootError = null;
     });
     try {
-      final mes = await _brouillonService.mes();
-      if (!mounted) return;
-      if (mes.isEmpty) {
-        await _createNewBrouillon();
+      // T1 : si mode reprise REJETE, on saute le dialog brouillons.
+      if (widget.repriseDepuisRejet != null) {
+        await _bootstrapReprise(widget.repriseDepuisRejet!);
       } else {
-        final mostRecent = mes.first; // backend trie par derniere_modification DESC (à confirmer)
-        final reprendre = await _askReprendreOuNouveau(mostRecent);
-        if (!mounted) return;
-        if (reprendre == true) {
-          _adopterBrouillon(mostRecent);
-        } else if (reprendre == false) {
-          // Nouveau : supprimer l'ancien puis créer
-          await _brouillonService.supprimer(mostRecent.brouillonUuid);
-          if (!mounted) return;
-          await _createNewBrouillon();
-        } else {
-          // null = dismiss : on quitte le wizard
-          if (mounted) Navigator.of(context).pop();
-          return;
-        }
+        await _bootstrapNormal();
       }
       if (!mounted) return;
       setState(() => _bootLoading = false);
@@ -108,6 +107,96 @@ class _WizardPublicationScreenState extends State<WizardPublicationScreen> {
         _bootLoading = false;
       });
     }
+  }
+
+  /// Flow standard : dialog "Reprendre / Nouveau" si brouillon existant.
+  Future<void> _bootstrapNormal() async {
+    final mes = await _brouillonService.mes();
+    if (!mounted) return;
+    if (mes.isEmpty) {
+      await _createNewBrouillon();
+    } else {
+      final mostRecent = mes.first;
+      final reprendre = await _askReprendreOuNouveau(mostRecent);
+      if (!mounted) return;
+      if (reprendre == true) {
+        _adopterBrouillon(mostRecent);
+      } else if (reprendre == false) {
+        await _brouillonService.supprimer(mostRecent.brouillonUuid);
+        if (!mounted) return;
+        await _createNewBrouillon();
+      } else {
+        if (mounted) Navigator.of(context).pop();
+        return;
+      }
+    }
+  }
+
+  /// Mode reprise REJETE (T1 + T2). Crée un brouillon temporaire avec
+  /// donneesJson pré-rempli depuis [propriete] aux 4 étapes :
+  ///   - etape1 : typeAnnonce, dureeLocation, typeBienCode
+  ///   - etape2 : adresseComplete, lat, lng
+  ///   - etape3 : prix, devise, periode, chambres, sdb, surface, commodites
+  ///   - etape4 : titre, description, nomContactPublic
+  /// On stocke l'uuid de la propriete pour T4 (updateAndPublier).
+  /// On démarre directement à l'étape 2 (Infos), pas Profil — l'user a déjà
+  /// publié donc son profil est validé.
+  Future<void> _bootstrapReprise(Propriete propriete) async {
+    _repriseDepuisRejetUuid = propriete.proprieteUuid;
+
+    // Fetch typesBien pour mapper typeBienId → typeBienCode (StepInfos lit le code).
+    final typesBien = await _proprieteService.listTypesBien();
+    String? typeBienCode;
+    for (final tb in typesBien) {
+      if (tb.typeBienId == propriete.typeBienId) {
+        typeBienCode = tb.code;
+        break;
+      }
+    }
+
+    final donneesJson = <String, dynamic>{
+      'etape1': {
+        'typeAnnonce': propriete.typeAnnonce,
+        if (propriete.dureeLocation != null) 'dureeLocation': propriete.dureeLocation,
+        if (typeBienCode != null) 'typeBienCode': typeBienCode,
+      },
+      'etape2': {
+        if (propriete.adresseComplete != null) 'adresseComplete': propriete.adresseComplete,
+        if (propriete.latitude != null) 'latitude': propriete.latitude,
+        if (propriete.longitude != null) 'longitude': propriete.longitude,
+      },
+      'etape3': {
+        'prix': propriete.prix,
+        'devise': propriete.devise,
+        if (propriete.periode != null) 'periode': propriete.periode,
+        'prixSurDemande': propriete.prixSurDemande,
+        'prixNegociable': propriete.prixNegociable,
+        if (propriete.nombreChambres != null) 'nombreChambres': propriete.nombreChambres,
+        if (propriete.nombreSallesBain != null) 'nombreSallesBain': propriete.nombreSallesBain,
+        if (propriete.surfaceM2 != null) 'surfaceM2': propriete.surfaceM2,
+        'commoditesCodes': propriete.commodites.map((c) => c.code).toList(),
+      },
+      'etape4': {
+        'titre': propriete.titre,
+        if (propriete.description != null) 'description': propriete.description,
+        if (propriete.nomContactPublic != null) 'nomContactPublic': propriete.nomContactPublic,
+      },
+    };
+
+    final created = await _brouillonService.creer(
+      BrouillonSaveRequest(etapeActuelle: 2, donneesJson: donneesJson),
+    );
+    setState(() {
+      _brouillonUuid = created.brouillonUuid;
+      _donneesJson = donneesJson;
+      _currentStep = 2; // skip Profil — déjà validé puisque l'user a publié
+    });
+    // Avance directement à la step 2 (Infos) après le frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _pageController.hasClients) {
+        _pageController.jumpToPage(1); // index 1 = step 2 Infos
+      }
+    });
   }
 
   Future<bool?> _askReprendreOuNouveau(Brouillon recent) {
@@ -351,10 +440,16 @@ class _WizardPublicationScreenState extends State<WizardPublicationScreen> {
                 onChanged: (photos) {
                   _donneesJson['photos'] = photos.map((p) => p.toJson()).toList();
                 },
+                // T3a : photos déjà uploadées sur MinIO en mode reprise REJETE,
+                // affichées read-only. Null en flow normal.
+                remotePhotos: widget.repriseDepuisRejet?.photos,
               ),
               StepValidationPublication(
                 brouillonUuid: _brouillonUuid,
                 donneesJson: _donneesJson,
+                // T4 : mode reprise REJETE → updateAndPublier au lieu de
+                // matérialiser + cleanup brouillon temp en fin de séquence.
+                repriseDepuisRejetUuid: _repriseDepuisRejetUuid,
                 onCompleted: () {
                   // Le wizard est terminé (succès ou message "brouillon
                   // sauvegardé"). On ferme l'écran et on revient à la recherche.

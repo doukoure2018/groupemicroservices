@@ -55,6 +55,39 @@ class ProprieteService {
     return Propriete.fromJson(data['propriete'] as Map<String, dynamic>);
   }
 
+  /// `GET /immo/proprietes/mes-proprietes` — liste TOUTES les propriétés du
+  /// user (tous statuts confondus). Le filtrage par statut est fait côté
+  /// mobile sur l'écran Mes annonces.
+  Future<List<Propriete>> mesProprietes({int limit = 50, int offset = 0}) async {
+    final response = await _api.get(
+      '/immo/proprietes/mes-proprietes',
+      queryParameters: {'limit': limit, 'offset': offset},
+    );
+    final data = response.data['data'] as Map<String, dynamic>;
+    return (data['proprietes'] as List<dynamic>)
+        .map((e) => Propriete.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// `PUT /immo/proprietes/{uuid}` puis `POST /immo/proprietes/{uuid}/publier`
+  /// — utilisé pour la re-soumission d'une annonce rejetée (RETIRE → EN_ATTENTE
+  /// ou PUBLIE selon modération hybride).
+  ///
+  /// ⚠️ Non-atomique : si PUT réussit mais POST publier échoue (réseau coupé
+  /// entre les 2), l'annonce reste éditée en RETIRE. L'user peut retry. Cf
+  /// dette mobile-rejet-republier-2-step-not-atomic — fix futur backend =
+  /// endpoint unique POST /proprietes/{uuid}/edit-et-publier transactionnel.
+  Future<Propriete> updateAndPublier(
+    String proprieteUuid,
+    Map<String, dynamic> updatePayload,
+  ) async {
+    await _api.put('/immo/proprietes/$proprieteUuid', data: updatePayload);
+    // PATCH (pas POST) — cf ProprieteResource @PatchMapping("/{uuid}/publier").
+    final response = await _api.patch('/immo/proprietes/$proprieteUuid/publier');
+    final data = response.data['data'] as Map<String, dynamic>;
+    return Propriete.fromJson(data['propriete'] as Map<String, dynamic>);
+  }
+
   /// `GET /immo/types-bien` — référentiel des types (MAISON, APPARTEMENT, ...).
   /// Données stables — un cache mémoire au niveau de l'écran suffira en 15.2c.
   Future<List<TypeBien>> listTypesBien() async {
