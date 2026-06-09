@@ -40,6 +40,13 @@ class FavoriStarButton extends StatefulWidget {
   /// Taille de l'icône (defaults 24 / 28 selon variante).
   final double? size;
 
+  /// Variante réduite pour overlay sur les cards de liste (Recommandées /
+  /// Toutes les annonces) : icône 16 + padding 6 → cercle ~28px au lieu de
+  /// ~44px. Évite le "blob" gris qui domine les petites cards. Sans effet sur
+  /// la fiche héro (qui reste en `light` non-compact, plus grand car la photo
+  /// l'est aussi). Ignoré si `light` est false.
+  final bool compact;
+
   const FavoriStarButton({
     super.key,
     required this.isFavorite,
@@ -47,6 +54,7 @@ class FavoriStarButton extends StatefulWidget {
     this.onChanged,
     this.light = false,
     this.size,
+    this.compact = false,
   });
 
   @override
@@ -102,7 +110,11 @@ class _FavoriStarButtonState extends State<FavoriStarButton> {
 
   @override
   Widget build(BuildContext context) {
-    final size = widget.size ?? (widget.light ? 28 : 24);
+    final size =
+        widget.size ?? (widget.light ? (widget.compact ? 16 : 28) : 24);
+    // Padding interne du cercle overlay : réduit en compact pour un cercle
+    // ~28px (vs ~44px). Sans effet hors variante light.
+    final overlayPadding = widget.compact ? 6.0 : 8.0;
     final iconColor = widget.light
         ? (_local ? Colors.redAccent : Colors.white)
         : (_local ? Colors.redAccent : AppColors.onBackground);
@@ -126,7 +138,7 @@ class _FavoriStarButtonState extends State<FavoriStarButton> {
           customBorder: const CircleBorder(),
           onTap: _loading ? null : _toggle,
           child: Padding(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(overlayPadding),
             child: _loading
                 ? SizedBox(
                     width: size, height: size,

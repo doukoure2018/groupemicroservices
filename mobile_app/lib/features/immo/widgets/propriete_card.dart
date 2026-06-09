@@ -201,6 +201,7 @@ class ProprieteCard extends StatelessWidget {
               proprieteUuid: propriete.proprieteUuid,
               isFavorite: propriete.isFavorite ?? false,
               light: true,
+              compact: true,
               onChanged: onFavoriToggled,
             ),
           ),
