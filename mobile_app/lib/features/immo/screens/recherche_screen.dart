@@ -680,7 +680,9 @@ class _RechercheScreenState extends State<RechercheScreen> {
 
   Widget _buildHorizontalList(List<Propriete> list) {
     return SizedBox(
-      height: 254,
+      // 274 (vs 254) : la ligne compteur de vues ajoutée sous l'adresse de
+      // ProprieteCardCompact a besoin de ~20px verticaux supplémentaires.
+      height: 274,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),

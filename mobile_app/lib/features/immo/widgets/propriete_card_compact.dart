@@ -94,6 +94,28 @@ class ProprieteCardCompact extends StatelessWidget {
                           ],
                         ),
                       ],
+                      // Compteur de vues façade — masqué si 0 vue (évite
+                      // d'encombrer les nouvelles annonces). nombre_vues vient
+                      // du SELECT p.* de la recherche.
+                      if (propriete.nombreVues > 0) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.visibility_outlined,
+                                size: 12, color: AppColors.primary),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${propriete.nombreVues} vue${propriete.nombreVues > 1 ? 's' : ''}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.onBackground
+                                    .withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 6),
                       Text(
                         _formatPrix(),
