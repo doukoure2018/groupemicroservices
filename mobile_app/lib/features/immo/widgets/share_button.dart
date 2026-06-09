@@ -16,10 +16,16 @@ class ShareButton extends StatefulWidget {
   final Propriete propriete;
   final double? size;
 
+  /// Si `true`, icône blanche dans un fond circulaire semi-transparent —
+  /// pour overlay flottant sur la photo héro (B2). Miroir exact de la
+  /// variante `light` de FavoriStarButton. Sinon IconButton AppBar standard.
+  final bool light;
+
   const ShareButton({
     super.key,
     required this.propriete,
     this.size,
+    this.light = false,
   });
 
   @override
@@ -44,7 +50,40 @@ class _ShareButtonState extends State<ShareButton> {
 
   @override
   Widget build(BuildContext context) {
-    final size = widget.size ?? 24;
+    final size = widget.size ?? (widget.light ? 24 : 24);
+
+    // Variante overlay photo (B2) : fond circulaire noir 0.35 + icône
+    // blanche, identique à FavoriStarButton(light:true) pour cohérence
+    // visuelle des 3 overlays héro.
+    if (widget.light) {
+      return Material(
+        color: Colors.black.withValues(alpha: 0.35),
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: _loading ? null : _handleShare,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: _loading
+                ? SizedBox(
+                    width: size, height: size,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(Colors.white),
+                    ),
+                  )
+                : Icon(Icons.share_outlined,
+                    size: size,
+                    color: Colors.white,
+                    shadows: const [
+                      Shadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 1)),
+                    ]),
+          ),
+        ),
+      );
+    }
+
+    // Variante AppBar standard.
     return IconButton(
       onPressed: _loading ? null : _handleShare,
       icon: _loading

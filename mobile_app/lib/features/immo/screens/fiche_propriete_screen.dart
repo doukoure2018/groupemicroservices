@@ -55,7 +55,8 @@ class FicheProprieteScreen extends StatefulWidget {
   State<FicheProprieteScreen> createState() => _FicheProprieteScreenState();
 }
 
-class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
+class _FicheProprieteScreenState extends State<FicheProprieteScreen>
+    with SingleTickerProviderStateMixin {
   final _service = ProprieteService();
   final _favoriService = FavoriService();
 
@@ -65,11 +66,30 @@ class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
   Map<int, TypeBien> _typesById = const {};
   bool? _isFavorite;
 
+  // Onglets fiche (B1) : index 0 = Aperçu, 1 = Galerie. Avis EXCLUS Phase B.
+  late final TabController _tabController;
+
+  // Contrôleur + index courant du PageView héro, remontés au parent (B3) pour
+  // synchroniser le strip de mini-thumbnails avec le swipe de la photo héro.
+  // ValueNotifier → seuls le strip et l'indicateur "N/M" se rebuildent au
+  // swipe, pas tout le NestedScrollView.
+  final PageController _photoController = PageController();
+  final ValueNotifier<int> _photoIndex = ValueNotifier<int>(0);
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _isFavorite = widget.initialIsFavorite; // valeur héritée, sera resync
     _load();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _photoController.dispose();
+    _photoIndex.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -129,90 +149,194 @@ class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
         // bas si besoin — ici PopScope sert juste de hook pour la sémantique.
       },
       child: Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 280,
-            pinned: true,
-            backgroundColor: AppColors.surface,
-            iconTheme: const IconThemeData(color: AppColors.onSurface),
-            title: Text(p.titre, maxLines: 1, overflow: TextOverflow.ellipsis),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.of(context).pop<bool?>(_isFavorite),
-            ),
-            actions: [
-              ShareButton(propriete: p),
-              FavoriStarButton(
-                proprieteUuid: p.proprieteUuid,
-                isFavorite: _isFavorite ?? false,
-                onChanged: (nouveau) {
-                  // Met à jour le state local pour que le pop retourne la
-                  // dernière valeur.
-                  if (mounted) setState(() => _isFavorite = nouveau);
-                },
+        body: NestedScrollView(
+          // B1 : héro dans le header, TabBar épinglée via `bottom:` du
+          // SliverAppBar (pattern canonique NestedScrollView + onglets). Le
+          // corps = TabBarView Aperçu/Galerie. Les sections existantes sont
+          // déplacées telles quelles dans Aperçu (filet de sécurité — pas de
+          // modif visuelle en B1). Strip thumbnails (B3) et en-tête regroupé
+          // (B4) viendront s'insérer dans le header ensuite.
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            SliverAppBar(
+              expandedHeight: 280,
+              pinned: true,
+              backgroundColor: AppColors.surface,
+              automaticallyImplyLeading: false,
+              // B2 : overlays flottants sur la photo héro (retour / share /
+              // favori) en pastilles circulaires noires 0.35 + icône blanche.
+              // Titre retiré de la toolbar — il rejoint l'en-tête au-dessus des
+              // tabs en B4, et reste affiché dans l'onglet Aperçu en attendant.
+              leadingWidth: 56,
+              leading: Center(
+                child: Material(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () => Navigator.of(context).pop<bool?>(_isFavorite),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 24,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black54,
+                            blurRadius: 6,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: _GalerieHeader(photos: p.photos),
-            ),
-          ),
-          SliverList(
-            delegate: SliverChildListDelegate([
-              _SectionPrixTitre(propriete: p),
-              const _Divider(),
-              _SectionMeta(propriete: p),
-              const _Divider(),
-              _SectionSpecs(propriete: p, typeBien: typeBien),
-              if (p.adresseComplete != null) ...[
-                const _Divider(),
-                _SectionAdresse(adresse: p.adresseComplete!),
+              actions: [
+                ShareButton(propriete: p, light: true),
+                const SizedBox(width: 8),
+                FavoriStarButton(
+                  proprieteUuid: p.proprieteUuid,
+                  isFavorite: _isFavorite ?? false,
+                  light: true,
+                  onChanged: (nouveau) {
+                    // Met à jour le state local pour que le pop retourne la
+                    // dernière valeur.
+                    if (mounted) setState(() => _isFavorite = nouveau);
+                  },
+                ),
+                const SizedBox(width: 12),
               ],
-              if (p.description != null && p.description!.trim().isNotEmpty) ...[
-                const _Divider(),
-                _SectionDescription(description: p.description!),
-              ],
-              if (p.commodites.isNotEmpty) ...[
-                const _Divider(),
-                _SectionCommodites(commodites: p.commodites),
-              ],
-              if (p.latitude != null && p.longitude != null) ...[
-                const _Divider(),
-                _SectionCarte(latitude: p.latitude!, longitude: p.longitude!),
-              ],
-              const _Divider(),
-              _SectionVendeur(nomContactPublic: p.nomContactPublic),
-              const SizedBox(height: 16),
-            ]),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomAppBar(
-        elevation: 8,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _openContacterSheet,
-                icon: const Icon(Icons.email_outlined),
-                label: const Text('Contacter'),
-                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              flexibleSpace: FlexibleSpaceBar(
+                background: _GalerieHeader(
+                  photos: p.photos,
+                  controller: _photoController,
+                  indexNotifier: _photoIndex,
+                ),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: _openVisiteSheet,
-                icon: const Icon(Icons.event_outlined),
-                label: const Text('Visiter'),
-                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            // B3 : strip mini-thumbnails sous le héro (masqué si < 2 photos —
+            // inutile pour une photo unique). Synchronisé au PageView héro via
+            // _photoIndex ; tap → animateToPage.
+            if (p.photos.length >= 2)
+              SliverToBoxAdapter(
+                child: _HeroThumbnailStrip(
+                  photos: p.photos,
+                  indexNotifier: _photoIndex,
+                  onTap: (i) => _photoController.animateToPage(
+                    i,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOut,
+                  ),
+                ),
+              ),
+            // B4 : en-tête (badge type + titre + adresse) entre le strip et les
+            // tabs. Scrolle avec le contenu ; seule la TabBar reste épinglée.
+            SliverToBoxAdapter(child: _SectionEnTete(propriete: p)),
+            // TabBar sortie du `bottom:` du SliverAppBar (B3) pour laisser le
+            // strip s'intercaler entre héro et tabs. Épinglée via délégué.
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _TabBarHeaderDelegate(
+                TabBar(
+                  controller: _tabController,
+                  labelColor: AppColors.primary,
+                  unselectedLabelColor: AppColors.onBackground,
+                  indicatorColor: AppColors.secondary,
+                  tabs: const [
+                    Tab(text: 'Aperçu'),
+                    Tab(text: 'Galerie'),
+                  ],
+                ),
               ),
             ),
           ],
+          body: TabBarView(
+            controller: _tabController,
+            children: [_buildApercu(p, typeBien), _buildGalerie(p)],
+          ),
+        ),
+        // B7 : barre CTA en Container (pas BottomAppBar, qui imposait une
+        // hauteur fixe → overflow). Se dimensionne au contenu via mainAxisSize
+        // .min ; SafeArea(top:false) gère l'inset de la nav gestuelle ; ombre
+        // haute pour la séparation. Prix (ligne 1, sarcelle, + "Négociable" si
+        // applicable) puis les 2 CTA Contacter/Visiter (ligne 2). Visiter
+        // conservé — couplage fonctionnel existant préservé (décision Phase B).
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          _formatPrix(p),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                        ),
+                      ),
+                      if (p.prixNegociable) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          'Négociable',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.onBackground),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _openContacterSheet,
+                          icon: const Icon(Icons.email_outlined),
+                          label: const Text('Contacter'),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: _openVisiteSheet,
+                          icon: const Icon(Icons.event_outlined),
+                          label: const Text('Visiter'),
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -231,10 +355,12 @@ class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
       ),
     );
     if (result == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Demande de contact envoyée'),
-        backgroundColor: AppColors.success,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Demande de contact envoyée'),
+          backgroundColor: AppColors.success,
+        ),
+      );
     }
   }
 
@@ -253,11 +379,103 @@ class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
       ),
     );
     if (result == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Demande de visite envoyée'),
-        backgroundColor: AppColors.success,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Demande de visite envoyée'),
+          backgroundColor: AppColors.success,
+        ),
+      );
     }
+  }
+
+  // -------------------- Onglet Aperçu (B1) --------------------
+  // Reprend à l'identique l'ordre et les sections de l'ex-SliverList. Aucune
+  // modif visuelle en B1 — restyle réparti sur B4..B6.
+  Widget _buildApercu(Propriete p, TypeBien? typeBien) {
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        _SectionMeta(propriete: p),
+        const _Divider(),
+        _SectionSpecs(propriete: p, typeBien: typeBien),
+        if (p.description != null && p.description!.trim().isNotEmpty) ...[
+          const _Divider(),
+          _SectionDescription(description: p.description!),
+        ],
+        if (p.commodites.isNotEmpty) ...[
+          const _Divider(),
+          _SectionCommodites(commodites: p.commodites),
+        ],
+        if (p.latitude != null && p.longitude != null) ...[
+          const _Divider(),
+          _SectionCarte(latitude: p.latitude!, longitude: p.longitude!),
+        ],
+        const _Divider(),
+        _SectionVendeur(nomContactPublic: p.nomContactPublic),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  // -------------------- Onglet Galerie (B8) --------------------
+  // Grille responsive : SliverGridDelegateWithMaxCrossAxisExtent (tuile cible
+  // ~200px) → 2 colonnes sur téléphone, 3+ sur tablette, automatiquement.
+  // Tuiles carrées, coins arrondis, tap → _FullscreenGallery existant
+  // (affiche l'URL pleine résolution + pinch-zoom).
+  Widget _buildGalerie(Propriete p) {
+    if (p.photos.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.photo_library_outlined,
+                  size: 48, color: AppColors.onBackground),
+              SizedBox(height: 12),
+              Text('Aucune photo disponible'),
+            ],
+          ),
+        ),
+      );
+    }
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 200,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 1,
+      ),
+      itemCount: p.photos.length,
+      itemBuilder: (_, i) {
+        final photo = p.photos[i];
+        return GestureDetector(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  _FullscreenGallery(photos: p.photos, initialIndex: i),
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: CachedNetworkImage(
+              imageUrl: photo.urlThumbnail,
+              fit: BoxFit.cover,
+              placeholder: (_, __) => Container(color: AppColors.divider),
+              errorWidget: (_, __, ___) => Container(
+                color: AppColors.divider,
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.broken_image_outlined,
+                  color: AppColors.onBackground,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -265,46 +483,47 @@ class _FicheProprieteScreenState extends State<FicheProprieteScreen> {
 // Galerie photos (header SliverAppBar)
 // ============================================================================
 
-class _GalerieHeader extends StatefulWidget {
+/// Header photo héro. B3 : state (PageController + index) remonté au parent
+/// pour synchro avec le strip de thumbnails — ce widget devient stateless.
+class _GalerieHeader extends StatelessWidget {
   final List<Photo> photos;
-  const _GalerieHeader({required this.photos});
-
-  @override
-  State<_GalerieHeader> createState() => _GalerieHeaderState();
-}
-
-class _GalerieHeaderState extends State<_GalerieHeader> {
-  int _index = 0;
-  late final _controller = PageController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  final PageController controller;
+  final ValueNotifier<int> indexNotifier;
+  const _GalerieHeader({
+    required this.photos,
+    required this.controller,
+    required this.indexNotifier,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (widget.photos.isEmpty) {
+    if (photos.isEmpty) {
       return Container(
         color: AppColors.divider,
         alignment: Alignment.center,
-        child: const Icon(Icons.image_not_supported_outlined, size: 48, color: AppColors.onBackground),
+        child: const Icon(
+          Icons.image_not_supported_outlined,
+          size: 48,
+          color: AppColors.onBackground,
+        ),
       );
     }
     return Stack(
       fit: StackFit.expand,
       children: [
         PageView.builder(
-          controller: _controller,
-          itemCount: widget.photos.length,
-          onPageChanged: (i) => setState(() => _index = i),
+          controller: controller,
+          itemCount: photos.length,
+          onPageChanged: (i) => indexNotifier.value = i,
           itemBuilder: (_, i) {
-            final p = widget.photos[i];
+            final p = photos[i];
             return GestureDetector(
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => _FullscreenGallery(photos: widget.photos, initialIndex: i),
-              )),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      _FullscreenGallery(photos: photos, initialIndex: i),
+                ),
+              ),
               child: CachedNetworkImage(
                 imageUrl: p.url,
                 fit: BoxFit.cover,
@@ -312,32 +531,137 @@ class _GalerieHeaderState extends State<_GalerieHeader> {
                 errorWidget: (_, __, ___) => Container(
                   color: AppColors.divider,
                   alignment: Alignment.center,
-                  child: const Icon(Icons.broken_image_outlined, size: 48, color: AppColors.onBackground),
+                  child: const Icon(
+                    Icons.broken_image_outlined,
+                    size: 48,
+                    color: AppColors.onBackground,
+                  ),
                 ),
               ),
             );
           },
         ),
-        // Indicateur "N / M" — caché si une seule photo (esthétique).
-        if (widget.photos.length >= 2)
+        // Indicateur "N / M" — caché si une seule photo (esthétique). Se
+        // rebuild seul via le notifier au swipe.
+        if (photos.length >= 2)
           Positioned(
             right: 16,
             bottom: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${_index + 1} / ${widget.photos.length}',
-                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+            child: ValueListenableBuilder<int>(
+              valueListenable: indexNotifier,
+              builder: (_, idx, __) => Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${idx + 1} / ${photos.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
           ),
       ],
     );
   }
+}
+
+/// Strip horizontal de mini-thumbnails sous le héro (B3). Surligne la photo
+/// courante (bordure corail) et synchronise le PageView héro au tap.
+class _HeroThumbnailStrip extends StatelessWidget {
+  final List<Photo> photos;
+  final ValueNotifier<int> indexNotifier;
+  final ValueChanged<int> onTap;
+  const _HeroThumbnailStrip({
+    required this.photos,
+    required this.indexNotifier,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 72,
+      color: AppColors.surface,
+      child: ValueListenableBuilder<int>(
+        valueListenable: indexNotifier,
+        builder: (_, current, __) => ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          itemCount: photos.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (_, i) {
+            final selected = i == current;
+            return GestureDetector(
+              onTap: () => onTap(i),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: 64,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: selected ? AppColors.secondary : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: CachedNetworkImage(
+                    imageUrl: photos[i].urlThumbnail,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Container(color: AppColors.divider),
+                    errorWidget: (_, __, ___) => Container(
+                      color: AppColors.divider,
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.broken_image_outlined,
+                        size: 20,
+                        color: AppColors.onBackground,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Délégué pour épingler la TabBar dans le NestedScrollView (B3). Hauteur
+/// fixe = preferredSize de la TabBar, fond surface pour rester opaque au
+/// scroll.
+class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar tabBar;
+  _TabBarHeaderDelegate(this.tabBar);
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(color: AppColors.surface, child: tabBar);
+  }
+
+  @override
+  bool shouldRebuild(_TabBarHeaderDelegate oldDelegate) =>
+      tabBar != oldDelegate.tabBar;
 }
 
 class _FullscreenGallery extends StatefulWidget {
@@ -391,18 +715,23 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
 class _Divider extends StatelessWidget {
   const _Divider();
   @override
-  Widget build(BuildContext context) => const Divider(height: 1, thickness: 1, color: AppColors.divider);
+  Widget build(BuildContext context) =>
+      const Divider(height: 1, thickness: 1, color: AppColors.divider);
 }
 
-class _SectionPrixTitre extends StatelessWidget {
+/// En-tête fiche (B4), affiché au-dessus des tabs : badge type (VENTE/LOCATION)
+/// + réf + titre + adresse. PAS de prix (déplacé vers le CTA bas en B7) et PAS
+/// de rating étoile (aucune donnée backend avis — dette tracée).
+class _SectionEnTete extends StatelessWidget {
   final Propriete propriete;
-  const _SectionPrixTitre({required this.propriete});
+  const _SectionEnTete({required this.propriete});
 
   @override
   Widget build(BuildContext context) {
     final isLocation = propriete.typeAnnonce == 'LOCATION';
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+    return Container(
+      color: AppColors.surface,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -416,7 +745,12 @@ class _SectionPrixTitre extends StatelessWidget {
                 ),
                 child: Text(
                   isLocation ? 'LOCATION' : 'VENTE',
-                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -427,42 +761,60 @@ class _SectionPrixTitre extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Duplication volontaire de _formatPrix() depuis ProprieteCard (15.2c) :
-          // pas d'over-engineering tant que 2 usages. Note dette : à factoriser
-          // dans lib/features/immo/utils/prix_formatter.dart au 3e usage.
-          Text(
-            _formatPrix(propriete),
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
-          ),
-          const SizedBox(height: 8),
           Text(
             propriete.titre,
-            style: Theme.of(context).textTheme.titleLarge,
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
+          if (propriete.adresseComplete != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.place_outlined,
+                  size: 18,
+                  color: AppColors.onBackground,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    propriete.adresseComplete!,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
   }
+}
 
-  String _formatPrix(Propriete p) {
-    if (p.prixSurDemande) return 'Sur demande';
-    final montant = CurrencyFormatter.format(p.prix, p.devise);
-    if (p.typeAnnonce == 'LOCATION' && p.periode != null) {
-      return '$montant ${_periodeLabel(p.periode!)}';
-    }
-    return montant;
+// Helpers prix partagés en-tête/CTA (extraits de l'ex-_SectionPrixTitre).
+// Duplication volontaire de _formatPrix depuis ProprieteCard (15.2c) — à
+// factoriser dans lib/features/immo/utils/prix_formatter.dart au 3e usage.
+String _formatPrix(Propriete p) {
+  if (p.prixSurDemande) return 'Sur demande';
+  final montant = CurrencyFormatter.format(p.prix, p.devise);
+  if (p.typeAnnonce == 'LOCATION' && p.periode != null) {
+    return '$montant ${_periodeLabel(p.periode!)}';
   }
+  return montant;
+}
 
-  String _periodeLabel(String code) {
-    switch (code) {
-      case 'PAR_MOIS': return '/mois';
-      case 'PAR_JOUR': return '/jour';
-      case 'PAR_AN': return '/an';
-      default: return '';
-    }
+String _periodeLabel(String code) {
+  switch (code) {
+    case 'PAR_MOIS':
+      return '/mois';
+    case 'PAR_JOUR':
+      return '/jour';
+    case 'PAR_AN':
+      return '/an';
+    default:
+      return '';
   }
 }
 
@@ -479,14 +831,22 @@ class _SectionMeta extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          const Icon(Icons.visibility_outlined, size: 16, color: AppColors.onBackground),
+          const Icon(
+            Icons.visibility_outlined,
+            size: 16,
+            color: AppColors.onBackground,
+          ),
           const SizedBox(width: 6),
           Text(
             '${propriete.nombreVues} vue${propriete.nombreVues > 1 ? 's' : ''}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(width: 16),
-          const Icon(Icons.favorite_outline, size: 16, color: AppColors.onBackground),
+          const Icon(
+            Icons.favorite_outline,
+            size: 16,
+            color: AppColors.onBackground,
+          ),
           const SizedBox(width: 6),
           Text(
             '${propriete.nombreFavoris}',
@@ -510,30 +870,45 @@ class _SectionSpecs extends StatelessWidget {
       items.add(_SpecItem(Icons.home_work_outlined, typeBien!.libelle));
     }
     if (propriete.nombreChambres != null) {
-      items.add(_SpecItem(Icons.bed_outlined, '${propriete.nombreChambres} ch.'));
+      items.add(
+        _SpecItem(Icons.bed_outlined, '${propriete.nombreChambres} ch.'),
+      );
     }
     if (propriete.nombreSallesBain != null) {
-      items.add(_SpecItem(Icons.bathtub_outlined, '${propriete.nombreSallesBain} sdb'));
+      items.add(
+        _SpecItem(Icons.bathtub_outlined, '${propriete.nombreSallesBain} sdb'),
+      );
     }
     if (propriete.surfaceM2 != null) {
-      items.add(_SpecItem(Icons.crop_outlined, '${propriete.surfaceM2!.toStringAsFixed(0)} m²'));
+      items.add(
+        _SpecItem(
+          Icons.crop_outlined,
+          '${propriete.surfaceM2!.toStringAsFixed(0)} m²',
+        ),
+      );
     }
     if (items.isEmpty) return const SizedBox.shrink();
+    // Row de cellules Expanded : chaque spec occupe une fraction égale de la
+    // largeur → overflow horizontal structurellement impossible (la cellule
+    // rétrécit, le libellé s'ellipse au pire). Garde-fou <360dp respecté sans
+    // fallback Wrap. Séparateurs verticaux étirés via IntrinsicHeight.
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: Wrap(
-        spacing: 16,
-        runSpacing: 8,
-        children: items
-            .map((s) => Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(s.icon, size: 18, color: AppColors.onBackground),
-                    const SizedBox(width: 6),
-                    Text(s.label, style: Theme.of(context).textTheme.bodyMedium),
-                  ],
-                ))
-            .toList(),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (int i = 0; i < items.length; i++) ...[
+              if (i > 0)
+                const VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: AppColors.divider,
+                ),
+              Expanded(child: _SpecCell(item: items[i])),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -545,21 +920,29 @@ class _SpecItem {
   const _SpecItem(this.icon, this.label);
 }
 
-class _SectionAdresse extends StatelessWidget {
-  final String adresse;
-  const _SectionAdresse({required this.adresse});
+/// Cellule d'une spec (icône sarcelle + libellé), centrée, ellipse sur 1 ligne
+/// pour ne jamais déborder même sur écran très étroit.
+class _SpecCell extends StatelessWidget {
+  final _SpecItem item;
+  const _SpecCell({required this.item});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.place_outlined, size: 20, color: AppColors.onBackground),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(adresse, style: Theme.of(context).textTheme.bodyMedium),
+          Icon(item.icon, size: 22, color: AppColors.primary),
+          const SizedBox(height: 6),
+          Text(
+            item.label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -567,12 +950,21 @@ class _SectionAdresse extends StatelessWidget {
   }
 }
 
-class _SectionDescription extends StatelessWidget {
+class _SectionDescription extends StatefulWidget {
   final String description;
   const _SectionDescription({required this.description});
 
   @override
+  State<_SectionDescription> createState() => _SectionDescriptionState();
+}
+
+class _SectionDescriptionState extends State<_SectionDescription> {
+  static const _collapsedMaxLines = 4;
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final textStyle = Theme.of(context).textTheme.bodyMedium;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: Column(
@@ -580,7 +972,52 @@ class _SectionDescription extends StatelessWidget {
         children: [
           Text('Description', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-          Text(description, style: Theme.of(context).textTheme.bodyMedium),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Mesure si le texte dépasse _collapsedMaxLines à cette largeur :
+              // le toggle "Lire plus" n'est rendu que dans ce cas.
+              final tp = TextPainter(
+                text: TextSpan(text: widget.description, style: textStyle),
+                maxLines: _collapsedMaxLines,
+                textDirection: TextDirection.ltr,
+              )..layout(maxWidth: constraints.maxWidth);
+              final isOverflowing = tp.didExceedMaxLines;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 200),
+                    alignment: Alignment.topCenter,
+                    child: Text(
+                      widget.description,
+                      maxLines: _expanded ? null : _collapsedMaxLines,
+                      overflow: _expanded
+                          ? TextOverflow.clip
+                          : TextOverflow.ellipsis,
+                      style: textStyle,
+                    ),
+                  ),
+                  if (isOverflowing) ...[
+                    const SizedBox(height: 4),
+                    GestureDetector(
+                      onTap: () => setState(() => _expanded = !_expanded),
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Text(
+                          _expanded ? 'Lire moins' : 'Lire plus',
+                          style: textStyle?.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
@@ -605,7 +1042,11 @@ class _SectionCommodites extends StatelessWidget {
             runSpacing: 8,
             children: commodites.map((c) {
               return Chip(
-                avatar: Icon(_iconeFromCode(c.code), size: 18, color: AppColors.primary),
+                avatar: Icon(
+                  _iconeFromCode(c.code),
+                  size: 18,
+                  color: AppColors.primary,
+                ),
                 label: Text(c.libelle),
                 backgroundColor: AppColors.primaryContainer,
                 side: BorderSide.none,
@@ -622,15 +1063,24 @@ class _SectionCommodites extends StatelessWidget {
   /// À étoffer au fil des nouvelles commodités exposées en BD.
   IconData _iconeFromCode(String code) {
     switch (code) {
-      case 'CLIMATISATION': return Icons.ac_unit;
-      case 'PARKING':        return Icons.local_parking;
-      case 'CHAUFFE_EAU':    return Icons.hot_tub_outlined;
-      case 'RESERVOIR_EAU':  return Icons.water_outlined;
-      case 'PISCINE':        return Icons.pool;
-      case 'JARDIN':         return Icons.park_outlined;
-      case 'ASCENSEUR':      return Icons.elevator_outlined;
-      case 'INTERNET':       return Icons.wifi;
-      default:               return Icons.check_circle_outline;
+      case 'CLIMATISATION':
+        return Icons.ac_unit;
+      case 'PARKING':
+        return Icons.local_parking;
+      case 'CHAUFFE_EAU':
+        return Icons.hot_tub_outlined;
+      case 'RESERVOIR_EAU':
+        return Icons.water_outlined;
+      case 'PISCINE':
+        return Icons.pool;
+      case 'JARDIN':
+        return Icons.park_outlined;
+      case 'ASCENSEUR':
+        return Icons.elevator_outlined;
+      case 'INTERNET':
+        return Icons.wifi;
+      default:
+        return Icons.check_circle_outline;
     }
   }
 }
@@ -666,28 +1116,32 @@ class _SectionCarte extends StatelessWidget {
                   // L'utilisateur peut explorer mais la fiche est en lecture
                   // seule — pas de drag du marker, pas de tap = move.
                   interactionOptions: const InteractionOptions(
-                    flags: InteractiveFlag.pinchZoom |
+                    flags:
+                        InteractiveFlag.pinchZoom |
                         InteractiveFlag.drag |
                         InteractiveFlag.doubleTapZoom,
                   ),
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.billetterie.gn',
                   ),
-                  MarkerLayer(markers: [
-                    Marker(
-                      point: point,
-                      width: 40,
-                      height: 40,
-                      child: const Icon(
-                        Icons.location_pin,
-                        color: AppColors.primary,
-                        size: 40,
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: point,
+                        width: 40,
+                        height: 40,
+                        child: const Icon(
+                          Icons.location_pin,
+                          color: AppColors.primary,
+                          size: 40,
+                        ),
                       ),
-                    ),
-                  ]),
+                    ],
+                  ),
                   const RichAttributionWidget(
                     attributions: [
                       TextSourceAttribution('© OpenStreetMap contributors'),
@@ -701,9 +1155,9 @@ class _SectionCarte extends StatelessWidget {
           Text(
             'Position approximative — ±30m typique',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.onBackground,
-                  fontStyle: FontStyle.italic,
-                ),
+              color: AppColors.onBackground,
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ],
       ),
@@ -745,9 +1199,9 @@ class _SectionVendeur extends StatelessWidget {
           // Contacter / Visiter passent par la BottomAppBar de la fiche.
           Text(
             'Contactez le vendeur via les boutons en bas de l\'écran.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.onBackground,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onBackground),
           ),
         ],
       ),
