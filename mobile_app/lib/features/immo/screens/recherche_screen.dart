@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../shared/http/api_exception.dart';
@@ -12,14 +14,20 @@ import '../services/geo_service.dart';
 import '../services/propriete_service.dart';
 import '../widgets/filtres_sheet.dart';
 import '../widgets/propriete_card.dart';
+import '../widgets/propriete_card_compact.dart';
 import 'fiche_propriete_screen.dart';
-import 'wizard/wizard_publication_screen.dart';
 
-/// Écran de recherche immobilier (15.2c). Liste de [Propriete] paginée avec
-/// filtres exposés via bottom sheet ([FiltresSheet]).
+/// Écran de recherche immobilier — refonte design SIRA Phase A (2026-06-09).
 ///
-/// State pattern : StatefulWidget + setState (cohérent legacy billetterie).
-/// Pagination infinite scroll : `_loadMore()` déclenché à ~300 px du bottom.
+/// Spec layout :
+///   1. Header : "Localisation" petit + ville gros + dropdown + cloche notif
+///   2. Search bar pill + bouton carré corail filtres collé à droite
+///   3. 4 catégories rondes (Maison/Villa/Appartement/Bungalow)
+///   4. Section "Recommandées" horizontal scroll (10 dernières publiées)
+///   5. Section "À proximité" horizontal scroll (si geoActive) ou CTA activer
+///   6. Liste "Toutes les annonces" verticale paginée
+///
+/// Palette : sarcelle #1F6F8B (primary) + corail #F26430 (secondary CTA).
 class RechercheScreen extends StatefulWidget {
   const RechercheScreen({super.key});
 
@@ -29,9 +37,15 @@ class RechercheScreen extends StatefulWidget {
 
 class _RechercheScreenState extends State<RechercheScreen> {
   static const int _pageSize = 20;
+  static const int _highlightSize = 10;
+  // MVP : ville statique pour l'header. Selector réel = dette
+  // mobile-recherche-ville-selector-future.
+  static const String _villeAffichee = 'Conakry';
 
   final _service = ProprieteService();
   final _scrollController = ScrollController();
+  final _searchController = TextEditingController();
+  Timer? _searchDebounce;
 
   bool _initialLoading = true;
   bool _loadingMore = false;
@@ -40,6 +54,8 @@ class _RechercheScreenState extends State<RechercheScreen> {
   int _total = 0;
   RechercheFiltres _filtres = const RechercheFiltres();
   Map<int, TypeBien> _typesById = const {};
+
+  List<Propriete> _recommandees = const [];
 
   @override
   void initState() {
@@ -50,6 +66,8 @@ class _RechercheScreenState extends State<RechercheScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -73,7 +91,6 @@ class _RechercheScreenState extends State<RechercheScreen> {
       _total = 0;
     });
     try {
-      // Charge types-bien en parallèle de la 1ère page recherche (1 RTT au lieu de 2).
       final results = await Future.wait([
         _service.rechercher(limit: _pageSize, offset: 0, filtres: _filtres),
         if (_typesById.isEmpty) _service.listTypesBien(),
@@ -89,12 +106,31 @@ class _RechercheScreenState extends State<RechercheScreen> {
         _total = paged.total as int;
         _initialLoading = false;
       });
+      _loadHighlights();
     } on AppException catch (e) {
       if (!mounted) return;
       setState(() {
         _error = e;
         _initialLoading = false;
       });
+    }
+  }
+
+  /// Charge les "Recommandées" — 10 dernières annonces publiées (tri
+   /// `date_publication DESC` côté backend, query existante). Best-effort :
+   /// un échec n'invalide pas l'écran principal (`_items` déjà chargé).
+  Future<void> _loadHighlights() async {
+    try {
+      final paged = await _service.rechercher(
+        limit: _highlightSize,
+        offset: 0,
+        filtres: const RechercheFiltres(),
+      );
+      if (!mounted) return;
+      setState(() => _recommandees = paged.items);
+    } on AppException {
+      // Best-effort : on garde _recommandees vide, la section ne s'affiche
+      // pas (condition `if (_recommandees.isNotEmpty)` côté build).
     }
   }
 
@@ -122,15 +158,37 @@ class _RechercheScreenState extends State<RechercheScreen> {
     }
   }
 
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 450), () {
+      final q = value.trim();
+      final next = _filtres.copyWith(q: q.isEmpty ? null : q);
+      if (next == _filtres) return;
+      setState(() => _filtres = next);
+      _loadInitial();
+    });
+  }
+
+  /// Toggle filtre catégorie typeBienCode. Combinable avec les autres filtres.
+  /// Tap deux fois sur la même = retire le filtre.
+  void _toggleCategorie(String code) {
+    final current = List<String>.from(_filtres.typeBienCodes);
+    if (current.contains(code)) {
+      current.remove(code);
+    } else {
+      current.clear(); // mono-select MVP — UX plus lisible
+      current.add(code);
+    }
+    setState(() => _filtres = _filtres.copyWith(typeBienCodes: current));
+    _loadInitial();
+  }
+
   Future<void> _openFilters() async {
     if (_typesById.isEmpty) {
-      // Charger les types si l'écran n'a pas encore eu une 1ère réponse OK.
       try {
         final types = await _service.listTypesBien();
         _typesById = {for (final t in types) t.typeBienId: t};
-      } on AppException catch (_) {
-        // Tant pis — on ouvre la sheet sans les types (le bloc "Type de bien" sera vide).
-      }
+      } on AppException catch (_) {}
     }
     if (!mounted) return;
     final result = await showModalBottomSheet<RechercheFiltres>(
@@ -139,7 +197,7 @@ class _RechercheScreenState extends State<RechercheScreen> {
       showDragHandle: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => FiltresSheet(
         initial: _filtres,
@@ -154,14 +212,12 @@ class _RechercheScreenState extends State<RechercheScreen> {
   }
 
   void _resetFiltres() {
+    _searchController.clear();
     setState(() => _filtres = const RechercheFiltres());
     _loadInitial();
   }
 
   Future<void> _onTapCard(Propriete p) async {
-    // Le pop de la fiche peut retourner le nouvel état isFavorite si l'user
-    // l'a toggleé pendant la consultation. On patche alors l'item local
-    // pour éviter un refetch complet de la liste.
     final result = await Navigator.of(context).push<bool?>(MaterialPageRoute(
       builder: (_) => FicheProprieteScreen(
         proprieteUuid: p.proprieteUuid,
@@ -178,33 +234,30 @@ class _RechercheScreenState extends State<RechercheScreen> {
   }
 
   void _patchFavori(String uuid, bool isFavorite) {
-    final idx = _items.indexWhere((e) => e.proprieteUuid == uuid);
-    if (idx < 0) return;
+    void patch(List<Propriete> list) {
+      final idx = list.indexWhere((e) => e.proprieteUuid == uuid);
+      if (idx >= 0) list[idx] = list[idx].withFavorite(isFavorite);
+    }
+
     setState(() {
-      _items[idx] = _items[idx].withFavorite(isFavorite);
+      patch(_items);
+      _recommandees = List<Propriete>.from(_recommandees);
+      patch(_recommandees);
     });
   }
 
-  Future<void> _openWizard() async {
-    // Pas de refresh search au retour : l'annonce publiée passe par EN_ATTENTE
-    // (modération admin), donc invisible dans la recherche publique tant que
-    // pas validée — un refresh ne montrerait rien de neuf.
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => const WizardPublicationScreen(),
-    ));
-  }
-
-  /// Raccourci "Près de moi" — toggle neutre (Géoloc-2B). Le badge "Filtres (N)"
-  /// inclut déjà geoActive dans son compteur, donc ce raccourci ne montre PAS
-  /// d'indicateur d'état pour éviter le double-affichage de l'info.
-  ///
-  /// Comportement :
-  ///   - Si geo PAS actif : appelle GeoService → applique avec rayon 5 km
-  ///     défaut + relance la recherche.
-  ///   - Si geo déjà actif : retire les 3 champs → relance la recherche.
-  Future<void> _toggleNearMe() async {
+  /// Toggle géoloc piloté par l'icône header (T5). Activer = demande la
+   /// position et applique lat/lng/rayonKm=5 sur les filtres. Désactiver =
+   /// reset les 3 champs → la liste revient à "toutes annonces sans filtre
+   /// distance". Rayon hardcodé 5km MVP (dette
+   /// [[geoloc-rayon-user-configurable]]).
+  Future<void> _toggleProximite() async {
     if (_filtres.geoActive) {
-      setState(() => _filtres = _filtres.copyWith(lat: null, lng: null, rayonKm: null));
+      setState(() => _filtres = _filtres.copyWith(
+            lat: null,
+            lng: null,
+            rayonKm: null,
+          ));
       _loadInitial();
       return;
     }
@@ -220,35 +273,21 @@ class _RechercheScreenState extends State<RechercheScreen> {
     _loadInitial();
   }
 
+  void _voirToutRecommandees() {
+    // MVP : juste scroll vers la section "Toutes les annonces" en bas.
+    // Vrai écran dédié = dette mobile-recherche-voir-tout-section-screen.
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Immobilier'),
-        actions: [
-          IconButton(
-            onPressed: _toggleNearMe,
-            icon: const Icon(Icons.my_location),
-            tooltip: 'Près de moi',
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: TextButton.icon(
-              onPressed: _openFilters,
-              icon: const Icon(Icons.tune),
-              label: Text(_filtres.isEmpty
-                  ? 'Filtres'
-                  : 'Filtres (${_filtres.activeCount})'),
-            ),
-          ),
-        ],
-      ),
-      body: _buildBody(),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openWizard,
-        icon: const Icon(Icons.add),
-        label: const Text('Publier'),
-      ),
+      backgroundColor: AppColors.background,
+      body: SafeArea(child: _buildBody()),
     );
   }
 
@@ -259,64 +298,483 @@ class _RechercheScreenState extends State<RechercheScreen> {
     if (_error != null) {
       return AppError(message: _error!.message, onRetry: _loadInitial);
     }
-    if (_items.isEmpty) {
-      if (_filtres.isEmpty) {
-        return const AppEmptyState(
-          icon: Icons.apartment_outlined,
-          title: 'Aucune annonce disponible',
-          subtitle: 'Revenez plus tard ou ajustez vos critères.',
-        );
-      }
-      return AppEmptyState(
-        icon: Icons.filter_alt_off_outlined,
-        title: 'Aucun résultat',
-        subtitle: 'Essayez d\'élargir vos filtres.',
-        action: FilledButton.tonal(
-          onPressed: _resetFiltres,
-          child: const Text('Effacer les filtres'),
-        ),
-      );
-    }
     return RefreshIndicator(
       onRefresh: _loadInitial,
-      child: ListView.separated(
+      color: AppColors.secondary,
+      child: CustomScrollView(
         controller: _scrollController,
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        itemCount: _items.length + 1, // +1 pour le footer
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          if (index == _items.length) {
-            // Footer : spinner si pagination en cours, ou compteur "N sur M".
-            if (_loadingMore) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-            if (_items.length < _total) {
-              // Reached end of current items but more available — sera fetch
-              // automatiquement par _onScroll quand l'utilisateur tire.
-              return const SizedBox(height: 16);
-            }
-            return Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Center(
-                child: Text(
-                  '${_items.length} sur $_total',
-                  style: Theme.of(context).textTheme.bodySmall,
+        slivers: [
+          SliverToBoxAdapter(child: _buildHeaderLocation()),
+          SliverToBoxAdapter(child: _buildSearchBar()),
+          SliverToBoxAdapter(child: _buildCategoriesRow()),
+          if (_recommandees.isNotEmpty)
+            SliverToBoxAdapter(
+              child: _buildSectionHeader('Recommandées', _voirToutRecommandees),
+            ),
+          if (_recommandees.isNotEmpty)
+            SliverToBoxAdapter(child: _buildHorizontalList(_recommandees)),
+          SliverToBoxAdapter(child: _buildToutesTitle()),
+          if (_items.isEmpty)
+            SliverToBoxAdapter(
+              child: SizedBox(height: 300, child: _buildEmptyState()),
+            ),
+          if (_items.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    if (index >= _items.length) return _buildPaginationFooter();
+                    final p = _items[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: ProprieteCard(
+                        propriete: p,
+                        typeBien: _typesById[p.typeBienId],
+                        onTap: () => _onTapCard(p),
+                        onFavoriToggled: (n) =>
+                            _onFavoriToggledFromCard(p, n),
+                      ),
+                    );
+                  },
+                  childCount: _items.length + 1,
                 ),
               ),
-            );
-          }
-          final p = _items[index];
-          return ProprieteCard(
+            ),
+        ],
+      ),
+    );
+  }
+
+  // -------------------- Header location --------------------
+
+  Widget _buildHeaderLocation() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 16, 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Localisation',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.onBackground.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Text(
+                      _villeAffichee,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.keyboard_arrow_down_rounded,
+                        color: AppColors.primary, size: 20),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Bouton géoloc — toggle filtre distance sur "Toutes les annonces".
+          // Sarcelle si inactif, corail filled si actif. SnackBars de refus
+          // géoloc / service off déjà gérés par GeoService.
+          _headerCircleButton(
+            icon: _filtres.geoActive
+                ? Icons.my_location
+                : Icons.my_location_outlined,
+            color: _filtres.geoActive
+                ? AppColors.secondary
+                : AppColors.primary,
+            onTap: _toggleProximite,
+          ),
+          const SizedBox(width: 10),
+          // Cloche notification — visuel pour MVP (dette
+          // [[mobile-notifications-bell-future]] pour la vraie feature).
+          _headerCircleButton(
+            icon: Icons.notifications_outlined,
+            color: AppColors.primary,
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Notifications — bientôt disponible'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Bouton rond blanc + ombre douce, icône colorée — utilisé pour les
+   /// actions du header (géoloc, cloche).
+  Widget _headerCircleButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(11),
+            child: Icon(icon, color: color, size: 22),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // -------------------- Search bar (pill + bouton corail) --------------------
+
+  /// Search bar pattern Airbnb/Booking : UNE seule pill blanche contenant
+   /// loupe + TextField + bouton filtres corail circulaire intégré à droite.
+   /// Pas de 2 zones juxtaposées — visuellement UN champ unifié.
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+      child: Container(
+        height: 50,
+        // Padding droite réduit (7px) pour que le bouton corail interne
+        // ait une marge serrée par rapport au bord arrondi de la pill.
+        padding: const EdgeInsets.fromLTRB(16, 0, 7, 0),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.search, color: AppColors.primary, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                onChanged: _onSearchChanged,
+                style: const TextStyle(fontSize: 14),
+                // Force InputBorder.none sur les 5 états — sinon le
+                // InputDecorationTheme du AppTheme.light() peint une
+                // OutlineInputBorder par défaut qui crée l'effet "pill
+                // dans la pill". Override explicite obligatoire ici.
+                decoration: InputDecoration(
+                  hintText: 'Rechercher',
+                  hintStyle: TextStyle(
+                    color: AppColors.onBackground.withValues(alpha: 0.4),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  filled: false,
+                  fillColor: Colors.transparent,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ),
+            if (_searchController.text.isNotEmpty) ...[
+              GestureDetector(
+                onTap: () {
+                  _searchController.clear();
+                  _onSearchChanged('');
+                },
+                child: const Icon(Icons.close,
+                    size: 18, color: AppColors.onBackground),
+              ),
+              const SizedBox(width: 6),
+            ],
+            // Bouton filtres INTÉGRÉ : cercle corail 36×36, perçu comme
+            // une action de la pill et non un champ séparé.
+            Material(
+              color: AppColors.secondary,
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: _openFilters,
+                child: SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(Icons.tune, color: Colors.white, size: 18),
+                      if (!_filtres.isEmpty)
+                        Positioned(
+                          top: -2,
+                          right: -2,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                  color: AppColors.surface, width: 1.5),
+                            ),
+                            constraints: const BoxConstraints(
+                                minWidth: 14, minHeight: 14),
+                            child: Text(
+                              '${_filtres.activeCount}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // -------------------- 4 catégories rondes scrollable --------------------
+
+  Widget _buildCategoriesRow() {
+    // Codes alignés sur le référentiel backend typeBienCode. Si un code
+    // n'existe pas côté backend, le filtre rendra 0 résultat — visible
+    // empty state. Ajustements à faire si nécessaire selon le seed BD.
+    final cats = <_Categorie>[
+      _Categorie('Maison', 'MAISON', Icons.home_outlined),
+      _Categorie('Villa', 'VILLA', Icons.villa_outlined),
+      _Categorie('Appartement', 'APPARTEMENT', Icons.apartment_outlined),
+      _Categorie('Bungalow', 'BUNGALOW', Icons.holiday_village_outlined),
+    ];
+    // Row spaceEvenly = espacement uniforme garanti entre les 4 catégories,
+    // indépendant de la largeur d'écran (Bungalow ne « tire » plus à droite).
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          for (final c in cats)
+            _buildCategorieCircle(c, _filtres.typeBienCodes.contains(c.code)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategorieCircle(_Categorie c, bool isSelected) {
+    return GestureDetector(
+      onTap: () => _toggleCategorie(c.code),
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isSelected
+                  ? AppColors.primary
+                  : AppColors.primaryContainer,
+              border: isSelected
+                  ? Border.all(color: AppColors.primary, width: 2)
+                  : null,
+            ),
+            child: Icon(
+              c.icon,
+              size: 24,
+              color: isSelected ? Colors.white : AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            c.label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // -------------------- Section header --------------------
+
+  Widget _buildSectionHeader(
+    String title,
+    VoidCallback? onAction, {
+    String? actionLabel = 'Voir tout',
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          if (onAction != null && actionLabel != null)
+            InkWell(
+              onTap: onAction,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text(
+                  actionLabel,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.secondary,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHorizontalList(List<Propriete> list) {
+    return SizedBox(
+      height: 254,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: list.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (_, i) {
+          final p = list[i];
+          return ProprieteCardCompact(
             propriete: p,
-            typeBien: _typesById[p.typeBienId],
             onTap: () => _onTapCard(p),
-            onFavoriToggled: (nouveau) => _onFavoriToggledFromCard(p, nouveau),
+            onFavoriToggled: (n) => _onFavoriToggledFromCard(p, n),
           );
         },
       ),
     );
   }
+
+  Widget _buildToutesTitle() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 26, 20, 12),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Text(
+              'Toutes les annonces',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          if (_total > 0)
+            Text(
+              '$_total résultat${_total > 1 ? 's' : ''}',
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.onBackground,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    if (_filtres.isEmpty) {
+      return const AppEmptyState(
+        icon: Icons.apartment_outlined,
+        title: 'Aucune annonce disponible',
+        subtitle: 'Revenez plus tard ou ajustez vos critères.',
+      );
+    }
+    return AppEmptyState(
+      icon: Icons.filter_alt_off_outlined,
+      title: 'Aucun résultat',
+      subtitle: 'Essayez d\'élargir vos filtres.',
+      action: FilledButton.tonal(
+        onPressed: _resetFiltres,
+        child: const Text('Effacer les filtres'),
+      ),
+    );
+  }
+
+  Widget _buildPaginationFooter() {
+    if (_loadingMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_items.length < _total) {
+      return const SizedBox(height: 16);
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Center(
+        child: Text(
+          '${_items.length} sur $_total',
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.onBackground,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Categorie {
+  final String label;
+  final String code;
+  final IconData icon;
+  const _Categorie(this.label, this.code, this.icon);
 }

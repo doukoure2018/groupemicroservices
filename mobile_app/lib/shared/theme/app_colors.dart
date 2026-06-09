@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Palette YIGUI — variante "Pro Airbnb" (validée 2026-05-29).
+/// Palette SIRA mobile — sarcelle #1F6F8B (primary) + corail #F26430 (CTA).
+/// Validée 2026-05-29, palette officielle mobile.
 ///
 /// Distincte des couleurs billetterie héritées
 /// (lib/presentation/resource/color_manager.dart) qui restent en place pour
@@ -13,6 +14,7 @@ class AppColors {
   static const Color primary = Color(0xFF1F6F8B); // sarcelle profonde
   static const Color primaryContainer = Color(0xFFE0EFF4); // sarcelle pâle
   static const Color secondary = Color(0xFFF26430); // corail CTA
+  static const Color secondaryContainer = Color(0xFFFFE8DC); // corail pâle (badges, hover)
 
   // Surfaces
   static const Color background = Color(0xFFFAFAFA);
