@@ -111,3 +111,9 @@ google:
   client:
     id: ${GOOGLE_CLIENT_ID}
     secret: ${GOOGLE_CLIENT_SECRET}
+  oauth:
+    # Audience attendue dans l'idToken Google reçu du mobile (POST /api/auth/google).
+    # = le Web Client ID que le mobile passe en serverClientId. Identique à
+    # GOOGLE_CLIENT_ID, donc on retombe dessus par défaut (zéro risque de drift).
+    # Si vide/non configuré → MobileTokenService refuse tout idToken (fail-closed).
+    audience: ${GOOGLE_OAUTH_AUDIENCE:${GOOGLE_CLIENT_ID:}}

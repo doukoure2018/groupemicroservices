@@ -193,8 +193,10 @@ public class MobileAuthController {
         }
 
         try {
-            // Decode the Google ID token to extract user info
-            // We use a simple JWT decode since the token is already validated by Google SDK on the client
+            // Vérifie ET décode l'idToken Google côté serveur (signature JWKS
+            // Google + aud + iss + exp + email_verified). Lève une exception
+            // si invalide → catch plus bas → 401. Ne JAMAIS faire confiance au
+            // client seul (cf dette backend-google-idtoken-no-verification).
             Map<String, Object> claims = mobileTokenService.decodeGoogleIdToken(googleIdToken);
 
             String googleId = (String) claims.get("sub");

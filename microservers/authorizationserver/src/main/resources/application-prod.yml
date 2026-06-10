@@ -108,6 +108,10 @@ google:
   client:
     id: ${GOOGLE_CLIENT_ID}
     secret: ${GOOGLE_CLIENT_SECRET}
+  oauth:
+    # Audience idToken Google (= Web Client ID). Défaut sur GOOGLE_CLIENT_ID.
+    # Vide → MobileTokenService refuse tout idToken (fail-closed).
+    audience: ${GOOGLE_OAUTH_AUDIENCE:${GOOGLE_CLIENT_ID:}}
 
 logging:
   level:

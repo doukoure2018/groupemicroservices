@@ -3,8 +3,15 @@ package io.multi.authorizationserver.service;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.jwk.source.RemoteJWKSet;
+import com.nimbusds.jose.proc.JWSVerificationKeySelector;
+import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
+import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import io.multi.authorizationserver.model.User;
 import io.multi.authorizationserver.security.KeyUtils;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.net.URL;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -21,10 +29,35 @@ import java.util.*;
 @RequiredArgsConstructor
 public class MobileTokenService {
 
+    /** Endpoint JWKS des clés publiques de signature des idToken Google. */
+    private static final String GOOGLE_CERTS_URL = "https://www.googleapis.com/oauth2/v3/certs";
+    /** Issuers valides d'un idToken Google (les 2 formes sont émises). */
+    private static final Set<String> GOOGLE_ISSUERS =
+            Set.of("accounts.google.com", "https://accounts.google.com");
+
     private final KeyUtils keyUtils;
 
     @Value("${oauth.issuer:http://localhost:8090}")
     private String issuer;
+
+    /**
+     * Audience attendue (= Web Client ID SIRA passé en serverClientId par le
+     * mobile). Injectée via google.oauth.audience (→ GOOGLE_OAUTH_AUDIENCE ou
+     * GOOGLE_CLIENT_ID). Vide = fail-closed : aucun idToken accepté.
+     */
+    @Value("${google.oauth.audience:}")
+    private String googleAudience;
+
+    // Processor JWT Google (signature RS256 via JWKS + exp/aud), construit
+    // paresseusement et caché. Remplaçable en test via setGoogleKeySource().
+    private volatile JWKSource<SecurityContext> googleKeySource;
+    private volatile ConfigurableJWTProcessor<SecurityContext> googleJwtProcessor;
+
+    /** Test-only : injecte une source de clés locale (pas d'appel réseau JWKS). */
+    void setGoogleKeySource(JWKSource<SecurityContext> source) {
+        this.googleKeySource = source;
+        this.googleJwtProcessor = null; // force la reconstruction du processor
+    }
 
     /**
      * Generate access_token, refresh_token, and id_token for a user
@@ -87,13 +120,48 @@ public class MobileTokenService {
     }
 
     /**
-     * Decode a Google ID token (JWT) to extract claims.
-     * The token is already validated client-side by Google SDK.
-     * For production, consider server-side verification with Google's public keys.
+     * Vérifie ET décode un idToken Google reçu du mobile (POST /api/auth/google).
+     *
+     * Vérifications (échec → exception → 401 côté controller) :
+     *   1. Signature RS256 contre le JWKS public Google (clés tournantes).
+     *      Rejette de facto les tokens forgés et alg=none (pas de clé RS256).
+     *   2. Expiration (exp) — via le claims verifier nimbus.
+     *   3. Audience (aud) == Web Client ID SIRA (google.oauth.audience).
+     *   4. Issuer (iss) ∈ {accounts.google.com, https://accounts.google.com}.
+     *   5. email_verified == true (refuse les emails Google non vérifiés).
+     *
+     * NE PLUS jamais faire un simple SignedJWT.parse() sans vérif : un idToken
+     * accepté = émission de tokens app, donc usurpation possible (cf dette
+     * backend-google-idtoken-no-verification).
      */
     public Map<String, Object> decodeGoogleIdToken(String idToken) throws Exception {
-        SignedJWT signedJWT = SignedJWT.parse(idToken);
-        JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
+        if (googleAudience == null || googleAudience.isBlank()) {
+            // Fail-closed : tant que l'audience (Web Client ID) n'est pas
+            // configurée, on refuse — pas de vérification possible.
+            throw new SecurityException(
+                    "google.oauth.audience non configuré — idToken Google refusé");
+        }
+
+        // 1+2+3 : signature (JWKS Google) + exp + aud + claims requis.
+        JWTClaimsSet claims;
+        try {
+            claims = googleJwtProcessor().process(idToken, null);
+        } catch (Exception e) {
+            throw new SecurityException("idToken Google invalide : " + e.getMessage(), e);
+        }
+
+        // 4 : issuer.
+        if (claims.getIssuer() == null || !GOOGLE_ISSUERS.contains(claims.getIssuer())) {
+            throw new SecurityException("idToken Google : issuer invalide (" + claims.getIssuer() + ")");
+        }
+
+        // 5 : email vérifié par Google.
+        Object emailVerified = claims.getClaim("email_verified");
+        boolean verified = Boolean.TRUE.equals(emailVerified)
+                || "true".equalsIgnoreCase(String.valueOf(emailVerified));
+        if (!verified) {
+            throw new SecurityException("idToken Google : email_verified != true");
+        }
 
         Map<String, Object> result = new HashMap<>();
         result.put("sub", claims.getSubject());
@@ -104,6 +172,45 @@ public class MobileTokenService {
         result.put("name", claims.getStringClaim("name"));
 
         return result;
+    }
+
+    /** Processor JWT Google paresseux et caché (clé source + verifier aud/exp). */
+    private ConfigurableJWTProcessor<SecurityContext> googleJwtProcessor() throws Exception {
+        ConfigurableJWTProcessor<SecurityContext> proc = googleJwtProcessor;
+        if (proc == null) {
+            synchronized (this) {
+                proc = googleJwtProcessor;
+                if (proc == null) {
+                    DefaultJWTProcessor<SecurityContext> p = new DefaultJWTProcessor<>();
+                    p.setJWSKeySelector(new JWSVerificationKeySelector<>(
+                            JWSAlgorithm.RS256, googleKeySource()));
+                    // Vérifie aud == googleAudience + présence sub/email/exp +
+                    // exp non dépassé. iss vérifié manuellement (2 valeurs OK).
+                    p.setJWTClaimsSetVerifier(new DefaultJWTClaimsVerifier<>(
+                            googleAudience,
+                            null,
+                            new HashSet<>(Arrays.asList("sub", "email", "exp"))));
+                    googleJwtProcessor = p;
+                    proc = p;
+                }
+            }
+        }
+        return proc;
+    }
+
+    /** Source de clés Google (RemoteJWKSet en prod, override local en test). */
+    private JWKSource<SecurityContext> googleKeySource() throws Exception {
+        JWKSource<SecurityContext> src = googleKeySource;
+        if (src == null) {
+            synchronized (this) {
+                src = googleKeySource;
+                if (src == null) {
+                    src = new RemoteJWKSet<>(new URL(GOOGLE_CERTS_URL));
+                    googleKeySource = src;
+                }
+            }
+        }
+        return src;
     }
 
     private String generateAccessToken(User user, Instant now) throws Exception {
