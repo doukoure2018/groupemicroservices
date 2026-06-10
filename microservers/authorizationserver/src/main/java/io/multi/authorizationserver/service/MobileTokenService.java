@@ -23,6 +23,7 @@ import java.net.URL;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -184,12 +185,21 @@ public class MobileTokenService {
                     DefaultJWTProcessor<SecurityContext> p = new DefaultJWTProcessor<>();
                     p.setJWSKeySelector(new JWSVerificationKeySelector<>(
                             JWSAlgorithm.RS256, googleKeySource()));
-                    // Vérifie aud == googleAudience + présence sub/email/exp +
-                    // exp non dépassé. iss vérifié manuellement (2 valeurs OK).
+                    // Vérifie aud ∈ audiences acceptées + présence sub/email/exp
+                    // + exp non dépassé. iss vérifié manuellement (2 valeurs OK).
+                    // google.oauth.audience est une LISTE séparée par virgules :
+                    // l'aud d'un idToken Google = le Client ID de la PLATEFORME
+                    // qui l'a émis (Web sur Android via serverClientId, mais iOS
+                    // Client ID sur iOS). On accepte donc tous nos client IDs.
+                    Set<String> acceptedAudiences = Arrays.stream(googleAudience.split(","))
+                            .map(String::trim)
+                            .filter(s -> !s.isEmpty())
+                            .collect(Collectors.toSet());
                     p.setJWTClaimsSetVerifier(new DefaultJWTClaimsVerifier<>(
-                            googleAudience,
+                            acceptedAudiences,
                             null,
-                            new HashSet<>(Arrays.asList("sub", "email", "exp"))));
+                            new HashSet<>(Arrays.asList("sub", "email", "exp")),
+                            null));
                     googleJwtProcessor = p;
                     proc = p;
                 }

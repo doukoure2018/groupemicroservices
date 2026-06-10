@@ -122,4 +122,16 @@ class MobileTokenServiceGoogleIdTokenTest {
         String token = sign(signingKey, validClaims().build());
         assertThrows(Exception.class, () -> service.decodeGoogleIdToken(token));
     }
+
+    @Test
+    void audienceMultiple_iosAccepte() throws Exception {
+        // google.oauth.audience = liste "web,ios" : un idToken iOS (aud = iOS
+        // Client ID) doit être accepté. C'est le cas réel iOS où l'aud n'est
+        // PAS le Web client.
+        final String iosAud = "421665850163-ios.apps.googleusercontent.com";
+        ReflectionTestUtils.setField(service, "googleAudience", AUDIENCE + " , " + iosAud);
+        String token = sign(signingKey, validClaims().audience(iosAud).build());
+        Map<String, Object> claims = service.decodeGoogleIdToken(token);
+        assertEquals("user@example.com", claims.get("email"));
+    }
 }
