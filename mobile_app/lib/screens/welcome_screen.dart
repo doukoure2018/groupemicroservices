@@ -221,14 +221,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             height: 240,
             fit: BoxFit.contain,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           const Text(
             'Trouvez votre maison.\nVendez la v\u00f4tre.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
               color: _kTextSecondary,
-              height: 1.5,
+              height: 1.4,
             ),
           ),
           const Spacer(flex: 3),
