@@ -6,11 +6,13 @@ import '../config/app_config.dart';
 import '../presentation/resource/color_manager.dart';
 import '../providers/auth_provider.dart';
 
-// Peach background matching template
-const _kBgColor = Color(0xFFFDE8D8);
-const _kFieldBg = Color(0xFFFFF0E8);
-const _kFieldBorder = Color(0xFFE8805A);
-const _kTitleColor = Color(0xFFE8622A);
+// Palette SIRA hybride — sarcelle (titres) + corail (CTA).
+const _kSarcelle = Color(0xFF1F6F8B);       // titres principaux
+const _kCorail = Color(0xFFF26430);         // CTA plein + accents corail
+const _kTextSecondary = Color(0xFF6B7280);  // texte secondaire gris doux
+const _kFieldBg = Color(0xFFF4F5F7);        // fond champ gris très clair
+const _kFieldBorder = _kCorail;             // bordure focus corail
+const _kTitleColor = _kSarcelle;            // titres = sarcelle (alias)
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -211,147 +213,66 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
         children: [
-          const Spacer(flex: 1),
-          // Card with illustration
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: _kBgColor,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              children: [
-                // Illustration placeholder using icons
-                SizedBox(
-                  height: 180,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Bus/transport illustration
-                      Icon(
-                        Icons.directions_bus_rounded,
-                        size: 100,
-                        color: _kTitleColor.withValues(alpha: 0.15),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        child: Container(
-                          width: 120,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: _kTitleColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                      // Person icon
-                      Positioned(
-                        top: 20,
-                        child: Container(
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                _kTitleColor.withValues(alpha: 0.2),
-                                _kTitleColor.withValues(alpha: 0.05),
-                              ],
-                            ),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.person_rounded,
-                            size: 40,
-                            color: _kTitleColor,
-                          ),
-                        ),
-                      ),
-                      // Decorative elements
-                      Positioned(
-                        right: 20,
-                        bottom: 20,
-                        child: Icon(
-                          Icons.local_florist_rounded,
-                          size: 40,
-                          color: _kTitleColor.withValues(alpha: 0.3),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          const Spacer(flex: 2),
+          // Logo SIRA Guin\u00e9e centr\u00e9, agrandi. Le logo porte d\u00e9j\u00e0 le nom de
+          // marque \u2192 pas de titre texte, juste le slogan en dessous.
+          Image.asset(
+            'assets/images/logo-sira-guinee-no-bg.png',
+            height: 240,
+            fit: BoxFit.contain,
           ),
-          const SizedBox(height: 40),
-          // Title
+          const SizedBox(height: 20),
           const Text(
-            'Voyagez en toute\ns\u00e9r\u00e9nit\u00e9',
+            'Trouvez votre maison.\nVendez la v\u00f4tre.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: _kTitleColor,
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'R\u00e9servez vos billets de transport\nen quelques clics partout en Guin\u00e9e',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF8B7B74),
+              fontSize: 16,
+              color: _kTextSecondary,
               height: 1.5,
             ),
           ),
-          const Spacer(flex: 2),
+          const Spacer(flex: 3),
           // Buttons
           Row(
             children: [
-              // Login button (filled)
+              // Connexion — CTA plein corail.
               Expanded(
                 child: SizedBox(
-                  height: 52,
+                  height: 54,
                   child: ElevatedButton(
                     onPressed: () => setState(() => _currentView = 1),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _kTitleColor,
-                      foregroundColor: ColorManager.white,
+                      backgroundColor: _kCorail,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       elevation: 0,
                     ),
                     child: const Text(
                       'Connexion',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 16),
-              // Register button (text)
+              // Inscription — secondaire outline corail.
               Expanded(
                 child: SizedBox(
-                  height: 52,
-                  child: TextButton(
+                  height: 54,
+                  child: OutlinedButton(
                     onPressed: () => setState(() => _currentView = 2),
-                    style: TextButton.styleFrom(
-                      foregroundColor: ColorManager.textPrimary,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _kCorail,
+                      side: const BorderSide(color: _kCorail, width: 1.5),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     child: const Text(
                       'Inscription',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
@@ -385,11 +306,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Content de vous revoir !',
+              'Bon retour parmi nous !',
               style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF333333),
+                fontSize: 16,
+                color: _kTextSecondary,
               ),
             ),
             const SizedBox(height: 40),
@@ -434,7 +354,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               child: TextButton(
                 onPressed: () {},
                 style: TextButton.styleFrom(
-                  foregroundColor: _kTitleColor,
+                  foregroundColor: _kCorail,
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -453,9 +373,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleLogin,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _kTitleColor,
-                  foregroundColor: ColorManager.white,
-                  disabledBackgroundColor: _kTitleColor.withValues(alpha: 0.6),
+                  backgroundColor: _kCorail,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: _kCorail.withValues(alpha: 0.6),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -466,12 +386,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
-                          color: ColorManager.white,
+                          color: Colors.white,
                           strokeWidth: 2.5,
                         ),
                       )
                     : const Text(
-                        'Connexion',
+                        'Se connecter',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -483,24 +403,36 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             // Create account link
             GestureDetector(
               onTap: _isLoading ? null : () => setState(() => _currentView = 2),
-              child: const Text(
-                'Cr\u00e9er un nouveau compte',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF333333),
+              child: RichText(
+                text: const TextSpan(
+                  style: TextStyle(fontSize: 14, color: _kTextSecondary),
+                  children: [
+                    TextSpan(text: 'Pas encore de compte ? '),
+                    TextSpan(
+                      text: 'Cr\u00e9er un compte',
+                      style: TextStyle(
+                        color: _kCorail,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
             const SizedBox(height: 36),
             // Or continue with
-            const Text(
-              'Ou continuer avec',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: _kTitleColor,
-              ),
+            Row(
+              children: [
+                const Expanded(child: Divider(color: Color(0xFFE0E0E0))),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'Ou continuer avec',
+                    style: TextStyle(fontSize: 13, color: _kTextSecondary),
+                  ),
+                ),
+                const Expanded(child: Divider(color: Color(0xFFE0E0E0))),
+              ],
             ),
             const SizedBox(height: 22),
             // Social icons
@@ -543,11 +475,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ),
             const SizedBox(height: 10),
             const Text(
-              'Inscrivez-vous pour r\u00e9server\nvos billets de transport',
+              'Rejoignez SIRA Guin\u00e9e pour publier et trouver',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF8B7B74),
+                color: _kTextSecondary,
                 height: 1.5,
               ),
             ),
@@ -647,9 +579,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleRegister,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _kTitleColor,
-                  foregroundColor: ColorManager.white,
-                  disabledBackgroundColor: _kTitleColor.withValues(alpha: 0.6),
+                  backgroundColor: _kCorail,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: _kCorail.withValues(alpha: 0.6),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -660,12 +592,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
-                          color: ColorManager.white,
+                          color: Colors.white,
                           strokeWidth: 2.5,
                         ),
                       )
                     : const Text(
-                        'Inscription',
+                        'S\'inscrire',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -677,24 +609,36 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             // Already have account
             GestureDetector(
               onTap: _isLoading ? null : () => setState(() => _currentView = 1),
-              child: const Text(
-                'D\u00e9j\u00e0 un compte ?',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF333333),
+              child: RichText(
+                text: const TextSpan(
+                  style: TextStyle(fontSize: 14, color: _kTextSecondary),
+                  children: [
+                    TextSpan(text: 'D\u00e9j\u00e0 un compte ? '),
+                    TextSpan(
+                      text: 'Se connecter',
+                      style: TextStyle(
+                        color: _kCorail,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
             const SizedBox(height: 32),
             // Or continue with
-            const Text(
-              'Ou continuer avec',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: _kTitleColor,
-              ),
+            Row(
+              children: [
+                const Expanded(child: Divider(color: Color(0xFFE0E0E0))),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'Ou continuer avec',
+                    style: TextStyle(fontSize: 13, color: _kTextSecondary),
+                  ),
+                ),
+                const Expanded(child: Divider(color: Color(0xFFE0E0E0))),
+              ],
             ),
             const SizedBox(height: 22),
             // Social icons

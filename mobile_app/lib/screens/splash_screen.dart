@@ -76,29 +76,25 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Bus icon in orange gradient box
+                // Logo SIRA Guinée (icon.jpeg) dans une carte blanche arrondie.
                 Container(
-                  width: 100,
-                  height: 100,
+                  width: 130,
+                  height: 130,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFFF97316), Color(0xFFEA580C)],
-                    ),
-                    borderRadius: BorderRadius.circular(24),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(28),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFF97316).withOpacity(0.3),
+                        color: Colors.black.withValues(alpha: 0.15),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.directions_bus_rounded,
-                    size: 56,
-                    color: Colors.white,
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.asset(
+                    'assets/images/icon.jpeg',
+                    fit: BoxFit.cover,
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -127,7 +123,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'TRANSPORT GUINEE',
+                  'TRANSPORT & IMMOBILIER',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -137,7 +133,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Réservez votre billet de transport',
+                  'Votre plateforme en Guinée',
                   style: TextStyle(
                     fontSize: 14,
                     color: ColorManager.textSecondary,
