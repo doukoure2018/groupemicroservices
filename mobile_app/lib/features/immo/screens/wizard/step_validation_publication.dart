@@ -7,10 +7,12 @@ import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/utils/currency_formatter.dart';
 import '../../models/local_photo.dart';
 import '../../models/photo.dart';
+import '../../models/profil_immo_request.dart';
 import '../../models/propriete.dart';
 import '../../services/brouillon_service.dart';
 import '../../services/local_photo_storage_service.dart';
 import '../../services/photo_upload_service.dart';
+import '../../services/profil_immo_service.dart';
 import '../../services/propriete_publication_service.dart';
 import '../../services/propriete_service.dart';
 
@@ -74,6 +76,7 @@ class _StepValidationPublicationState extends State<StepValidationPublication>
   final _photoUploadService = PhotoUploadService();
   final _publicationService = ProprietePublicationService();
   final _proprieteService = ProprieteService();
+  final _profilService = ProfilImmoService();
   final _storage = LocalPhotoStorageService();
 
   bool _termsAccepted = false;
@@ -308,11 +311,18 @@ class _StepValidationPublicationState extends State<StepValidationPublication>
       } on AppException catch (e) {
         if (!mounted) return;
         setState(() => _publishing = false);
-        await _showErrorDialog(
-          title: 'Création annonce échouée',
-          message: e.message,
-          retry: true,
-        );
+        // Gate "pas de profil vendeur" : levé ici (materialiser vérifie le
+        // profil avant de créer la Propriete). Dialog friendly + activation
+        // silencieuse au lieu du message technique brut.
+        if (_isNoProfileError(e.message)) {
+          await _showActivateProfileDialog(onActivated: _publish);
+        } else {
+          await _showErrorDialog(
+            title: 'Création annonce échouée',
+            message: e.message,
+            retry: true,
+          );
+        }
         return;
       }
       proprieteUuid = propriete.proprieteUuid;
@@ -424,6 +434,12 @@ class _StepValidationPublicationState extends State<StepValidationPublication>
     } on AppException catch (e) {
       if (!mounted) return;
       setState(() => _publishing = false);
+      // Défensif : le gate profil est normalement levé plus tôt (materialiser).
+      // S'il remonte ici, on propose la même activation que sur l'autre chemin.
+      if (_isNoProfileError(e.message)) {
+        await _showActivateProfileDialog(onActivated: _publish);
+        return;
+      }
       await _showPublishFailedDialog(e.message);
       widget.onCompleted();
       return;
@@ -563,6 +579,74 @@ class _StepValidationPublicationState extends State<StepValidationPublication>
     if (shouldRetry == true && mounted) {
       _publish();
     }
+  }
+
+  /// Détecte l'erreur backend "pas de profil vendeur" (ProprieteServiceImpl
+  /// .getProfilOrFail). MATCH FRAGILE sur le texte FR — dette
+  /// mobile-error-match-by-code-not-text : à remplacer par un code d'erreur
+  /// structuré renvoyé par le backend (NO_IMMO_PROFILE).
+  bool _isNoProfileError(String message) {
+    final m = message.toLowerCase();
+    return m.contains('profil') && m.contains('publi');
+  }
+
+  /// Dialog UX (Option A) quand l'utilisateur n'a pas encore de profil vendeur.
+  /// Message friendly + CTA qui ACTIVE le profil silencieusement
+  /// (PROPRIETAIRE_SIMPLE, comme StepProfil — il n'existe pas d'écran de
+  /// formulaire) puis relance la publication via [onActivated].
+  Future<void> _showActivateProfileDialog({
+    required Future<void> Function() onActivated,
+  }) async {
+    final activate = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Une dernière étape avant de publier'),
+        content: const Text(
+          'Activez votre profil vendeur pour mettre votre annonce en ligne. '
+          'C\'est instantané et gratuit.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Plus tard'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Activer mon profil'),
+          ),
+        ],
+      ),
+    );
+    if (activate != true) {
+      // "Plus tard" : le brouillon est déjà sauvegardé → on ferme le wizard.
+      if (mounted) widget.onCompleted();
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _publishing = true;
+      _publishStatus = 'Activation de votre profil…';
+      _photoProgress = null;
+    });
+    try {
+      await _profilService.creer(const ProfilImmoRequest(
+        typeProfil: 'PROPRIETAIRE_SIMPLE',
+      ));
+    } on AppException catch (e) {
+      if (!mounted) return;
+      setState(() => _publishing = false);
+      await _showErrorDialog(
+        title: 'Activation du profil échouée',
+        message: e.message,
+        retry: false,
+      );
+      if (mounted) widget.onCompleted();
+      return;
+    }
+    // Profil activé → on relance la séquence de publication.
+    if (!mounted) return;
+    await onActivated();
   }
 
   Future<void> _showPublishFailedDialog(String backendMessage) async {
