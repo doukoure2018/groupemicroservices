@@ -313,6 +313,10 @@ services:
       OAUTH_ISSUER: ${OAUTH_ISSUER}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-__GOOGLE_OAUTH_DISABLED__}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-__GOOGLE_OAUTH_DISABLED__}
+      # Audiences acceptées de l'idToken Google (liste CSV : Web,iOS,...).
+      # Défaut sur GOOGLE_CLIENT_ID si non fourni (Web seul). Nécessaire pour
+      # la vérif idToken mobile multi-plateforme (l'aud iOS != Web client).
+      GOOGLE_OAUTH_AUDIENCE: ${GOOGLE_OAUTH_AUDIENCE:-${GOOGLE_CLIENT_ID:-__GOOGLE_OAUTH_DISABLED__}}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-true}
       SERVER_FORWARD_HEADERS_STRATEGY: NATIVE
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
