@@ -76,26 +76,13 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo SIRA Guinée (icon.jpeg) dans une carte blanche arrondie.
-                Container(
-                  width: 130,
-                  height: 130,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Image.asset(
-                    'assets/images/icon.jpeg',
-                    fit: BoxFit.cover,
-                  ),
+                // Logo SIRA Guinée (PNG transparent) posé directement sur le
+                // fond clair du splash — pas de carte blanche nécessaire.
+                Image.asset(
+                  'assets/images/icon-no-bg.png',
+                  width: 180,
+                  height: 180,
+                  fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 32),
                 // Logo text: "SIRA" in navy + " Guinée" in orange
