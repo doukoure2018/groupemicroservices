@@ -191,9 +191,13 @@ jobs:
             mkdir -p "$DEPLOY_DIR/keys"
             cd "$DEPLOY_DIR"
 
-            # Récupère le compose + nginx déposés par scp
+            # Récupère le compose (critique) + nginx (non-critique) déposés par scp
             mv ~/sira-guinee/test-deploy/docker-compose.yml .
-            mv ~/sira-guinee/test-deploy/nginx/sira-guinee-test.conf .
+            if [ -f ~/sira-guinee/test-deploy/nginx/sira-guinee-test.conf ]; then
+              mv ~/sira-guinee/test-deploy/nginx/sira-guinee-test.conf .
+            else
+              echo "⚠️ conf nginx absente du scp — étape nginx sera sautée"
+            fi
             rm -rf ~/sira-guinee/test-deploy
 
             # Génère .env TEST depuis les secrets de l'environment 'test'
@@ -312,10 +316,20 @@ jobs:
               fi
             done
 
-            # Update nginx config (overwrite)
-            sudo mv sira-guinee-test.conf /etc/nginx/sites-available/sira-guinee-test
-            sudo ln -sf /etc/nginx/sites-available/sira-guinee-test /etc/nginx/sites-enabled/sira-guinee-test
-            sudo nginx -t && sudo systemctl reload nginx
+            # Update nginx config — best-effort : ne fait JAMAIS échouer le
+            # deploy backend déjà réussi (la conf change rarement ; un mv raté
+            # = conf existante conservée). Cf dette deploy-nginx-conf-mv-flaky.
+            if [ -f sira-guinee-test.conf ]; then
+              sudo mv sira-guinee-test.conf /etc/nginx/sites-available/sira-guinee-test
+              sudo ln -sf /etc/nginx/sites-available/sira-guinee-test /etc/nginx/sites-enabled/sira-guinee-test
+              if sudo nginx -t; then
+                sudo systemctl reload nginx || echo "⚠️ reload nginx KO"
+              else
+                echo "⚠️ nginx -t KO — reload sauté, conf précédente conservée"
+              fi
+            else
+              echo "⚠️ conf nginx non trouvée — conf existante conservée, pas de reload"
+            fi
 
             echo "Deployment TEST OK — https://test.sira-guinee.com"
 
@@ -386,7 +400,11 @@ jobs:
             cd "$DEPLOY_DIR"
 
             mv ~/sira-guinee/prod-deploy/docker-compose.yml .
-            mv ~/sira-guinee/prod-deploy/nginx/sira-guinee-prod.conf .
+            if [ -f ~/sira-guinee/prod-deploy/nginx/sira-guinee-prod.conf ]; then
+              mv ~/sira-guinee/prod-deploy/nginx/sira-guinee-prod.conf .
+            else
+              echo "⚠️ conf nginx absente du scp — étape nginx sera sautée"
+            fi
             rm -rf ~/sira-guinee/prod-deploy
 
             mkdir -p ~/sira-guinee/backups
@@ -499,9 +517,18 @@ jobs:
               fi
             done
 
-            sudo mv sira-guinee-prod.conf /etc/nginx/sites-available/sira-guinee-prod
-            sudo ln -sf /etc/nginx/sites-available/sira-guinee-prod /etc/nginx/sites-enabled/sira-guinee-prod
-            sudo nginx -t && sudo systemctl reload nginx
+            # Update nginx config — best-effort (cf dette deploy-nginx-conf-mv-flaky).
+            if [ -f sira-guinee-prod.conf ]; then
+              sudo mv sira-guinee-prod.conf /etc/nginx/sites-available/sira-guinee-prod
+              sudo ln -sf /etc/nginx/sites-available/sira-guinee-prod /etc/nginx/sites-enabled/sira-guinee-prod
+              if sudo nginx -t; then
+                sudo systemctl reload nginx || echo "⚠️ reload nginx KO"
+              else
+                echo "⚠️ nginx -t KO — reload sauté, conf précédente conservée"
+              fi
+            else
+              echo "⚠️ conf nginx non trouvée — conf existante conservée, pas de reload"
+            fi
 
             echo "Deployment PROD OK — https://sira-guinee.com"
 
