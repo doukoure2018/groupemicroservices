@@ -43,8 +43,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
+    // Web Client ID "SIRA Guinée Web" — sert à obtenir un idToken dont l'aud
+    // == ce client, vérifié côté backend (POST /api/auth/google). Ce n'est PAS
+    // le iOS Client ID (lui est dans ios/Runner/Info.plist > GIDClientID).
     serverClientId:
-        '421665850163-7uh8sdk3fbtkpam6rq61u653i78p1n5o.apps.googleusercontent.com',
+        '421665850163-70gvngsk2g8frt4g6vlhrs2tl40aemoe.apps.googleusercontent.com',
   );
 
   @override

@@ -105,9 +105,11 @@ class AppConfig {
   // ===========================================================================
   // Feature flags
   // ===========================================================================
-  // Google Sign-In désactivé MVP (Google OAuth backend = __GOOGLE_DISABLED__).
-  // Pour réactiver : créer un OAuth Client iOS sur console.cloud.google.com,
-  // remplacer GIDClientID dans mobile_app/ios/Runner/Info.plist par le vrai,
-  // puis passer ce flag à `true`.
-  static const bool enableGoogleSignIn = false;
+  // Google Sign-In activé en dev + test uniquement (smoke test avant prod).
+  // PROD reste false tant que : (1) smoke test TEST validé, (2) secret prod
+  // GOOGLE_CLIENT_ID rotaté du placeholder __GOOGLE_DISABLED__ vers le vrai
+  // Web Client ID SIRA (GitHub Actions), (3) backend redéployé avec la
+  // vérification idToken (commit 9794442). Cf dette
+  // backend-google-idtoken-no-verification.
+  static const bool enableGoogleSignIn = isDev || isTest;
 }

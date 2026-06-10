@@ -4,13 +4,12 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
-	<!-- GIDClientID placeholder : MVP n'utilise pas Google Sign-In côté mobile
-	     (Google OAuth est __GOOGLE_DISABLED__ côté backend). Cette valeur évite
-	     juste le crash au lancement du plugin google_sign_in. À remplacer par
-	     un vrai Client ID iOS (Google Cloud Console) si on active Sign in with
-	     Google plus tard. -->
+	<!-- iOS OAuth Client ID "SIRA Guinée iOS" (Google Cloud Console, projet
+	     supple-alpha-405513, bundle com.sira.guinee.app). Le scheme inversé
+	     correspondant est déclaré dans CFBundleURLTypes ci-dessous (callback
+	     OAuth google_sign_in). -->
 	<key>GIDClientID</key>
-	<string>000000000000-placeholder.apps.googleusercontent.com</string>
+	<string>421665850163-jv9mqkbfq1f4q249jpi690a5ooqctuis.apps.googleusercontent.com</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -39,6 +38,17 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>yigui</string>
+			</array>
+		</dict>
+		<dict>
+			<!-- Google Sign-In : scheme = iOS Client ID inversé (callback OAuth). -->
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>google-signin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.421665850163-jv9mqkbfq1f4q249jpi690a5ooqctuis</string>
 			</array>
 		</dict>
 	</array>
