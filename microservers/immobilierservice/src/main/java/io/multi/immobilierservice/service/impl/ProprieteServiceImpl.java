@@ -520,9 +520,13 @@ public class ProprieteServiceImpl implements ProprieteService {
     }
 
     private ProfilImmo getProfilOrFail(Long userId) {
+        // Message user-friendly, sans détail d'implémentation. Doit conserver
+        // les mots "profil" + "publier" : le mobile détecte ce cas par match
+        // texte (dette mobile-error-match-by-code-not-text) en attendant un
+        // code d'erreur structuré (NO_IMMO_PROFILE).
         return profilImmoRepository.findByUserId(userId)
                 .orElseThrow(() -> new ApiException(
-                        "Vous devez créer un profil immobilier avant de publier (POST /immo/profils)"));
+                        "Activez votre profil vendeur avant de publier votre annonce."));
     }
 
     private void ensureOwner(Propriete p, Long userId) {
