@@ -68,7 +68,12 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public User updateUser(String userUuid, String firstName, String lastName, String email, String phone, String bio, String address) {
         try {
-            return jdbcClient.sql(UPDATE_USER_FUNCTION).paramSource(getParamSource( userUuid,  firstName,  lastName,  email,  phone,  bio,  address)).query(User.class).single();
+            jdbcClient.sql(UPDATE_USER_QUERY)
+                    .paramSource(getParamSource(userUuid, firstName, lastName, email, phone, bio, address))
+                    .update();
+            // Recharge l'user complet (rôles/authorities via les JOINs de
+            // SELECT_USER_BY_UUID_QUERY) — un RETURNING ne les donnerait pas.
+            return getUserByUuid(userUuid);
         }catch (EmptyResultDataAccessException exception){
             log.error(exception.getMessage());
             throw  new ApiException("No user found by userUuid");
@@ -433,7 +438,7 @@ public class UserRepositoryImpl implements UserRepository {
                 .addValue("userUuid",userUuid, VARCHAR)
                 .addValue("firstName",firstName, VARCHAR)
                 .addValue("lastName",lastName, VARCHAR)
-                .addValue("email",email.trim().toLowerCase(), VARCHAR)
+                .addValue("email", email == null ? null : email.trim().toLowerCase(), VARCHAR)
                 .addValue("phone",phone, VARCHAR)
                 .addValue("bio",bio, VARCHAR)
                 .addValue("address",address, VARCHAR);

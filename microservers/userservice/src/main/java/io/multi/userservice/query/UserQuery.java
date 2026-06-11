@@ -83,9 +83,20 @@ public class UserQuery {
             FROM users u JOIN user_roles ur ON ur.user_id = u.user_id JOIN roles r ON r.role_id = ur.role_id WHERE u.email =:email
             GROUP BY u.user_id;
             """;
-    public static final String UPDATE_USER_FUNCTION=
+    // Mise à jour partielle du profil : COALESCE = ne touche que les champs
+    // fournis (null = inchangé), n'écrase pas le reste. (Avant : stub
+    // "SELECT * FROM Users" qui ne mettait RIEN à jour.)
+    public static final String UPDATE_USER_QUERY=
             """
-               SELECT * FROM Users;
+               UPDATE users SET
+                   first_name = COALESCE(:firstName, first_name),
+                   last_name  = COALESCE(:lastName, last_name),
+                   email      = COALESCE(:email, email),
+                   phone      = COALESCE(:phone, phone),
+                   bio        = COALESCE(:bio, bio),
+                   address    = COALESCE(:address, address),
+                   updated_at = now()
+               WHERE user_uuid = :userUuid
             """;
     public static final String CREATE_USER_STORED_PROCEDURE=
             """
