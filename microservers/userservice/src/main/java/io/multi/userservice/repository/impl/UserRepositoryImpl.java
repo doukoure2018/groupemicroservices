@@ -214,6 +214,15 @@ public class UserRepositoryImpl implements UserRepository {
     public void updatePassword(String userUuid, String encodedPassword) {
         try {
             jdbcClient.sql(UPDATE_USER_PASSWORD_QUERY).params(Map.of("userUuid",userUuid,"password",encodedPassword)).update();
+            // Sécurité : un changement de mot de passe révoque tous les refresh
+            // tokens de l'user (déconnecte les sessions actives). Couvre les 2
+            // chemins (updatePassword connecté + doResetPassword via token) car
+            // ils passent tous deux ici. Écriture directe dans la table auth
+            // (BD partagée) — cf dette cross-service-refresh-token-coupling.
+            jdbcClient.sql("""
+                    UPDATE refresh_token SET revoked = TRUE
+                    WHERE user_id = (SELECT user_id FROM users WHERE user_uuid = :userUuid)
+                    """).param("userUuid", userUuid).update();
         }catch (EmptyResultDataAccessException exception){
             log.error(exception.getMessage());
             throw  new ApiException("User not found, Please try again");

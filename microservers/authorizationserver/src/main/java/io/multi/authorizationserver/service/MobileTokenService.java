@@ -37,6 +37,7 @@ public class MobileTokenService {
             Set.of("accounts.google.com", "https://accounts.google.com");
 
     private final KeyUtils keyUtils;
+    private final RefreshTokenStore refreshTokenStore;
 
     @Value("${oauth.issuer:http://localhost:8090}")
     private String issuer;
@@ -106,6 +107,16 @@ public class MobileTokenService {
             throw new RuntimeException("Invalid token type");
         }
 
+        // Rotation + révocation : le jti doit être ACTIF en BD (non révoqué,
+        // non expiré). Sinon (logout, rotation déjà consommée, password-change,
+        // user supprimé, jti inconnu) → refus.
+        String jti = claims.getJWTID();
+        if (!refreshTokenStore.isActive(jti)) {
+            throw new RuntimeException("Refresh token revoked or unknown");
+        }
+        // Rotation : révoque l'ancien jti ; generateTokens émet un nouveau jti.
+        refreshTokenStore.revoke(jti);
+
         // Reconstruct a minimal User for token generation
         User user = User.builder()
                 .userId(Long.parseLong(claims.getClaim("user_id").toString()))
@@ -118,6 +129,33 @@ public class MobileTokenService {
                 .build();
 
         return generateTokens(user);
+    }
+
+    /** Révoque le refresh token fourni (logout). Vérifie signature + type. */
+    public void revokeRefreshToken(String refreshToken) throws Exception {
+        JWTClaimsSet claims = verifyRefreshToken(refreshToken);
+        refreshTokenStore.revoke(claims.getJWTID());
+    }
+
+    /** Révoque TOUS les refresh tokens de l'utilisateur (logout-all). */
+    public void revokeAllSessions(String refreshToken) throws Exception {
+        JWTClaimsSet claims = verifyRefreshToken(refreshToken);
+        Long userId = Long.parseLong(claims.getClaim("user_id").toString());
+        refreshTokenStore.revokeAllForUser(userId);
+    }
+
+    /** Vérifie signature + type=refresh d'un refresh token, retourne ses claims. */
+    private JWTClaimsSet verifyRefreshToken(String refreshToken) throws Exception {
+        SignedJWT signedJWT = SignedJWT.parse(refreshToken);
+        JWSVerifier verifier = new RSASSAVerifier(keyUtils.getRSAKeyPair().toRSAPublicKey());
+        if (!signedJWT.verify(verifier)) {
+            throw new RuntimeException("Invalid refresh token signature");
+        }
+        JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
+        if (!"refresh".equals(claims.getClaim("token_type"))) {
+            throw new RuntimeException("Invalid token type");
+        }
+        return claims;
     }
 
     /**
@@ -256,15 +294,17 @@ public class MobileTokenService {
     private String generateRefreshToken(User user, Instant now) throws Exception {
         JWSSigner signer = new RSASSASigner(keyUtils.getRSAKeyPair().toRSAPrivateKey());
 
-        // Refresh token 90 jours (rétention longue durée façon Facebook/Insta).
-        // Fenêtre glissante : chaque refresh régénère un token 90j. ⚠️ Stateless
-        // (pas de révocation serveur) — cf dette backend-refresh-token-rotation-revocation.
+        // Refresh token 90 jours (rétention longue durée, fenêtre glissante).
+        // jti tracké en BD (refresh_token) → rotation + révocation possibles
+        // (RefreshTokenStore). Cf dette backend-refresh-token-rotation-revocation.
+        Instant expiresAt = now.plus(90, ChronoUnit.DAYS);
+        String jti = UUID.randomUUID().toString();
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .issuer(issuer)
                 .subject(user.getUserUuid())
                 .issueTime(Date.from(now))
-                .expirationTime(Date.from(now.plus(90, ChronoUnit.DAYS)))
-                .jwtID(UUID.randomUUID().toString())
+                .expirationTime(Date.from(expiresAt))
+                .jwtID(jti)
                 .claim("token_type", "refresh")
                 .claim("user_id", user.getUserId())
                 .claim("email", user.getEmail())
@@ -282,6 +322,8 @@ public class MobileTokenService {
                 claimsSet
         );
         signedJWT.sign(signer);
+        // Persiste le jti (état serveur pour rotation/révocation).
+        refreshTokenStore.save(jti, user.getUserId(), expiresAt);
         return signedJWT.serialize();
     }
 

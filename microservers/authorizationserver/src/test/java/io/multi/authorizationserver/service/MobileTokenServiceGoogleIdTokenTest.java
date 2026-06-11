@@ -39,8 +39,8 @@ class MobileTokenServiceGoogleIdTokenTest {
     void setUp() throws Exception {
         signingKey = new RSAKeyGenerator(2048).keyID("test-key-1").generate();
 
-        // keyUtils non utilisé par decodeGoogleIdToken → null acceptable ici.
-        service = new MobileTokenService(null);
+        // keyUtils + refreshTokenStore non utilisés par decodeGoogleIdToken → null ici.
+        service = new MobileTokenService(null, null);
         ReflectionTestUtils.setField(service, "googleAudience", AUDIENCE);
         service.setGoogleKeySource(
                 new ImmutableJWKSet<SecurityContext>(new JWKSet(signingKey.toPublicJWK())));

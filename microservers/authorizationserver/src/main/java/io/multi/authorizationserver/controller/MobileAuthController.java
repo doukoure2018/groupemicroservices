@@ -270,4 +270,45 @@ public class MobileAuthController {
             ));
         }
     }
+
+    /**
+     * POST /api/auth/logout - Révoque le refresh token fourni (cet appareil).
+     * Idempotent : un token déjà révoqué/invalide renvoie quand même success.
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestBody Map<String, String> body) {
+        String refreshToken = body.get("refreshToken");
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "error", "message", "Refresh token requis"));
+        }
+        try {
+            mobileTokenService.revokeRefreshToken(refreshToken);
+        } catch (Exception e) {
+            log.warn("Logout: refresh token invalide (ignoré): {}", e.getMessage());
+        }
+        return ResponseEntity.ok(Map.of("status", "success", "message", "Déconnecté"));
+    }
+
+    /**
+     * POST /api/auth/logout-all - Révoque TOUS les refresh tokens de l'user
+     * (déconnexion de tous les appareils). Requiert un refresh token valide.
+     */
+    @PostMapping("/logout-all")
+    public ResponseEntity<?> logoutAll(@RequestBody Map<String, String> body) {
+        String refreshToken = body.get("refreshToken");
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "error", "message", "Refresh token requis"));
+        }
+        try {
+            mobileTokenService.revokeAllSessions(refreshToken);
+            return ResponseEntity.ok(Map.of(
+                    "status", "success", "message", "Déconnecté de tous les appareils"));
+        } catch (Exception e) {
+            log.error("Logout-all error: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "status", "error", "message", "Refresh token invalide"));
+        }
+    }
 }
