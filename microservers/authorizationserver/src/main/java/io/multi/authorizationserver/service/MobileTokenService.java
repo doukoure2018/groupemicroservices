@@ -256,11 +256,14 @@ public class MobileTokenService {
     private String generateRefreshToken(User user, Instant now) throws Exception {
         JWSSigner signer = new RSASSASigner(keyUtils.getRSAKeyPair().toRSAPrivateKey());
 
+        // Refresh token 90 jours (rétention longue durée façon Facebook/Insta).
+        // Fenêtre glissante : chaque refresh régénère un token 90j. ⚠️ Stateless
+        // (pas de révocation serveur) — cf dette backend-refresh-token-rotation-revocation.
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .issuer(issuer)
                 .subject(user.getUserUuid())
                 .issueTime(Date.from(now))
-                .expirationTime(Date.from(now.plus(30, ChronoUnit.DAYS)))
+                .expirationTime(Date.from(now.plus(90, ChronoUnit.DAYS)))
                 .jwtID(UUID.randomUUID().toString())
                 .claim("token_type", "refresh")
                 .claim("user_id", user.getUserId())
