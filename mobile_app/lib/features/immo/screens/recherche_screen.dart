@@ -573,25 +573,34 @@ class _RechercheScreenState extends State<RechercheScreen> {
   // -------------------- 4 catégories rondes scrollable --------------------
 
   Widget _buildCategoriesRow() {
-    // Codes alignés sur le référentiel backend typeBienCode. Si un code
-    // n'existe pas côté backend, le filtre rendra 0 résultat — visible
-    // empty state. Ajustements à faire si nécessaire selon le seed BD.
+    // 7 types réels alignés sur la table immo_type_bien (BD vérifiée
+    // 2026-06-11). Codes = typeBienCode du filtre backend (multi-select).
     final cats = <_Categorie>[
       _Categorie('Maison', 'MAISON', Icons.home_outlined),
-      _Categorie('Villa', 'VILLA', Icons.villa_outlined),
       _Categorie('Appartement', 'APPARTEMENT', Icons.apartment_outlined),
-      _Categorie('Bungalow', 'BUNGALOW', Icons.holiday_village_outlined),
+      _Categorie('Immeuble', 'IMMEUBLE', Icons.location_city_outlined),
+      _Categorie('Terrain', 'TERRAIN', Icons.landscape_outlined),
+      _Categorie('Bureau', 'BUREAU', Icons.business_center_outlined),
+      _Categorie('Boutique', 'BOUTIQUE', Icons.storefront_outlined),
+      _Categorie('Chambre', 'CHAMBRE', Icons.bed_outlined),
     ];
-    // Row spaceEvenly = espacement uniforme garanti entre les 4 catégories,
-    // indépendant de la largeur d'écran (Bungalow ne « tire » plus à droite).
+    // 7 catégories → ListView horizontale scrollable (un Row ne tiendrait pas
+    // sur la largeur téléphone). Toggle/sélection inchangés (_buildCategorieCircle).
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          for (final c in cats)
-            _buildCategorieCircle(c, _filtres.typeBienCodes.contains(c.code)),
-        ],
+      padding: const EdgeInsets.fromLTRB(0, 18, 0, 8),
+      child: SizedBox(
+        height: 82,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: cats.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 20),
+          itemBuilder: (_, i) {
+            final c = cats[i];
+            return _buildCategorieCircle(
+                c, _filtres.typeBienCodes.contains(c.code));
+          },
+        ),
       ),
     );
   }
