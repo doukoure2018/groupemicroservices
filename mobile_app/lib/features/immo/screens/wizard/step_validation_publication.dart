@@ -314,7 +314,7 @@ class _StepValidationPublicationState extends State<StepValidationPublication>
         // Gate "pas de profil vendeur" : levé ici (materialiser vérifie le
         // profil avant de créer la Propriete). Dialog friendly + activation
         // silencieuse au lieu du message technique brut.
-        if (_isNoProfileError(e.message)) {
+        if (_isNoProfileError(e)) {
           await _showActivateProfileDialog(onActivated: _publish);
         } else {
           await _showErrorDialog(
@@ -436,7 +436,7 @@ class _StepValidationPublicationState extends State<StepValidationPublication>
       setState(() => _publishing = false);
       // Défensif : le gate profil est normalement levé plus tôt (materialiser).
       // S'il remonte ici, on propose la même activation que sur l'autre chemin.
-      if (_isNoProfileError(e.message)) {
+      if (_isNoProfileError(e)) {
         await _showActivateProfileDialog(onActivated: _publish);
         return;
       }
@@ -581,12 +581,13 @@ class _StepValidationPublicationState extends State<StepValidationPublication>
     }
   }
 
-  /// Détecte l'erreur backend "pas de profil vendeur" (ProprieteServiceImpl
-  /// .getProfilOrFail). MATCH FRAGILE sur le texte FR — dette
-  /// mobile-error-match-by-code-not-text : à remplacer par un code d'erreur
-  /// structuré renvoyé par le backend (NO_IMMO_PROFILE).
-  bool _isNoProfileError(String message) {
-    final m = message.toLowerCase();
+  /// Détecte le cas "pas de profil vendeur" (ProprieteServiceImpl.getProfilOrFail).
+  /// PRINCIPAL : code structuré backend `NO_IMMO_PROFILE`.
+  /// FALLBACK : match texte FR (filet pendant la transition / vieux backend —
+  /// cf dette mobile-error-match-text-fallback-cleanup, à retirer plus tard).
+  bool _isNoProfileError(AppException e) {
+    if (e is ApiException && e.code == 'NO_IMMO_PROFILE') return true;
+    final m = e.message.toLowerCase();
     return m.contains('profil') && m.contains('publi');
   }
 

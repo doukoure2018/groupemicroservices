@@ -24,10 +24,17 @@ class ServerException extends AppException {
 /// Backend a renvoyé une erreur métier (4xx hors auth). Message à afficher.
 class ApiException extends AppException {
   final String? developerMessage;
+
+  /// Code d'erreur structuré renvoyé par le backend (ex "NO_IMMO_PROFILE").
+  /// Permet un match fiable côté caller au lieu de parser le message FR.
+  /// Null si le backend n'a pas fourni de code.
+  final String? code;
+
   const ApiException(
     super.message, {
     required super.statusCode,
     this.developerMessage,
+    this.code,
   });
 }
 

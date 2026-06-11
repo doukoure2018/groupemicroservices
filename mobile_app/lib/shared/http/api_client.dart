@@ -137,6 +137,7 @@ class ApiClient {
       backendMessage ?? 'Une erreur est survenue.',
       statusCode: code ?? 0,
       developerMessage: e.message,
+      code: _extractBackendCode(e.response?.data),
     );
   }
 
@@ -146,6 +147,15 @@ class ApiClient {
       if (m is String && m.isNotEmpty) return m;
       final err = body['error'];
       if (err is String && err.isNotEmpty) return err;
+    }
+    return null;
+  }
+
+  /// Code d'erreur structuré backend (`body['code']`, ex "NO_IMMO_PROFILE").
+  String? _extractBackendCode(dynamic body) {
+    if (body is Map<String, dynamic>) {
+      final c = body['code'];
+      if (c is String && c.isNotEmpty) return c;
     }
     return null;
   }
