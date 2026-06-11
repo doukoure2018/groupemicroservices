@@ -24,6 +24,16 @@ name: CD - Build & Deploy SIRA Guinée
 permissions:
   contents: read
 
+# Sérialise les déploiements par environnement : un `push main` (auto-deploy
+# test) + un `workflow_dispatch` lancés ~simultanément créaient 2 runs
+# concurrents qui se battaient sur ~/sira-guinee/{test-deploy,test} (rm -rf /
+# mv) → `mv: cannot stat` dans le perdant (faux rouge). Avec ce groupe, le 2e
+# run attend la fin du 1er. test et prod ont des groupes distincts (dossiers
+# distincts, pas de race entre eux).
+concurrency:
+  group: backend-cd-${{ github.event.inputs.environment || 'test' }}
+  cancel-in-progress: false
+
 on:
   workflow_dispatch:
     inputs:
