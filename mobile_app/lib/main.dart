@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
+import 'models/user_profile.dart';
 import 'screens/splash_screen.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/complete_profile_screen.dart';
 import 'features/hub/hub_screen.dart';
 import 'presentation/resource/color_manager.dart';
 import 'services/api_service.dart';
+import 'services/user_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -70,12 +73,63 @@ class _AuthWrapperState extends State<AuthWrapper> {
           case AuthStatus.loading:
             return const SplashScreen();
           case AuthStatus.authenticated:
-            return const HubScreen();
+            // Gate : profil complet (tél + adresse) requis avant le Hub.
+            return const _ProfileGate();
           case AuthStatus.unauthenticated:
           case AuthStatus.error:
             return const WelcomeScreen();
         }
       },
     );
+  }
+}
+
+/// Gate post-login : vérifie que le profil a tél + adresse. Sinon →
+/// [CompleteProfileScreen] bloquant avant le [HubScreen]. Fail-open sur erreur
+/// réseau (ne verrouille pas l'user ; re-check au prochain lancement).
+class _ProfileGate extends StatefulWidget {
+  const _ProfileGate();
+
+  @override
+  State<_ProfileGate> createState() => _ProfileGateState();
+}
+
+class _ProfileGateState extends State<_ProfileGate> {
+  final _userService = UserService();
+  UserProfile? _profile;
+  bool _loading = true;
+  bool _completed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    try {
+      final p = await _userService.getProfile();
+      if (!mounted) return;
+      setState(() {
+        _profile = p;
+        _loading = false;
+      });
+    } catch (_) {
+      // Fail-open : erreur réseau transitoire ne doit pas bloquer l'accès.
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const SplashScreen();
+    if (!_completed && _profile != null && !_profile!.isComplete) {
+      return CompleteProfileScreen(
+        profile: _profile!,
+        onCompleted: () => setState(() => _completed = true),
+      );
+    }
+    return const HubScreen();
   }
 }
