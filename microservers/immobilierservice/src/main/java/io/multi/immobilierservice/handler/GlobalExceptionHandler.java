@@ -40,7 +40,7 @@ public class GlobalExceptionHandler {
     /** 400 — erreur métier explicite. */
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<Map<String, String>> handleApiException(ApiException e) {
-        return body(HttpStatus.BAD_REQUEST, e.getMessage());
+        return body(HttpStatus.BAD_REQUEST, e.getMessage(), e.getCode());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -54,8 +54,16 @@ public class GlobalExceptionHandler {
     }
 
     private static ResponseEntity<Map<String, String>> body(HttpStatus status, String message) {
+        return body(status, message, null);
+    }
+
+    private static ResponseEntity<Map<String, String>> body(HttpStatus status, String message, String code) {
         Map<String, String> error = new HashMap<>();
         error.put("error", message);
+        // code structuré additif (ex NO_IMMO_PROFILE) — présent seulement si fourni.
+        if (code != null) {
+            error.put("code", code);
+        }
         error.put("timestamp", LocalDateTime.now().toString());
         return ResponseEntity.status(status).body(error);
     }

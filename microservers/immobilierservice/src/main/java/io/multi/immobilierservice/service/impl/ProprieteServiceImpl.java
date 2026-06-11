@@ -526,7 +526,8 @@ public class ProprieteServiceImpl implements ProprieteService {
         // code d'erreur structuré (NO_IMMO_PROFILE).
         return profilImmoRepository.findByUserId(userId)
                 .orElseThrow(() -> new ApiException(
-                        "Activez votre profil vendeur avant de publier votre annonce."));
+                        "Activez votre profil vendeur avant de publier votre annonce.",
+                        "NO_IMMO_PROFILE"));
     }
 
     private void ensureOwner(Propriete p, Long userId) {
