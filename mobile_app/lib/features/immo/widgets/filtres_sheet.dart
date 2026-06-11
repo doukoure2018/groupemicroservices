@@ -56,11 +56,12 @@ class _FiltresSheetState extends State<FiltresSheet> {
   }
 
   void _reset() {
-    setState(() {
-      _draft = const RechercheFiltres();
-      _qController.clear();
-      _prixRange = const RangeValues(_prixMin, _prixMax);
-    });
+    // Réinitialise ET applique : ferme la sheet en renvoyant des filtres vides
+    // → l'écran principal se vide aussi (cercles catégories désélectionnés +
+    // liste rechargée). Avant, le reset restait LOCAL à la sheet : si l'user
+    // fermait sans taper "Appliquer", les catégories de l'écran restaient
+    // sélectionnées (bug réinitialisation).
+    Navigator.of(context).pop(const RechercheFiltres());
   }
 
   void _apply() {
