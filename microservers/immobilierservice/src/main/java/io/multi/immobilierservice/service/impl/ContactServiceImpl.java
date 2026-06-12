@@ -16,7 +16,6 @@ import io.multi.immobilierservice.repository.ProfilImmoRepository;
 import io.multi.immobilierservice.repository.ProprieteRepository;
 import io.multi.immobilierservice.service.ContactService;
 import io.multi.immobilierservice.service.ImmoNotificationProducer;
-import io.multi.immobilierservice.service.PreferencesNotificationService;
 import io.multi.immobilierservice.utils.UserDisplayUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +38,9 @@ public class ContactServiceImpl implements ContactService {
     private final ProprieteRepository proprieteRepository;
     private final ProfilImmoRepository profilImmoRepository;
     private final ImmoNotificationProducer notificationProducer;
-    private final PreferencesNotificationService preferencesService;
+
+    /** Rôle des comptes recevant les leads contact/visite (intermédiation Phase 1). */
+    private static final String ROLE_BACKOFFICE = "ADMIN_BACKOFFICE";
 
     @Override
     @Transactional
@@ -82,10 +83,11 @@ public class ContactServiceImpl implements ContactService {
     }
 
     /**
-     * Publie un événement IMMO_CONTACT_RECU avec payload auto-suffisant pour l'email
-     * (snapshot des coordonnées vendeur + visiteur + propriété au moment T). Si la
-     * récupération des infos vendeur échoue, on log et on skip — le contact reste
-     * créé en BD, le vendeur le verra dans son interface "mes contacts".
+     * Publie IMMO_CONTACT_RECU vers le(s) compte(s) BACK-OFFICE (intermédiation Phase 1).
+     * Le vendeur n'est PLUS destinataire : le back-office reçoit le lead (prospect +
+     * propriété + coordonnées propriétaire à relayer) par email + SMS. Un event est publié
+     * par compte back-office (référence d'idempotence suffixée par userId). Payload
+     * auto-suffisant (snapshot au moment T). Échec = log + skip, jamais de rollback.
      */
     private void publishContactRecu(Contact contact, String proprieteUuid, Long proprieteId) {
         try {
@@ -94,55 +96,90 @@ public class ContactServiceImpl implements ContactService {
                 log.warn("Notification CONTACT_RECU skip : propriété {} introuvable", proprieteUuid);
                 return;
             }
+
+            // Coordonnées du propriétaire (ex-vendeur) — incluses dans le lead pour que le
+            // back-office puisse le recontacter. Best-effort : si le lookup échoue, on notifie
+            // quand même (le lead reste exploitable via la référence de l'annonce).
+            String proprietaireNom = "", proprietaireTelephone = "", proprietaireEmail = "";
             ProfilImmo vendeurProfil = profilImmoRepository.findById(propriete.getProfilId()).orElse(null);
-            if (vendeurProfil == null) {
-                log.warn("Notification CONTACT_RECU skip : profil {} introuvable", propriete.getProfilId());
-                return;
+            if (vendeurProfil != null) {
+                try {
+                    User proprietaire = userClient.getUserById(vendeurProfil.getUserId());
+                    if (proprietaire != null) {
+                        proprietaireNom = UserDisplayUtils.nomComplet(proprietaire);
+                        proprietaireTelephone = proprietaire.getPhone() != null ? proprietaire.getPhone() : "";
+                        proprietaireEmail = proprietaire.getEmail() != null ? proprietaire.getEmail() : "";
+                    }
+                } catch (Exception e) {
+                    log.warn("Lookup propriétaire Feign échec userId={} : {} — lead envoyé sans coordonnées propriétaire",
+                            vendeurProfil.getUserId(), e.getMessage());
+                }
             }
-            User vendeur;
+
+            // Destinataires = comptes ADMIN_BACKOFFICE (intermédiation). Vendeur OUT.
+            List<User> backoffices;
             try {
-                vendeur = userClient.getUserById(vendeurProfil.getUserId());
+                backoffices = userClient.getUsersByRole(ROLE_BACKOFFICE);
             } catch (Exception e) {
-                log.error("Lookup vendeur Feign échec pour userId={} : {}",
-                        vendeurProfil.getUserId(), e.getMessage());
+                log.error("Lookup back-office Feign échec : {} — CONTACT_RECU non notifié", e.getMessage());
                 return;
             }
-            if (vendeur == null || vendeur.getEmail() == null) {
-                log.warn("Notification CONTACT_RECU skip : vendeur {} introuvable ou sans email",
-                        vendeurProfil.getUserId());
+            if (backoffices == null || backoffices.isEmpty()) {
+                log.warn("Notification CONTACT_RECU skip : aucun compte {} configuré", ROLE_BACKOFFICE);
                 return;
             }
-            String vendeurNom = UserDisplayUtils.nomComplet(vendeur);
-            String vendeurTelephone = vendeur.getPhone() != null ? vendeur.getPhone() : "";
-            String vendeurEmail = vendeur.getEmail();
 
-            // Snapshot des préférences SMS du vendeur (destinataire du SMS).
-            // Si désactivé après le publish, le SMS partira quand même (choix MVP).
-            boolean smsEnabled = preferencesService.getOrDefaults(vendeurProfil.getUserId()).isContactSms();
+            String prixAffiche = formatPrix(propriete);
+            int notifies = 0;
+            for (User bo : backoffices) {
+                if (bo == null || bo.getEmail() == null || bo.getEmail().isBlank()) continue;
 
-            Map<String, Object> data = new HashMap<>();
-            data.put("vendeurEmail", vendeurEmail);
-            data.put("vendeurNom", vendeurNom);
-            data.put("vendeurTelephone", vendeurTelephone);
-            data.put("smsEnabled", smsEnabled);
-            data.put("proprieteUuid", proprieteUuid);
-            data.put("proprieteReference", propriete.getReference());
-            data.put("proprieteTitre", propriete.getTitre());
-            data.put("visiteurNom", contact.getNomDemandeur());
-            data.put("visiteurTelephone", contact.getTelephoneDemandeur() != null ? contact.getTelephoneDemandeur() : "");
-            data.put("visiteurEmail", contact.getEmailDemandeur() != null ? contact.getEmailDemandeur() : "");
-            data.put("message", contact.getMessage() != null ? contact.getMessage() : "");
-            data.put("typeDemande", contact.getTypeDemande());
-            data.put("dateContact", contact.getCreatedAt() != null
-                    ? contact.getCreatedAt().toString() : "");
+                Map<String, Object> data = new HashMap<>();
+                data.put("backofficeEmail", bo.getEmail());
+                data.put("backofficeNom", UserDisplayUtils.nomComplet(bo));
+                data.put("backofficeTelephone", bo.getPhone() != null ? bo.getPhone() : "");
+                data.put("smsEnabled", true);   // back-office : toujours SMS (pas d'opt-out MVP)
+                // Propriété
+                data.put("proprieteUuid", proprieteUuid);
+                data.put("proprieteReference", propriete.getReference());
+                data.put("proprieteTitre", propriete.getTitre());
+                data.put("proprieteTypeAnnonce", propriete.getTypeAnnonce() != null ? propriete.getTypeAnnonce() : "");
+                data.put("proprietePrix", prixAffiche);
+                data.put("proprieteAdresse", propriete.getAdresseComplete() != null ? propriete.getAdresseComplete() : "");
+                // Propriétaire à relayer
+                data.put("proprietaireNom", proprietaireNom);
+                data.put("proprietaireTelephone", proprietaireTelephone);
+                data.put("proprietaireEmail", proprietaireEmail);
+                // Prospect (demandeur)
+                data.put("visiteurNom", contact.getNomDemandeur());
+                data.put("visiteurTelephone", contact.getTelephoneDemandeur() != null ? contact.getTelephoneDemandeur() : "");
+                data.put("visiteurEmail", contact.getEmailDemandeur() != null ? contact.getEmailDemandeur() : "");
+                data.put("message", contact.getMessage() != null ? contact.getMessage() : "");
+                data.put("typeDemande", contact.getTypeDemande());
+                data.put("dateContact", contact.getCreatedAt() != null ? contact.getCreatedAt().toString() : "");
 
-            String reference = EventType.IMMO_CONTACT_RECU.name() + ":" + contact.getContactUuid();
-            notificationProducer.publish(EventType.IMMO_CONTACT_RECU, reference, data);
+                // Idempotence par destinataire : {EVENT}:{contactUuid}:{userId}
+                String reference = EventType.IMMO_CONTACT_RECU.name() + ":" + contact.getContactUuid()
+                        + ":" + bo.getUserId();
+                notificationProducer.publish(EventType.IMMO_CONTACT_RECU, reference, data);
+                notifies++;
+            }
+            log.info("Lead CONTACT_RECU routé vers {} compte(s) back-office (vendeur NON notifié) — contact {}",
+                    notifies, contact.getContactUuid());
         } catch (Exception e) {
             // L'event publish ne doit JAMAIS faire rollback la création du contact.
             log.error("Échec publication CONTACT_RECU pour contact {} : {} — contact persisté quand même",
                     contact.getContactUuid(), e.getMessage());
         }
+    }
+
+    /** Affichage prix lead : "Prix sur demande" ou "{montant} {devise}". */
+    private String formatPrix(Propriete p) {
+        if (Boolean.TRUE.equals(p.getPrixSurDemande()) || p.getPrix() == null) {
+            return "Prix sur demande";
+        }
+        String devise = p.getDevise() != null ? p.getDevise() : "";
+        return (p.getPrix().toPlainString() + " " + devise).trim();
     }
 
     @Override

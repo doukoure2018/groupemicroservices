@@ -5,6 +5,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import java.util.List;
+
 
 // URL directe Docker DNS (workaround bug Eureka Spring Cloud 4.2.0 Content-Type
 // octet-stream — registry jamais peuplé). Override par USERSERVICE_URL en docker
@@ -48,4 +50,12 @@ public interface UserClient {
     /** Voir {@link #getUserById(Long)} — même dépendance permitAll s'applique. */
     @GetMapping("/user/getUser/uuid/{uuid}")
     User getUserByUuid(@PathVariable(name ="uuid" ) String uuid);
+
+    /**
+     * Liste les comptes ayant un rôle donné (ex. ADMIN_BACKOFFICE pour le routing des
+     * leads contact/visite). Renvoie {@code List<User>} DIRECT (endpoint userservice non
+     * enveloppé). Même dépendance permitAll {@code /user/by-role/**} que {@link #getUserById(Long)}.
+     */
+    @GetMapping("/user/by-role/{roleName}")
+    List<User> getUsersByRole(@PathVariable(name = "roleName") String roleName);
 }

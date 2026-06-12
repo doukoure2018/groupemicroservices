@@ -54,7 +54,7 @@ public class ResourceServerConfig {
                         //
                         // À RETIRER QUAND : Feign interceptor M2M en place (tâche backlog).
                         // NE PAS "corriger" naïvement en supprimant /user/getUser/** = casse Feign immo.
-                        .requestMatchers("/actuator/health","/actuator/info","/user/register/**", "/user/verify/account/**","/user/verify/password/**", "/user/resetpassword/**", "/user/image/**","/user/getUser/**","/user/client/**","/user/offLine/**").permitAll()
+                        .requestMatchers("/actuator/health","/actuator/info","/user/register/**", "/user/verify/account/**","/user/verify/password/**", "/user/resetpassword/**", "/user/image/**","/user/getUser/**","/user/by-role/**","/user/client/**","/user/offLine/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .accessDeniedHandler(new CustomAccessDeniedHandler())

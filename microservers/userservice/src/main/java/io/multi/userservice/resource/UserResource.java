@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 
 import static io.multi.userservice.constant.Constants.PHOTO_DIRECTORY;
@@ -194,6 +195,15 @@ public class UserResource {
     @GetMapping("/list")
     public ResponseEntity<Response> getUsers(@NotNull Authentication authentication, HttpServletRequest request) {
         return ok(getResponse(request, Map.of("users",userService.getUsers()), "List of Users Retreived Successfully", OK));
+    }
+
+    // Feign M2M (immobilierservice → routing leads back-office). Renvoie List<User>
+    // DIRECT (pas l'enveloppe Response) pour que UserClient.getUsersByRole désérialise
+    // directement. permitAll /user/by-role/** côté ResourceServerConfig (même dépendance
+    // no-auth que /user/getUser/**, cf dette feign-eureka-bypass-debt).
+    @GetMapping("/by-role/{roleName}")
+    public ResponseEntity<List<User>> getUsersByRole(@PathVariable(name = "roleName") String roleName) {
+        return ResponseEntity.ok(userService.getUsersByRole(roleName));
     }
 
     // Admin: Get all available roles

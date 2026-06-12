@@ -16,9 +16,11 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ImmoSmsServiceImpl implements ImmoSmsService {
 
-    /** Seuls ces 2 events ont droit au canal payant SMS. Le reste = email-only. */
+    /** Events ayant droit au canal payant SMS. Le reste = email-only.
+     *  Intermédiation Phase 1 : CONTACT_RECU + VISITE_DEMANDEE → SMS back-office. */
     private static final Set<ImmoEventType> SMS_ELIGIBLE = Set.of(
             ImmoEventType.IMMO_CONTACT_RECU,
+            ImmoEventType.IMMO_VISITE_DEMANDEE,
             ImmoEventType.IMMO_VISITE_CONFIRMEE
     );
 
@@ -75,7 +77,9 @@ public class ImmoSmsServiceImpl implements ImmoSmsService {
     /** Quelle clé du payload contient le téléphone destinataire ? Varie selon l'event. */
     private String phoneKey(ImmoEventType type) {
         return switch (type) {
-            case IMMO_CONTACT_RECU      -> "vendeurTelephone";
+            // Intermédiation Phase 1 : leads contact/visite → téléphone back-office.
+            case IMMO_CONTACT_RECU,
+                 IMMO_VISITE_DEMANDEE   -> "backofficeTelephone";
             case IMMO_VISITE_CONFIRMEE  -> "visiteurTelephone";
             default -> throw new IllegalStateException("Pas de phoneKey pour " + type);
         };
@@ -85,8 +89,13 @@ public class ImmoSmsServiceImpl implements ImmoSmsService {
     private String buildMessage(ImmoEventType type, Map<String, Object> data) {
         String ref = (String) data.getOrDefault("proprieteReference", "");
         return switch (type) {
-            case IMMO_CONTACT_RECU -> "YIGUI Immo - Nouveau contact sur " + ref
-                    + ". Connectez-vous pour repondre.";
+            case IMMO_CONTACT_RECU -> "YIGUI Immo - Nouveau lead CONTACT sur " + ref
+                    + ". Details par email.";
+            case IMMO_VISITE_DEMANDEE -> {
+                String date = (String) data.getOrDefault("dateVisite", "");
+                yield "YIGUI Immo - Lead VISITE sur " + ref
+                        + (date.isBlank() ? "" : " (" + date + ")") + ". Details par email.";
+            }
             case IMMO_VISITE_CONFIRMEE -> {
                 String date = (String) data.getOrDefault("dateVisite", "");
                 String heure = (String) data.getOrDefault("heureVisite", "");

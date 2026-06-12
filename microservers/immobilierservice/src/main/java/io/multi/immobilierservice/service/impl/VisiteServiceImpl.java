@@ -40,6 +40,9 @@ public class VisiteServiceImpl implements VisiteService {
     private final ImmoNotificationProducer notificationProducer;
     private final PreferencesNotificationService preferencesService;
 
+    /** Rôle des comptes recevant les leads contact/visite (intermédiation Phase 1). */
+    private static final String ROLE_BACKOFFICE = "ADMIN_BACKOFFICE";
+
     @Override
     @Transactional
     public Visite demander(String proprieteUuid, VisiteCreateRequest req, Long visiteurUserId) {
@@ -131,32 +134,84 @@ public class VisiteServiceImpl implements VisiteService {
         }
     }
 
-    /** Publie IMMO_VISITE_DEMANDEE → email vendeur. Snapshot complet pour template. */
+    /**
+     * Publie IMMO_VISITE_DEMANDEE vers le(s) compte(s) BACK-OFFICE (intermédiation Phase 1).
+     * Le vendeur n'est PLUS destinataire : le back-office reçoit le lead (visiteur +
+     * propriété + coordonnées propriétaire à relayer) par email + SMS. Un event est publié
+     * par compte back-office (référence d'idempotence suffixée par userId).
+     */
     private void publishVisiteDemandee(Visite visite, String proprieteUuid, Long proprieteId, Long visiteurUserId) {
         try {
             Propriete propriete = proprieteRepository.findById(proprieteId).orElse(null);
             if (propriete == null) return;
+
+            // Coordonnées du propriétaire (ex-vendeur) à relayer — best-effort.
+            String proprietaireNom = "", proprietaireTelephone = "", proprietaireEmail = "";
             ProfilImmo vendeurProfil = profilImmoRepository.findById(propriete.getProfilId()).orElse(null);
-            if (vendeurProfil == null) return;
-            User vendeur = fetchUserSafe(vendeurProfil.getUserId());
-            if (vendeur == null || vendeur.getEmail() == null) return;
+            if (vendeurProfil != null) {
+                User proprietaire = fetchUserSafe(vendeurProfil.getUserId());
+                if (proprietaire != null) {
+                    proprietaireNom = UserDisplayUtils.nomComplet(proprietaire);
+                    proprietaireTelephone = proprietaire.getPhone() != null ? proprietaire.getPhone() : "";
+                    proprietaireEmail = proprietaire.getEmail() != null ? proprietaire.getEmail() : "";
+                }
+            }
+
             User visiteur = fetchUserSafe(visiteurUserId);
+            String visiteurNom = visiteur != null ? UserDisplayUtils.nomComplet(visiteur) : "";
+            String visiteurTelephone = visiteur != null && visiteur.getPhone() != null ? visiteur.getPhone() : "";
+            String visiteurEmail = visiteur != null && visiteur.getEmail() != null ? visiteur.getEmail() : "";
 
-            Map<String, Object> data = new HashMap<>();
-            data.put("vendeurEmail", vendeur.getEmail());
-            data.put("vendeurNom", UserDisplayUtils.nomComplet(vendeur));
-            data.put("proprieteUuid", proprieteUuid);
-            data.put("proprieteReference", propriete.getReference());
-            data.put("proprieteTitre", propriete.getTitre());
-            data.put("visiteurNom", UserDisplayUtils.nomComplet(visiteur));
-            data.put("dateVisite", visite.getDateVisite() != null ? visite.getDateVisite().toString() : "");
-            data.put("heureVisite", visite.getHeureVisite() != null ? visite.getHeureVisite().toString() : "");
-            data.put("notesVisiteur", visite.getNotesVisiteur() != null ? visite.getNotesVisiteur() : "");
+            // Destinataires = comptes ADMIN_BACKOFFICE (intermédiation). Vendeur OUT.
+            List<User> backoffices;
+            try {
+                backoffices = userClient.getUsersByRole(ROLE_BACKOFFICE);
+            } catch (Exception e) {
+                log.error("Lookup back-office Feign échec : {} — VISITE_DEMANDEE non notifié", e.getMessage());
+                return;
+            }
+            if (backoffices == null || backoffices.isEmpty()) {
+                log.warn("Notification VISITE_DEMANDEE skip : aucun compte {} configuré", ROLE_BACKOFFICE);
+                return;
+            }
 
-            notificationProducer.publish(
-                    EventType.IMMO_VISITE_DEMANDEE,
-                    EventType.IMMO_VISITE_DEMANDEE.name() + ":" + visite.getVisiteUuid(),
-                    data);
+            String prixAffiche = formatPrix(propriete);
+            int notifies = 0;
+            for (User bo : backoffices) {
+                if (bo == null || bo.getEmail() == null || bo.getEmail().isBlank()) continue;
+
+                Map<String, Object> data = new HashMap<>();
+                data.put("backofficeEmail", bo.getEmail());
+                data.put("backofficeNom", UserDisplayUtils.nomComplet(bo));
+                data.put("backofficeTelephone", bo.getPhone() != null ? bo.getPhone() : "");
+                data.put("smsEnabled", true);   // back-office : toujours SMS (pas d'opt-out MVP)
+                // Propriété
+                data.put("proprieteUuid", proprieteUuid);
+                data.put("proprieteReference", propriete.getReference());
+                data.put("proprieteTitre", propriete.getTitre());
+                data.put("proprieteTypeAnnonce", propriete.getTypeAnnonce() != null ? propriete.getTypeAnnonce() : "");
+                data.put("proprietePrix", prixAffiche);
+                data.put("proprieteAdresse", propriete.getAdresseComplete() != null ? propriete.getAdresseComplete() : "");
+                // Propriétaire à relayer
+                data.put("proprietaireNom", proprietaireNom);
+                data.put("proprietaireTelephone", proprietaireTelephone);
+                data.put("proprietaireEmail", proprietaireEmail);
+                // Prospect (visiteur)
+                data.put("visiteurNom", visiteurNom);
+                data.put("visiteurTelephone", visiteurTelephone);
+                data.put("visiteurEmail", visiteurEmail);
+                data.put("dateVisite", visite.getDateVisite() != null ? visite.getDateVisite().toString() : "");
+                data.put("heureVisite", visite.getHeureVisite() != null ? visite.getHeureVisite().toString() : "");
+                data.put("notesVisiteur", visite.getNotesVisiteur() != null ? visite.getNotesVisiteur() : "");
+
+                // Idempotence par destinataire : {EVENT}:{visiteUuid}:{userId}
+                String reference = EventType.IMMO_VISITE_DEMANDEE.name() + ":" + visite.getVisiteUuid()
+                        + ":" + bo.getUserId();
+                notificationProducer.publish(EventType.IMMO_VISITE_DEMANDEE, reference, data);
+                notifies++;
+            }
+            log.info("Lead VISITE_DEMANDEE routé vers {} compte(s) back-office (vendeur NON notifié) — visite {}",
+                    notifies, visite.getVisiteUuid());
         } catch (Exception e) {
             log.error("Échec publish VISITE_DEMANDEE pour visite {} : {}", visite.getVisiteUuid(), e.getMessage());
         }
@@ -203,5 +258,14 @@ public class VisiteServiceImpl implements VisiteService {
             log.error("Lookup user Feign échec pour userId={} : {}", userId, e.getMessage());
             return null;
         }
+    }
+
+    /** Affichage prix lead : "Prix sur demande" ou "{montant} {devise}". */
+    private String formatPrix(Propriete p) {
+        if (Boolean.TRUE.equals(p.getPrixSurDemande()) || p.getPrix() == null) {
+            return "Prix sur demande";
+        }
+        String devise = p.getDevise() != null ? p.getDevise() : "";
+        return (p.getPrix().toPlainString() + " " + devise).trim();
     }
 }

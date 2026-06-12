@@ -29,6 +29,7 @@ public interface UserService {
     void resetPassword(String email);
     void doResetPassword(String userUuid, String token, String password, String confirmPassword);
     List<User> getUsers();
+    List<User> getUsersByRole(String roleName);
 
     List<Role> getRoles();
     User getAssignee(String ticketUuid);

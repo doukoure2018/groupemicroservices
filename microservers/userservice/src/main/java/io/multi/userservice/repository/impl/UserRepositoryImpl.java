@@ -269,6 +269,21 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public List<User> getUsersByRole(String roleName) {
+        try {
+            return jdbcClient.sql(SELECT_USERS_BY_ROLE_QUERY)
+                    .param("roleName", roleName)
+                    .query(User.class).list();
+        }catch (EmptyResultDataAccessException exception){
+            log.error(exception.getMessage());
+            throw  new ApiException("Users Not Found. Please try again");
+        }catch (Exception e){
+            log.error(e.getMessage());
+            throw  new ApiException("An error occurred please try again");
+        }
+    }
+
+    @Override
     public List<Role> getRoles() {
         try {
             return jdbcClient.sql(SELECT_ROLES_USER_QUERY).query(Role.class).list();

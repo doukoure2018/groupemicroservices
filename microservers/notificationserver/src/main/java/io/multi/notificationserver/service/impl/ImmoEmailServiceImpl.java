@@ -90,9 +90,10 @@ public class ImmoEmailServiceImpl implements ImmoEmailService {
     /** Quelle clé du payload contient l'email destinataire ? Varie selon l'event. */
     private String destinataireKey(ImmoEventType type) {
         return switch (type) {
+            // Intermédiation Phase 1 : les leads contact/visite vont au back-office, PAS au vendeur.
             case IMMO_CONTACT_RECU,
-                 IMMO_VISITE_DEMANDEE,
-                 IMMO_ANNONCE_VALIDEE,
+                 IMMO_VISITE_DEMANDEE     -> "backofficeEmail";
+            case IMMO_ANNONCE_VALIDEE,
                  IMMO_ANNONCE_REJETEE,
                  IMMO_RAPPEL_EXPIRATION  -> "vendeurEmail";      // destinataire = propriétaire / vendeur
             case IMMO_VISITE_CONFIRMEE   -> "visiteurEmail";
@@ -103,8 +104,8 @@ public class ImmoEmailServiceImpl implements ImmoEmailService {
     private String subjectFor(ImmoEventType type, Map<String, Object> data) {
         String ref = (String) data.getOrDefault("proprieteReference", "");
         return switch (type) {
-            case IMMO_CONTACT_RECU       -> "Nouveau contact sur votre annonce " + ref;
-            case IMMO_VISITE_DEMANDEE    -> "Nouvelle demande de visite — " + ref;
+            case IMMO_CONTACT_RECU       -> "[Lead] Nouveau contact — " + ref;
+            case IMMO_VISITE_DEMANDEE    -> "[Lead] Demande de visite — " + ref;
             case IMMO_VISITE_CONFIRMEE   -> "Votre visite est confirmée — " + ref;
             case IMMO_ANNONCE_VALIDEE    -> "Votre annonce " + ref + " est publiée";
             case IMMO_ANNONCE_REJETEE    -> "Votre annonce " + ref + " a été refusée";
