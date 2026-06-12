@@ -68,6 +68,10 @@ spring:
     properties:
       spring:
         json:
+          # ImmoNotification vit dans event.immo (hors domain) — sans ce trust, le
+          # consumer immo rejette le message ("not in trusted packages") et boucle.
+          trusted:
+            packages: "io.multi.notificationserver.domain,io.multi.notificationserver.event.immo"
           type:
             mapping: "Notification:io.multi.notificationserver.domain.Notification,io.multi.authorizationserver.event.Notification:io.multi.notificationserver.domain.Notification,io.multi.billetterieservice.event.Notification:io.multi.notificationserver.domain.Notification,ImmoNotification:io.multi.notificationserver.event.immo.ImmoNotification,io.multi.immobilierservice.event.Notification:io.multi.notificationserver.event.immo.ImmoNotification"
       # Add global properties for handling large messages
