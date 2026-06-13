@@ -16,6 +16,7 @@ public class User {
     private String email;
     private String password;
     private String phone;
+    private String address;
     private String bio;
     private String imageUrl;
     private String qrCodeImageUri;

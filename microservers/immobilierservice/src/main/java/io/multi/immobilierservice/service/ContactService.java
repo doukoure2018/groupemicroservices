@@ -4,6 +4,7 @@ import io.multi.immobilierservice.domain.Contact;
 import io.multi.immobilierservice.dto.ContactCreateRequest;
 import io.multi.immobilierservice.dto.ContactView;
 import io.multi.immobilierservice.dto.LeadAdminView;
+import io.multi.immobilierservice.dto.ProprietaireView;
 
 import java.util.List;
 
@@ -45,4 +46,7 @@ public interface ContactService {
      * refusé (400) si déjà traité (n'écrase pas traite_par/traite_at).
      */
     Contact traiterLead(String contactUuid, String action, String noteAdmin, Long adminUserId);
+
+    /** Back-office : coordonnées du propriétaire d'une annonce (relais lead). 404 si introuvable. */
+    ProprietaireView getProprietaireByPropriete(String proprieteUuid);
 }

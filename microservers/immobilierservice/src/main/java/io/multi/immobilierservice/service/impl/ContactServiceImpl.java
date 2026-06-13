@@ -8,6 +8,7 @@ import io.multi.immobilierservice.domain.Propriete;
 import io.multi.immobilierservice.dto.ContactCreateRequest;
 import io.multi.immobilierservice.dto.ContactView;
 import io.multi.immobilierservice.dto.LeadAdminView;
+import io.multi.immobilierservice.dto.ProprietaireView;
 import io.multi.immobilierservice.event.EventType;
 import io.multi.immobilierservice.exception.ApiException;
 import io.multi.immobilierservice.exception.ForbiddenException;
@@ -273,5 +274,32 @@ public class ContactServiceImpl implements ContactService {
         // sans réécrire traite_par/traite_at.
         return contactRepository.traiterLead(contactUuid, leadStatut, adminUserId, noteAdmin)
                 .orElseThrow(() -> new ApiException("Lead déjà traité — action ignorée"));
+    }
+
+    @Override
+    public ProprietaireView getProprietaireByPropriete(String proprieteUuid) {
+        Propriete propriete = proprieteRepository.findByUuid(proprieteUuid)
+                .orElseThrow(() -> new NotFoundException("Propriété introuvable : " + proprieteUuid));
+        ProfilImmo profil = profilImmoRepository.findById(propriete.getProfilId())
+                .orElseThrow(() -> new NotFoundException("Profil propriétaire introuvable"));
+        User u;
+        try {
+            u = userClient.getUserById(profil.getUserId());
+        } catch (Exception e) {
+            log.error("Lookup propriétaire Feign échec userId={} : {}", profil.getUserId(), e.getMessage());
+            throw new ApiException("Service utilisateur indisponible, réessayez plus tard");
+        }
+        if (u == null) {
+            throw new NotFoundException("Propriétaire introuvable");
+        }
+        return ProprietaireView.builder()
+                .userId(u.getUserId())
+                .firstName(u.getFirstName())
+                .lastName(u.getLastName())
+                .email(u.getEmail())
+                .telephone(u.getPhone())
+                .address(u.getAddress())
+                .typeProfil(profil.getTypeProfil())
+                .build();
     }
 }

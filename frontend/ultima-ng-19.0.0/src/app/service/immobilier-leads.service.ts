@@ -37,6 +37,10 @@ export class ImmobilierLeadsService {
     getProprieteDetail$ = (proprieteUuid: string): Observable<IResponse> =>
         this.http.get<IResponse>(`${server}/immo/proprietes/${proprieteUuid}`).pipe(catchError(this.handleError));
 
+    /** Coordonnées du propriétaire de l'annonce (back-office) — nom/email/tél/adresse. */
+    getProprietaire$ = (proprieteUuid: string): Observable<IResponse> =>
+        this.http.get<IResponse>(`${this.baseUrl}/proprietes/${proprieteUuid}/proprietaire`).pipe(catchError(this.handleError));
+
     private handleError = (httpErrorResponse: HttpErrorResponse): Observable<never> => {
         let error = 'Une erreur est survenue. Veuillez réessayer.';
         if (httpErrorResponse.error instanceof ErrorEvent) {

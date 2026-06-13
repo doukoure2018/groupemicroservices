@@ -13,7 +13,7 @@ import { Arrivee } from './arrivee.model';
 
 // Immobilier (SIRA Guinée)
 import { IPropriete } from './propriete';
-import { ILeadContactView, ILeadVisiteView } from './lead';
+import { ILeadContactView, ILeadVisiteView, IProprietaire } from './lead';
 
 export interface IResponse {
     time: Date | string;
@@ -56,6 +56,7 @@ export interface IResponse {
         // Leads back-office (intermédiation)
         contacts?: ILeadContactView[];
         visites?: ILeadVisiteView[];
+        proprietaire?: IProprietaire;
         statut?: string;
         limit?: number;
         offset?: number;

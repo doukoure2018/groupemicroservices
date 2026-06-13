@@ -57,3 +57,13 @@ export interface ITraiterLeadRequest {
     action: 'TRAITE' | 'REJETE';
     noteAdmin?: string;
 }
+
+export interface IProprietaire {
+    userId: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    telephone: string;
+    address: string;
+    typeProfil: string;
+}

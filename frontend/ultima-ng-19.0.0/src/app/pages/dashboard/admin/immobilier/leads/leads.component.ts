@@ -2,7 +2,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ImmobilierLeadsService } from '@/service/immobilier-leads.service';
-import { ILeadContactView, ILeadVisiteView } from '@/interface/lead';
+import { ILeadContactView, ILeadVisiteView, IProprietaire } from '@/interface/lead';
 import { IPropriete } from '@/interface/propriete';
 
 import { TableModule } from 'primeng/table';
@@ -37,6 +37,7 @@ interface DetailDialog {
     uuid: string;
     label: string;
     propriete: IPropriete | null;
+    proprietaire: IProprietaire | null;
 }
 
 interface LeadsState {
@@ -51,7 +52,7 @@ interface LeadsState {
 }
 
 const EMPTY_DIALOG: TraiterDialog = { open: false, kind: 'contact', uuid: '', label: '', submitting: false };
-const EMPTY_DETAIL: DetailDialog = { open: false, loading: false, submitting: false, kind: 'contact', uuid: '', label: '', propriete: null };
+const EMPTY_DETAIL: DetailDialog = { open: false, loading: false, submitting: false, kind: 'contact', uuid: '', label: '', propriete: null, proprietaire: null };
 
 @Component({
     selector: 'app-immobilier-leads',
@@ -158,13 +159,19 @@ export class ImmobilierLeadsComponent implements OnInit {
     // ── Dialog « Voir l'annonce » (détail propriété) ──
     openAnnonce(kind: LeadKind, leadUuid: string, label: string, proprieteUuid: string): void {
         this.noteText = '';
-        this.patch({ detail: { open: true, loading: true, submitting: false, kind, uuid: leadUuid, label, propriete: null } });
+        this.patch({ detail: { open: true, loading: true, submitting: false, kind, uuid: leadUuid, label, propriete: null, proprietaire: null } });
+        // Annonce (bloquant pour l'affichage principal).
         this.leadsService.getProprieteDetail$(proprieteUuid).subscribe({
             next: (r) => this.patch({ detail: { ...this.detail(), loading: false, propriete: (r.data.propriete as IPropriete) ?? null } }),
             error: (e) => {
                 this.patch({ detail: { ...EMPTY_DETAIL } });
                 this.showError(e);
             }
+        });
+        // Propriétaire (non bloquant : si échec, on garde l'annonce sans la carte propriétaire).
+        this.leadsService.getProprietaire$(proprieteUuid).subscribe({
+            next: (r) => this.patch({ detail: { ...this.detail(), proprietaire: (r.data.proprietaire as IProprietaire) ?? null } }),
+            error: () => {}
         });
     }
 

@@ -5,6 +5,7 @@ import io.multi.immobilierservice.domain.Response;
 import io.multi.immobilierservice.domain.Visite;
 import io.multi.immobilierservice.dto.LeadAdminView;
 import io.multi.immobilierservice.dto.LeadVisiteAdminView;
+import io.multi.immobilierservice.dto.ProprietaireView;
 import io.multi.immobilierservice.dto.TraiterLeadRequest;
 import io.multi.immobilierservice.service.ContactService;
 import io.multi.immobilierservice.service.VisiteService;
@@ -91,6 +92,17 @@ public class AdminLeadResource {
         return ResponseEntity.ok(RequestUtils.getResponse(http,
                 Map.of("visite", v),
                 "Lead visite traité : " + req.getAction(),
+                HttpStatus.OK));
+    }
+
+    /** Coordonnées du propriétaire d'une annonce (relais lead) — nom, email, tél, adresse. */
+    @GetMapping("/proprietes/{proprieteUuid}/proprietaire")
+    public ResponseEntity<Response> getProprietaire(@PathVariable String proprieteUuid,
+                                                    HttpServletRequest http) {
+        ProprietaireView proprietaire = contactService.getProprietaireByPropriete(proprieteUuid);
+        return ResponseEntity.ok(RequestUtils.getResponse(http,
+                Map.of("proprietaire", proprietaire),
+                "Propriétaire de l'annonce",
                 HttpStatus.OK));
     }
 }

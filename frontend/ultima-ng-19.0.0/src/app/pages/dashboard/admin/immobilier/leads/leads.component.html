@@ -151,6 +151,20 @@
 
         <p-divider />
 
+        <!-- Propriétaire de l'annonce (à relayer) -->
+        <div class="rounded-lg p-3" style="background: var(--surface-100)">
+            <div class="text-sm font-semibold mb-2"><i class="pi pi-user mr-1"></i>Propriétaire de l'annonce</div>
+            <div *ngIf="detail().proprietaire as o; else ownerLoading" class="flex flex-col gap-1 text-sm">
+                <div><span class="text-muted-color">Nom :</span> {{ o.firstName }} {{ o.lastName }}<span *ngIf="o.typeProfil" class="text-muted-color"> ({{ o.typeProfil }})</span></div>
+                <div *ngIf="o.telephone"><span class="text-muted-color">Contact :</span> {{ o.telephone }}</div>
+                <div *ngIf="o.email"><span class="text-muted-color">Email :</span> {{ o.email }}</div>
+                <div *ngIf="o.address"><span class="text-muted-color">Adresse :</span> {{ o.address }}</div>
+            </div>
+            <ng-template #ownerLoading><span class="text-sm text-muted-color">Chargement du propriétaire…</span></ng-template>
+        </div>
+
+        <p-divider />
+
         <label class="text-sm font-medium" for="noteAdminDetail">Note interne (optionnelle)</label>
         <textarea pInputTextarea id="noteAdminDetail" rows="2" [(ngModel)]="noteText" [autoResize]="true" placeholder="Note de traitement…"></textarea>
     </div>
