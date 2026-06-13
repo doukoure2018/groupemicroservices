@@ -230,6 +230,14 @@ public class MobileAuthController {
                 }
             }
 
+            // Capture la photo Google pour les comptes pré-existants sans avatar
+            // (même correctif que CustomOidcUserService côté web).
+            if (imageUrl != null && !imageUrl.isBlank()
+                    && (user.getImageUrl() == null || user.getImageUrl().isBlank())) {
+                userRepository.updateImageUrl(user.getUserId(), imageUrl);
+                user.setImageUrl(imageUrl);
+            }
+
             // Generate JWT tokens
             Map<String, Object> tokens = mobileTokenService.generateTokens(user);
 

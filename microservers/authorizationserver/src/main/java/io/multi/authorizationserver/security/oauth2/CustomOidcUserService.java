@@ -109,6 +109,16 @@ public class CustomOidcUserService extends OidcUserService {
             }
         }
 
+        // Capture la photo de profil Google pour les comptes pré-existants : avant,
+        // image_url n'était posé qu'à la CRÉATION (createOAuth2User). Les comptes liés
+        // (LOCAL → Google) ou déjà liés restaient donc sans avatar (NULL) → image
+        // absente en prod alors qu'elle apparaissait pour les comptes créés via Google.
+        if (imageUrl != null && !imageUrl.isBlank()
+                && (user.getImageUrl() == null || user.getImageUrl().isBlank())) {
+            userRepository.updateImageUrl(user.getUserId(), imageUrl);
+            user.setImageUrl(imageUrl);
+        }
+
         return new CustomOidcUser(oidcUser, user);
     }
 }

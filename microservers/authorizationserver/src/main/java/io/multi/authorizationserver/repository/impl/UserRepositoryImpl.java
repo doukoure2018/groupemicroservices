@@ -189,6 +189,19 @@ public class UserRepositoryImpl implements UserRepository {
         }
     }
 
+    @Override
+    public void updateImageUrl(Long userId, String imageUrl) {
+        try {
+            jdbcClient.sql(UPDATE_USER_IMAGE_URL_QUERY)
+                    .param("userId", userId)
+                    .param("imageUrl", imageUrl)
+                    .update();
+            log.info("Updated image_url for user {}", userId);
+        } catch (Exception e) {
+            log.error("Error updating image_url for user {}: {}", userId, e.getMessage());
+        }
+    }
+
     // Local registration methods
     @Override
     public boolean emailExists(String email) {

@@ -169,6 +169,12 @@ public class UserQuery {
             WHERE user_id = :userId
             """;
 
+    public static final String UPDATE_USER_IMAGE_URL_QUERY =
+            """
+            UPDATE users SET image_url = :imageUrl, updated_at = NOW()
+            WHERE user_id = :userId
+            """;
+
     // Local registration queries
     public static final String INSERT_LOCAL_USER_QUERY =
             """

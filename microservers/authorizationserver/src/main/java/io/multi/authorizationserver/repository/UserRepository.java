@@ -18,6 +18,7 @@ public interface UserRepository {
     Optional<User> findByGoogleId(String googleId);
     User createOAuth2User(String email, String firstName, String lastName, String imageUrl, String googleId, String provider);
     void linkGoogleAccount(Long userId, String googleId);
+    void updateImageUrl(Long userId, String imageUrl);
 
     // Local registration methods
     boolean emailExists(String email);
