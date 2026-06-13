@@ -82,7 +82,7 @@ public final class VisiteQuery {
 
     /** Liste back-office des leads visite, enrichie réf/titre propriété (join). */
     public static final String FIND_LEADS_FOR_ADMIN = """
-            SELECT v.*, p.reference AS propriete_reference, p.titre AS propriete_titre
+            SELECT v.*, p.propriete_uuid AS propriete_uuid, p.reference AS propriete_reference, p.titre AS propriete_titre
             FROM immo_visite v
             INNER JOIN immo_propriete p ON p.propriete_id = v.propriete_id
             WHERE v.lead_statut = :statut

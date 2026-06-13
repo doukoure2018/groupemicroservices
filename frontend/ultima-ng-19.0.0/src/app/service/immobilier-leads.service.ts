@@ -33,6 +33,10 @@ export class ImmobilierLeadsService {
     traiterVisite$ = (visiteUuid: string, request: ITraiterLeadRequest): Observable<IResponse> =>
         this.http.patch<IResponse>(`${this.baseUrl}/visites/${visiteUuid}`, request).pipe(catchError(this.handleError));
 
+    /** Détail complet de l'annonce liée à un lead (endpoint public GET /immo/proprietes/{uuid}). */
+    getProprieteDetail$ = (proprieteUuid: string): Observable<IResponse> =>
+        this.http.get<IResponse>(`${server}/immo/proprietes/${proprieteUuid}`).pipe(catchError(this.handleError));
+
     private handleError = (httpErrorResponse: HttpErrorResponse): Observable<never> => {
         let error = 'Une erreur est survenue. Veuillez réessayer.';
         if (httpErrorResponse.error instanceof ErrorEvent) {

@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LeadAdminView {
     private Contact contact;
+    private String proprieteUuid;
     private String proprieteReference;
     private String proprieteTitre;
 }

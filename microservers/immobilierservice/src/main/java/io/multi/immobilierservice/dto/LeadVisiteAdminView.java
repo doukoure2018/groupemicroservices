@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LeadVisiteAdminView {
     private Visite visite;
+    private String proprieteUuid;
     private String proprieteReference;
     private String proprieteTitre;
 }

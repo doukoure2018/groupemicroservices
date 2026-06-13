@@ -99,6 +99,7 @@ public class VisiteRepositoryImpl implements VisiteRepository {
                 // Réutilise VisiteRowMapper pour v.* (incl. champs lead_*), puis lit les 2 colonnes jointes.
                 .query((rs, n) -> LeadVisiteAdminView.builder()
                         .visite(rowMapper.mapRow(rs, n))
+                        .proprieteUuid(rs.getString("propriete_uuid"))
                         .proprieteReference(rs.getString("propriete_reference"))
                         .proprieteTitre(rs.getString("propriete_titre"))
                         .build())

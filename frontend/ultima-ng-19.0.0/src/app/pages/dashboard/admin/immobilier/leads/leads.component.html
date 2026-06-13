@@ -46,7 +46,10 @@
                             <td>{{ row.contact.createdAt | date: 'dd/MM/yy HH:mm' }}</td>
                             <td><p-tag [value]="row.contact.leadStatut" [severity]="statutSeverity(row.contact.leadStatut)" /></td>
                             <td>
-                                <p-button icon="pi pi-check" label="Traiter" size="small" (onClick)="openTraiter('contact', row.contact.contactUuid, row.proprieteTitre)" />
+                                <div class="flex gap-2">
+                                    <p-button icon="pi pi-eye" label="Voir" size="small" [outlined]="true" severity="secondary" (onClick)="openAnnonce('contact', row.contact.contactUuid, row.proprieteTitre, row.proprieteUuid)" />
+                                    <p-button icon="pi pi-check" label="Traiter" size="small" (onClick)="openTraiter('contact', row.contact.contactUuid, row.proprieteTitre)" />
+                                </div>
                             </td>
                         </tr>
                     </ng-template>
@@ -84,7 +87,10 @@
                             <td>{{ row.visite.createdAt | date: 'dd/MM/yy HH:mm' }}</td>
                             <td><p-tag [value]="row.visite.leadStatut" [severity]="statutSeverity(row.visite.leadStatut)" /></td>
                             <td>
-                                <p-button icon="pi pi-check" label="Traiter" size="small" (onClick)="openTraiter('visite', row.visite.visiteUuid, row.proprieteTitre)" />
+                                <div class="flex gap-2">
+                                    <p-button icon="pi pi-eye" label="Voir" size="small" [outlined]="true" severity="secondary" (onClick)="openAnnonce('visite', row.visite.visiteUuid, row.proprieteTitre, row.proprieteUuid)" />
+                                    <p-button icon="pi pi-check" label="Traiter" size="small" (onClick)="openTraiter('visite', row.visite.visiteUuid, row.proprieteTitre)" />
+                                </div>
                             </td>
                         </tr>
                     </ng-template>
@@ -110,5 +116,48 @@
         <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="closeTraiter()" [disabled]="dialog().submitting" />
         <p-button label="Rejeter" severity="danger" icon="pi pi-times" (onClick)="submitTraiter('REJETE')" [loading]="dialog().submitting" />
         <p-button label="Marquer traité" severity="success" icon="pi pi-check" (onClick)="submitTraiter('TRAITE')" [loading]="dialog().submitting" />
+    </ng-template>
+</p-dialog>
+
+<!-- Dialog : détail de l'annonce + traiter depuis le détail -->
+<p-dialog [visible]="detail().open" (onHide)="closeDetail()" [modal]="true" [draggable]="false" [style]="{ width: '46rem' }" [header]="'Annonce — ' + detail().label">
+    <div *ngIf="detail().loading" class="flex justify-center p-6">
+        <p-progressSpinner styleClass="w-12 h-12" strokeWidth="4" />
+    </div>
+
+    <div *ngIf="!detail().loading && detail().propriete as p" class="flex flex-col gap-3">
+        <img *ngIf="detailPhotoUrl(p)" [src]="detailPhotoUrl(p)!" alt="Photo annonce" class="w-full rounded-lg object-cover" style="max-height: 16rem" />
+
+        <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-lg font-semibold">{{ p.titre }}</span>
+            <p-tag [value]="p.typeAnnonce" severity="info" />
+            <span class="text-sm text-muted-color">{{ p.reference }}</span>
+        </div>
+
+        <div class="text-xl font-bold text-primary">{{ formatPrix(p) }}</div>
+
+        <div *ngIf="p.adresseComplete" class="text-sm"><i class="pi pi-map-marker mr-1"></i>{{ p.adresseComplete }}</div>
+
+        <div class="flex gap-4 text-sm text-muted-color flex-wrap">
+            <span *ngIf="p.nombreChambres != null"><i class="pi pi-home mr-1"></i>{{ p.nombreChambres }} ch.</span>
+            <span *ngIf="p.nombreSallesBain != null">{{ p.nombreSallesBain }} sdb</span>
+            <span *ngIf="p.surfaceM2 != null">{{ p.surfaceM2 }} m²</span>
+            <span><i class="pi pi-eye mr-1"></i>{{ p.nombreVues }} vues</span>
+        </div>
+
+        <p-divider />
+
+        <div *ngIf="p.description" class="text-sm whitespace-pre-line">{{ p.description }}</div>
+
+        <p-divider />
+
+        <label class="text-sm font-medium" for="noteAdminDetail">Note interne (optionnelle)</label>
+        <textarea pInputTextarea id="noteAdminDetail" rows="2" [(ngModel)]="noteText" [autoResize]="true" placeholder="Note de traitement…"></textarea>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Fermer" severity="secondary" [text]="true" (onClick)="closeDetail()" [disabled]="detail().submitting" />
+        <p-button label="Rejeter" severity="danger" icon="pi pi-times" (onClick)="submitTraiterFromDetail('REJETE')" [loading]="detail().submitting" [disabled]="detail().loading" />
+        <p-button label="Marquer traité" severity="success" icon="pi pi-check" (onClick)="submitTraiterFromDetail('TRAITE')" [loading]="detail().submitting" [disabled]="detail().loading" />
     </ng-template>
 </p-dialog>

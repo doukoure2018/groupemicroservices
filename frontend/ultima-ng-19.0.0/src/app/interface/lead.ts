@@ -41,12 +41,14 @@ export interface ILeadVisite {
 
 export interface ILeadContactView {
     contact: ILeadContact;
+    proprieteUuid: string;
     proprieteReference: string;
     proprieteTitre: string;
 }
 
 export interface ILeadVisiteView {
     visite: ILeadVisite;
+    proprieteUuid: string;
     proprieteReference: string;
     proprieteTitre: string;
 }

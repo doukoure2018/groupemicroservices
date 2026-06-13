@@ -102,6 +102,7 @@ public class ContactRepositoryImpl implements ContactRepository {
                 // Réutilise ContactRowMapper pour c.* (incl. champs lead_*), puis lit les 2 colonnes jointes.
                 .query((rs, n) -> LeadAdminView.builder()
                         .contact(rowMapper.mapRow(rs, n))
+                        .proprieteUuid(rs.getString("propriete_uuid"))
                         .proprieteReference(rs.getString("propriete_reference"))
                         .proprieteTitre(rs.getString("propriete_titre"))
                         .build())

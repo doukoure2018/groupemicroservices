@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ImmobilierLeadsService } from '@/service/immobilier-leads.service';
 import { ILeadContactView, ILeadVisiteView } from '@/interface/lead';
+import { IPropriete } from '@/interface/propriete';
 
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -13,6 +14,8 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { CardModule } from 'primeng/card';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ImageModule } from 'primeng/image';
+import { DividerModule } from 'primeng/divider';
 import { TabsModule } from 'primeng/tabs';
 import { MessageService } from 'primeng/api';
 
@@ -26,6 +29,16 @@ interface TraiterDialog {
     submitting: boolean;
 }
 
+interface DetailDialog {
+    open: boolean;
+    loading: boolean;
+    submitting: boolean;
+    kind: LeadKind;
+    uuid: string;
+    label: string;
+    propriete: IPropriete | null;
+}
+
 interface LeadsState {
     loadingContacts: boolean;
     loadingVisites: boolean;
@@ -34,9 +47,11 @@ interface LeadsState {
     totalContacts: number;
     totalVisites: number;
     dialog: TraiterDialog;
+    detail: DetailDialog;
 }
 
 const EMPTY_DIALOG: TraiterDialog = { open: false, kind: 'contact', uuid: '', label: '', submitting: false };
+const EMPTY_DETAIL: DetailDialog = { open: false, loading: false, submitting: false, kind: 'contact', uuid: '', label: '', propriete: null };
 
 @Component({
     selector: 'app-immobilier-leads',
@@ -53,6 +68,8 @@ const EMPTY_DIALOG: TraiterDialog = { open: false, kind: 'contact', uuid: '', la
         TooltipModule,
         CardModule,
         ProgressSpinnerModule,
+        ImageModule,
+        DividerModule,
         TabsModule
     ],
     providers: [MessageService],
@@ -70,10 +87,11 @@ export class ImmobilierLeadsComponent implements OnInit {
         visites: [],
         totalContacts: 0,
         totalVisites: 0,
-        dialog: { ...EMPTY_DIALOG }
+        dialog: { ...EMPTY_DIALOG },
+        detail: { ...EMPTY_DETAIL }
     });
 
-    /** Note interne saisie dans le dialog (champ libre, hors signal pour ngModel propre). */
+    /** Note interne saisie (partagée par le dialog rapide et le détail). */
     noteText = '';
 
     contacts = computed(() => this.state().contacts);
@@ -83,6 +101,7 @@ export class ImmobilierLeadsComponent implements OnInit {
     totalContacts = computed(() => this.state().totalContacts);
     totalVisites = computed(() => this.state().totalVisites);
     dialog = computed(() => this.state().dialog);
+    detail = computed(() => this.state().detail);
 
     ngOnInit(): void {
         this.loadContacts();
@@ -116,6 +135,7 @@ export class ImmobilierLeadsComponent implements OnInit {
         this.loadVisites();
     }
 
+    // ── Dialog rapide « Traiter » ──
     openTraiter(kind: LeadKind, uuid: string, label: string): void {
         this.noteText = '';
         this.patch({ dialog: { open: true, kind, uuid, label, submitting: false } });
@@ -130,31 +150,64 @@ export class ImmobilierLeadsComponent implements OnInit {
         const d = this.dialog();
         if (!d.uuid || d.submitting) return;
         this.patch({ dialog: { ...d, submitting: true } });
+        this.executeTraiter(d.kind, d.uuid, action, () => this.closeTraiter(), (ok) => {
+            if (!ok) this.patch({ dialog: { ...this.dialog(), submitting: false } });
+        });
+    }
 
+    // ── Dialog « Voir l'annonce » (détail propriété) ──
+    openAnnonce(kind: LeadKind, leadUuid: string, label: string, proprieteUuid: string): void {
+        this.noteText = '';
+        this.patch({ detail: { open: true, loading: true, submitting: false, kind, uuid: leadUuid, label, propriete: null } });
+        this.leadsService.getProprieteDetail$(proprieteUuid).subscribe({
+            next: (r) => this.patch({ detail: { ...this.detail(), loading: false, propriete: (r.data.propriete as IPropriete) ?? null } }),
+            error: (e) => {
+                this.patch({ detail: { ...EMPTY_DETAIL } });
+                this.showError(e);
+            }
+        });
+    }
+
+    closeDetail(): void {
+        this.noteText = '';
+        this.patch({ detail: { ...EMPTY_DETAIL } });
+    }
+
+    submitTraiterFromDetail(action: 'TRAITE' | 'REJETE'): void {
+        const d = this.detail();
+        if (!d.uuid || d.submitting) return;
+        this.patch({ detail: { ...d, submitting: true } });
+        this.executeTraiter(d.kind, d.uuid, action, () => this.closeDetail(), (ok) => {
+            if (!ok) this.patch({ detail: { ...this.detail(), submitting: false } });
+        });
+    }
+
+    /** Cœur du traitement, partagé : appelle l'API, retire le lead de la liste, toast. */
+    private executeTraiter(kind: LeadKind, leadUuid: string, action: 'TRAITE' | 'REJETE', onDone: () => void, onSettled: (ok: boolean) => void): void {
         const note = this.noteText.trim();
         const request = { action, noteAdmin: note.length ? note : undefined };
-        const call$ = d.kind === 'contact' ? this.leadsService.traiterContact$(d.uuid, request) : this.leadsService.traiterVisite$(d.uuid, request);
+        const call$ = kind === 'contact' ? this.leadsService.traiterContact$(leadUuid, request) : this.leadsService.traiterVisite$(leadUuid, request);
 
         call$.subscribe({
             next: (r) => {
-                // Le lead passe NOUVEAU → action : il quitte le filtre NOUVEAU, on le retire de la liste.
-                if (d.kind === 'contact') {
+                if (kind === 'contact') {
                     this.patch({
-                        contacts: this.contacts().filter((c) => c.contact.contactUuid !== d.uuid),
+                        contacts: this.contacts().filter((c) => c.contact.contactUuid !== leadUuid),
                         totalContacts: Math.max(0, this.totalContacts() - 1)
                     });
                 } else {
                     this.patch({
-                        visites: this.visites().filter((v) => v.visite.visiteUuid !== d.uuid),
+                        visites: this.visites().filter((v) => v.visite.visiteUuid !== leadUuid),
                         totalVisites: Math.max(0, this.totalVisites() - 1)
                     });
                 }
-                this.closeTraiter();
+                onDone();
                 this.showSuccess(r.message || (action === 'TRAITE' ? 'Lead traité' : 'Lead rejeté'));
+                onSettled(true);
             },
             error: (e) => {
-                this.patch({ dialog: { ...this.dialog(), submitting: false } });
                 this.showError(e);
+                onSettled(false);
             }
         });
     }
@@ -164,6 +217,19 @@ export class ImmobilierLeadsComponent implements OnInit {
         if (statut === 'NOUVEAU') return 'warn';
         if (statut === 'REJETE') return 'danger';
         return 'secondary';
+    }
+
+    formatPrix(p: IPropriete | null): string {
+        if (!p) return '';
+        if (p.prixSurDemande) return 'Prix sur demande';
+        const montant = new Intl.NumberFormat('fr-FR').format(p.prix);
+        return `${montant} ${p.devise}`;
+    }
+
+    detailPhotoUrl(p: IPropriete | null): string | null {
+        if (!p) return null;
+        const cover = p.photoCouverture ?? p.photos?.[0];
+        return cover?.url || cover?.urlThumbnail || null;
     }
 
     private patch(partial: Partial<LeadsState>): void {

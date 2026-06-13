@@ -69,7 +69,7 @@ public final class ContactQuery {
 
     /** Liste back-office des leads contact, enrichie réf/titre propriété (join). */
     public static final String FIND_LEADS_FOR_ADMIN = """
-            SELECT c.*, p.reference AS propriete_reference, p.titre AS propriete_titre
+            SELECT c.*, p.propriete_uuid AS propriete_uuid, p.reference AS propriete_reference, p.titre AS propriete_titre
             FROM immo_contact c
             INNER JOIN immo_propriete p ON p.propriete_id = c.propriete_id
             WHERE c.lead_statut = :statut
