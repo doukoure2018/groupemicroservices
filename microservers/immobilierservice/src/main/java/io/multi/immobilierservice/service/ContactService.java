@@ -3,6 +3,7 @@ package io.multi.immobilierservice.service;
 import io.multi.immobilierservice.domain.Contact;
 import io.multi.immobilierservice.dto.ContactCreateRequest;
 import io.multi.immobilierservice.dto.ContactView;
+import io.multi.immobilierservice.dto.LeadAdminView;
 
 import java.util.List;
 
@@ -31,4 +32,17 @@ public interface ContactService {
 
     /** Marque un contact comme "vu par vendeur" — seul le propriétaire du bien peut le faire. */
     Contact marquerVu(String contactUuid, Long requesterUserId);
+
+    // ── Intermédiation Phase 1 : leads back-office ──
+
+    /** Back-office : leads contact par statut (défaut NOUVEAU), enrichis réf/titre propriété. */
+    List<LeadAdminView> findLeadsForAdmin(String statut, int limit, int offset);
+
+    long countLeadsForAdmin(String statut);
+
+    /**
+     * Back-office : traite un lead (TRAITE|REJETE). 404 si introuvable ;
+     * refusé (400) si déjà traité (n'écrase pas traite_par/traite_at).
+     */
+    Contact traiterLead(String contactUuid, String action, String noteAdmin, Long adminUserId);
 }

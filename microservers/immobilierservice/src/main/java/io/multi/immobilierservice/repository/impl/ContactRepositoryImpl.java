@@ -1,6 +1,7 @@
 package io.multi.immobilierservice.repository.impl;
 
 import io.multi.immobilierservice.domain.Contact;
+import io.multi.immobilierservice.dto.LeadAdminView;
 import io.multi.immobilierservice.mapper.ContactRowMapper;
 import io.multi.immobilierservice.query.ContactQuery;
 import io.multi.immobilierservice.repository.ContactRepository;
@@ -89,6 +90,40 @@ public class ContactRepositoryImpl implements ContactRepository {
         return jdbcClient.sql(ContactQuery.FIND_VENDEUR_USER_ID)
                 .param("contactUuid", contactUuid)
                 .query(Long.class)
+                .optional();
+    }
+
+    @Override
+    public List<LeadAdminView> findLeadsForAdmin(String statut, int limit, int offset) {
+        return jdbcClient.sql(ContactQuery.FIND_LEADS_FOR_ADMIN)
+                .param("statut", statut)
+                .param("limit", limit)
+                .param("offset", offset)
+                // Réutilise ContactRowMapper pour c.* (incl. champs lead_*), puis lit les 2 colonnes jointes.
+                .query((rs, n) -> LeadAdminView.builder()
+                        .contact(rowMapper.mapRow(rs, n))
+                        .proprieteReference(rs.getString("propriete_reference"))
+                        .proprieteTitre(rs.getString("propriete_titre"))
+                        .build())
+                .list();
+    }
+
+    @Override
+    public long countLeadsForAdmin(String statut) {
+        return jdbcClient.sql(ContactQuery.COUNT_LEADS_FOR_ADMIN)
+                .param("statut", statut)
+                .query(Long.class)
+                .single();
+    }
+
+    @Override
+    public Optional<Contact> traiterLead(String contactUuid, String leadStatut, Long adminUserId, String noteAdmin) {
+        return jdbcClient.sql(ContactQuery.UPDATE_LEAD_TRAITE)
+                .param("contactUuid", contactUuid)
+                .param("leadStatut", leadStatut)
+                .param("adminUserId", adminUserId)
+                .param("noteAdmin", noteAdmin)
+                .query(rowMapper)
                 .optional();
     }
 }

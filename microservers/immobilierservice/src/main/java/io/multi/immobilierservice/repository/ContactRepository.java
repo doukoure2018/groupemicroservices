@@ -1,6 +1,7 @@
 package io.multi.immobilierservice.repository;
 
 import io.multi.immobilierservice.domain.Contact;
+import io.multi.immobilierservice.dto.LeadAdminView;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,4 +26,14 @@ public interface ContactRepository {
 
     /** user_id du vendeur (owner) — sert au check d'autorisation pour markVu. */
     Optional<Long> findVendeurUserId(String contactUuid);
+
+    // ── Intermédiation Phase 1 : leads back-office ──
+
+    /** Leads contact par lead_statut (enrichis réf/titre propriété), paginés. */
+    List<LeadAdminView> findLeadsForAdmin(String statut, int limit, int offset);
+
+    long countLeadsForAdmin(String statut);
+
+    /** Mark-traité conditionnel (seulement si NOUVEAU). Empty si déjà traité. */
+    Optional<Contact> traiterLead(String contactUuid, String leadStatut, Long adminUserId, String noteAdmin);
 }
