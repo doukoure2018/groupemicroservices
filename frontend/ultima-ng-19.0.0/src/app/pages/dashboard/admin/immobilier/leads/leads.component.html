@@ -106,7 +106,7 @@
 </div>
 
 <!-- Dialog : marquer traité / rejeté -->
-<p-dialog [visible]="dialog().open" (onHide)="closeTraiter()" [modal]="true" [draggable]="false" [style]="{ width: '32rem' }" header="Traiter le lead">
+<p-dialog [visible]="dialog().open" (visibleChange)="!$event && closeTraiter()" [modal]="true" [draggable]="false" [style]="{ width: '32rem' }" header="Traiter le lead">
     <div class="flex flex-col gap-3">
         <p class="m-0">Annonce : <strong>{{ dialog().label }}</strong></p>
         <label class="text-sm font-medium" for="noteAdmin">Note interne (optionnelle)</label>
@@ -120,7 +120,7 @@
 </p-dialog>
 
 <!-- Dialog : détail de l'annonce + traiter depuis le détail -->
-<p-dialog [visible]="detail().open" (onHide)="closeDetail()" [modal]="true" [draggable]="false" [style]="{ width: '46rem' }" [header]="'Annonce — ' + detail().label">
+<p-dialog [visible]="detail().open" (visibleChange)="!$event && closeDetail()" [modal]="true" [draggable]="false" [style]="{ width: '46rem' }" [header]="'Annonce — ' + detail().label">
     <div *ngIf="detail().loading" class="flex justify-center p-6">
         <p-progressSpinner styleClass="w-12 h-12" strokeWidth="4" />
     </div>
