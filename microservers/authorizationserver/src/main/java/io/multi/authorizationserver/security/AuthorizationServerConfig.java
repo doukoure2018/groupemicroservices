@@ -439,8 +439,19 @@ public class AuthorizationServerConfig {
         return null;
     }
 
-    // Method for access token authorities (returns String)
+    // Method for access token authorities (returns String).
+    // Build from the User entity (role + fine-grained authorities) so the claim is
+    // IDENTICAL regardless of login path. The Google/OIDC principal (CustomOidcUser)
+    // only exposes [ROLE_<role>] via getAuthorities(), which previously stripped the
+    // fine permissions (immo:lead:*) from web/Google access tokens → 403 on the
+    // back-office endpoints (password/mobile tokens were unaffected). Falling back to
+    // the principal authorities preserves behaviour when the User can't be extracted.
     private String getAuthoritiesAsString(JwtEncodingContext context) {
+        User user = extractUser(context.getPrincipal().getPrincipal());
+        if (user != null) {
+            return (user.getRole() != null ? user.getRole() : "") +
+                    (user.getAuthorities() != null ? "," + user.getAuthorities() : "");
+        }
         return context.getPrincipal().getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));

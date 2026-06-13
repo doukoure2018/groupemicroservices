@@ -32,7 +32,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/immo/admin")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyAuthority('ADMIN_BACKOFFICE','SUPER_ADMIN')")
 public class AdminLeadResource {
 
     private final ContactService contactService;
@@ -40,6 +39,7 @@ public class AdminLeadResource {
     private final JwtUtils jwtUtils;
 
     /** Liste des leads contact (défaut : lead_statut=NOUVEAU), enrichis réf/titre propriété. */
+    @PreAuthorize("hasAnyAuthority('immo:lead:read','SUPER_ADMIN')")
     @GetMapping("/contacts")
     public ResponseEntity<Response> listContacts(@RequestParam(defaultValue = "NOUVEAU") String statut,
                                                  @RequestParam(defaultValue = "20") int limit,
@@ -54,6 +54,7 @@ public class AdminLeadResource {
     }
 
     /** Marque un lead contact TRAITE|REJETE. Refus si déjà traité (pas de réécriture). */
+    @PreAuthorize("hasAnyAuthority('immo:lead:update','SUPER_ADMIN')")
     @PatchMapping("/contacts/{contactUuid}")
     public ResponseEntity<Response> traiterContact(@PathVariable String contactUuid,
                                                    @Valid @RequestBody TraiterLeadRequest req,
@@ -68,6 +69,7 @@ public class AdminLeadResource {
     }
 
     /** Liste des leads visite (défaut : lead_statut=NOUVEAU), enrichis réf/titre propriété. */
+    @PreAuthorize("hasAnyAuthority('immo:lead:read','SUPER_ADMIN')")
     @GetMapping("/visites")
     public ResponseEntity<Response> listVisites(@RequestParam(defaultValue = "NOUVEAU") String statut,
                                                 @RequestParam(defaultValue = "20") int limit,
@@ -82,6 +84,7 @@ public class AdminLeadResource {
     }
 
     /** Marque un lead visite TRAITE|REJETE. Refus si déjà traité (pas de réécriture). */
+    @PreAuthorize("hasAnyAuthority('immo:lead:update','SUPER_ADMIN')")
     @PatchMapping("/visites/{visiteUuid}")
     public ResponseEntity<Response> traiterVisite(@PathVariable String visiteUuid,
                                                   @Valid @RequestBody TraiterLeadRequest req,
@@ -96,6 +99,7 @@ public class AdminLeadResource {
     }
 
     /** Coordonnées du propriétaire d'une annonce (relais lead) — nom, email, tél, adresse. */
+    @PreAuthorize("hasAnyAuthority('immo:lead:read','SUPER_ADMIN')")
     @GetMapping("/proprietes/{proprieteUuid}/proprietaire")
     public ResponseEntity<Response> getProprietaire(@PathVariable String proprieteUuid,
                                                     HttpServletRequest http) {
