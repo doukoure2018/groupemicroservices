@@ -26,6 +26,10 @@ public class ContactRowMapper implements RowMapper<Contact> {
                 .statut(rs.getString("statut"))
                 .vuParVendeur(rs.getBoolean("vu_par_vendeur"))
                 .createdAt(rs.getObject("created_at", OffsetDateTime.class))
+                .leadStatut(rs.getString("lead_statut"))
+                .noteAdmin(rs.getString("note_admin"))
+                .traitePar(rs.getObject("traite_par", Long.class))
+                .traiteAt(rs.getObject("traite_at", OffsetDateTime.class))
                 .build();
     }
 }

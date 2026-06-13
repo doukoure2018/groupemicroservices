@@ -27,4 +27,10 @@ public class Visite {
     private String motifAnnulation;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
+
+    // Audit-log lead back-office (V27) — intermédiation Phase 1.
+    private String leadStatut;         // NOUVEAU | TRAITE | REJETE
+    private String noteAdmin;
+    private Long traitePar;            // user_id admin back-office (nullable)
+    private OffsetDateTime traiteAt;
 }

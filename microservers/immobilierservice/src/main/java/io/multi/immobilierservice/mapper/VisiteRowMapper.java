@@ -28,6 +28,10 @@ public class VisiteRowMapper implements RowMapper<Visite> {
                 .motifAnnulation(rs.getString("motif_annulation"))
                 .createdAt(rs.getObject("created_at", OffsetDateTime.class))
                 .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+                .leadStatut(rs.getString("lead_statut"))
+                .noteAdmin(rs.getString("note_admin"))
+                .traitePar(rs.getObject("traite_par", Long.class))
+                .traiteAt(rs.getObject("traite_at", OffsetDateTime.class))
                 .build();
     }
 }
