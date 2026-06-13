@@ -1,0 +1,114 @@
+<p-toast />
+
+<div class="card">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h2 class="text-xl font-semibold m-0">Demandes (leads) immobilier</h2>
+            <p class="text-sm text-muted-color mt-1 mb-0">Contacts et visites à traiter, puis relayer au propriétaire.</p>
+        </div>
+        <p-button icon="pi pi-refresh" label="Rafraîchir" severity="secondary" size="small" (onClick)="refresh()" />
+    </div>
+
+    <p-tabs value="0">
+        <p-tablist>
+            <p-tab value="0">Contacts ({{ totalContacts() }})</p-tab>
+            <p-tab value="1">Visites ({{ totalVisites() }})</p-tab>
+        </p-tablist>
+        <p-tabpanels>
+            <!-- CONTACTS -->
+            <p-tabpanel value="0">
+                <p-table [value]="contacts()" [loading]="loadingContacts()" [paginator]="contacts().length > 10" [rows]="10" responsiveLayout="scroll">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Annonce</th>
+                            <th>Prospect</th>
+                            <th>Type</th>
+                            <th>Message</th>
+                            <th>Date</th>
+                            <th>Statut</th>
+                            <th></th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-row>
+                        <tr>
+                            <td>
+                                <div class="font-medium">{{ row.proprieteTitre }}</div>
+                                <div class="text-sm text-muted-color">{{ row.proprieteReference }}</div>
+                            </td>
+                            <td>
+                                <div>{{ row.contact.nomDemandeur }}</div>
+                                <div class="text-sm text-muted-color">
+                                    {{ row.contact.telephoneDemandeur }}<span *ngIf="row.contact.emailDemandeur"> · {{ row.contact.emailDemandeur }}</span>
+                                </div>
+                            </td>
+                            <td>{{ row.contact.typeDemande }}</td>
+                            <td><span class="line-clamp-2">{{ row.contact.message }}</span></td>
+                            <td>{{ row.contact.createdAt | date: 'dd/MM/yy HH:mm' }}</td>
+                            <td><p-tag [value]="row.contact.leadStatut" [severity]="statutSeverity(row.contact.leadStatut)" /></td>
+                            <td>
+                                <p-button icon="pi pi-check" label="Traiter" size="small" (onClick)="openTraiter('contact', row.contact.contactUuid, row.proprieteTitre)" />
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="7" class="text-center p-4 text-muted-color">Aucun lead contact en attente.</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </p-tabpanel>
+
+            <!-- VISITES -->
+            <p-tabpanel value="1">
+                <p-table [value]="visites()" [loading]="loadingVisites()" [paginator]="visites().length > 10" [rows]="10" responsiveLayout="scroll">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Annonce</th>
+                            <th>Visiteur</th>
+                            <th>Date visite</th>
+                            <th>Notes</th>
+                            <th>Demandé le</th>
+                            <th>Statut</th>
+                            <th></th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-row>
+                        <tr>
+                            <td>
+                                <div class="font-medium">{{ row.proprieteTitre }}</div>
+                                <div class="text-sm text-muted-color">{{ row.proprieteReference }}</div>
+                            </td>
+                            <td>#{{ row.visite.visiteurUserId }}</td>
+                            <td>{{ row.visite.dateVisite }}<span *ngIf="row.visite.heureVisite"> à {{ row.visite.heureVisite }}</span></td>
+                            <td><span class="line-clamp-2">{{ row.visite.notesVisiteur }}</span></td>
+                            <td>{{ row.visite.createdAt | date: 'dd/MM/yy HH:mm' }}</td>
+                            <td><p-tag [value]="row.visite.leadStatut" [severity]="statutSeverity(row.visite.leadStatut)" /></td>
+                            <td>
+                                <p-button icon="pi pi-check" label="Traiter" size="small" (onClick)="openTraiter('visite', row.visite.visiteUuid, row.proprieteTitre)" />
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="7" class="text-center p-4 text-muted-color">Aucun lead visite en attente.</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </p-tabpanel>
+        </p-tabpanels>
+    </p-tabs>
+</div>
+
+<!-- Dialog : marquer traité / rejeté -->
+<p-dialog [visible]="dialog().open" (onHide)="closeTraiter()" [modal]="true" [draggable]="false" [style]="{ width: '32rem' }" header="Traiter le lead">
+    <div class="flex flex-col gap-3">
+        <p class="m-0">Annonce : <strong>{{ dialog().label }}</strong></p>
+        <label class="text-sm font-medium" for="noteAdmin">Note interne (optionnelle)</label>
+        <textarea pInputTextarea id="noteAdmin" rows="3" [(ngModel)]="noteText" [autoResize]="true" placeholder="Note de traitement (visible back-office uniquement)…"></textarea>
+    </div>
+    <ng-template pTemplate="footer">
+        <p-button label="Annuler" severity="secondary" [text]="true" (onClick)="closeTraiter()" [disabled]="dialog().submitting" />
+        <p-button label="Rejeter" severity="danger" icon="pi pi-times" (onClick)="submitTraiter('REJETE')" [loading]="dialog().submitting" />
+        <p-button label="Marquer traité" severity="success" icon="pi pi-check" (onClick)="submitTraiter('TRAITE')" [loading]="dialog().submitting" />
+    </ng-template>
+</p-dialog>

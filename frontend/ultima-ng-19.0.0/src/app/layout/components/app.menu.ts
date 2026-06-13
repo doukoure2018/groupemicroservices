@@ -29,13 +29,20 @@ export class AppMenu {
     }
 
     private initializeMenu() {
-        if (this.user?.role === 'SUPER_ADMIN') {
+        // Le rôle backend est un STRING_AGG multi-rôle ("USER,ADMIN_BACKOFFICE") →
+        // appartenance EXACTE par split (pas === ni includes brut : 'ADMIN_BACKOFFICE'
+        // contient 'ADMIN' en sous-chaîne). ADMIN_BACKOFFICE testé avant ADMIN.
+        const roles = (this.user?.role ?? '').split(',').map((r) => r.trim());
+        const has = (r: string) => roles.includes(r);
+        if (has('SUPER_ADMIN')) {
             this.model = this.getSuperAdminMenu();
-        } else if (this.user?.role === 'ADMIN') {
+        } else if (has('ADMIN_BACKOFFICE')) {
+            this.model = this.getBackofficeMenu();
+        } else if (has('ADMIN')) {
             this.model = this.getAdminMenu();
-        } else if (this.user?.role === 'AGENT_CREDIT') {
+        } else if (has('AGENT_CREDIT')) {
             this.model = this.getAgentCreditMenu();
-        } else if (this.user?.role === 'MANAGER') {
+        } else if (has('MANAGER')) {
             this.model = this.getManagerMenu();
         } else {
             this.model = this.getDefaultMenu();
@@ -178,6 +185,11 @@ export class AppMenu {
                         label: 'Modération des annonces',
                         icon: 'pi pi-fw pi-check-circle',
                         routerLink: ['/dashboards/admin/immobilier/moderation']
+                    },
+                    {
+                        label: 'Demandes (leads)',
+                        icon: 'pi pi-fw pi-inbox',
+                        routerLink: ['/dashboards/admin/immobilier/leads']
                     }
                 ]
             }
@@ -246,6 +258,32 @@ export class AppMenu {
                         label: 'Rapports Manager',
                         icon: 'pi pi-fw pi-chart-bar',
                         routerLink: ['/dashboards/manager']
+                    }
+                ]
+            }
+        ];
+    }
+
+    private getBackofficeMenu(): MenuItem[] {
+        return [
+            {
+                label: 'Tableau de bord',
+                items: [
+                    {
+                        label: 'Tableau de bord',
+                        icon: 'pi pi-fw pi-th-large',
+                        routerLink: ['/dashboards']
+                    }
+                ]
+            },
+            {
+                label: 'Immobilier (SIRA Guinée)',
+                icon: 'pi pi-fw pi-building',
+                items: [
+                    {
+                        label: 'Demandes (leads)',
+                        icon: 'pi pi-fw pi-inbox',
+                        routerLink: ['/dashboards/admin/immobilier/leads']
                     }
                 ]
             }

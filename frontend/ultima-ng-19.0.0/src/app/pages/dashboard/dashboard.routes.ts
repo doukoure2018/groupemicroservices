@@ -117,6 +117,11 @@ export default [
         data: { breadcrumb: 'Modération Immobilière' },
         loadComponent: () => import('./admin/immobilier/moderation/moderation.component').then((c) => c.ImmobilierModerationComponent)
     },
+    {
+        path: 'admin/immobilier/leads',
+        data: { breadcrumb: 'Demandes (leads) immobilier' },
+        loadComponent: () => import('./admin/immobilier/leads/leads.component').then((c) => c.ImmobilierLeadsComponent)
+    },
 
     // ===== AUTRES ROUTES =====
     {
