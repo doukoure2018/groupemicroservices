@@ -1,6 +1,7 @@
 package io.multi.immobilierservice.repository.impl;
 
 import io.multi.immobilierservice.domain.Visite;
+import io.multi.immobilierservice.dto.LeadVisiteAdminView;
 import io.multi.immobilierservice.mapper.VisiteRowMapper;
 import io.multi.immobilierservice.query.VisiteQuery;
 import io.multi.immobilierservice.repository.VisiteRepository;
@@ -87,5 +88,36 @@ public class VisiteRepositoryImpl implements VisiteRepository {
     public Optional<Long> findOwnerUserId(String uuid) {
         return jdbcClient.sql(VisiteQuery.FIND_OWNER_USER_ID)
                 .param("visiteUuid", uuid).query(Long.class).optional();
+    }
+
+    @Override
+    public List<LeadVisiteAdminView> findLeadsForAdmin(String statut, int limit, int offset) {
+        return jdbcClient.sql(VisiteQuery.FIND_LEADS_FOR_ADMIN)
+                .param("statut", statut)
+                .param("limit", limit)
+                .param("offset", offset)
+                // Réutilise VisiteRowMapper pour v.* (incl. champs lead_*), puis lit les 2 colonnes jointes.
+                .query((rs, n) -> LeadVisiteAdminView.builder()
+                        .visite(rowMapper.mapRow(rs, n))
+                        .proprieteReference(rs.getString("propriete_reference"))
+                        .proprieteTitre(rs.getString("propriete_titre"))
+                        .build())
+                .list();
+    }
+
+    @Override
+    public long countLeadsForAdmin(String statut) {
+        return jdbcClient.sql(VisiteQuery.COUNT_LEADS_FOR_ADMIN)
+                .param("statut", statut).query(Long.class).single();
+    }
+
+    @Override
+    public Optional<Visite> traiterLead(String visiteUuid, String leadStatut, Long adminUserId, String noteAdmin) {
+        return jdbcClient.sql(VisiteQuery.UPDATE_LEAD_TRAITE)
+                .param("visiteUuid", visiteUuid)
+                .param("leadStatut", leadStatut)
+                .param("adminUserId", adminUserId)
+                .param("noteAdmin", noteAdmin)
+                .query(rowMapper).optional();
     }
 }

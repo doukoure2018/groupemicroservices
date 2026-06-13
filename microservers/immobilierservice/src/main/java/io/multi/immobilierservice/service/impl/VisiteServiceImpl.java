@@ -5,10 +5,12 @@ import io.multi.clients.domain.User;
 import io.multi.immobilierservice.domain.ProfilImmo;
 import io.multi.immobilierservice.domain.Propriete;
 import io.multi.immobilierservice.domain.Visite;
+import io.multi.immobilierservice.dto.LeadVisiteAdminView;
 import io.multi.immobilierservice.dto.VisiteCreateRequest;
 import io.multi.immobilierservice.event.EventType;
 import io.multi.immobilierservice.exception.ApiException;
 import io.multi.immobilierservice.exception.ForbiddenException;
+import io.multi.immobilierservice.exception.NotFoundException;
 import io.multi.immobilierservice.repository.FavoriRepository;
 import io.multi.immobilierservice.repository.ProfilImmoRepository;
 import io.multi.immobilierservice.repository.ProprieteRepository;
@@ -267,5 +269,37 @@ public class VisiteServiceImpl implements VisiteService {
         }
         String devise = p.getDevise() != null ? p.getDevise() : "";
         return (p.getPrix().toPlainString() + " " + devise).trim();
+    }
+
+    // ── Intermédiation Phase 1 : leads visite back-office ──
+
+    @Override
+    public List<LeadVisiteAdminView> findLeadsForAdmin(String statut, int limit, int offset) {
+        String s = (statut != null && !statut.isBlank()) ? statut : "NOUVEAU";
+        return visiteRepository.findLeadsForAdmin(s, limit, offset);
+    }
+
+    @Override
+    public long countLeadsForAdmin(String statut) {
+        String s = (statut != null && !statut.isBlank()) ? statut : "NOUVEAU";
+        return visiteRepository.countLeadsForAdmin(s);
+    }
+
+    @Override
+    @Transactional
+    public Visite traiterLead(String visiteUuid, String action, String noteAdmin, Long adminUserId) {
+        // 404 si le lead n'existe pas du tout (NotFoundException → 404).
+        visiteRepository.findByUuid(visiteUuid)
+                .orElseThrow(() -> new NotFoundException("Lead visite introuvable : " + visiteUuid));
+
+        String leadStatut = switch (action) {
+            case "TRAITE", "REJETE" -> action;
+            default -> throw new ApiException("action invalide : " + action);
+        };
+
+        // UPDATE conditionnel (WHERE lead_statut='NOUVEAU') : empty = déjà traité → refus,
+        // sans réécrire traite_par/traite_at.
+        return visiteRepository.traiterLead(visiteUuid, leadStatut, adminUserId, noteAdmin)
+                .orElseThrow(() -> new ApiException("Lead déjà traité — action ignorée"));
     }
 }

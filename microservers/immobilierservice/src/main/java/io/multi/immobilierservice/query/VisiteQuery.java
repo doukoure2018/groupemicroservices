@@ -77,4 +77,36 @@ public final class VisiteQuery {
             INNER JOIN immo_profil prof ON prof.profil_id = p.profil_id
             WHERE v.visite_uuid = :visiteUuid
             """;
+
+    // ── Intermédiation Phase 1 : leads visite back-office (filtrés par lead_statut) ──
+
+    /** Liste back-office des leads visite, enrichie réf/titre propriété (join). */
+    public static final String FIND_LEADS_FOR_ADMIN = """
+            SELECT v.*, p.reference AS propriete_reference, p.titre AS propriete_titre
+            FROM immo_visite v
+            INNER JOIN immo_propriete p ON p.propriete_id = v.propriete_id
+            WHERE v.lead_statut = :statut
+            ORDER BY v.created_at DESC
+            LIMIT :limit OFFSET :offset
+            """;
+
+    public static final String COUNT_LEADS_FOR_ADMIN = """
+            SELECT COUNT(*) FROM immo_visite WHERE lead_statut = :statut
+            """;
+
+    /**
+     * Mark-traité conditionnel : applique seulement si encore NOUVEAU.
+     * Si lead_statut != 'NOUVEAU', 0 ligne mise à jour (RETURNING vide) →
+     * n'écrase JAMAIS un traite_par/traite_at déjà posé.
+     */
+    public static final String UPDATE_LEAD_TRAITE = """
+            UPDATE immo_visite SET
+                lead_statut = :leadStatut,
+                note_admin  = :noteAdmin,
+                traite_par  = :adminUserId,
+                traite_at   = CURRENT_TIMESTAMP
+            WHERE visite_uuid = :visiteUuid
+              AND lead_statut = 'NOUVEAU'
+            RETURNING *
+            """;
 }

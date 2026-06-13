@@ -1,6 +1,7 @@
 package io.multi.immobilierservice.repository;
 
 import io.multi.immobilierservice.domain.Visite;
+import io.multi.immobilierservice.dto.LeadVisiteAdminView;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,4 +24,13 @@ public interface VisiteRepository {
 
     /** Owner du bien (pour autoriser les actions vendeur). */
     Optional<Long> findOwnerUserId(String visiteUuid);
+
+    // ── Intermédiation Phase 1 : leads visite back-office ──
+
+    List<LeadVisiteAdminView> findLeadsForAdmin(String statut, int limit, int offset);
+
+    long countLeadsForAdmin(String statut);
+
+    /** Mark-traité conditionnel (seulement si NOUVEAU). Empty si déjà traité. */
+    Optional<Visite> traiterLead(String visiteUuid, String leadStatut, Long adminUserId, String noteAdmin);
 }
