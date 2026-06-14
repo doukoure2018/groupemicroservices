@@ -105,11 +105,13 @@ class AppConfig {
   // ===========================================================================
   // Feature flags
   // ===========================================================================
-  // Google Sign-In activé en dev + test uniquement (smoke test avant prod).
-  // PROD reste false tant que : (1) smoke test TEST validé, (2) secret prod
-  // GOOGLE_CLIENT_ID rotaté du placeholder __GOOGLE_DISABLED__ vers le vrai
-  // Web Client ID SIRA (GitHub Actions), (3) backend redéployé avec la
-  // vérification idToken (commit 9794442). Cf dette
-  // backend-google-idtoken-no-verification.
-  static const bool enableGoogleSignIn = isDev || isTest;
+  // Google Sign-In activé sur TOUS les envs (dev + test + prod, 2026-06-14).
+  // Préconditions prod désormais réunies :
+  //   (1) smoke test TEST validé (iOS+Android) ;
+  //   (2) client IDs réels en place : iOS GIDClientID (Info.plist) + Android
+  //       (google-services.json) — plus de placeholder ;
+  //   (3) backend prod redéployé avec vérification idToken (MobileTokenService,
+  //       commit 9794442) ;
+  //   (4) secret prod GOOGLE_OAUTH_AUDIENCE = liste Web+iOS (idToken iOS accepté).
+  static const bool enableGoogleSignIn = true;
 }
