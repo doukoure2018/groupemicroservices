@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../../../shared/http/api_exception.dart';
@@ -21,8 +19,8 @@ import 'fiche_propriete_screen.dart';
 ///
 /// Spec layout :
 ///   1. Header : "Localisation" petit + ville gros + dropdown + cloche notif
-///   2. Search bar pill + bouton carré corail filtres collé à droite
-///   3. 4 catégories rondes (Maison/Villa/Appartement/Bungalow)
+///      + bouton Filtres (tune) corail — recherche texte supprimée 2026-06-14.
+///   2. 4 catégories rondes (Maison/Villa/Appartement/Bungalow)
 ///   4. Section "Recommandées" horizontal scroll (10 dernières publiées)
 ///   5. Section "À proximité" horizontal scroll (si geoActive) ou CTA activer
 ///   6. Liste "Toutes les annonces" verticale paginée
@@ -44,8 +42,6 @@ class _RechercheScreenState extends State<RechercheScreen> {
 
   final _service = ProprieteService();
   final _scrollController = ScrollController();
-  final _searchController = TextEditingController();
-  Timer? _searchDebounce;
 
   bool _initialLoading = true;
   bool _loadingMore = false;
@@ -66,8 +62,6 @@ class _RechercheScreenState extends State<RechercheScreen> {
 
   @override
   void dispose() {
-    _searchDebounce?.cancel();
-    _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -158,17 +152,6 @@ class _RechercheScreenState extends State<RechercheScreen> {
     }
   }
 
-  void _onSearchChanged(String value) {
-    _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 450), () {
-      final q = value.trim();
-      final next = _filtres.copyWith(q: q.isEmpty ? null : q);
-      if (next == _filtres) return;
-      setState(() => _filtres = next);
-      _loadInitial();
-    });
-  }
-
   /// Toggle filtre catégorie typeBienCode. Combinable avec les autres filtres.
   /// Tap deux fois sur la même = retire le filtre.
   void _toggleCategorie(String code) {
@@ -212,7 +195,6 @@ class _RechercheScreenState extends State<RechercheScreen> {
   }
 
   void _resetFiltres() {
-    _searchController.clear();
     setState(() => _filtres = const RechercheFiltres());
     _loadInitial();
   }
@@ -305,7 +287,6 @@ class _RechercheScreenState extends State<RechercheScreen> {
         controller: _scrollController,
         slivers: [
           SliverToBoxAdapter(child: _buildHeaderLocation()),
-          SliverToBoxAdapter(child: _buildSearchBar()),
           SliverToBoxAdapter(child: _buildCategoriesRow()),
           if (_recommandees.isNotEmpty)
             SliverToBoxAdapter(
@@ -412,6 +393,15 @@ class _RechercheScreenState extends State<RechercheScreen> {
               );
             },
           ),
+          const SizedBox(width: 10),
+          // Bouton Filtres — remplace la barre de recherche supprimée. Corail
+          // si des filtres sont actifs (+ badge du nombre). Ouvre FiltresSheet.
+          _headerCircleButton(
+            icon: Icons.tune,
+            color: _filtres.isEmpty ? AppColors.primary : AppColors.secondary,
+            onTap: _openFilters,
+            badgeCount: _filtres.activeCount,
+          ),
         ],
       ),
     );
@@ -423,8 +413,9 @@ class _RechercheScreenState extends State<RechercheScreen> {
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
+    int badgeCount = 0,
   }) {
-    return Container(
+    final button = Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
         shape: BoxShape.circle,
@@ -449,124 +440,34 @@ class _RechercheScreenState extends State<RechercheScreen> {
         ),
       ),
     );
-  }
-
-  // -------------------- Search bar (pill + bouton corail) --------------------
-
-  /// Search bar pattern Airbnb/Booking : UNE seule pill blanche contenant
-   /// loupe + TextField + bouton filtres corail circulaire intégré à droite.
-   /// Pas de 2 zones juxtaposées — visuellement UN champ unifié.
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
-      child: Container(
-        height: 50,
-        // Padding droite réduit (7px) pour que le bouton corail interne
-        // ait une marge serrée par rapport au bord arrondi de la pill.
-        padding: const EdgeInsets.fromLTRB(16, 0, 7, 0),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.search, color: AppColors.primary, size: 22),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TextField(
-                controller: _searchController,
-                onChanged: _onSearchChanged,
-                style: const TextStyle(fontSize: 14),
-                // Force InputBorder.none sur les 5 états — sinon le
-                // InputDecorationTheme du AppTheme.light() peint une
-                // OutlineInputBorder par défaut qui crée l'effet "pill
-                // dans la pill". Override explicite obligatoire ici.
-                decoration: InputDecoration(
-                  hintText: 'Rechercher',
-                  hintStyle: TextStyle(
-                    color: AppColors.onBackground.withValues(alpha: 0.4),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  filled: false,
-                  fillColor: Colors.transparent,
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-            ),
-            if (_searchController.text.isNotEmpty) ...[
-              GestureDetector(
-                onTap: () {
-                  _searchController.clear();
-                  _onSearchChanged('');
-                },
-                child: const Icon(Icons.close,
-                    size: 18, color: AppColors.onBackground),
-              ),
-              const SizedBox(width: 6),
-            ],
-            // Bouton filtres INTÉGRÉ : cercle corail 36×36, perçu comme
-            // une action de la pill et non un champ séparé.
-            Material(
+    if (badgeCount <= 0) return button;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        button,
+        Positioned(
+          top: -2,
+          right: -2,
+          child: Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
               color: AppColors.secondary,
-              shape: const CircleBorder(),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: _openFilters,
-                child: SizedBox(
-                  width: 36,
-                  height: 36,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Icon(Icons.tune, color: Colors.white, size: 18),
-                      if (!_filtres.isEmpty)
-                        Positioned(
-                          top: -2,
-                          right: -2,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                  color: AppColors.surface, width: 1.5),
-                            ),
-                            constraints: const BoxConstraints(
-                                minWidth: 14, minHeight: 14),
-                            child: Text(
-                              '${_filtres.activeCount}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 8,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.surface, width: 1.5),
+            ),
+            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+            child: Text(
+              '$badgeCount',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
