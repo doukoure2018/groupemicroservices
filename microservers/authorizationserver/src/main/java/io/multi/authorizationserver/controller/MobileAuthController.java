@@ -214,10 +214,13 @@ public class MobileAuthController {
             }
 
             String userUuid = (String) account.get("user_uuid");
+            String email = (String) account.get("email");
             userRepository.enableUser(userUuid);
             userRepository.deleteAccountToken(token); // single-use
 
-            User user = userRepository.getUserByUuid(userUuid);
+            // getUserByEmail (chemin prouvé par le login). NB: getUserByUuid est
+            // bancale (SELECT_USER_BY_UUID_QUERY filtre en réalité WHERE username).
+            User user = userRepository.getUserByEmail(email);
             Map<String, Object> tokens = mobileTokenService.generateTokens(user);
             log.info("Mobile verify-mobile success + auto-login for uuid: {}", userUuid);
             return ResponseEntity.ok(tokens);

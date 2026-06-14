@@ -275,6 +275,7 @@ public class UserRepositoryImpl implements UserRepository {
                     .query((rs, rowNum) -> {
                         Map<String, Object> map = new HashMap<>();
                         map.put("user_uuid", rs.getString("user_uuid"));
+                        map.put("email", rs.getString("email"));
                         map.put("expired", rs.getBoolean("expired"));
                         return map;
                     })

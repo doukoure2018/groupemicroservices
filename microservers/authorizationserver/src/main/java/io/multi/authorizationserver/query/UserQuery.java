@@ -198,6 +198,7 @@ public class UserQuery {
     public static final String SELECT_ACCOUNT_TOKEN_QUERY =
             """
             SELECT u.user_uuid AS user_uuid,
+                   u.email AS email,
                    (acct.created_at + INTERVAL '24 hours') < NOW() AS expired
             FROM account_tokens acct
             JOIN users u ON u.user_id = acct.user_id
