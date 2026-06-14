@@ -55,12 +55,19 @@ class TicketScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.share, color: ColorManager.accent),
             onPressed: () async {
+              // sharePositionOrigin requis sur iOS/iPad (popover) — ancré sur le
+              // rect courant, sinon PlatformException. Null sur Android (ignoré).
+              final box = context.findRenderObject() as RenderBox?;
+              final origin = (box != null && box.hasSize)
+                  ? box.localToGlobal(Offset.zero) & box.size
+                  : null;
               await Share.share(
                 'Mon billet SIRA Guinée\n'
                 'Code: ${billet.codeBillet}\n'
                 'Trajet: $departure - $destination\n'
                 'Date: $_formattedDate a $time\n'
                 'Passager: ${billet.nomPassager}',
+                sharePositionOrigin: origin,
               );
             },
           ),

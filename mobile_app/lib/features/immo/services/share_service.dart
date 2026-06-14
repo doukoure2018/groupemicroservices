@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -29,13 +30,22 @@ import '../models/propriete.dart';
 class ShareService {
   /// Tente le partage avec image. Fallback texte seul si pas d'image ou
   /// erreur. Toujours `Future<void>` — pas de retour à gérer côté caller.
-  static Future<void> sharePropriete(Propriete propriete) async {
+  ///
+  /// [sharePositionOrigin] : rect source (en coordonnées globales) du widget
+  /// déclencheur. REQUIS sur iOS/iPad : `UIActivityViewController` est présenté
+  /// en popover et exige un rect d'ancrage non nul, sinon `PlatformException
+  /// (sharePositionOrigin: argument must be set ...)`. Le caller le calcule
+  /// depuis son `RenderBox`. Sans danger sur Android (ignoré).
+  static Future<void> sharePropriete(
+    Propriete propriete, {
+    Rect? sharePositionOrigin,
+  }) async {
     final text = _formatText(propriete);
     final subject = 'SIRA Guinée — ${propriete.titre}';
     final imageUrl = _coverUrl(propriete);
 
     if (imageUrl == null) {
-      await Share.share(text, subject: subject);
+      await Share.share(text, subject: subject, sharePositionOrigin: sharePositionOrigin);
       return;
     }
 
@@ -45,13 +55,14 @@ class ShareService {
         [XFile(file.path)],
         text: text,
         subject: subject,
+        sharePositionOrigin: sharePositionOrigin,
       );
     } catch (_) {
       // Fallback silencieux : on partage au moins le texte. Cas typiques :
       // - MinIO down (timeout 30s puis HttpException)
       // - URL malformée (404)
       // - Pas de permission disque (rare)
-      await Share.share(text, subject: subject);
+      await Share.share(text, subject: subject, sharePositionOrigin: sharePositionOrigin);
     }
   }
 

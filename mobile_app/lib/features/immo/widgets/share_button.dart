@@ -37,9 +37,16 @@ class _ShareButtonState extends State<ShareButton> {
 
   Future<void> _handleShare() async {
     if (_loading) return;
+    // Rect d'ancrage du popover de partage iOS/iPad (coordonnées globales),
+    // calculé depuis le RenderBox du bouton. Capturé AVANT l'await (le widget
+    // est monté et layouté ici). Null sur Android → ignoré.
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = (box != null && box.hasSize)
+        ? box.localToGlobal(Offset.zero) & box.size
+        : null;
     setState(() => _loading = true);
     try {
-      await ShareService.sharePropriete(widget.propriete);
+      await ShareService.sharePropriete(widget.propriete, sharePositionOrigin: origin);
     } finally {
       // Pas de gestion d'erreur explicite : ShareService a son propre
       // fallback texte-seul silencieux. Le bouton reset le loading pour

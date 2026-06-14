@@ -809,11 +809,19 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   Future<void> _shareOffer(TripOffer offer) async {
     final content = _buildShareText(offer);
 
+    // sharePositionOrigin requis sur iOS/iPad (popover) — ancré sur le rect
+    // courant, sinon PlatformException. Null sur Android (ignoré).
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = (box != null && box.hasSize)
+        ? box.localToGlobal(Offset.zero) & box.size
+        : null;
+
     try {
       final result = await Share.share(
         content,
         subject:
             '${offer.departureCity} -> ${offer.arrivalCity} - SIRA Guinée',
+        sharePositionOrigin: origin,
       );
       debugPrint('Share result: ${result.status}');
       if (result.status == ShareResultStatus.unavailable) {
