@@ -1,0 +1,32 @@
+<div class="flex items-center justify-center min-h-screen px-4" style="background: linear-gradient(135deg, #0d4f4a 0%, #0a3d39 100%);">
+    <div class="text-center p-8 rounded-2xl shadow-2xl" style="background:#ffffff; max-width: 420px; width:100%;">
+        <img src="/images/logo-sira-guinee-no-bg.png" alt="SIRA Guinée" style="height:72px; width:auto; margin:0 auto 24px;" />
+
+        @switch (state().status) {
+            @case ('loading') {
+                <p-progressSpinner styleClass="!w-12 !h-12" strokeWidth="4" />
+                <h2 class="text-xl font-bold mt-4" style="color:#1e3a5f;">Vérification en cours…</h2>
+                <p class="text-sm mt-2" style="color:#64748b;">Activation de votre compte SIRA Guinée.</p>
+            }
+            @case ('mobile-ok') {
+                <div style="font-size:48px; line-height:1;">✅</div>
+                <h2 class="text-xl font-bold mt-4" style="color:#1e3a5f;">Compte vérifié</h2>
+                <p class="text-sm mt-2" style="color:#64748b;">Ouverture de l'application SIRA Guinée…</p>
+                <p-button label="Ouvrir l'app" styleClass="mt-4 w-full" (onClick)="openApp()" />
+            }
+            @case ('desktop-ok') {
+                <div style="font-size:48px; line-height:1;">✅</div>
+                <h2 class="text-xl font-bold mt-4" style="color:#1e3a5f;">Compte vérifié</h2>
+                <p class="text-sm mt-3" style="color:#64748b;">
+                    Ouvrez l'application <strong>SIRA Guinée</strong> sur votre téléphone
+                    pour vous connecter et accéder à votre profil.
+                </p>
+            }
+            @case ('error') {
+                <div style="font-size:48px; line-height:1;">⚠️</div>
+                <h2 class="text-xl font-bold mt-4" style="color:#b91c1c;">Vérification impossible</h2>
+                <p class="text-sm mt-2" style="color:#64748b;">{{ state().message }}</p>
+            }
+        }
+    </div>
+</div>

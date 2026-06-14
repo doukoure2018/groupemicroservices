@@ -19,6 +19,11 @@ export class UserService {
 
     verifyAccountToken$ = (token: string) => <Observable<IResponse>>this.http.get<IResponse>(`${server}/user/verify/account?token=${token}`).pipe(tap(console.log), catchError(this.handleError));
 
+    // Web-bridge Phase 2 : vérifie + active le compte ET renvoie les tokens
+    // (format generateTokens : access_token/refresh_token/id_token). Endpoint
+    // authorizationserver via gateway (préfixe /authorization). Pas d'enveloppe IResponse.
+    verifyMobile$ = (token: string) => <Observable<any>>this.http.post<any>(`${server}/authorization/api/auth/verify-mobile`, { token }).pipe(tap(console.log), catchError(this.handleError));
+
     resetPassword$ = (form: FormData) => <Observable<IResponse>>this.http.post<IResponse>(`${server}/user/resetpassword`, form).pipe(tap(console.log), catchError(this.handleError));
 
     verifyPasswordToken$ = (token: string) => <Observable<IResponse>>this.http.get<IResponse>(`${server}/user/verify/password?token=${token}`).pipe(tap(console.log), catchError(this.handleError));

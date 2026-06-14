@@ -15,6 +15,7 @@ export default [
             { path: 'register', loadComponent: () => import('./register/register.component').then((c) => c.RegisterComponent) },
             { path: 'newpassword', loadComponent: () => import('./newpassword').then((c) => c.NewPassword) },
             { path: 'verify/account', loadComponent: () => import('./verifyaccount/verifyaccount.component').then((c) => c.VerifyaccountComponent) },
+            { path: 'verify/mobile', loadComponent: () => import('./verifymobile/verifymobile.component').then((c) => c.VerifymobileComponent) },
             { path: 'verify/password', loadComponent: () => import('./verifypassword/verifypassword.component').then((c) => c.VerifypasswordComponent) },
             { path: 'lockscreen', loadComponent: () => import('./lockscreen').then((c) => c.LockScreen) },
             { path: '**', redirectTo: '/notfound' }
