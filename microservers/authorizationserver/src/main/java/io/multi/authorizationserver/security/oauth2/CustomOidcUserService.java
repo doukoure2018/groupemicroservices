@@ -24,7 +24,26 @@ import java.util.Optional;
 @Slf4j
 public class CustomOidcUserService extends OidcUserService {
 
+    /**
+     * Avatar par défaut posé par le DEFAULT de la colonne {@code users.image_url}
+     * (cf migration V1). image_url n'étant donc JAMAIS NULL, on doit considérer
+     * ce placeholder comme "remplaçable" pour pouvoir capter la photo Google.
+     * Le SQL reste la source de vérité ; cette constante en est le miroir Java.
+     */
+    public static final String DEFAULT_AVATAR_URL =
+            "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
     private final UserRepository userRepository;
+
+    /**
+     * Vrai si l'avatar courant est vide ou correspond au placeholder par défaut
+     * (test robuste au éventuel suffixe {@code ?timestamp}), donc remplaçable par
+     * la photo Google. Faux si l'user a un avatar uploadé custom (à ne pas écraser).
+     */
+    private static boolean isReplaceableAvatar(String current) {
+        return current == null || current.isBlank()
+                || current.contains("flaticon") || current.contains("149071");
+    }
 
     @Override
     public OidcUser loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException {
@@ -111,10 +130,12 @@ public class CustomOidcUserService extends OidcUserService {
 
         // Capture la photo de profil Google pour les comptes pré-existants : avant,
         // image_url n'était posé qu'à la CRÉATION (createOAuth2User). Les comptes liés
-        // (LOCAL → Google) ou déjà liés restaient donc sans avatar (NULL) → image
-        // absente en prod alors qu'elle apparaissait pour les comptes créés via Google.
+        // (LOCAL → Google) ou déjà liés restaient donc sans avatar.
+        // Garde élargie : image_url n'est JAMAIS NULL (DEFAULT SQL = placeholder
+        // flaticon, V1), donc un simple isBlank() ne se déclenchait jamais. On
+        // remplace aussi le placeholder par défaut — mais pas un avatar uploadé custom.
         if (imageUrl != null && !imageUrl.isBlank()
-                && (user.getImageUrl() == null || user.getImageUrl().isBlank())) {
+                && isReplaceableAvatar(user.getImageUrl())) {
             userRepository.updateImageUrl(user.getUserId(), imageUrl);
             user.setImageUrl(imageUrl);
         }
