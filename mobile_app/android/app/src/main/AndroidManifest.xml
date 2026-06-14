@@ -41,6 +41,15 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="yigui"/>
             </intent-filter>
+
+            <!-- Phase 2 : deep-link vérification email (sira://verify) → auto-login.
+                 Distinct du yigui:// (OAuth) qui reste intact. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="sira" android:host="verify"/>
+            </intent-filter>
         </activity>
 
         <!-- Don't delete the meta-data below.

@@ -132,6 +132,38 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Phase 2 : auto-login depuis les tokens reçus via deep-link sira://verify
+  // (web-bridge vérif email). Pas d'appel réseau — tokens déjà émis par le
+  // backend verify-mobile. Profil complet (Phase 1) → AuthWrapper route direct
+  // vers le Hub, sans gate.
+  Future<bool> completeAuthFromTokens({
+    required String accessToken,
+    required String refreshToken,
+    String? idToken,
+  }) async {
+    _status = AuthStatus.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final tokens = await _authService.saveDeepLinkTokens(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        idToken: idToken,
+      );
+      _tokens = tokens;
+      _user = await _authService.getUserFromIdToken();
+      _status = AuthStatus.authenticated;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _status = AuthStatus.error;
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Login via OAuth2 PKCE (fallback)
   Future<bool> login() async {
     _status = AuthStatus.loading;

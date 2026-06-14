@@ -38,6 +38,8 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>yigui</string>
+				<!-- Phase 2 : deep-link vérification email (sira://verify). yigui reste pour l'OAuth. -->
+				<string>sira</string>
 			</array>
 		</dict>
 		<dict>

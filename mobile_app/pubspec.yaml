@@ -18,6 +18,9 @@ dependencies:
   flutter_secure_storage: ^9.2.2
   google_sign_in: ^6.2.2
 
+  # Deep links (Phase 2 : sira://verify auto-login)
+  app_links: ^6.3.2
+
   # HTTP & API
   http: ^1.2.2
   dio: ^5.7.0

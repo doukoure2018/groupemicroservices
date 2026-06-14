@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:app_links/app_links.dart';
 import 'providers/auth_provider.dart';
 import 'models/user_profile.dart';
 import 'screens/splash_screen.dart';
@@ -52,6 +54,9 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
+  final _appLinks = AppLinks();
+  StreamSubscription<Uri>? _linkSub;
+
   @override
   void initState() {
     super.initState();
@@ -69,6 +74,42 @@ class _AuthWrapperState extends State<AuthWrapper> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthProvider>().initialize();
     });
+    _initDeepLinks();
+  }
+
+  /// Phase 2 : écoute les deep-links sira://verify (vérif email web-bridge).
+  /// Cold start (app ouverte via le lien) + foreground (lien tapé app ouverte).
+  Future<void> _initDeepLinks() async {
+    try {
+      final initial = await _appLinks.getInitialLink();
+      if (initial != null) _handleDeepLink(initial);
+    } catch (_) {
+      // pas de lien initial / plateforme non supportée : on ignore.
+    }
+    _linkSub = _appLinks.uriLinkStream.listen(_handleDeepLink, onError: (_) {});
+  }
+
+  void _handleDeepLink(Uri uri) {
+    if (uri.scheme != 'sira' || uri.host != 'verify') return;
+    final access = uri.queryParameters['accessToken'];
+    final refresh = uri.queryParameters['refreshToken'];
+    final id = uri.queryParameters['idToken'];
+    if (access == null || access.isEmpty || refresh == null || refresh.isEmpty) {
+      return;
+    }
+    if (!mounted) return;
+    // Auto-login : stocke les tokens → status authenticated → Hub direct.
+    context.read<AuthProvider>().completeAuthFromTokens(
+          accessToken: access,
+          refreshToken: refresh,
+          idToken: id,
+        );
+  }
+
+  @override
+  void dispose() {
+    _linkSub?.cancel();
+    super.dispose();
   }
 
   @override

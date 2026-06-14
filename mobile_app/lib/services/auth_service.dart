@@ -122,6 +122,26 @@ class AuthService {
     }
   }
 
+  // ========== DEEP-LINK VERIFY (Phase 2) ==========
+
+  /// Stocke des tokens reçus via le deep-link sira://verify (web-bridge). Pas
+  /// d'appel réseau : verify-mobile a déjà émis les tokens côté backend.
+  Future<AuthTokens> saveDeepLinkTokens({
+    required String accessToken,
+    required String refreshToken,
+    String? idToken,
+  }) async {
+    final tokens = AuthTokens(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      idToken: idToken,
+      accessTokenExpirationDateTime:
+          DateTime.now().add(const Duration(seconds: 3600)),
+    );
+    await _saveTokens(tokens);
+    return tokens;
+  }
+
   // ========== OAUTH2 PKCE LOGIN (fallback) ==========
 
   Future<AuthTokens?> login() async {
