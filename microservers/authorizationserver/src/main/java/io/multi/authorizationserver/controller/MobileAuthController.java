@@ -8,6 +8,7 @@ import io.multi.authorizationserver.model.User;
 import io.multi.authorizationserver.repository.UserRepository;
 import io.multi.authorizationserver.service.MobileTokenService;
 import io.multi.authorizationserver.service.UserService;
+import io.multi.authorizationserver.utils.AvatarUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -230,10 +231,12 @@ public class MobileAuthController {
                 }
             }
 
-            // Capture la photo Google pour les comptes pré-existants sans avatar
-            // (même correctif que CustomOidcUserService côté web).
+            // Capture la photo Google pour les comptes pré-existants : image_url
+            // n'est jamais blank (DEFAULT SQL = placeholder flaticon), donc on
+            // remplace aussi le placeholder par défaut — pas un avatar custom.
+            // Garde partagée avec le web via AvatarUtils.
             if (imageUrl != null && !imageUrl.isBlank()
-                    && (user.getImageUrl() == null || user.getImageUrl().isBlank())) {
+                    && AvatarUtils.isReplaceable(user.getImageUrl())) {
                 userRepository.updateImageUrl(user.getUserId(), imageUrl);
                 user.setImageUrl(imageUrl);
             }
