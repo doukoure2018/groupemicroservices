@@ -62,6 +62,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
         authProvider.logout();
       }
     };
+    // Lancer l'init auth UNE SEULE FOIS ici (post-frame pour éviter un
+    // notifyListeners pendant le build). Avant, initialize() était déclenché
+    // par SplashScreen.initState — or SplashScreen est réutilisé (AuthWrapper +
+    // _ProfileGate), donc il se relançait et provoquait le flash Welcome→profil.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthProvider>().initialize();
+    });
   }
 
   @override
@@ -123,7 +130,11 @@ class _ProfileGateState extends State<_ProfileGate> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const SplashScreen();
+    // Loader NEUTRE (pas SplashScreen) : SplashScreen ne doit plus être réutilisé
+    // ici, sinon il re-déclenchait l'init et causait le flash.
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     if (!_completed && _profile != null && !_profile!.isComplete) {
       return CompleteProfileScreen(
         profile: _profile!,

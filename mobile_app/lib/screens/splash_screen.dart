@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 import '../presentation/resource/color_manager.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -20,7 +18,9 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     _setupAnimations();
-    _initializeApp();
+    // NB : SplashScreen est désormais purement présentationnel. L'init auth
+    // (initialize()) est déclenchée UNE SEULE FOIS par AuthWrapper, plus ici
+    // (ce widget étant réutilisé, l'appeler ici relançait l'init → flash).
   }
 
   void _setupAnimations() {
@@ -44,14 +44,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _animationController.forward();
-  }
-
-  Future<void> _initializeApp() async {
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.initialize();
-    }
   }
 
   @override
