@@ -56,6 +56,7 @@ class AuthService {
     required String lastName,
     required String email,
     required String password,
+    required String address,
     String? phone,
   }) async {
     try {
@@ -69,6 +70,7 @@ class AuthService {
           'password': password,
           'confirmPassword': password,
           'phone': phone,
+          'address': address,
         }),
       );
 

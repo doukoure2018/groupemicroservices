@@ -156,6 +156,7 @@ public class LoginController {
                     registerRequest.getFirstName(),
                     registerRequest.getLastName(),
                     registerRequest.getPhone(),
+                    registerRequest.getAddress(),
                     encodedPassword
             );
 

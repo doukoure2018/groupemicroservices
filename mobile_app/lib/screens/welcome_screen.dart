@@ -37,6 +37,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final _registerLastNameController = TextEditingController();
   final _registerEmailController = TextEditingController();
   final _registerPhoneController = TextEditingController();
+  final _registerAddressController = TextEditingController();
   final _registerPasswordController = TextEditingController();
   final _registerConfirmPasswordController = TextEditingController();
 
@@ -60,6 +61,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     _registerLastNameController.dispose();
     _registerEmailController.dispose();
     _registerPhoneController.dispose();
+    _registerAddressController.dispose();
     _registerPasswordController.dispose();
     _registerConfirmPasswordController.dispose();
     super.dispose();
@@ -96,9 +98,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       lastName: _registerLastNameController.text.trim(),
       email: _registerEmailController.text.trim(),
       password: _registerPasswordController.text,
-      phone: _registerPhoneController.text.trim().isEmpty
-          ? null
-          : _registerPhoneController.text.trim(),
+      // Format aligné sur le gate (CompleteProfileScreen) : +224 + 9 chiffres.
+      phone: '+224${_registerPhoneController.text.trim()}',
+      address: _registerAddressController.text.trim(),
     );
 
     if (mounted) {
@@ -113,6 +115,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         _registerLastNameController.clear();
         _registerEmailController.clear();
         _registerPhoneController.clear();
+        _registerAddressController.clear();
         _registerPasswordController.clear();
         _registerConfirmPasswordController.clear();
       } else if (authProvider.errorMessage != null) {
@@ -528,11 +531,33 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               },
             ),
             const SizedBox(height: 14),
-            // Phone
+            // T\u00e9l\u00e9phone (+224 + 9 chiffres, commence par 6) \u2014 requis.
+            // M\u00eames r\u00e8gles que le gate CompleteProfileScreen ; le +224 est ajout\u00e9
+            // \u00e0 l'envoi (_handleRegister). Profil ainsi complet \u2192 plus de gate.
             _buildField(
               controller: _registerPhoneController,
-              hint: 'T\u00e9l\u00e9phone (optionnel)',
+              hint: 'T\u00e9l\u00e9phone (6XXXXXXXX)',
               keyboardType: TextInputType.phone,
+              validator: (value) {
+                final v = value?.trim() ?? '';
+                if (v.isEmpty) return 'Le t\u00e9l\u00e9phone est requis';
+                if (!RegExp(r'^6\d{8}$').hasMatch(v)) {
+                  return 'Num\u00e9ro invalide (9 chiffres, commence par 6)';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 14),
+            // Adresse \u2014 requise, max 100 car. (colonne users.address VARCHAR(100)).
+            _buildField(
+              controller: _registerAddressController,
+              hint: 'Adresse',
+              validator: (value) {
+                final v = value?.trim() ?? '';
+                if (v.isEmpty) return 'L\'adresse est requise';
+                if (v.length > 100) return 'Adresse trop longue (100 max)';
+                return null;
+              },
             ),
             const SizedBox(height: 14),
             // Password

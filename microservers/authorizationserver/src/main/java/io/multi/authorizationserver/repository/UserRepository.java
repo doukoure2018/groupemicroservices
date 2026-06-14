@@ -22,7 +22,7 @@ public interface UserRepository {
 
     // Local registration methods
     boolean emailExists(String email);
-    String createLocalUser(String email, String firstName, String lastName, String phone, String encodedPassword);
+    String createLocalUser(String email, String firstName, String lastName, String phone, String address, String encodedPassword);
 
     // Password reset methods
     java.util.Map<String, Object> findUserBasicByEmail(String email);

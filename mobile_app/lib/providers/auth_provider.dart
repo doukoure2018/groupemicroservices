@@ -81,6 +81,7 @@ class AuthProvider extends ChangeNotifier {
     required String lastName,
     required String email,
     required String password,
+    required String address,
     String? phone,
   }) async {
     _errorMessage = null;
@@ -92,6 +93,7 @@ class AuthProvider extends ChangeNotifier {
         lastName: lastName,
         email: email,
         password: password,
+        address: address,
         phone: phone,
       );
       return message;

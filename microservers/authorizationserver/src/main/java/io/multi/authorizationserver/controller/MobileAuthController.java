@@ -122,6 +122,13 @@ public class MobileAuthController {
             if (request.getLastName() == null || request.getLastName().isBlank()) {
                 return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Nom requis"));
             }
+            if (request.getAddress() == null || request.getAddress().isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Adresse requise"));
+            }
+            // users.address est VARCHAR(100) — refuser au-delà pour éviter l'erreur SQL.
+            if (request.getAddress().trim().length() > 100) {
+                return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Adresse trop longue (100 caractères max)"));
+            }
 
             // Validate passwords match
             if (request.getConfirmPassword() != null && !request.getPassword().equals(request.getConfirmPassword())) {
@@ -145,6 +152,7 @@ public class MobileAuthController {
                     request.getFirstName(),
                     request.getLastName(),
                     request.getPhone(),
+                    request.getAddress().trim(),
                     encodedPassword
             );
 

@@ -219,7 +219,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     @Transactional
-    public String createLocalUser(String email, String firstName, String lastName, String phone, String encodedPassword) {
+    public String createLocalUser(String email, String firstName, String lastName, String phone, String address, String encodedPassword) {
         try {
             // Insert the user and get the generated user_id and user_uuid
             Map<String, Object> result = jdbcClient.sql(INSERT_LOCAL_USER_QUERY)
@@ -227,6 +227,7 @@ public class UserRepositoryImpl implements UserRepository {
                     .param("firstName", firstName)
                     .param("lastName", lastName)
                     .param("phone", phone)
+                    .param("address", address)
                     .query((rs, rowNum) -> {
                         Map<String, Object> map = new HashMap<>();
                         map.put("user_id", rs.getLong("user_id"));
