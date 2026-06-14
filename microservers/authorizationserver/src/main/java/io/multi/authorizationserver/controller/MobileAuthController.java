@@ -188,6 +188,48 @@ public class MobileAuthController {
     }
 
     /**
+     * POST /api/auth/verify-mobile - Vérifie le token d'activation (email), active
+     * le compte et auto-login : renvoie directement les tokens (même format que
+     * /token et /google). Utilisé par le web-bridge (Phase 2) qui redirige ensuite
+     * vers sira://verify?accessToken=...&refreshToken=... (scheme sira dédié Phase 2 ;
+     * yigui:// reste réservé à l'OAuth PKCE).
+     */
+    @PostMapping("/verify-mobile")
+    public ResponseEntity<?> verifyMobile(@RequestBody Map<String, String> body) {
+        String token = body.get("token");
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Token requis"));
+        }
+        try {
+            Map<String, Object> account = userRepository.getAccountToken(token);
+            // null = token introuvable OU déjà consommé (supprimé au 1er usage).
+            if (account == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                        "status", "error", "message", "Lien invalide ou déjà utilisé"));
+            }
+            if (Boolean.TRUE.equals(account.get("expired"))) {
+                userRepository.deleteAccountToken(token);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                        "status", "error", "message", "Lien expiré. Renvoyez l'email de vérification."));
+            }
+
+            String userUuid = (String) account.get("user_uuid");
+            userRepository.enableUser(userUuid);
+            userRepository.deleteAccountToken(token); // single-use
+
+            User user = userRepository.getUserByUuid(userUuid);
+            Map<String, Object> tokens = mobileTokenService.generateTokens(user);
+            log.info("Mobile verify-mobile success + auto-login for uuid: {}", userUuid);
+            return ResponseEntity.ok(tokens);
+
+        } catch (Exception e) {
+            log.error("verify-mobile error: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "status", "error", "message", "Erreur lors de la vérification."));
+        }
+    }
+
+    /**
      * POST /api/auth/google - Exchange Google ID token for app tokens
      */
     @PostMapping("/google")

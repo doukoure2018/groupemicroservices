@@ -24,6 +24,12 @@ public interface UserRepository {
     boolean emailExists(String email);
     String createLocalUser(String email, String firstName, String lastName, String phone, String address, String encodedPassword);
 
+    // Mobile account verification (Phase 2) : token email → {user_uuid, expired}
+    // (null si introuvable/déjà utilisé), activation du compte, suppression token.
+    java.util.Map<String, Object> getAccountToken(String token);
+    void enableUser(String userUuid);
+    void deleteAccountToken(String token);
+
     // Password reset methods
     java.util.Map<String, Object> findUserBasicByEmail(String email);
     String getOrCreatePasswordToken(Long userId);

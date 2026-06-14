@@ -266,6 +266,37 @@ public class UserRepositoryImpl implements UserRepository {
         }
     }
 
+    // Mobile account verification (Phase 2)
+    @Override
+    public Map<String, Object> getAccountToken(String token) {
+        try {
+            return jdbcClient.sql(SELECT_ACCOUNT_TOKEN_QUERY)
+                    .param("token", token)
+                    .query((rs, rowNum) -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("user_uuid", rs.getString("user_uuid"));
+                        map.put("expired", rs.getBoolean("expired"));
+                        return map;
+                    })
+                    .single();
+        } catch (EmptyResultDataAccessException e) {
+            return null; // token introuvable ou déjà consommé
+        } catch (Exception e) {
+            log.error("Error reading account token: {}", e.getMessage());
+            throw new ApiException("Failed to read account token");
+        }
+    }
+
+    @Override
+    public void enableUser(String userUuid) {
+        jdbcClient.sql(ENABLE_USER_BY_UUID_QUERY).param("userUuid", userUuid).update();
+    }
+
+    @Override
+    public void deleteAccountToken(String token) {
+        jdbcClient.sql(DELETE_ACCOUNT_TOKEN_QUERY).param("token", token).update();
+    }
+
     // Password reset methods
     @Override
     public Map<String, Object> findUserBasicByEmail(String email) {

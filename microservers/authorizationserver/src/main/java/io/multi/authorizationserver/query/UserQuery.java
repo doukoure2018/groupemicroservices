@@ -192,6 +192,30 @@ public class UserQuery {
             VALUES (:userId, :token)
             """;
 
+    // Vérification mobile (Phase 2) : récupère le compte lié au token + flag
+    // d'expiration (24 h, même règle que userservice). Alias `acct` (PAS `at`,
+    // mot-clé Postgres AT TIME ZONE).
+    public static final String SELECT_ACCOUNT_TOKEN_QUERY =
+            """
+            SELECT u.user_uuid AS user_uuid,
+                   (acct.created_at + INTERVAL '24 hours') < NOW() AS expired
+            FROM account_tokens acct
+            JOIN users u ON u.user_id = acct.user_id
+            WHERE acct.token = :token
+            """;
+
+    public static final String ENABLE_USER_BY_UUID_QUERY =
+            """
+            UPDATE users SET enabled = TRUE, account_non_expired = TRUE,
+                   account_non_locked = TRUE, updated_at = NOW()
+            WHERE user_uuid = :userUuid
+            """;
+
+    public static final String DELETE_ACCOUNT_TOKEN_QUERY =
+            """
+            DELETE FROM account_tokens WHERE token = :token
+            """;
+
     public static final String INSERT_CREDENTIALS_QUERY =
             """
             INSERT INTO credentials (credential_uuid, user_id, password, created_at, updated_at)
