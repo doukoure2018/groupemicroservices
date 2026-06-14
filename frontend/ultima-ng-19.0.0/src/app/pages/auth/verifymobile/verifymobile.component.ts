@@ -54,8 +54,11 @@ export class VerifymobileComponent {
                 next: (resp: any) => {
                     const access = resp?.access_token;
                     const refresh = resp?.refresh_token;
+                    const id = resp?.id_token;
                     if (this.isMobile && access && refresh) {
-                        this.deepLink = `sira://verify?accessToken=${encodeURIComponent(access)}&refreshToken=${encodeURIComponent(refresh)}`;
+                        let dl = `sira://verify?accessToken=${encodeURIComponent(access)}&refreshToken=${encodeURIComponent(refresh)}`;
+                        if (id) dl += `&idToken=${encodeURIComponent(id)}`;
+                        this.deepLink = dl;
                         this.state.set({ status: 'mobile-ok' });
                         // Laisse le DOM se peindre puis tente d'ouvrir l'app.
                         setTimeout(() => this.openApp(), 500);
