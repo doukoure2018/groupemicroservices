@@ -869,12 +869,13 @@ class _SectionSpecs extends StatelessWidget {
     if (typeBien != null) {
       items.add(_SpecItem(Icons.home_work_outlined, typeBien!.libelle));
     }
-    if (propriete.nombreChambres != null) {
+    // Masqué quand 0 (terrain / local sans pièces) — on n'affiche pas "0 ch.".
+    if ((propriete.nombreChambres ?? 0) > 0) {
       items.add(
         _SpecItem(Icons.bed_outlined, '${propriete.nombreChambres} ch.'),
       );
     }
-    if (propriete.nombreSallesBain != null) {
+    if ((propriete.nombreSallesBain ?? 0) > 0) {
       items.add(
         _SpecItem(Icons.bathtub_outlined, '${propriete.nombreSallesBain} sdb'),
       );

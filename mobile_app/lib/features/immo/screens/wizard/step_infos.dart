@@ -85,6 +85,42 @@ class StepInfosState extends State<StepInfos>
   bool _geoActive = false;
   bool _gpsLoading = false;
 
+  // Adaptation du formulaire selon le type de bien (SCOPE A) :
+  //  - TERRAIN          : ni chambres/sdb, ni commodités ; surface requise.
+  //  - BUREAU/BOUTIQUE  : ni chambres/sdb ; commodités gardées (élec/eau).
+  //  - résidentiel (MAISON/APPARTEMENT/IMMEUBLE/CHAMBRE) : tout affiché.
+  bool get _isTerrain => _typeBienCode == 'TERRAIN';
+  bool get _isPro => _typeBienCode == 'BUREAU' || _typeBienCode == 'BOUTIQUE';
+  bool get _isResidentiel => _typeBienCode != null && !_isTerrain && !_isPro;
+
+  // Placeholders parlants selon le type de bien (UX création).
+  String _titreHint() {
+    switch (_typeBienCode) {
+      case 'TERRAIN':
+        return 'Terrain 500 m² à Sangoyah';
+      case 'BUREAU':
+        return 'Bureau 40 m² climatisé, Kaloum';
+      case 'BOUTIQUE':
+        return 'Boutique 25 m² bord de route, Madina';
+      case 'IMMEUBLE':
+        return 'Immeuble R+3, Ratoma';
+      case 'CHAMBRE':
+        return 'Chambre meublée, Kipé';
+      default:
+        return 'Maison 4 chambres avec jardin, Kipé';
+    }
+  }
+
+  String _descriptionHint() {
+    if (_isTerrain) {
+      return 'Superficie, accès, environnement, papiers (titre foncier…)…';
+    }
+    if (_isPro) {
+      return 'Surface, agencement, équipements, accès, parking…';
+    }
+    return 'Détails du bien, points forts, environnement…';
+  }
+
   // Référentiels (chargés une fois, asynchrones, en parallèle)
   bool _refsLoading = true;
   AppException? _refsError;
@@ -305,7 +341,19 @@ class StepInfosState extends State<StepInfos>
                             color: _typeBienCode == t.code ? AppColors.primary : AppColors.onBackground),
                         selected: _typeBienCode == t.code,
                         onSelected: (sel) {
-                          setState(() => _typeBienCode = sel ? t.code : null);
+                          setState(() {
+                            _typeBienCode = sel ? t.code : null;
+                            // Reset silencieux des valeurs masquées par le nouveau
+                            // type (évite d'envoyer chambres/sdb/commodités hérités
+                            // d'un type bâti sur un terrain ou un local pro).
+                            if (!_isResidentiel) {
+                              _nombreChambres = 0;
+                              _nombreSallesBain = 0;
+                            }
+                            if (_isTerrain) {
+                              _selectedCommodites = {};
+                            }
+                          });
                           _notifyChanged();
                         },
                       ))
@@ -316,9 +364,9 @@ class StepInfosState extends State<StepInfos>
             TextFormField(
               controller: _titreController,
               maxLength: 200,
-              decoration: const InputDecoration(
-                hintText: 'Maison 4 chambres avec jardin, Kipé',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: _titreHint(),
+                border: const OutlineInputBorder(),
               ),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) return 'Titre requis';
@@ -406,22 +454,37 @@ class StepInfosState extends State<StepInfos>
               ),
             ],
             _sectionTitle('Caractéristiques'),
-            _stepperRow('Chambres', _nombreChambres, 0, 50, (v) {
-              setState(() => _nombreChambres = v);
-              _notifyChanged();
-            }),
-            _stepperRow('Salles de bain', _nombreSallesBain, 0, 50, (v) {
-              setState(() => _nombreSallesBain = v);
-              _notifyChanged();
-            }),
-            const SizedBox(height: 12),
+            // Chambres + salles de bain uniquement pour le résidentiel
+            // (masqués pour TERRAIN et BUREAU/BOUTIQUE).
+            if (_isResidentiel) ...[
+              _stepperRow('Chambres', _nombreChambres, 0, 50, (v) {
+                setState(() => _nombreChambres = v);
+                _notifyChanged();
+              }),
+              _stepperRow('Salles de bain', _nombreSallesBain, 0, 50, (v) {
+                setState(() => _nombreSallesBain = v);
+                _notifyChanged();
+              }),
+              const SizedBox(height: 12),
+            ],
             TextFormField(
               controller: _surfaceController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Surface (m²)',
-                border: OutlineInputBorder(),
+              // Surface REQUISE pour un terrain (info n°1) ; optionnelle sinon.
+              decoration: InputDecoration(
+                labelText: _isTerrain ? 'Surface (m²) *' : 'Surface (m²)',
+                border: const OutlineInputBorder(),
               ),
+              validator: _isTerrain
+                  ? (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Surface requise pour un terrain';
+                      }
+                      final n = double.tryParse(v.trim());
+                      if (n == null || n <= 0) return 'Surface invalide (> 0)';
+                      return null;
+                    }
+                  : null,
             ),
             _sectionTitle('Localisation'),
             TextFormField(
@@ -541,20 +604,24 @@ class StepInfosState extends State<StepInfos>
                 ),
               ],
             ],
-            _sectionTitle('Commodités'),
-            if (_commodites.isEmpty)
-              Text('Aucune commodité disponible.',
-                  style: Theme.of(context).textTheme.bodySmall)
-            else
-              ..._buildCommoditesGroupees(),
+            // Commodités masquées pour un terrain nu (gardées pour résidentiel
+            // et pro : électricité/eau utiles à un bureau/boutique).
+            if (!_isTerrain) ...[
+              _sectionTitle('Commodités'),
+              if (_commodites.isEmpty)
+                Text('Aucune commodité disponible.',
+                    style: Theme.of(context).textTheme.bodySmall)
+              else
+                ..._buildCommoditesGroupees(),
+            ],
             _sectionTitle('Description'),
             TextFormField(
               controller: _descriptionController,
               maxLines: 5,
               maxLength: 1500,
-              decoration: const InputDecoration(
-                hintText: 'Détails du bien, points forts, environnement…',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: _descriptionHint(),
+                border: const OutlineInputBorder(),
                 alignLabelWithHint: true,
               ),
             ),
@@ -574,7 +641,7 @@ class StepInfosState extends State<StepInfos>
               maxLength: 20,
               decoration: const InputDecoration(
                 labelText: 'Téléphone',
-                hintText: '+224621091895',
+                hintText: '+224 6XX XX XX XX',
                 border: OutlineInputBorder(),
               ),
             ),
