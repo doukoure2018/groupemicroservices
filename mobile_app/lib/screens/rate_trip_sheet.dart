@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import '../models/commande.dart';
 import '../services/billetterie_service.dart';
 import '../presentation/resource/color_manager.dart';
 import '../presentation/resource/font_manager.dart';
@@ -12,18 +11,27 @@ import '../presentation/resource/styles_manager.dart';
 /// Branchée sur `POST /billetterie/avis` (note 1-5 + commentaire optionnel).
 /// Renvoie `true` via [Navigator.pop] si l'avis a été soumis avec succès, afin
 /// que l'écran appelant marque la commande comme notée.
+///
+/// Découplée du modèle Commande : ouvrable depuis "Mes Voyages" comme depuis
+/// une notification (DEMANDE_AVIS) via le seul [commandeUuid].
 class RateTripSheet extends StatefulWidget {
-  final Commande commande;
+  final String commandeUuid;
+  final String? routeLabel;
 
-  const RateTripSheet({super.key, required this.commande});
+  const RateTripSheet({super.key, required this.commandeUuid, this.routeLabel});
 
   /// Affiche la sheet et renvoie `true` si un avis a été enregistré.
-  static Future<bool?> show(BuildContext context, Commande commande) {
+  static Future<bool?> show(
+    BuildContext context, {
+    required String commandeUuid,
+    String? routeLabel,
+  }) {
     return showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => RateTripSheet(commande: commande),
+      builder: (_) =>
+          RateTripSheet(commandeUuid: commandeUuid, routeLabel: routeLabel),
     );
   }
 
@@ -57,7 +65,7 @@ class _RateTripSheetState extends State<RateTripSheet> {
     setState(() => _isSubmitting = true);
     try {
       await _billetterieService.createAvis(
-        commandeUuid: widget.commande.commandeUuid,
+        commandeUuid: widget.commandeUuid,
         note: _note,
         commentaire: _commentController.text,
       );
@@ -110,7 +118,6 @@ class _RateTripSheetState extends State<RateTripSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final commande = widget.commande;
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
@@ -149,14 +156,16 @@ class _RateTripSheetState extends State<RateTripSheet> {
                 fontSize: FontSize.s20,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              '${commande.villeDepartLibelle} → ${commande.villeArriveeLibelle}',
-              style: getRegularStyle(
-                color: ColorManager.textSecondary,
-                fontSize: FontSize.s14,
+            if (widget.routeLabel != null && widget.routeLabel!.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                widget.routeLabel!,
+                style: getRegularStyle(
+                  color: ColorManager.textSecondary,
+                  fontSize: FontSize.s14,
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: AppSize.s20),
 
             // Star selector

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../models/app_notification.dart';
 import '../models/avis.dart';
 import '../models/commande.dart';
 import '../models/offre.dart';
@@ -151,5 +152,34 @@ class BilletterieService {
         if (trimmed != null && trimmed.isNotEmpty) 'commentaire': trimmed,
       },
     );
+  }
+
+  /// GET /billetterie/notifications - Notifications in-app de l'utilisateur
+  Future<List<AppNotification>> getNotifications({int page = 0, int size = 30}) async {
+    final response = await _api.get(
+      '$_basePath/notifications',
+      queryParameters: {'page': page, 'size': size},
+    );
+    final data = response.data['data'];
+    return (data['notifications'] as List)
+        .map((json) => AppNotification.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// GET /billetterie/notifications/unread-count - Nombre de notifications non lues
+  Future<int> getUnreadNotificationCount() async {
+    final response = await _api.get('$_basePath/notifications/unread-count');
+    final data = response.data['data'];
+    return (data['unreadCount'] as num?)?.toInt() ?? 0;
+  }
+
+  /// PUT /billetterie/notifications/{id}/read - Marquer une notification comme lue
+  Future<void> markNotificationAsRead(int notificationId) async {
+    await _api.put('$_basePath/notifications/$notificationId/read');
+  }
+
+  /// PUT /billetterie/notifications/read-all - Tout marquer comme lu
+  Future<void> markAllNotificationsAsRead() async {
+    await _api.put('$_basePath/notifications/read-all');
   }
 }

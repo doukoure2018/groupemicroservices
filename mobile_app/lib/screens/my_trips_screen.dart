@@ -204,7 +204,12 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
   }
 
   Future<void> _rateTrip(Commande commande) async {
-    final rated = await RateTripSheet.show(context, commande);
+    final rated = await RateTripSheet.show(
+      context,
+      commandeUuid: commande.commandeUuid,
+      routeLabel:
+          '${commande.villeDepartLibelle} → ${commande.villeArriveeLibelle}',
+    );
     if (rated == true && mounted) {
       setState(() => _ratedCommandeUuids.add(commande.commandeUuid));
     }

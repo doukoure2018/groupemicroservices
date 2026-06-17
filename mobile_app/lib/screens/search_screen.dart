@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../presentation/resource/color_manager.dart';
+import '../services/billetterie_service.dart';
 import 'city_search_screen.dart';
+import 'notifications_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   final Function(Map<String, dynamic> searchParams)? onSearch;
@@ -12,12 +14,85 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  final BilletterieService _billetterieService = BilletterieService();
   Map<String, String>? _departureCity;
   Map<String, String>? _destinationCity;
   DateTime _departureDate = DateTime.now();
   DateTime? _returnDate;
   int _adults = 1;
   int _children = 0;
+  int _unreadCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    try {
+      final count = await _billetterieService.getUnreadNotificationCount();
+      if (mounted) setState(() => _unreadCount = count);
+    } catch (_) {
+      // Silencieux : le badge n'est qu'indicatif.
+    }
+  }
+
+  Future<void> _openNotifications() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+    );
+    _loadUnreadCount();
+  }
+
+  Widget _buildNotificationBell() {
+    return GestureDetector(
+      onTap: _openNotifications,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: ColorManager.black.withValues(alpha: 0.35),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.notifications_outlined,
+              color: ColorManager.white,
+              size: 22,
+            ),
+          ),
+          if (_unreadCount > 0)
+            Positioned(
+              right: -2,
+              top: -2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                decoration: BoxDecoration(
+                  color: ColorManager.error,
+                  shape: BoxShape.rectangle,
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: ColorManager.white, width: 1.5),
+                ),
+                child: Text(
+                  _unreadCount > 9 ? '9+' : '$_unreadCount',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: ColorManager.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   void _swapCities() {
     setState(() {
@@ -383,6 +458,12 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                   ),
                   child: const SizedBox(height: 40),
+                ),
+                // Notification bell (top-right over the image)
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 8,
+                  right: 16,
+                  child: _buildNotificationBell(),
                 ),
               ],
             ),
