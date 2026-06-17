@@ -25,5 +25,6 @@ public class InAppNotification {
     private OffsetDateTime dateLecture;
     private Long referenceId;
     private String referenceType;
+    private String metadata;
     private OffsetDateTime createdAt;
 }

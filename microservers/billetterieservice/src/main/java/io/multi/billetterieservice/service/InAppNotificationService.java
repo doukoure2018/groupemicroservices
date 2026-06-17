@@ -12,5 +12,8 @@ public interface InAppNotificationService {
     void createNotification(Long userId, String typeNotification, String categorie,
                             String titre, String message, boolean envoyee,
                             Long referenceId, String referenceType);
+    void createNotification(Long userId, String typeNotification, String categorie,
+                            String titre, String message, boolean envoyee,
+                            Long referenceId, String referenceType, String metadata);
     boolean existsByReference(Long userId, Long referenceId, String referenceType, String categorie);
 }

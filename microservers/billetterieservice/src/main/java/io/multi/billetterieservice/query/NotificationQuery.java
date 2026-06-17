@@ -6,16 +6,16 @@ public final class NotificationQuery {
 
     public static final String INSERT = """
         INSERT INTO notifications (user_id, type_notification, categorie, titre, message,
-                                    envoyee, date_envoi, reference_id, reference_type)
+                                    envoyee, date_envoi, reference_id, reference_type, metadata)
         VALUES (:userId, :typeNotification, :categorie, :titre, :message,
-                :envoyee, CURRENT_TIMESTAMP, :referenceId, :referenceType)
+                :envoyee, CURRENT_TIMESTAMP, :referenceId, :referenceType, CAST(:metadata AS jsonb))
         RETURNING notification_id, notification_uuid, created_at
         """;
 
     public static final String FIND_BY_USER_ID = """
         SELECT notification_id, notification_uuid, user_id, type_notification, categorie,
                titre, message, lue, envoyee, date_envoi, date_lecture,
-               reference_id, reference_type, created_at
+               reference_id, reference_type, metadata::text AS metadata, created_at
         FROM notifications
         WHERE user_id = :userId
         ORDER BY created_at DESC

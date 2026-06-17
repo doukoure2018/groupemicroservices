@@ -81,6 +81,12 @@ key:
 jwks:
   uri: http://localhost:8090/oauth2/jwks
 
+billetterie:
+  avis:
+    # Délai (heures) après l'arrivée estimée avant d'envoyer la demande d'avis.
+    # Surchargeable via BILLETTERIE_AVIS_DELAI_HEURES (ex: 0 en TEST pour valider tout de suite).
+    delai-heures: ${BILLETTERIE_AVIS_DELAI_HEURES:24}
+
 orange:
   api:
     oauth:

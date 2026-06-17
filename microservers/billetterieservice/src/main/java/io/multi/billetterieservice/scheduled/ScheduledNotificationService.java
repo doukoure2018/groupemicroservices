@@ -9,6 +9,7 @@ import io.multi.clients.UserClient;
 import io.multi.clients.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.support.MessageBuilder;
@@ -34,6 +35,10 @@ public class ScheduledNotificationService {
     private final InAppNotificationService inAppNotificationService;
     private final KafkaTemplate<String, Notification> kafkaTemplate;
     private final UserClient userClient;
+
+    /** Délai (heures) après l'arrivée estimée avant d'envoyer la demande d'avis. Défaut 24h. */
+    @Value("${billetterie.avis.delai-heures:24}")
+    private int avisDelaiHeures;
 
     @Scheduled(fixedRate = 900000) // 15 minutes
     public void checkRemplissage() {
@@ -248,6 +253,47 @@ public class ScheduledNotificationService {
                 data.put("billetCodes", billetCodes);
                 sendKafkaNotification(EventType.RAPPEL_H2, data);
             }
+        }
+    }
+
+    /**
+     * Demande d'avis post-voyage (Étape 8 du parcours client).
+     * Crée une notification in-app "DEMANDE_AVIS" pour chaque commande dont le
+     * voyage est terminé depuis >= delaiHeures, non annulée, sans avis ni
+     * demande déjà envoyée. Le commandeUuid est stocké en metadata pour que le
+     * mobile ouvre directement l'écran de notation au tap.
+     * S'exécute toutes les 30 min (et au démarrage du service).
+     */
+    @Scheduled(fixedRate = 1800000) // 30 minutes
+    public void checkDemandeAvis() {
+        var commandes = jdbcClient.sql(ScheduledNotificationQuery.FIND_COMMANDES_FOR_AVIS_REQUEST)
+                .param("delaiHeures", avisDelaiHeures)
+                .query((rs, rowNum) -> new Object[]{
+                        rs.getLong("commande_id"),
+                        rs.getString("commande_uuid"),
+                        rs.getLong("user_id"),
+                        rs.getString("ville_depart_libelle"),
+                        rs.getString("ville_arrivee_libelle")
+                })
+                .list();
+
+        for (var cmd : commandes) {
+            Long commandeId = (Long) cmd[0];
+            String commandeUuid = (String) cmd[1];
+            Long userId = (Long) cmd[2];
+            String trajet = cmd[3] + " → " + cmd[4];
+
+            String titre = "Comment s'est passé votre voyage ?";
+            String message = "Votre voyage " + trajet + " est terminé. "
+                    + "Donnez votre avis pour aider les autres voyageurs !";
+            String metadata = "{\"commandeUuid\":\"" + commandeUuid + "\"}";
+
+            inAppNotificationService.createNotification(userId, "IN_APP", "DEMANDE_AVIS",
+                    titre, message, false, commandeId, "COMMANDE", metadata);
+        }
+
+        if (!commandes.isEmpty()) {
+            log.info("Demandes d'avis créées: {} (délai={}h)", commandes.size(), avisDelaiHeures);
         }
     }
 

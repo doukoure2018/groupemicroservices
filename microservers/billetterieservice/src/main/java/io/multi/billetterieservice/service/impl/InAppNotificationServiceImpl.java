@@ -41,6 +41,7 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
                         .dateLecture(rs.getObject("date_lecture", OffsetDateTime.class))
                         .referenceId(rs.getObject("reference_id", Long.class))
                         .referenceType(rs.getString("reference_type"))
+                        .metadata(rs.getString("metadata"))
                         .createdAt(rs.getObject("created_at", OffsetDateTime.class))
                         .build())
                 .list();
@@ -75,6 +76,14 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
     public void createNotification(Long userId, String typeNotification, String categorie,
                                     String titre, String message, boolean envoyee,
                                     Long referenceId, String referenceType) {
+        createNotification(userId, typeNotification, categorie, titre, message, envoyee,
+                referenceId, referenceType, null);
+    }
+
+    @Override
+    public void createNotification(Long userId, String typeNotification, String categorie,
+                                    String titre, String message, boolean envoyee,
+                                    Long referenceId, String referenceType, String metadata) {
         jdbcClient.sql(NotificationQuery.INSERT)
                 .param("userId", userId)
                 .param("typeNotification", typeNotification)
@@ -84,6 +93,7 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
                 .param("envoyee", envoyee)
                 .param("referenceId", referenceId)
                 .param("referenceType", referenceType)
+                .param("metadata", metadata)
                 .query((rs, rowNum) -> rs.getLong("notification_id"))
                 .single();
         log.debug("Notification in-app créée pour userId: {} - {}", userId, titre);

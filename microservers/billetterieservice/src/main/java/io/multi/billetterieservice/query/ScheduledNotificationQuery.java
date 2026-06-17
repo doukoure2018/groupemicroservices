@@ -64,6 +64,43 @@ public final class ScheduledNotificationQuery {
           AND o.date_depart = CURRENT_DATE + INTERVAL '1 day'
         """;
 
+    /**
+     * Commandes dont le voyage est terminé depuis au moins :delaiHeures heures
+     * (date_depart + heure d'arrivée estimée + délai <= maintenant), non annulées,
+     * sans avis déjà donné et sans demande d'avis déjà envoyée.
+     */
+    public static final String FIND_COMMANDES_FOR_AVIS_REQUEST = """
+        SELECT c.commande_id, c.commande_uuid, c.user_id, c.numero_commande,
+               vd.libelle AS ville_depart_libelle,
+               va.libelle AS ville_arrivee_libelle
+        FROM commandes c
+        INNER JOIN offres o ON c.offre_id = o.offre_id
+        INNER JOIN trajets t ON o.trajet_id = t.trajet_id
+        INNER JOIN departs dep ON t.depart_id = dep.depart_id
+        INNER JOIN sites sd ON dep.site_id = sd.site_id
+        INNER JOIN localisations ld ON sd.localisation_id = ld.localisation_id
+        LEFT JOIN quartiers qd ON ld.quartier_id = qd.quartier_id
+        LEFT JOIN communes cd ON qd.commune_id = cd.commune_id
+        LEFT JOIN villes vd ON cd.ville_id = vd.ville_id
+        INNER JOIN arrivees arr ON t.arrivee_id = arr.arrivee_id
+        INNER JOIN sites sa ON arr.site_id = sa.site_id
+        INNER JOIN localisations la ON sa.localisation_id = la.localisation_id
+        LEFT JOIN quartiers qa ON la.quartier_id = qa.quartier_id
+        LEFT JOIN communes ca ON qa.commune_id = ca.commune_id
+        LEFT JOIN villes va ON ca.ville_id = va.ville_id
+        WHERE c.statut IN ('CONFIRMEE', 'PAYEE', 'UTILISEE', 'TERMINEE')
+          AND (o.date_depart + COALESCE(o.heure_arrivee_estimee, o.heure_depart)
+               + make_interval(hours => :delaiHeures)) <= LOCALTIMESTAMP
+          AND NOT EXISTS (
+                SELECT 1 FROM avis a WHERE a.commande_id = c.commande_id)
+          AND NOT EXISTS (
+                SELECT 1 FROM notifications n
+                WHERE n.user_id = c.user_id
+                  AND n.reference_id = c.commande_id
+                  AND n.reference_type = 'COMMANDE'
+                  AND n.categorie = 'DEMANDE_AVIS')
+        """;
+
     public static final String FIND_OFFRES_DEPART_PROCHE = """
         SELECT o.offre_id, o.offre_uuid, o.date_depart, o.heure_depart,
                o.point_rencontre,
