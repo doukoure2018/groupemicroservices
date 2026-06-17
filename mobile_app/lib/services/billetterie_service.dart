@@ -131,4 +131,25 @@ class BilletterieService {
     final data = response.data['data'];
     return data['commande'] as Map<String, dynamic>;
   }
+
+  /// POST /billetterie/avis - Noter un voyage (note 1-5 + commentaire optionnel)
+  ///
+  /// Le backend valide la propriété de la commande, son statut
+  /// (CONFIRMEE/PAYEE/UTILISEE/TERMINEE) et l'unicité (un seul avis par
+  /// commande). Une 2e tentative renvoie 400 "Un avis a déjà été donné...".
+  Future<void> createAvis({
+    required String commandeUuid,
+    required int note,
+    String? commentaire,
+  }) async {
+    final trimmed = commentaire?.trim();
+    await _api.post(
+      '$_basePath/avis',
+      data: {
+        'commandeUuid': commandeUuid,
+        'note': note,
+        if (trimmed != null && trimmed.isNotEmpty) 'commentaire': trimmed,
+      },
+    );
+  }
 }

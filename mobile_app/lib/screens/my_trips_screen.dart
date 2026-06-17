@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/commande.dart';
 import '../services/billetterie_service.dart';
+import 'rate_trip_sheet.dart';
 import '../presentation/resource/color_manager.dart';
 import '../presentation/resource/font_manager.dart';
 import '../presentation/resource/values_manager.dart';
@@ -25,6 +26,11 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
   List<Commande> _activeCommandes = [];
   List<Commande> _pastCommandes = [];
   List<Commande> _cancelledCommandes = [];
+
+  /// UUID des commandes notées durant la session. Le backend `mes-commandes`
+  /// ne renvoie pas encore d'indicateur "déjà noté" : on suit l'état localement
+  /// pour basculer le bouton sur "Avis envoyé" après soumission.
+  final Set<String> _ratedCommandeUuids = {};
 
   @override
   void initState() {
@@ -194,6 +200,13 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       }
+    }
+  }
+
+  Future<void> _rateTrip(Commande commande) async {
+    final rated = await RateTripSheet.show(context, commande);
+    if (rated == true && mounted) {
+      setState(() => _ratedCommandeUuids.add(commande.commandeUuid));
     }
   }
 
@@ -680,56 +693,93 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
       );
     }
 
-    // Past tab: view tickets + details
-    return Row(
+    // Past tab: view tickets + details, then rate the trip
+    return Column(
       children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: commande.billets.isEmpty
-                ? null
-                : () => widget.onViewTickets?.call(commande),
-            icon: const Icon(Icons.confirmation_number_outlined, size: 18),
-            label: Text(
-              'Voir billets',
-              style: getMediumStyle(
-                color: ColorManager.white,
-                fontSize: FontSize.s14,
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: commande.billets.isEmpty
+                    ? null
+                    : () => widget.onViewTickets?.call(commande),
+                icon: const Icon(Icons.confirmation_number_outlined, size: 18),
+                label: Text(
+                  'Voir billets',
+                  style: getMediumStyle(
+                    color: ColorManager.white,
+                    fontSize: FontSize.s14,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorManager.primary,
+                  foregroundColor: ColorManager.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.r12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  elevation: 0,
+                ),
               ),
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: ColorManager.primary,
-              foregroundColor: ColorManager.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.r12),
+            const SizedBox(width: AppSize.s12),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => widget.onContact?.call(commande),
+                icon: const Icon(Icons.info_outline, size: 18),
+                label: Text(
+                  'D\u00e9tails',
+                  style: getMediumStyle(
+                    color: ColorManager.textSecondary,
+                    fontSize: FontSize.s14,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ColorManager.textSecondary,
+                  side: const BorderSide(color: ColorManager.grey1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.r12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              elevation: 0,
             ),
-          ),
+          ],
         ),
-        const SizedBox(width: AppSize.s12),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () => widget.onContact?.call(commande),
-            icon: const Icon(Icons.info_outline, size: 18),
-            label: Text(
-              'D\u00e9tails',
-              style: getMediumStyle(
-                color: ColorManager.textSecondary,
-                fontSize: FontSize.s14,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: ColorManager.textSecondary,
-              side: const BorderSide(color: ColorManager.grey1),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.r12),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-            ),
-          ),
-        ),
+        const SizedBox(height: AppSize.s8),
+        _buildRateButton(commande),
       ],
+    );
+  }
+
+  Widget _buildRateButton(Commande commande) {
+    final alreadyRated = _ratedCommandeUuids.contains(commande.commandeUuid);
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: alreadyRated ? null : () => _rateTrip(commande),
+        icon: Icon(
+          alreadyRated ? Icons.check_circle : Icons.star_outline_rounded,
+          size: 18,
+          color: alreadyRated ? ColorManager.success : ColorManager.starRating,
+        ),
+        label: Text(
+          alreadyRated ? 'Avis envoy\u00e9' : 'Noter le voyage',
+          style: getMediumStyle(
+            color: alreadyRated ? ColorManager.success : ColorManager.accentDark,
+            fontSize: FontSize.s14,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(
+            color: alreadyRated ? ColorManager.success : ColorManager.grey1,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.r12),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      ),
     );
   }
 
