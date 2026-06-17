@@ -166,9 +166,12 @@ class ProprieteCard extends StatelessWidget {
   }
 
   Widget _cover() {
-    final url = propriete.photoCouverture?.urlThumbnail ??
-        propriete.photoCouverture?.url ??
-        (propriete.photos.isNotEmpty ? propriete.photos.first.urlThumbnail : null);
+    // Image PLEINE résolution (pas la miniature) : la carte est pleine largeur,
+    // la miniature était trop basse définition → rendu flou. memCacheWidth
+    // downsample en mémoire pour garder la RAM/perf raisonnables.
+    final url = propriete.photoCouverture?.url ??
+        propriete.photoCouverture?.urlThumbnail ??
+        (propriete.photos.isNotEmpty ? propriete.photos.first.url : null);
     // Stack pour permettre l'overlay étoile favoris top-right sur la photo.
     // L'IconButton du FavoriStarButton consomme le tap → ne bubble pas vers
     // l'InkWell card (pas d'ouverture fiche par erreur).
@@ -187,6 +190,7 @@ class ProprieteCard extends StatelessWidget {
             CachedNetworkImage(
               imageUrl: url,
               fit: BoxFit.cover,
+              memCacheWidth: 1080,
               placeholder: (_, __) => Container(color: AppColors.divider),
               errorWidget: (_, __, ___) => Container(
                 color: AppColors.divider,

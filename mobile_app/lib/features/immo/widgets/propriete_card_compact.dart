@@ -140,10 +140,12 @@ class ProprieteCardCompact extends StatelessWidget {
   }
 
   Widget _cover(bool isLocation) {
-    final url = propriete.photoCouverture?.urlThumbnail ??
-        propriete.photoCouverture?.url ??
+    // Image PLEINE résolution (pas la miniature) pour un rendu net ;
+    // memCacheWidth borne la RAM (carte compacte, largeur ~260px).
+    final url = propriete.photoCouverture?.url ??
+        propriete.photoCouverture?.urlThumbnail ??
         (propriete.photos.isNotEmpty
-            ? propriete.photos.first.urlThumbnail
+            ? propriete.photos.first.url
             : null);
     // border-radius 16 uniquement sur le haut.
     const radius = BorderRadius.vertical(top: Radius.circular(16));
@@ -166,6 +168,7 @@ class ProprieteCardCompact extends StatelessWidget {
               CachedNetworkImage(
                 imageUrl: url,
                 fit: BoxFit.cover,
+                memCacheWidth: 720,
                 placeholder: (_, __) => Container(color: AppColors.divider),
                 errorWidget: (_, __, ___) => Container(
                   color: AppColors.divider,
