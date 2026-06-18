@@ -84,9 +84,9 @@ class TicketScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.r20),
                 boxShadow: [
                   BoxShadow(
-                    color: ColorManager.primary.withValues(alpha: 0.08),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
+                    color: ColorManager.primary.withValues(alpha: 0.10),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
@@ -114,7 +114,7 @@ class TicketScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'BILLET \u00c9LECTRONIQUE',
+                          'BILLET ÉLECTRONIQUE',
                           style: getRegularStyle(
                             color: ColorManager.white,
                             fontSize: FontSize.s10,
@@ -131,17 +131,24 @@ class TicketScreen extends StatelessWidget {
                     color: ColorManager.accent,
                   ),
 
-                  // Ticket content
+                  // Route band (Départ → Arrivée + date/heure)
                   Padding(
-                    padding: const EdgeInsets.all(AppPadding.p20),
+                    padding: const EdgeInsets.fromLTRB(
+                        AppPadding.p20, AppPadding.p16, AppPadding.p20, 0),
+                    child: _buildRouteBand(),
+                  ),
+
+                  // Top section : code billet + QR
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(AppPadding.p20,
+                        AppPadding.p16, AppPadding.p20, AppPadding.p16),
                     child: Column(
                       children: [
-                        // Ticket code
                         Text(
                           'Code billet',
                           style: getRegularStyle(
                             color: ColorManager.textTertiary,
-                            fontSize: FontSize.s12,
+                            fontSize: FontSize.s11,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -156,33 +163,28 @@ class TicketScreen extends StatelessWidget {
                           ),
                           child: Text(
                             billet.codeBillet,
-                            style:
-                                getBoldStyle(
-                                  color: ColorManager.primary,
-                                  fontSize: 22,
-                                ).copyWith(
-                                  fontFamily: 'monospace',
-                                  letterSpacing: 3,
-                                ),
+                            style: getBoldStyle(
+                              color: ColorManager.primary,
+                              fontSize: 20,
+                            ).copyWith(
+                              fontFamily: 'monospace',
+                              letterSpacing: 3,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: AppSize.s20),
-
-                        // Real QR Code
+                        const SizedBox(height: AppSize.s16),
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: ColorManager.white,
                             borderRadius: BorderRadius.circular(AppRadius.r12),
-                            border: Border.all(
-                              color: ColorManager.grey1,
-                              width: 1,
-                            ),
+                            border:
+                                Border.all(color: ColorManager.grey1, width: 1),
                           ),
                           child: QrImageView(
                             data: billet.qrContent,
                             version: QrVersions.auto,
-                            size: 160,
+                            size: 158,
                             backgroundColor: ColorManager.white,
                             eyeStyle: const QrEyeStyle(
                               eyeShape: QrEyeShape.square,
@@ -194,44 +196,42 @@ class TicketScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: AppSize.s20),
-
-                        // Dashed divider with cutouts
-                        Row(
-                          children: List.generate(
-                            30,
-                            (index) => Expanded(
-                              child: Container(
-                                height: 1,
-                                color: index.isEven
-                                    ? ColorManager.grey2
-                                    : Colors.transparent,
-                              ),
-                            ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Présentez ce QR code à l’embarquement',
+                          style: getRegularStyle(
+                            color: ColorManager.textTertiary,
+                            fontSize: FontSize.s11,
                           ),
                         ),
-                        const SizedBox(height: AppSize.s20),
+                      ],
+                    ),
+                  ),
 
-                        // Ticket details
+                  // Perforation (tear line + side notches)
+                  _buildPerforation(),
+
+                  // Bottom section (stub) : details + status
+                  Padding(
+                    padding: const EdgeInsets.all(AppPadding.p20),
+                    child: Column(
+                      children: [
                         _buildTicketRow(
                           Icons.person_outline,
                           'Passager',
                           billet.nomPassager,
                         ),
-                        _buildTicketRow(
-                          Icons.route,
-                          'Trajet',
-                          '$departure - $destination',
-                        ),
-                        _buildTicketRow(
-                          Icons.calendar_today_outlined,
-                          'Date & Heure',
-                          '$_formattedDate - $time',
-                        ),
+                        if (billet.numeroSiege != null &&
+                            billet.numeroSiege!.isNotEmpty)
+                          _buildTicketRow(
+                            Icons.event_seat_outlined,
+                            'Siège',
+                            billet.numeroSiege!,
+                          ),
                         if (vehiclePlate.isNotEmpty)
                           _buildTicketRow(
                             Icons.directions_bus_outlined,
-                            'V\u00e9hicule',
+                            'Véhicule',
                             vehiclePlate,
                           ),
                         if (driverName.isNotEmpty)
@@ -242,7 +242,6 @@ class TicketScreen extends StatelessWidget {
                           ),
 
                         // Status
-                        const SizedBox(height: 4),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -258,7 +257,7 @@ class TicketScreen extends StatelessWidget {
                                   'Statut',
                                   style: getRegularStyle(
                                     color: ColorManager.textSecondary,
-                                    fontSize: FontSize.s14,
+                                    fontSize: FontSize.s13,
                                   ),
                                 ),
                               ],
@@ -270,15 +269,14 @@ class TicketScreen extends StatelessWidget {
                               ),
                               decoration: BoxDecoration(
                                 color: ColorManager.successLight,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.r4,
-                                ),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.r4),
                               ),
                               child: Text(
                                 billet.statut,
                                 style: getMediumStyle(
                                   color: ColorManager.success,
-                                  fontSize: FontSize.s12,
+                                  fontSize: FontSize.s11,
                                 ),
                               ),
                             ),
@@ -308,12 +306,12 @@ class TicketScreen extends StatelessWidget {
                           const Icon(
                             Icons.location_on,
                             color: ColorManager.accentDark,
-                            size: 20,
+                            size: 18,
                           ),
                           const SizedBox(width: AppSize.s8),
                           Expanded(
                             child: Text(
-                              'RDV: $meetingPoint',
+                              'Point de RDV : $meetingPoint',
                               style: getMediumStyle(
                                 color: ColorManager.accentDark,
                                 fontSize: FontSize.s12,
@@ -334,15 +332,15 @@ class TicketScreen extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () => _handlePdf(context),
-                    icon: const Icon(Icons.picture_as_pdf, size: 20),
-                    label: const Text('T\u00e9l\u00e9charger PDF'),
+                    icon: const Icon(Icons.picture_as_pdf, size: 18),
+                    label: const Text('Télécharger PDF'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorManager.primary,
                       foregroundColor: ColorManager.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.r12),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
                       elevation: 0,
                     ),
                   ),
@@ -351,7 +349,7 @@ class TicketScreen extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _handleShare(context),
-                    icon: const Icon(Icons.share, size: 20),
+                    icon: const Icon(Icons.share, size: 18),
                     label: const Text('Partager'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: ColorManager.accent,
@@ -359,7 +357,7 @@ class TicketScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.r12),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
                     ),
                   ),
                 ),
@@ -370,6 +368,140 @@ class TicketScreen extends StatelessWidget {
       ),
     );
   }
+
+  /// Bandeau Départ → Arrivée avec icône bus et date/heure centrées.
+  Widget _buildRouteBand() {
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    departure,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: getBoldStyle(
+                      color: ColorManager.textPrimary,
+                      fontSize: FontSize.s16,
+                    ),
+                  ),
+                  Text(
+                    'Départ',
+                    style: getRegularStyle(
+                      color: ColorManager.textTertiary,
+                      fontSize: FontSize.s11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Icon(
+                Icons.directions_bus_rounded,
+                color: ColorManager.primary,
+                size: 22,
+              ),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    destination,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                    style: getBoldStyle(
+                      color: ColorManager.textPrimary,
+                      fontSize: FontSize.s16,
+                    ),
+                  ),
+                  Text(
+                    'Arrivée',
+                    style: getRegularStyle(
+                      color: ColorManager.textTertiary,
+                      fontSize: FontSize.s11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: ColorManager.primarySurface,
+            borderRadius: BorderRadius.circular(AppRadius.r20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.calendar_today_outlined,
+                  size: 13, color: ColorManager.primary),
+              const SizedBox(width: 6),
+              Text(
+                '$_formattedDate · $time',
+                style: getMediumStyle(
+                  color: ColorManager.primary,
+                  fontSize: FontSize.s12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Ligne de perforation avec encoches latérales (effet ticket détachable).
+  Widget _buildPerforation() {
+    return Row(
+      children: [
+        Transform.translate(
+          offset: const Offset(-10, 0),
+          child: _notch(),
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              children: List.generate(
+                26,
+                (i) => Expanded(
+                  child: Container(
+                    height: 1.5,
+                    color: i.isEven
+                        ? ColorManager.grey2
+                        : Colors.transparent,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Transform.translate(
+          offset: const Offset(10, 0),
+          child: _notch(),
+        ),
+      ],
+    );
+  }
+
+  Widget _notch() => Container(
+        width: 20,
+        height: 20,
+        decoration: const BoxDecoration(
+          color: ColorManager.background,
+          shape: BoxShape.circle,
+        ),
+      );
 
   Future<void> _handlePdf(BuildContext context) async {
     try {
@@ -429,7 +561,7 @@ class TicketScreen extends StatelessWidget {
             label,
             style: getRegularStyle(
               color: ColorManager.textSecondary,
-              fontSize: FontSize.s14,
+              fontSize: FontSize.s13,
             ),
           ),
           const Spacer(),
@@ -438,7 +570,7 @@ class TicketScreen extends StatelessWidget {
               value,
               style: getMediumStyle(
                 color: ColorManager.textPrimary,
-                fontSize: FontSize.s14,
+                fontSize: FontSize.s13,
               ),
               textAlign: TextAlign.right,
             ),
