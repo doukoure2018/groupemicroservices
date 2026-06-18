@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:app_links/app_links.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'providers/auth_provider.dart';
 import 'models/user_profile.dart';
 import 'screens/splash_screen.dart';
@@ -12,9 +14,19 @@ import 'features/hub/hub_screen.dart';
 import 'presentation/resource/color_manager.dart';
 import 'services/api_service.dart';
 import 'services/user_service.dart';
+import 'services/push_notification_service.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase (push FCM/APNs). Tolère l'absence de config native (ex iOS sans
+  // GoogleService-Info.plist en dev) : l'app démarre quand même, sans push.
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  } catch (_) {
+    // Push indisponible sur cette plateforme/config : on continue sans.
+  }
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -35,6 +47,7 @@ class MyApp extends StatelessWidget {
       create: (_) => AuthProvider(),
       child: MaterialApp(
         title: 'SIRA Guinée',
+        navigatorKey: navigatorKey,
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: ColorManager.accent),
@@ -152,6 +165,8 @@ class _ProfileGateState extends State<_ProfileGate> {
   void initState() {
     super.initState();
     _fetch();
+    // Authentifié : on enregistre le device pour les push (idempotent).
+    PushNotificationService.instance.start();
   }
 
   Future<void> _fetch() async {

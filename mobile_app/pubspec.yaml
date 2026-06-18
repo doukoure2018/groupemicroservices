@@ -18,6 +18,10 @@ dependencies:
   flutter_secure_storage: ^9.2.2
   google_sign_in: ^6.2.2
 
+  # Push notifications (FCM/APNs) — notif système même app fermée
+  firebase_core: ^3.8.0
+  firebase_messaging: ^15.1.5
+
   # Deep links (Phase 2 : sira://verify auto-login)
   app_links: ^6.3.2
 

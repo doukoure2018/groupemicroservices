@@ -182,4 +182,15 @@ class BilletterieService {
   Future<void> markAllNotificationsAsRead() async {
     await _api.put('$_basePath/notifications/read-all');
   }
+
+  /// POST /billetterie/device-tokens - Enregistrer le token FCM/APNs du device
+  Future<void> registerDeviceToken({
+    required String token,
+    required String platform,
+  }) async {
+    await _api.post(
+      '$_basePath/device-tokens',
+      data: {'token': token, 'platform': platform},
+    );
+  }
 }
