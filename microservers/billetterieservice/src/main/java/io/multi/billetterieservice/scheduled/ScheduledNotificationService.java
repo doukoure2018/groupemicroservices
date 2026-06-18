@@ -4,6 +4,8 @@ import io.multi.billetterieservice.event.Event;
 import io.multi.billetterieservice.event.EventType;
 import io.multi.billetterieservice.event.Notification;
 import io.multi.billetterieservice.query.ScheduledNotificationQuery;
+import io.multi.billetterieservice.service.DeviceTokenService;
+import io.multi.billetterieservice.service.FcmSender;
 import io.multi.billetterieservice.service.InAppNotificationService;
 import io.multi.clients.UserClient;
 import io.multi.clients.domain.User;
@@ -35,6 +37,8 @@ public class ScheduledNotificationService {
     private final InAppNotificationService inAppNotificationService;
     private final KafkaTemplate<String, Notification> kafkaTemplate;
     private final UserClient userClient;
+    private final DeviceTokenService deviceTokenService;
+    private final FcmSender fcmSender;
 
     /** Délai (heures) après l'arrivée estimée avant d'envoyer la demande d'avis. Défaut 24h. */
     @Value("${billetterie.avis.delai-heures:24}")
@@ -290,6 +294,12 @@ public class ScheduledNotificationService {
 
             inAppNotificationService.createNotification(userId, "IN_APP", "DEMANDE_AVIS",
                     titre, message, false, commandeId, "COMMANDE", metadata);
+
+            // Push système (FCM/APNs) en plus de l'in-app, si l'user a des devices.
+            fcmSender.sendToTokens(
+                    deviceTokenService.getTokensByUser(userId),
+                    titre, message,
+                    Map.of("categorie", "DEMANDE_AVIS", "commandeUuid", commandeUuid));
         }
 
         if (!commandes.isEmpty()) {

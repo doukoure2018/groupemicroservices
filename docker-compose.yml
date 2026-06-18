@@ -423,6 +423,10 @@ services:
       JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
+      # Demande d'avis post-voyage : délai (h) après arrivée. 24h prod, 0 en TEST.
+      BILLETTERIE_AVIS_DELAI_HEURES: ${BILLETTERIE_AVIS_DELAI_HEURES:-24}
+      # Firebase Cloud Messaging — clé compte de service base64 (secret .env, vide = push off).
+      FCM_SERVICE_ACCOUNT_B64: ${FCM_SERVICE_ACCOUNT_B64:-}
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
     volumes:
       - ./keys:/app/keys

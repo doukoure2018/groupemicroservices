@@ -87,6 +87,11 @@ billetterie:
     # Surchargeable via BILLETTERIE_AVIS_DELAI_HEURES (ex: 0 en TEST pour valider tout de suite).
     delai-heures: ${BILLETTERIE_AVIS_DELAI_HEURES:24}
 
+# Firebase Cloud Messaging — clé compte de service en base64 (secret serveur,
+# jamais commité). Absent = push désactivées (notifications in-app inchangées).
+fcm:
+  service-account-b64: ${FCM_SERVICE_ACCOUNT_B64:}
+
 orange:
   api:
     oauth:

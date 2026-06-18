@@ -96,6 +96,13 @@
             <artifactId>unirest-java-core</artifactId>
             <version>4.4.4</version>
         </dependency>
+
+        <!-- Firebase Admin SDK — envoi des push FCM/APNs -->
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>9.4.1</version>
+        </dependency>
     </dependencies>
 
     <build>
