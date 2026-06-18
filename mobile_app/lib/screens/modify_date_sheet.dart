@@ -145,24 +145,24 @@ class _ModifyDateSheetState extends State<ModifyDateSheet> {
               ),
             ),
           ),
-          const SizedBox(height: AppSize.s16),
+          const SizedBox(height: AppSize.s14),
           Text(
             'Changer la date',
             style: getSemiBoldStyle(
               color: ColorManager.textPrimary,
-              fontSize: FontSize.s20,
+              fontSize: FontSize.s18,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             '${widget.commande.villeDepartLibelle} → ${widget.commande.villeArriveeLibelle} · '
             '${widget.commande.nombrePlaces} place${widget.commande.nombrePlaces > 1 ? 's' : ''}',
             style: getRegularStyle(
-              color: ColorManager.textSecondary,
-              fontSize: FontSize.s14,
+              color: ColorManager.textTertiary,
+              fontSize: FontSize.s12,
             ),
           ),
-          const SizedBox(height: AppSize.s16),
+          const SizedBox(height: AppSize.s14),
           Flexible(child: _buildContent()),
           const SizedBox(height: AppSize.s12),
           SizedBox(
@@ -177,13 +177,13 @@ class _ModifyDateSheetState extends State<ModifyDateSheet> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.r12),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 13),
                 elevation: 0,
               ),
               child: _isSubmitting
                   ? const SizedBox(
-                      width: 20,
-                      height: 20,
+                      width: 18,
+                      height: 18,
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: ColorManager.white),
                     )
@@ -191,17 +191,19 @@ class _ModifyDateSheetState extends State<ModifyDateSheet> {
                       'Confirmer le changement',
                       style: getSemiBoldStyle(
                         color: ColorManager.white,
-                        fontSize: FontSize.s16,
+                        fontSize: FontSize.s14,
                       ),
                     ),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Le montant payé reste inchangé.',
-            style: getRegularStyle(
-              color: ColorManager.textTertiary,
-              fontSize: FontSize.s11,
+          const SizedBox(height: 6),
+          Center(
+            child: Text(
+              'Le montant payé reste inchangé.',
+              style: getRegularStyle(
+                color: ColorManager.textTertiary,
+                fontSize: FontSize.s11,
+              ),
             ),
           ),
         ],
@@ -226,7 +228,7 @@ class _ModifyDateSheetState extends State<ModifyDateSheet> {
                 textAlign: TextAlign.center,
                 style: getRegularStyle(
                     color: ColorManager.textSecondary,
-                    fontSize: FontSize.s14)),
+                    fontSize: FontSize.s13)),
             const SizedBox(height: 12),
             TextButton(onPressed: _load, child: const Text('Réessayer')),
           ],
@@ -239,13 +241,13 @@ class _ModifyDateSheetState extends State<ModifyDateSheet> {
         child: Column(
           children: [
             const Icon(Icons.event_busy,
-                size: 48, color: ColorManager.textTertiary),
+                size: 44, color: ColorManager.textTertiary),
             const SizedBox(height: 12),
             Text(
               'Aucune autre date disponible pour ce trajet.',
               textAlign: TextAlign.center,
               style: getMediumStyle(
-                  color: ColorManager.textSecondary, fontSize: FontSize.s14),
+                  color: ColorManager.textSecondary, fontSize: FontSize.s13),
             ),
           ],
         ),
@@ -266,7 +268,8 @@ class _ModifyDateSheetState extends State<ModifyDateSheet> {
           ? null
           : () => setState(() => _selectedUuid = offre.offreUuid),
       child: Container(
-        padding: const EdgeInsets.all(AppPadding.p14),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppPadding.p12, vertical: AppPadding.p10),
         decoration: BoxDecoration(
           color: selected ? ColorManager.infoLight : ColorManager.white,
           borderRadius: BorderRadius.circular(AppRadius.r12),
@@ -283,9 +286,9 @@ class _ModifyDateSheetState extends State<ModifyDateSheet> {
                   ? Icons.radio_button_checked
                   : Icons.radio_button_unchecked,
               color: selected ? ColorManager.primary : ColorManager.grey2,
-              size: 22,
+              size: 20,
             ),
-            const SizedBox(width: AppSize.s12),
+            const SizedBox(width: AppSize.s8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,20 +301,20 @@ class _ModifyDateSheetState extends State<ModifyDateSheet> {
                           '${_formatDate(offre.dateDepart)} · ${_formatTime(offre.heureDepart)}',
                           style: getSemiBoldStyle(
                               color: ColorManager.textPrimary,
-                              fontSize: FontSize.s14),
+                              fontSize: FontSize.s13),
                         ),
                       ),
                       Text(
                         '${_formatPrice(offre.montant)} ${offre.devise ?? 'GNF'}',
                         style: getSemiBoldStyle(
-                            color: ColorManager.primary, fontSize: FontSize.s14),
+                            color: ColorManager.primary, fontSize: FontSize.s13),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
                   // Véhicule · clim · note
                   Wrap(
-                    spacing: 12,
+                    spacing: 10,
                     runSpacing: 4,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
@@ -328,14 +331,14 @@ class _ModifyDateSheetState extends State<ModifyDateSheet> {
                             color: ColorManager.starRating),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   // Chauffeur · places
                   Row(
                     children: [
                       if (offre.nomChauffeur != null &&
                           offre.nomChauffeur!.isNotEmpty) ...[
                         const Icon(Icons.person_outline,
-                            size: 13, color: ColorManager.textTertiary),
+                            size: 12, color: ColorManager.textTertiary),
                         const SizedBox(width: 3),
                         Flexible(
                           child: Text(
@@ -343,19 +346,19 @@ class _ModifyDateSheetState extends State<ModifyDateSheet> {
                             overflow: TextOverflow.ellipsis,
                             style: getRegularStyle(
                                 color: ColorManager.textSecondary,
-                                fontSize: FontSize.s12),
+                                fontSize: FontSize.s11),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                       ],
                       const Icon(Icons.event_seat_outlined,
-                          size: 13, color: ColorManager.textTertiary),
+                          size: 12, color: ColorManager.textTertiary),
                       const SizedBox(width: 3),
                       Text(
                         '${offre.nombrePlacesDisponibles} dispo',
                         style: getRegularStyle(
                             color: ColorManager.textTertiary,
-                            fontSize: FontSize.s12),
+                            fontSize: FontSize.s11),
                       ),
                     ],
                   ),
@@ -372,12 +375,12 @@ class _ModifyDateSheetState extends State<ModifyDateSheet> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: color ?? ColorManager.textSecondary),
+        Icon(icon, size: 13, color: color ?? ColorManager.textSecondary),
         const SizedBox(width: 3),
         Text(
           label,
           style: getRegularStyle(
-              color: ColorManager.textSecondary, fontSize: FontSize.s12),
+              color: ColorManager.textSecondary, fontSize: FontSize.s11),
         ),
       ],
     );
