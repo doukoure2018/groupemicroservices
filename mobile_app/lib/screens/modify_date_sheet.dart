@@ -276,6 +276,7 @@ class _ModifyDateSheetState extends State<ModifyDateSheet> {
           ),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(
               selected
@@ -289,30 +290,96 @@ class _ModifyDateSheetState extends State<ModifyDateSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '${_formatDate(offre.dateDepart)} · ${_formatTime(offre.heureDepart)}',
-                    style: getSemiBoldStyle(
-                        color: ColorManager.textPrimary,
-                        fontSize: FontSize.s14),
+                  // Date/heure + prix
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${_formatDate(offre.dateDepart)} · ${_formatTime(offre.heureDepart)}',
+                          style: getSemiBoldStyle(
+                              color: ColorManager.textPrimary,
+                              fontSize: FontSize.s14),
+                        ),
+                      ),
+                      Text(
+                        '${_formatPrice(offre.montant)} ${offre.devise ?? 'GNF'}',
+                        style: getSemiBoldStyle(
+                            color: ColorManager.primary, fontSize: FontSize.s14),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${offre.nombrePlacesDisponibles} place${offre.nombrePlacesDisponibles > 1 ? 's' : ''} dispo',
-                    style: getRegularStyle(
-                        color: ColorManager.textTertiary,
-                        fontSize: FontSize.s12),
+                  const SizedBox(height: 6),
+                  // Véhicule · clim · note
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (offre.typeVehiculeLibelle != null &&
+                          offre.typeVehiculeLibelle!.isNotEmpty)
+                        _infoChip(Icons.directions_bus_outlined,
+                            offre.typeVehiculeLibelle!),
+                      if (offre.vehiculeClimatise)
+                        _infoChip(Icons.ac_unit, 'Clim',
+                            color: ColorManager.info),
+                      if (offre.noteMoyenne != null && offre.noteMoyenne! > 0)
+                        _infoChip(Icons.star_rounded,
+                            offre.noteMoyenne!.toStringAsFixed(1),
+                            color: ColorManager.starRating),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  // Chauffeur · places
+                  Row(
+                    children: [
+                      if (offre.nomChauffeur != null &&
+                          offre.nomChauffeur!.isNotEmpty) ...[
+                        const Icon(Icons.person_outline,
+                            size: 13, color: ColorManager.textTertiary),
+                        const SizedBox(width: 3),
+                        Flexible(
+                          child: Text(
+                            offre.nomChauffeur!,
+                            overflow: TextOverflow.ellipsis,
+                            style: getRegularStyle(
+                                color: ColorManager.textSecondary,
+                                fontSize: FontSize.s12),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      const Icon(Icons.event_seat_outlined,
+                          size: 13, color: ColorManager.textTertiary),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${offre.nombrePlacesDisponibles} dispo',
+                        style: getRegularStyle(
+                            color: ColorManager.textTertiary,
+                            fontSize: FontSize.s12),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            Text(
-              '${_formatPrice(offre.montant)} ${offre.devise ?? 'GNF'}',
-              style: getMediumStyle(
-                  color: ColorManager.textSecondary, fontSize: FontSize.s13),
-            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _infoChip(IconData icon, String label, {Color? color}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color ?? ColorManager.textSecondary),
+        const SizedBox(width: 3),
+        Text(
+          label,
+          style: getRegularStyle(
+              color: ColorManager.textSecondary, fontSize: FontSize.s12),
+        ),
+      ],
     );
   }
 }
