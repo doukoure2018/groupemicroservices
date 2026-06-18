@@ -12,7 +12,7 @@ class TicketPdfService {
   static const _successColor = PdfColor.fromInt(0xFF10B981);
   static const _surfaceBg = PdfColor.fromInt(0xFFF5F7FA);
 
-  /// Generates a PDF for a single ticket using Google Fonts for Unicode support.
+  /// Génère le PDF d'un billet, aligné sur le look de l'écran Billet mobile.
   static Future<Uint8List> generateTicketPdf({
     required Billet billet,
     required String departure,
@@ -25,7 +25,7 @@ class TicketPdfService {
   }) async {
     final doc = pw.Document();
 
-    // Use built-in fonts (no network required, supports French accents)
+    // Polices intégrées (pas de réseau, accents FR supportés)
     final font = pw.Font.helvetica();
     final fontBold = pw.Font.helveticaBold();
 
@@ -52,7 +52,7 @@ class TicketPdfService {
             ),
             child: pw.Column(
               children: [
-                // Header - gradient-like effect with primary color
+                // Header
                 pw.Container(
                   width: double.infinity,
                   padding: const pw.EdgeInsets.symmetric(
@@ -70,7 +70,7 @@ class TicketPdfService {
                           style: pw.TextStyle(
                             font: fontBold,
                             color: PdfColors.white,
-                            fontSize: 24,
+                            fontSize: 22,
                           )),
                       pw.SizedBox(height: 4),
                       pw.Text('BILLET ELECTRONIQUE',
@@ -84,19 +84,23 @@ class TicketPdfService {
                   ),
                 ),
 
-                // Accent line under header
+                // Accent line
                 pw.Container(
-                  width: double.infinity,
-                  height: 3,
-                  color: _accentColor,
+                    width: double.infinity, height: 3, color: _accentColor),
+
+                // Route band (Départ -> Arrivée + date/heure)
+                pw.Padding(
+                  padding:
+                      const pw.EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: _routeBand(departure, destination, date, time, font,
+                      fontBold),
                 ),
 
-                // Content
+                // Code + QR
                 pw.Padding(
-                  padding: const pw.EdgeInsets.all(20),
+                  padding: const pw.EdgeInsets.fromLTRB(20, 14, 20, 14),
                   child: pw.Column(
                     children: [
-                      // Ticket code
                       pw.Text('Code billet', style: labelStyle),
                       pw.SizedBox(height: 4),
                       pw.Container(
@@ -110,51 +114,59 @@ class TicketPdfService {
                             style: pw.TextStyle(
                               font: fontBold,
                               color: _primaryColor,
-                              fontSize: 22,
+                              fontSize: 20,
                               letterSpacing: 2,
                             )),
                       ),
-                      pw.SizedBox(height: 18),
-
-                      // QR Code
-                      qrCode,
-                      pw.SizedBox(height: 18),
-
-                      // Dashed divider
+                      pw.SizedBox(height: 16),
                       pw.Container(
-                        width: double.infinity,
-                        child: pw.Row(
-                          children: List.generate(
-                            40,
-                            (i) => pw.Expanded(
-                              child: pw.Container(
-                                height: 1,
-                                color: i.isEven
-                                    ? PdfColors.grey300
-                                    : PdfColors.white,
-                              ),
-                            ),
-                          ),
+                        padding: const pw.EdgeInsets.all(8),
+                        decoration: pw.BoxDecoration(
+                          border:
+                              pw.Border.all(color: PdfColors.grey300, width: 1),
+                          borderRadius: pw.BorderRadius.circular(10),
                         ),
+                        child: qrCode,
                       ),
-                      pw.SizedBox(height: 14),
+                      pw.SizedBox(height: 6),
+                      pw.Text("Presentez ce QR code a l'embarquement",
+                          style: labelStyle.copyWith(fontSize: 9)),
+                    ],
+                  ),
+                ),
 
-                      // Details
+                // Perforation (tear line, pleine largeur)
+                pw.Row(
+                  children: List.generate(
+                    40,
+                    (i) => pw.Expanded(
+                      child: pw.Container(
+                        height: 1,
+                        color: i.isEven ? PdfColors.grey300 : PdfColors.white,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Stub : détails + statut
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(20),
+                  child: pw.Column(
+                    children: [
                       _pdfRow('Passager', billet.nomPassager, labelStyle,
                           boldStyle),
-                      _pdfRow('Trajet', '$departure - $destination',
-                          labelStyle, boldStyle),
-                      _pdfRow(
-                          'Date & Heure', '$date - $time', labelStyle, boldStyle),
+                      if (billet.numeroSiege != null &&
+                          billet.numeroSiege!.isNotEmpty)
+                        _pdfRow('Siege', billet.numeroSiege!, labelStyle,
+                            boldStyle),
                       if (vehiclePlate.isNotEmpty)
                         _pdfRow(
                             'Vehicule', vehiclePlate, labelStyle, boldStyle),
                       if (driverName.isNotEmpty)
-                        _pdfRow(
-                            'Chauffeur', driverName, labelStyle, boldStyle),
+                        _pdfRow('Chauffeur', driverName, labelStyle, boldStyle),
 
                       // Status badge
-                      pw.SizedBox(height: 8),
+                      pw.SizedBox(height: 4),
                       pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
@@ -174,10 +186,10 @@ class TicketPdfService {
                           ),
                         ],
                       ),
-                      pw.SizedBox(height: 14),
 
                       // Meeting point
-                      if (meetingPoint.isNotEmpty)
+                      if (meetingPoint.isNotEmpty) ...[
+                        pw.SizedBox(height: 14),
                         pw.Container(
                           width: double.infinity,
                           padding: const pw.EdgeInsets.all(10),
@@ -186,10 +198,9 @@ class TicketPdfService {
                             borderRadius: pw.BorderRadius.circular(6),
                           ),
                           child: pw.Text('Point de RDV : $meetingPoint',
-                              style: baseStyle.copyWith(
-                                color: _warningText,
-                              )),
+                              style: baseStyle.copyWith(color: _warningText)),
                         ),
+                      ],
                     ],
                   ),
                 ),
@@ -202,6 +213,80 @@ class TicketPdfService {
 
     return doc.save();
   }
+
+  /// Bandeau Départ -> Arrivée (points colorés + ligne) avec chip date/heure.
+  static pw.Widget _routeBand(String departure, String destination,
+      String date, String time, pw.Font font, pw.Font fontBold) {
+    final cityStyle =
+        pw.TextStyle(font: fontBold, color: _primaryColor, fontSize: 15);
+    final tagStyle =
+        pw.TextStyle(font: font, color: PdfColors.grey500, fontSize: 9);
+    return pw.Column(
+      children: [
+        pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(departure, style: cityStyle, maxLines: 1),
+                  pw.Text('Depart', style: tagStyle),
+                ],
+              ),
+            ),
+            pw.Padding(
+              padding: const pw.EdgeInsets.symmetric(horizontal: 8),
+              child: pw.Container(
+                width: 46,
+                child: pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    _dot(_primaryColor),
+                    pw.Expanded(
+                      child: pw.Container(
+                          height: 1, color: PdfColors.grey400),
+                    ),
+                    _dot(_accentColor),
+                  ],
+                ),
+              ),
+            ),
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.end,
+                children: [
+                  pw.Text(destination,
+                      style: cityStyle,
+                      maxLines: 1,
+                      textAlign: pw.TextAlign.right),
+                  pw.Text('Arrivee', style: tagStyle),
+                ],
+              ),
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 10),
+        pw.Container(
+          padding:
+              const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: pw.BoxDecoration(
+            color: _surfaceBg,
+            borderRadius: pw.BorderRadius.circular(20),
+          ),
+          child: pw.Text('$date . $time',
+              style: pw.TextStyle(
+                  font: fontBold, color: _primaryColor, fontSize: 11)),
+        ),
+      ],
+    );
+  }
+
+  static pw.Widget _dot(PdfColor color) => pw.Container(
+        width: 5,
+        height: 5,
+        decoration: pw.BoxDecoration(color: color, shape: pw.BoxShape.circle),
+      );
 
   static pw.Widget _pdfRow(
     String label,
