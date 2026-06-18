@@ -160,7 +160,9 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
         widget.destinationVilleUuid == null ||
         widget.destinationVilleUuid!.isEmpty) {
       setState(() {
-        _offers = _getMockOffers();
+        _offers = [];
+        _error =
+            'Villes non reconnues. Revenez à la recherche et resélectionnez le départ et la destination.';
         _isLoading = false;
       });
       return;
@@ -221,77 +223,6 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
   List<String> get _vehicleTypes {
     return _offers.map((o) => o.vehicleType).toSet().toList()..sort();
-  }
-
-  List<TripOffer> _getMockOffers() {
-    return [
-      TripOffer(
-        id: '1',
-        departureTime: '07:00',
-        arrivalTime: '14:30',
-        duration: '7h30',
-        departureCity: widget.departure,
-        arrivalCity: widget.destination,
-        price: 150000,
-        availableSeats: 12,
-        rating: 4.2,
-        reviewCount: 45,
-        hasAC: true,
-        vehicleType: 'Minibus',
-        vehicleBrand: 'Toyota',
-        vehicleModel: 'Hiace',
-        vehicleRegistration: 'RC 1234 AB',
-        totalSeats: 18,
-        driverName: 'Mamadou Diallo',
-        driverPhone: '+224 621 XX XX XX',
-        departureSite: 'Gare de ${widget.departure}',
-        arrivalSite: 'Gare de ${widget.destination}',
-      ),
-      TripOffer(
-        id: '2',
-        departureTime: '08:30',
-        arrivalTime: '16:00',
-        duration: '7h30',
-        departureCity: widget.departure,
-        arrivalCity: widget.destination,
-        price: 140000,
-        availableSeats: 8,
-        rating: 4.5,
-        reviewCount: 67,
-        hasAC: true,
-        vehicleType: 'Minibus',
-        vehicleBrand: 'Toyota',
-        vehicleModel: 'Hiace',
-        vehicleRegistration: 'RC 5678 CD',
-        totalSeats: 15,
-        driverName: 'Ibrahima Bah',
-        driverPhone: '+224 622 XX XX XX',
-        departureSite: 'Gare de ${widget.departure}',
-        arrivalSite: 'Gare de ${widget.destination}',
-      ),
-      TripOffer(
-        id: '3',
-        departureTime: '10:00',
-        arrivalTime: '17:30',
-        duration: '7h30',
-        departureCity: widget.departure,
-        arrivalCity: widget.destination,
-        price: 130000,
-        availableSeats: 15,
-        rating: 3.8,
-        reviewCount: 32,
-        hasAC: false,
-        vehicleType: 'Minibus',
-        vehicleBrand: 'Mercedes',
-        vehicleModel: 'Sprinter',
-        vehicleRegistration: 'RC 9012 EF',
-        totalSeats: 22,
-        driverName: 'Ousmane Camara',
-        driverPhone: '+224 623 XX XX XX',
-        departureSite: 'Gare de ${widget.departure}',
-        arrivalSite: 'Gare de ${widget.destination}',
-      ),
-    ];
   }
 
   @override
