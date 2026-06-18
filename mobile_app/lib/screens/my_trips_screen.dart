@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/commande.dart';
 import '../services/billetterie_service.dart';
 import 'rate_trip_sheet.dart';
+import 'modify_date_sheet.dart';
 import '../presentation/resource/color_manager.dart';
 import '../presentation/resource/font_manager.dart';
 import '../presentation/resource/values_manager.dart';
@@ -200,6 +201,13 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       }
+    }
+  }
+
+  Future<void> _modifyDate(Commande commande) async {
+    final modified = await ModifyDateSheet.show(context, commande);
+    if (modified == true && mounted) {
+      _loadCommandes();
     }
   }
 
@@ -664,6 +672,33 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: AppSize.s8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _modifyDate(commande),
+              icon: const Icon(
+                Icons.edit_calendar_outlined,
+                size: 18,
+                color: ColorManager.primary,
+              ),
+              label: Text(
+                'Modifier la date',
+                style: getMediumStyle(
+                  color: ColorManager.primary,
+                  fontSize: FontSize.s14,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ColorManager.primary,
+                side: const BorderSide(color: ColorManager.primary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.r12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
           ),
           if (commande.canCancel) ...[
             const SizedBox(height: AppSize.s8),

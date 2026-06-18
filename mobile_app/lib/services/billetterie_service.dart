@@ -89,6 +89,27 @@ class BilletterieService {
     await _api.put('$_basePath/commandes/$commandeUuid/annuler');
   }
 
+  /// GET /billetterie/commandes/{uuid}/offres-alternatives - Autres dates du même trajet
+  Future<List<Offre>> getOffresAlternatives(String commandeUuid) async {
+    final response =
+        await _api.get('$_basePath/commandes/$commandeUuid/offres-alternatives');
+    final data = response.data['data'];
+    return (data['offres'] as List)
+        .map((json) => Offre.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// PUT /billetterie/commandes/{uuid}/modifier-date - Déplacer la réservation
+  Future<void> modifierDateCommande({
+    required String commandeUuid,
+    required String nouvelleOffreUuid,
+  }) async {
+    await _api.put(
+      '$_basePath/commandes/$commandeUuid/modifier-date',
+      data: {'nouvelleOffreUuid': nouvelleOffreUuid},
+    );
+  }
+
   /// POST /billetterie/billets/validate - Valider un billet via QR code
   /// Returns a structured result: {success, billet, ?status, ?error}
   Future<Map<String, dynamic>> validateBillet(String codeBillet) async {
