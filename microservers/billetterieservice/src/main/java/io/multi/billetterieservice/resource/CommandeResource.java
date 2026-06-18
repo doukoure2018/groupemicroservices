@@ -1,8 +1,10 @@
 package io.multi.billetterieservice.resource;
 
 import io.multi.billetterieservice.domain.Commande;
+import io.multi.billetterieservice.domain.Offre;
 import io.multi.billetterieservice.domain.Response;
 import io.multi.billetterieservice.dto.CommandeRequest;
+import io.multi.billetterieservice.dto.ModifierDateRequest;
 import io.multi.billetterieservice.service.CommandeService;
 import io.multi.billetterieservice.utils.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -76,6 +78,45 @@ public class CommandeResource {
         return ResponseEntity.ok(
                 getResponse(request, Map.of("commande", commande),
                         "Commande annulée avec succès", OK)
+        );
+    }
+
+    /**
+     * GET /billetterie/commandes/{uuid}/offres-alternatives - Offres du même trajet
+     * vers lesquelles la réservation peut être déplacée (changement de date).
+     */
+    @GetMapping("/{uuid}/offres-alternatives")
+    public ResponseEntity<Response> getOffresAlternatives(
+            @PathVariable String uuid,
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest request) {
+        Long userId = jwtUtils.extractUserId(jwt);
+        log.info("GET /billetterie/commandes/{}/offres-alternatives - userId: {}", uuid, userId);
+        List<Offre> offres = commandeService.getOffresAlternatives(uuid, userId);
+        return ResponseEntity.ok(
+                getResponse(request, Map.of("offres", offres),
+                        "Offres alternatives récupérées", OK)
+        );
+    }
+
+    /**
+     * PUT /billetterie/commandes/{uuid}/modifier-date - Déplacer la réservation vers
+     * une autre offre du même trajet (montant d'origine conservé).
+     */
+    @PutMapping("/{uuid}/modifier-date")
+    public ResponseEntity<Response> modifierDate(
+            @PathVariable String uuid,
+            @Valid @RequestBody ModifierDateRequest modifierDateRequest,
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest request) {
+        Long userId = jwtUtils.extractUserId(jwt);
+        log.info("PUT /billetterie/commandes/{}/modifier-date - userId: {}, nouvelleOffre: {}",
+                uuid, userId, modifierDateRequest.getNouvelleOffreUuid());
+        Commande commande = commandeService.modifierDateCommande(
+                uuid, modifierDateRequest.getNouvelleOffreUuid(), userId);
+        return ResponseEntity.ok(
+                getResponse(request, Map.of("commande", commande),
+                        "Date de la réservation modifiée avec succès", OK)
         );
     }
 

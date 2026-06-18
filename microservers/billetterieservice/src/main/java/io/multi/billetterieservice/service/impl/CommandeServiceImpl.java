@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -486,6 +487,89 @@ public class CommandeServiceImpl implements CommandeService {
         }
 
         // 6. Retourner la commande mise à jour
+        return getByUuid(commandeUuid);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Offre> getOffresAlternatives(String commandeUuid, Long userId) {
+        Commande commande = getByUuid(commandeUuid);
+        if (!commande.getUserId().equals(userId)) {
+            throw new ApiException("Vous n'êtes pas autorisé à accéder à cette commande");
+        }
+        Offre offreActuelle = offreService.getByUuid(commande.getOffreUuid());
+        LocalDateTime now = LocalDateTime.now();
+
+        return offreService.getByTrajet(offreActuelle.getTrajetUuid()).stream()
+                .filter(o -> !o.getOffreUuid().equals(offreActuelle.getOffreUuid()))
+                .filter(o -> "OUVERT".equals(o.getStatut()))
+                .filter(o -> o.getNombrePlacesDisponibles() != null
+                        && o.getNombrePlacesDisponibles() >= commande.getNombrePlaces())
+                .filter(o -> LocalDateTime.of(o.getDateDepart(), o.getHeureDepart()).isAfter(now))
+                .sorted((a, b) -> LocalDateTime.of(a.getDateDepart(), a.getHeureDepart())
+                        .compareTo(LocalDateTime.of(b.getDateDepart(), b.getHeureDepart())))
+                .toList();
+    }
+
+    @Override
+    public Commande modifierDateCommande(String commandeUuid, String nouvelleOffreUuid, Long userId) {
+        log.info("Modification date commande {} -> offre {} par userId {}", commandeUuid, nouvelleOffreUuid, userId);
+
+        Commande commande = getByUuid(commandeUuid);
+        if (!commande.getUserId().equals(userId)) {
+            throw new ApiException("Vous n'êtes pas autorisé à modifier cette commande");
+        }
+        if (!List.of("CONFIRMEE", "PAYEE").contains(commande.getStatut())) {
+            throw new ApiException("Seules les commandes confirmées ou payées peuvent être modifiées (statut: "
+                    + commande.getStatut() + ")");
+        }
+
+        Offre offreActuelle = offreService.getByUuid(commande.getOffreUuid());
+        LocalDateTime now = LocalDateTime.now();
+
+        // Éligibilité : l'offre actuelle ne doit pas être déjà partie.
+        if (!LocalDateTime.of(offreActuelle.getDateDepart(), offreActuelle.getHeureDepart()).isAfter(now)) {
+            throw new ApiException("Ce voyage est déjà parti, la date ne peut plus être modifiée");
+        }
+        if (nouvelleOffreUuid.equals(offreActuelle.getOffreUuid())) {
+            throw new ApiException("La nouvelle offre est identique à l'offre actuelle");
+        }
+
+        Offre nouvelleOffre = offreService.getByUuid(nouvelleOffreUuid);
+
+        if (!nouvelleOffre.getTrajetUuid().equals(offreActuelle.getTrajetUuid())) {
+            throw new ApiException("La nouvelle offre doit concerner le même trajet");
+        }
+        if (!"OUVERT".equals(nouvelleOffre.getStatut())) {
+            throw new ApiException("La nouvelle offre n'est pas disponible (statut: " + nouvelleOffre.getStatut() + ")");
+        }
+        if (!LocalDateTime.of(nouvelleOffre.getDateDepart(), nouvelleOffre.getHeureDepart()).isAfter(now)) {
+            throw new ApiException("La nouvelle date de départ doit être dans le futur");
+        }
+        if (nouvelleOffre.getNombrePlacesDisponibles() == null
+                || nouvelleOffre.getNombrePlacesDisponibles() < commande.getNombrePlaces()) {
+            throw new ApiException("Pas assez de places sur la nouvelle offre");
+        }
+
+        // Transaction (classe @Transactional) : réserver la nouvelle (fail fast si plein),
+        // libérer l'ancienne, repointer la commande. Le trigger places ne s'active pas
+        // sur un changement d'offre_id (statut inchangé) → gestion manuelle ici.
+        offreService.reserverPlaces(nouvelleOffreUuid, commande.getNombrePlaces());
+        offreService.libererPlaces(offreActuelle.getOffreUuid(), commande.getNombrePlaces());
+
+        int updated = jdbcClient.sql(CommandeQuery.UPDATE_COMMANDE_OFFRE)
+                .param("offreId", nouvelleOffre.getOffreId())
+                .param("commandeUuid", commandeUuid)
+                .param("userId", userId)
+                .update();
+        if (updated == 0) {
+            throw new ApiException("Impossible de modifier la commande");
+        }
+
+        log.info("Commande {} déplacée: {} -> {} (montant d'origine conservé)", commandeUuid,
+                offreActuelle.getDateDepart(), nouvelleOffre.getDateDepart());
+
+        // Montant d'origine conservé (MVP paiement simulé — dette réconciliation prix).
         return getByUuid(commandeUuid);
     }
 }

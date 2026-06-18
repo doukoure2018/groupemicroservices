@@ -116,6 +116,17 @@ public final class CommandeQuery {
         WHERE commande_id = :commandeId
         """;
 
+    /**
+     * Repointe la commande vers une autre offre (changement de date).
+     * Le trigger update_offre_places ne se déclenche PAS ici (statut inchangé) :
+     * les places sont gérées manuellement dans le service.
+     */
+    public static final String UPDATE_COMMANDE_OFFRE = """
+        UPDATE commandes SET offre_id = :offreId, updated_at = CURRENT_TIMESTAMP
+        WHERE commande_uuid = :commandeUuid AND user_id = :userId
+          AND statut IN ('CONFIRMEE', 'PAYEE')
+        """;
+
     public static final String UPDATE_COMMANDE_STATUT_UTILISEE = """
         UPDATE commandes SET statut = 'UTILISEE', updated_at = CURRENT_TIMESTAMP
         WHERE commande_id = :commandeId
