@@ -77,22 +77,22 @@ class _SplashScreenState extends State<SplashScreen>
                   fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 32),
-                // Logo text: "SIRA" in navy + " Guinée" in orange
+                // Logo text: "SYNERGI" in navy + "A" in orange
                 RichText(
                   text: const TextSpan(
                     children: [
                       TextSpan(
-                        text: 'SIRA',
+                        text: 'SYNERGI',
                         style: TextStyle(
-                          fontSize: 38,
+                          fontSize: 36,
                           fontWeight: FontWeight.bold,
                           color: ColorManager.primary,
                         ),
                       ),
                       TextSpan(
-                        text: ' Guinée',
+                        text: 'A',
                         style: TextStyle(
-                          fontSize: 38,
+                          fontSize: 36,
                           fontWeight: FontWeight.bold,
                           color: ColorManager.accent,
                         ),
@@ -102,7 +102,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'TRANSPORT & IMMOBILIER',
+                  'IMMO TRANS GUINEE',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
