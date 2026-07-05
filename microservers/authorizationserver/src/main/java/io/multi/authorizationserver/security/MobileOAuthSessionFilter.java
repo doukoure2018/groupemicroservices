@@ -29,6 +29,7 @@ public class MobileOAuthSessionFilter implements Filter {
     public static final String MOBILE_LOGIN_DONE_COOKIE = "MOBILE_LOGIN_DONE";
     public static final String MOBILE_AUTH_SESSION_KEY = "MOBILE_OAUTH_URL_SESSION";
     public static final String MOBILE_AUTH_TOKEN_PARAM = "mobile_auth_token";
+    public static final String WEB_AUTH_SESSION_KEY = "WEB_OAUTH_URL_SESSION";
 
     // Cache côté serveur pour stocker les URLs OAuth (solution la plus robuste)
     // Clé: token unique, Valeur: URL OAuth + timestamp
@@ -175,6 +176,17 @@ public class MobileOAuthSessionFilter implements Filter {
                 // Rediriger vers /login avec le token comme paramètre
                 httpResponse.sendRedirect("/login?mobile_auth_token=" + authToken);
                 return;
+            }
+
+            // Web (SPA) : mémoriser l'URL d'autorisation en session pour reprise après login,
+            // au cas où la SavedRequest de Spring serait perdue (assets non permitAll, multi-onglets, erreur intermédiaire).
+            if ("GET".equalsIgnoreCase(httpRequest.getMethod())) {
+                String fullOAuthUrl = httpRequest.getRequestURL().toString();
+                String queryString = httpRequest.getQueryString();
+                if (queryString != null) {
+                    fullOAuthUrl += "?" + queryString;
+                }
+                httpRequest.getSession(true).setAttribute(WEB_AUTH_SESSION_KEY, fullOAuthUrl);
             }
             log.info("========================================");
         }

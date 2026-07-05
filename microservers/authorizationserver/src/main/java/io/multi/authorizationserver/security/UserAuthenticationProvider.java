@@ -37,11 +37,13 @@ public class UserAuthenticationProvider implements AuthenticationProvider {
             if(encoder.matches((String) authentication.getCredentials(), user.getPassword())) {
                 return authenticated(user, "[PROTECTED]", commaSeparatedStringToAuthorityList(user.getRole() + "," + user.getAuthorities()));
             } else throw new BadCredentialsException("Incorrect email/password. Please try again.");
-        } catch (BadCredentialsException | ApiException | LockedException | CredentialsExpiredException |
-                 DisabledException exception) {
-            throw new ApiException(exception.getMessage());
+        } catch (AuthenticationException exception) {
+            // BadCredentials/Locked/Disabled/CredentialsExpired : gérées par le failureHandler (redirect /login?error)
+            throw exception;
+        } catch (ApiException exception) {
+            throw new BadCredentialsException(exception.getMessage());
         } catch (Exception exception) {
-            throw new ApiException("Unable to authenticate. Please try again.");
+            throw new AuthenticationServiceException("Unable to authenticate. Please try again.");
         }
     }
 

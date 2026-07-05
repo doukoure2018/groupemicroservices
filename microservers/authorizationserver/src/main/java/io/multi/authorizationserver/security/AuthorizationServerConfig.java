@@ -170,7 +170,11 @@ public class AuthorizationServerConfig {
                     HttpSession session = request.getSession(false);
 
                     // MÉTHODE 1: Chercher le token dans les paramètres de la requête
+                    // (le formulaire web poste un champ caché vide : le traiter comme absent)
                     mobileAuthToken = request.getParameter(MobileOAuthSessionFilter.MOBILE_AUTH_TOKEN_PARAM);
+                    if (mobileAuthToken != null && mobileAuthToken.isEmpty()) {
+                        mobileAuthToken = null;
+                    }
                     log.info("📋 Token from request param: {}", mobileAuthToken);
 
                     // MÉTHODE 2: Si pas de token dans les params, chercher dans le cookie
@@ -264,9 +268,22 @@ public class AuthorizationServerConfig {
                             log.info("📋 Found saved request: {}", redirectUrl);
                             if (redirectUrl.contains("/oauth2/authorize")) {
                                 log.info("➡️ Redirecting to OAuth2 flow");
+                                session.removeAttribute(MobileOAuthSessionFilter.WEB_AUTH_SESSION_KEY);
                                 response.sendRedirect(redirectUrl);
                                 return;
                             }
+                        }
+                    }
+
+                    // Priorité 3: URL d'autorisation web mémorisée par MobileOAuthSessionFilter
+                    // (reprend le flux OAuth2 même si la SavedRequest de Spring a été perdue)
+                    if (session != null) {
+                        Object webOAuthUrl = session.getAttribute(MobileOAuthSessionFilter.WEB_AUTH_SESSION_KEY);
+                        if (webOAuthUrl != null && !webOAuthUrl.toString().isEmpty()) {
+                            session.removeAttribute(MobileOAuthSessionFilter.WEB_AUTH_SESSION_KEY);
+                            log.info("➡️ Redirecting to stored web OAuth2 authorize URL");
+                            response.sendRedirect(webOAuthUrl.toString());
+                            return;
                         }
                     }
 
