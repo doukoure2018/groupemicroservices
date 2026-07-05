@@ -1,5 +1,8 @@
 export const server = 'http://localhost:9000';
 
+// Authorizationserver lancé via Maven (profil dev, sans context-path).
+// Si le backend tourne en Docker (profil prod), le serveur d'auth est servi sous /authorization :
+// ajouter le suffixe /authorization aux deux URLs ci-dessous. (Dette T6 : URLs compile-time.)
 export const authorizationServer = 'http://localhost:8090';
 
 export const tokenEndpoint = 'http://localhost:8090/oauth2/token';
