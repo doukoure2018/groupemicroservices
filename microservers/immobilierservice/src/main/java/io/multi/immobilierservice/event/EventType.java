@@ -20,5 +20,6 @@ public enum EventType {
     IMMO_RAPPEL_EXPIRATION,      // job J-7 : annonce expire bientôt → email propriétaire
     IMMO_SIGNALEMENT_SEUIL,      // 3e signalement distinct sur une annonce → email admin
     IMMO_AGENCE_APPROUVEE,       // conformité approuve le dossier agence → email agence
-    IMMO_AGENCE_REJETEE          // conformité rejette le dossier agence (motif) → email agence
+    IMMO_AGENCE_REJETEE,         // conformité rejette le dossier agence (motif) → email agence
+    IMMO_DEMANDE_BESOIN          // client déclare un besoin → email aux agences vérifiées de la zone
 }

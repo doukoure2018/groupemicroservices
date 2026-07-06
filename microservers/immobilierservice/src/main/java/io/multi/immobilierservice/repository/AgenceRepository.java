@@ -38,4 +38,12 @@ public interface AgenceRepository {
     long countEnValidation();
 
     Optional<Agence> decisionConformite(String agenceUuid, String statut, String motifRejet);
+
+    // ---------- Diffusion des demandes de besoin (V32) ----------
+
+    List<Agence> findVerifieesByCommune(Long communeId);
+
+    List<Agence> findVerifieesByRegion(Long regionId);
+
+    List<Agence> findVerifieesAll();
 }

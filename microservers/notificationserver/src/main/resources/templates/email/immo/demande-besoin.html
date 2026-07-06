@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Nouvelle demande client</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #222; background: #f5f5f5; }
+    .container { max-width: 600px; margin: 30px auto; background: #fff; border-radius: 8px;
+                 box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; }
+    .header { background: #1e3a5f; color: white; padding: 20px 24px; }
+    .header h1 { margin: 0; font-size: 20px; }
+    .body { padding: 24px; line-height: 1.5; }
+    .info-box { background: #eef4fb; border-left: 4px solid #1e3a5f; padding: 16px;
+                margin: 16px 0; border-radius: 4px; }
+    .info-box table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .info-box td { padding: 4px 0; vertical-align: top; }
+    .info-box td.label { color: #555; width: 40%; }
+    .contact-box { background: #e8f5e9; border-left: 4px solid #2e7d32; padding: 16px;
+                   margin: 16px 0; border-radius: 4px; }
+    .footer { background: #fafafa; padding: 16px 24px; font-size: 12px; color: #777;
+              text-align: center; border-top: 1px solid #eee; }
+    a.btn { display: inline-block; background: #f97316; color: white; padding: 10px 20px;
+            border-radius: 4px; text-decoration: none; margin-top: 12px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Nouvelle demande client dans votre zone</h1>
+  </div>
+  <div class="body">
+    <p>Bonjour <strong th:text="${agenceNom}">[Agence]</strong>,</p>
+    <p>Un client recherche un bien dans votre zone d'activité. Soyez parmi les premiers à le contacter !</p>
+
+    <div class="info-box">
+      <table>
+        <tr><td class="label">Référence</td><td th:text="${reference}">DEM-XXXX</td></tr>
+        <tr><td class="label">Recherche</td>
+            <td><span th:text="${typeBienLibelle != '' ? typeBienLibelle : 'Bien immobilier'}">[Type]</span>
+                — <span th:text="${typeAnnonce == 'LOCATION' ? 'à louer' : 'à acheter'}">[location/achat]</span></td></tr>
+        <tr><td class="label">Zone</td>
+            <td><span th:text="${quartierLibelle != '' ? quartierLibelle + ', ' : ''}"></span><span
+                     th:text="${communeLibelle}">[Commune]</span> <span
+                     th:text="${regionLibelle != '' ? '(' + regionLibelle + ')' : ''}"></span></td></tr>
+        <tr th:if="${budgetMin != '' or budgetMax != ''}"><td class="label">Budget</td>
+            <td><span th:text="${budgetMin != '' ? budgetMin : '—'}"></span> à
+                <span th:text="${budgetMax != '' ? budgetMax : '—'}"></span> <span th:text="${devise}">GNF</span></td></tr>
+        <tr th:if="${nbChambresMin != ''}"><td class="label">Chambres (min)</td><td th:text="${nbChambresMin}"></td></tr>
+        <tr th:if="${description != ''}"><td class="label">Précisions</td><td th:text="${description}"></td></tr>
+      </table>
+    </div>
+
+    <div class="contact-box">
+      <div style="font-weight: bold; margin-bottom: 6px;">Contacter le client</div>
+      <div th:if="${clientNom != ''}">Nom : <span th:text="${clientNom}">[Client]</span></div>
+      <div th:if="${contactTelephone != ''}">Téléphone : <a th:href="'tel:' + ${contactTelephone}" th:text="${contactTelephone}">[Tel]</a></div>
+      <div th:if="${contactWhatsapp != ''}">WhatsApp : <span th:text="${contactWhatsapp}">[WhatsApp]</span></div>
+    </div>
+
+    <p style="text-align: center;">
+      <a class="btn" th:href="${uiUrl}" href="#">Voir toutes les demandes dans mon espace</a>
+    </p>
+  </div>
+  <div class="footer">
+    Vous recevez cet email car votre agence est vérifiée dans la zone de cette demande.
+    Notification automatique — ne pas répondre.
+  </div>
+</div>
+</body>
+</html>

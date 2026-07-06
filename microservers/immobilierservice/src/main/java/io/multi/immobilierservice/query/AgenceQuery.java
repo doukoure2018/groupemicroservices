@@ -125,6 +125,22 @@ public final class AgenceQuery {
             WHERE statut_verification = 'EN_VALIDATION' AND actif = TRUE
             """;
 
+    /** Cibles de diffusion des demandes de besoin (V32) : agences vérifiées par zone. */
+    public static final String FIND_VERIFIEES_BY_COMMUNE = """
+            SELECT * FROM immo_agence
+            WHERE statut_verification = 'VERIFIE' AND actif = TRUE AND commune_id = :communeId
+            """;
+
+    public static final String FIND_VERIFIEES_BY_REGION = """
+            SELECT * FROM immo_agence
+            WHERE statut_verification = 'VERIFIE' AND actif = TRUE AND region_id = :regionId
+            """;
+
+    public static final String FIND_VERIFIEES_ALL = """
+            SELECT * FROM immo_agence
+            WHERE statut_verification = 'VERIFIE' AND actif = TRUE
+            """;
+
     public static final String DECISION_CONFORMITE = """
             UPDATE immo_agence SET
                 statut_verification = :statut,

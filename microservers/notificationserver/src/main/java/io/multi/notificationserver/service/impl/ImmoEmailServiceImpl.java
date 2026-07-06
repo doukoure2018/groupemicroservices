@@ -86,6 +86,7 @@ public class ImmoEmailServiceImpl implements ImmoEmailService {
             case IMMO_SIGNALEMENT_SEUIL  -> "email/immo/signalement-seuil";
             case IMMO_AGENCE_APPROUVEE   -> "email/immo/agence-approuvee";
             case IMMO_AGENCE_REJETEE     -> "email/immo/agence-rejetee";
+            case IMMO_DEMANDE_BESOIN     -> "email/immo/demande-besoin";
         };
     }
 
@@ -101,7 +102,8 @@ public class ImmoEmailServiceImpl implements ImmoEmailService {
             case IMMO_VISITE_CONFIRMEE   -> "visiteurEmail";
             case IMMO_SIGNALEMENT_SEUIL  -> "adminEmail";
             case IMMO_AGENCE_APPROUVEE,
-                 IMMO_AGENCE_REJETEE     -> "agenceEmail";
+                 IMMO_AGENCE_REJETEE,
+                 IMMO_DEMANDE_BESOIN     -> "agenceEmail";
         };
     }
 
@@ -117,6 +119,8 @@ public class ImmoEmailServiceImpl implements ImmoEmailService {
             case IMMO_SIGNALEMENT_SEUIL  -> "[Modération] Annonce " + ref + " : seuil de signalements atteint";
             case IMMO_AGENCE_APPROUVEE   -> "Votre agence " + data.getOrDefault("agenceNom", "") + " est validée ✓";
             case IMMO_AGENCE_REJETEE     -> "Votre dossier agence " + data.getOrDefault("agenceNom", "") + " a été refusé";
+            case IMMO_DEMANDE_BESOIN     -> "[Demande client] " + data.getOrDefault("typeBienLibelle", "Bien")
+                    + " — " + data.getOrDefault("communeLibelle", "") + " (" + data.getOrDefault("reference", "") + ")";
         };
     }
 

@@ -173,6 +173,29 @@ public class AgenceRepositoryImpl implements AgenceRepository {
     }
 
     @Override
+    public List<Agence> findVerifieesByCommune(Long communeId) {
+        return jdbcClient.sql(AgenceQuery.FIND_VERIFIEES_BY_COMMUNE)
+                .param("communeId", communeId)
+                .query(rowMapper)
+                .list();
+    }
+
+    @Override
+    public List<Agence> findVerifieesByRegion(Long regionId) {
+        return jdbcClient.sql(AgenceQuery.FIND_VERIFIEES_BY_REGION)
+                .param("regionId", regionId)
+                .query(rowMapper)
+                .list();
+    }
+
+    @Override
+    public List<Agence> findVerifieesAll() {
+        return jdbcClient.sql(AgenceQuery.FIND_VERIFIEES_ALL)
+                .query(rowMapper)
+                .list();
+    }
+
+    @Override
     public Optional<Agence> decisionConformite(String agenceUuid, String statut, String motifRejet) {
         return jdbcClient.sql(AgenceQuery.DECISION_CONFORMITE)
                 .param("agenceUuid", agenceUuid)
