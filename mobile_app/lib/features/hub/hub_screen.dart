@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../screens/main_screen.dart';
 import '../../shared/theme/app_colors.dart';
 import '../../shared/theme/app_theme.dart';
+import '../immo/screens/declarer_besoin_screen.dart';
 import '../immo/screens/mes_annonces_screen.dart';
+import '../immo/screens/mes_demandes_screen.dart';
 import '../immo/screens/mes_favoris_screen.dart';
 import '../immo/screens/recherche_screen.dart';
 import '../immo/screens/wizard/wizard_publication_screen.dart';
@@ -99,6 +101,13 @@ class _ProfilPlaceholder extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const WizardPublicationScreen()),
             ),
           ),
+          const SizedBox(height: 12),
+          // CTA acheteur : déclarer un besoin — diffusé aux agences de la zone.
+          _DeclarerBesoinCard(
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const DeclarerBesoinScreen()),
+            ),
+          ),
           const SizedBox(height: 18),
           Material(
             color: AppColors.surface,
@@ -117,8 +126,89 @@ class _ProfilPlaceholder extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          Material(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            child: ListTile(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              leading: const Icon(Icons.campaign_outlined,
+                  color: AppColors.primary),
+              title: const Text('Mes demandes'),
+              subtitle: const Text('Vos besoins déclarés aux agences'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MesDemandesScreen()),
+              ),
+            ),
+          ),
           // Items futurs : Mes contacts, Mon profil vendeur, Déconnexion.
         ],
+      ),
+    );
+  }
+}
+
+/// CTA « Déclarer mon besoin » — pendant acheteur de [_PublierCard] :
+/// le client décrit sa recherche, les agences vérifiées de la zone la
+/// reçoivent par email et le recontactent.
+class _DeclarerBesoinCard extends StatelessWidget {
+  final VoidCallback onTap;
+  const _DeclarerBesoinCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.primary,
+      borderRadius: BorderRadius.circular(16),
+      elevation: 0,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.campaign_outlined,
+                    color: Colors.white, size: 26),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Déclarer mon besoin',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Décrivez votre recherche, les agences vous contactent',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: Colors.white),
+            ],
+          ),
+        ),
       ),
     );
   }
