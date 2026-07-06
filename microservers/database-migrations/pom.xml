@@ -52,7 +52,8 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <db.url>jdbc:postgresql://localhost:5433/innodb</db.url>
+                <!-- Postgres Docker local : port hôte 5435 (POSTGRES_HOST_PORT du .env), aligné sur les application.yml dev -->
+                <db.url>jdbc:postgresql://localhost:5435/innodb</db.url>
                 <db.username>inno2711</db.username>
                 <db.password>manager2711</db.password>
                 <flyway.cleanDisabled>false</flyway.cleanDisabled>
