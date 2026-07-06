@@ -511,12 +511,16 @@ public class UserRepositoryImpl implements UserRepository {
 
     private SqlParameterSource getParamSourceAccount(String firstName, String lastName, String email,
                                                      String username, String password, String token, String roleName) {
+        // Username optionnel : généré automatiquement (même règle que le flux createUser)
+        String effectiveUsername = (username == null || username.trim().isEmpty())
+                ? generateUsername(firstName, lastName)
+                : username.trim().toLowerCase();
         return new MapSqlParameterSource()
                 .addValue("userUuid", randomUUUID.get(), VARCHAR)
                 .addValue("firstName", firstName, VARCHAR)
                 .addValue("lastName", lastName, VARCHAR)
                 .addValue("email", email.trim().toLowerCase(), VARCHAR)
-                .addValue("username", username.trim().toLowerCase(), VARCHAR)
+                .addValue("username", effectiveUsername, VARCHAR)
                 .addValue("memberId", memberId.get(), VARCHAR)
                 .addValue("credentialUuid", randomUUUID.get(), VARCHAR)
                 .addValue("password", password, VARCHAR)

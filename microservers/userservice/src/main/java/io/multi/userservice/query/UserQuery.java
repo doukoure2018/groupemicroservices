@@ -105,7 +105,7 @@ public class UserQuery {
 
     public static final String CREATE_ACCOUNT_STORED_PROCEDURE=
             """
-               CALL create_account(:userUuid, :firstName, :lastName, :email, :username, :password, :credentialUuid, :token, :memberId,:roleName,:service)
+               CALL create_account(:userUuid, :firstName, :lastName, :email, :username, :password, :credentialUuid, :token, :memberId, :roleName)
             """;
 
     public static final String CREATE_ACCOUNT_AGENT_CREDIT_STORED_PROCEDURE =

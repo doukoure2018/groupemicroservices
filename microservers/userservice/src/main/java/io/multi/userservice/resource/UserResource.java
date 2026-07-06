@@ -37,14 +37,27 @@ public class UserResource {
 
     @PostMapping("/register")
     public ResponseEntity<Response> register(@RequestBody UserRequest user, HttpServletRequest request) {
-        userService.createUser(
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail(),
-                user.getUsername(),
-                user.getPassword(),
-                user.getPhone()
-        );
+        if ("AGENCE".equalsIgnoreCase(user.getAccountType())) {
+            // Compte agence immobilière : rôle ADMIN_IMMO (liste blanche côté serveur,
+            // le client n'envoie qu'un type de compte, jamais un nom de rôle).
+            userService.createAccountUser(
+                    user.getFirstName(),
+                    user.getLastName(),
+                    user.getEmail(),
+                    user.getUsername(),
+                    user.getPassword(),
+                    "ADMIN_IMMO"
+            );
+        } else {
+            userService.createUser(
+                    user.getFirstName(),
+                    user.getLastName(),
+                    user.getEmail(),
+                    user.getUsername(),
+                    user.getPassword(),
+                    user.getPhone()
+            );
+        }
         return created(getUri()).body(getResponse(request, emptyMap(), "Account created. Check your email to enable your account", CREATED));
     }
 

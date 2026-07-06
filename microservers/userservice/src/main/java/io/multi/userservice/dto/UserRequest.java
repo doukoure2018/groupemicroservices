@@ -24,5 +24,9 @@ public class UserRequest {
     private String bio;
     private String phone;
     private String address;
+    // Type de compte choisi à l'inscription : PARTICULIER (défaut) ou AGENCE.
+    // Ne jamais accepter un nom de rôle brut ici : le mapping vers le rôle
+    // se fait côté serveur (liste blanche dans UserResource).
+    private String accountType;
 
 }
