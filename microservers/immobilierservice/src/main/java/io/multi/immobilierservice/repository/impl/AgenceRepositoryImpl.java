@@ -117,4 +117,68 @@ public class AgenceRepositoryImpl implements AgenceRepository {
                 .query(Long.class)
                 .single();
     }
+
+    // ---------- Onboarding / conformité (V31) ----------
+
+    @Override
+    public Optional<Agence> updateOnboarding(Agence agence) {
+        log.debug("Onboarding agence UUID={}", agence.getAgenceUuid());
+        return jdbcClient.sql(AgenceQuery.UPDATE_ONBOARDING)
+                .param("agenceUuid", agence.getAgenceUuid())
+                .param("nom", agence.getNom())
+                .param("raisonSociale", agence.getRaisonSociale())
+                .param("numeroRegistre", agence.getNumeroRegistre())
+                .param("adresse", agence.getAdresse())
+                .param("communeId", agence.getCommuneId())
+                .param("regionId", agence.getRegionId())
+                .param("email", agence.getEmail())
+                .param("telephone", agence.getTelephone())
+                .param("telephoneWhatsapp", agence.getTelephoneWhatsapp())
+                .param("description", agence.getDescription())
+                .query(rowMapper)
+                .optional();
+    }
+
+    @Override
+    public Optional<Agence> updateDocumentKyc(String agenceUuid, String documentsKycUrl) {
+        return jdbcClient.sql(AgenceQuery.UPDATE_DOCUMENT_KYC)
+                .param("agenceUuid", agenceUuid)
+                .param("documentsKycUrl", documentsKycUrl)
+                .query(rowMapper)
+                .optional();
+    }
+
+    @Override
+    public Optional<Agence> soumettreConformite(String agenceUuid) {
+        return jdbcClient.sql(AgenceQuery.SOUMETTRE_CONFORMITE)
+                .param("agenceUuid", agenceUuid)
+                .query(rowMapper)
+                .optional();
+    }
+
+    @Override
+    public List<Agence> findEnValidation(int limit, int offset) {
+        return jdbcClient.sql(AgenceQuery.FIND_EN_VALIDATION)
+                .param("limit", limit)
+                .param("offset", offset)
+                .query(rowMapper)
+                .list();
+    }
+
+    @Override
+    public long countEnValidation() {
+        return jdbcClient.sql(AgenceQuery.COUNT_EN_VALIDATION)
+                .query(Long.class)
+                .single();
+    }
+
+    @Override
+    public Optional<Agence> decisionConformite(String agenceUuid, String statut, String motifRejet) {
+        return jdbcClient.sql(AgenceQuery.DECISION_CONFORMITE)
+                .param("agenceUuid", agenceUuid)
+                .param("statut", statut)
+                .param("motifRejet", motifRejet)
+                .query(rowMapper)
+                .optional();
+    }
 }

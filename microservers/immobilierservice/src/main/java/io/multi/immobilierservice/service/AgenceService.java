@@ -35,4 +35,31 @@ public interface AgenceService {
     List<ProfilImmo> listerAgents(String agenceUuid);
 
     void retirerAgent(String agenceUuid, Long userIdAgent, Long requesterUserId);
+
+    // ---------- Onboarding conformité (V31) ----------
+
+    /** L'agence de l'utilisateur connecté (la première active), ou empty si pas encore créée. */
+    java.util.Optional<Agence> findMonAgence(Long userId);
+
+    /** Crée ou complète l'agence de l'utilisateur avec les infos d'onboarding. */
+    Agence saveOnboarding(io.multi.immobilierservice.dto.OnboardingAgenceRequest request, Long userId);
+
+    /** Upload du document RCCM (MinIO) et rattachement à l'agence de l'utilisateur. */
+    Agence uploadRccm(org.springframework.web.multipart.MultipartFile file, Long userId);
+
+    /** Soumet le dossier à la conformité (statut EN_VALIDATION) après contrôle de complétude. */
+    Agence soumettreConformite(Long userId);
+
+    // ---------- Backoffice conformité (rôle ADMIN_CONFORMITE) ----------
+
+    /** File d'attente des dossiers agence EN_VALIDATION (plus anciens d'abord). */
+    List<Agence> listEnValidation(int limit, int offset);
+
+    long countEnValidation();
+
+    /** Approuve le dossier → VERIFIE + email à l'agence. */
+    Agence approuverConformite(String agenceUuid, Long adminUserId);
+
+    /** Rejette le dossier → REJETE + motif + email à l'agence. */
+    Agence rejeterConformite(String agenceUuid, String motif, Long adminUserId);
 }

@@ -33,6 +33,12 @@ public class AgenceRowMapper implements RowMapper<Agence> {
                 .actif(rs.getBoolean("actif"))
                 .createdAt(rs.getObject("created_at", java.time.OffsetDateTime.class))
                 .updatedAt(rs.getObject("updated_at", java.time.OffsetDateTime.class))
+                .adresse(rs.getString("adresse"))
+                .communeId(rs.getObject("commune_id", Long.class))
+                .regionId(rs.getObject("region_id", Long.class))
+                .telephoneWhatsapp(rs.getString("telephone_whatsapp"))
+                .motifRejet(rs.getString("motif_rejet"))
+                .dateSoumissionConformite(rs.getObject("date_soumission_conformite", java.time.OffsetDateTime.class))
                 .build();
     }
 }

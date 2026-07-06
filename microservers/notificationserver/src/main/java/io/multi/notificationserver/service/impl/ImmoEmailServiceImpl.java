@@ -84,6 +84,8 @@ public class ImmoEmailServiceImpl implements ImmoEmailService {
             case IMMO_ANNONCE_REJETEE    -> "email/immo/annonce-rejetee";
             case IMMO_RAPPEL_EXPIRATION  -> "email/immo/rappel-expiration";
             case IMMO_SIGNALEMENT_SEUIL  -> "email/immo/signalement-seuil";
+            case IMMO_AGENCE_APPROUVEE   -> "email/immo/agence-approuvee";
+            case IMMO_AGENCE_REJETEE     -> "email/immo/agence-rejetee";
         };
     }
 
@@ -98,6 +100,8 @@ public class ImmoEmailServiceImpl implements ImmoEmailService {
                  IMMO_RAPPEL_EXPIRATION  -> "vendeurEmail";      // destinataire = propriétaire / vendeur
             case IMMO_VISITE_CONFIRMEE   -> "visiteurEmail";
             case IMMO_SIGNALEMENT_SEUIL  -> "adminEmail";
+            case IMMO_AGENCE_APPROUVEE,
+                 IMMO_AGENCE_REJETEE     -> "agenceEmail";
         };
     }
 
@@ -111,6 +115,8 @@ public class ImmoEmailServiceImpl implements ImmoEmailService {
             case IMMO_ANNONCE_REJETEE    -> "Votre annonce " + ref + " a été refusée";
             case IMMO_RAPPEL_EXPIRATION  -> "Votre annonce " + ref + " expire bientôt";
             case IMMO_SIGNALEMENT_SEUIL  -> "[Modération] Annonce " + ref + " : seuil de signalements atteint";
+            case IMMO_AGENCE_APPROUVEE   -> "Votre agence " + data.getOrDefault("agenceNom", "") + " est validée ✓";
+            case IMMO_AGENCE_REJETEE     -> "Votre dossier agence " + data.getOrDefault("agenceNom", "") + " a été refusé";
         };
     }
 

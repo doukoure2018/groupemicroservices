@@ -24,4 +24,18 @@ public interface AgenceRepository {
     void softDelete(String agenceUuid);
 
     long count();
+
+    // ---------- Onboarding / conformité (V31) ----------
+
+    Optional<Agence> updateOnboarding(Agence agence);
+
+    Optional<Agence> updateDocumentKyc(String agenceUuid, String documentsKycUrl);
+
+    Optional<Agence> soumettreConformite(String agenceUuid);
+
+    List<Agence> findEnValidation(int limit, int offset);
+
+    long countEnValidation();
+
+    Optional<Agence> decisionConformite(String agenceUuid, String statut, String motifRejet);
 }

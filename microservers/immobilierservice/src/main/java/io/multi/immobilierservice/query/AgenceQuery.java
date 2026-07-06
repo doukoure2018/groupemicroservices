@@ -75,4 +75,62 @@ public final class AgenceQuery {
     public static final String COUNT_ALL = """
             SELECT COUNT(*) FROM immo_agence WHERE actif = TRUE
             """;
+
+    // ---------- Onboarding / conformité (V31) ----------
+
+    public static final String UPDATE_ONBOARDING = """
+            UPDATE immo_agence SET
+                nom = :nom,
+                raison_sociale = :raisonSociale,
+                numero_registre = :numeroRegistre,
+                adresse = :adresse,
+                commune_id = :communeId,
+                region_id = :regionId,
+                email = :email,
+                telephone = :telephone,
+                telephone_whatsapp = :telephoneWhatsapp,
+                description = :description,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE agence_uuid = :agenceUuid
+            RETURNING *
+            """;
+
+    public static final String UPDATE_DOCUMENT_KYC = """
+            UPDATE immo_agence SET
+                documents_kyc_url = :documentsKycUrl,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE agence_uuid = :agenceUuid
+            RETURNING *
+            """;
+
+    public static final String SOUMETTRE_CONFORMITE = """
+            UPDATE immo_agence SET
+                statut_verification = 'EN_VALIDATION',
+                date_soumission_conformite = CURRENT_TIMESTAMP,
+                motif_rejet = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE agence_uuid = :agenceUuid
+            RETURNING *
+            """;
+
+    public static final String FIND_EN_VALIDATION = """
+            SELECT * FROM immo_agence
+            WHERE statut_verification = 'EN_VALIDATION' AND actif = TRUE
+            ORDER BY date_soumission_conformite ASC NULLS LAST
+            LIMIT :limit OFFSET :offset
+            """;
+
+    public static final String COUNT_EN_VALIDATION = """
+            SELECT COUNT(*) FROM immo_agence
+            WHERE statut_verification = 'EN_VALIDATION' AND actif = TRUE
+            """;
+
+    public static final String DECISION_CONFORMITE = """
+            UPDATE immo_agence SET
+                statut_verification = :statut,
+                motif_rejet = :motifRejet,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE agence_uuid = :agenceUuid
+            RETURNING *
+            """;
 }
