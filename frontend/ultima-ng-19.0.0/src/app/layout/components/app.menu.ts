@@ -38,6 +38,10 @@ export class AppMenu {
             this.model = this.getSuperAdminMenu();
         } else if (has('ADMIN_BACKOFFICE')) {
             this.model = this.getBackofficeMenu();
+        } else if (has('ADMIN_CONFORMITE')) {
+            this.model = this.getConformiteMenu();
+        } else if (has('ADMIN_IMMO')) {
+            this.model = this.getAgenceImmoMenu();
         } else if (has('ADMIN')) {
             this.model = this.getAdminMenu();
         } else if (has('AGENT_CREDIT')) {
@@ -258,6 +262,38 @@ export class AppMenu {
                         label: 'Rapports Manager',
                         icon: 'pi pi-fw pi-chart-bar',
                         routerLink: ['/dashboards/manager']
+                    }
+                ]
+            }
+        ];
+    }
+
+    /** Menu du backoffice conformité (rôle ADMIN_CONFORMITE). */
+    private getConformiteMenu(): MenuItem[] {
+        return [
+            {
+                label: 'CONFORMITÉ',
+                items: [
+                    {
+                        label: 'Validation des agences',
+                        icon: 'pi pi-fw pi-verified',
+                        routerLink: ['/dashboards/conformite']
+                    }
+                ]
+            }
+        ];
+    }
+
+    /** Menu de l'espace agence immobilière (rôle ADMIN_IMMO). */
+    private getAgenceImmoMenu(): MenuItem[] {
+        return [
+            {
+                label: 'MON AGENCE',
+                items: [
+                    {
+                        label: 'Profil & validation',
+                        icon: 'pi pi-fw pi-building',
+                        routerLink: ['/dashboards/agence']
                     }
                 ]
             }

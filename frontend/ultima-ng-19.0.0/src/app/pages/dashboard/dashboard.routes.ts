@@ -123,6 +123,20 @@ export default [
         loadComponent: () => import('./admin/immobilier/leads/leads.component').then((c) => c.ImmobilierLeadsComponent)
     },
 
+    // 8. Espace agence immobilière (rôle ADMIN_IMMO)
+    {
+        path: 'agence',
+        data: { breadcrumb: 'Mon agence' },
+        loadComponent: () => import('./agence/agence-onboarding.component').then((c) => c.AgenceOnboardingComponent)
+    },
+
+    // 9. Backoffice conformité (rôle ADMIN_CONFORMITE)
+    {
+        path: 'conformite',
+        data: { breadcrumb: 'Conformité — Validation des agences' },
+        loadComponent: () => import('./conformite/conformite.component').then((c) => c.ConformiteComponent)
+    },
+
     // ===== AUTRES ROUTES =====
     {
         path: 'createUser',

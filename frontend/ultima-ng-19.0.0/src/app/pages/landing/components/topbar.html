@@ -40,15 +40,15 @@
         </a>
         <a
           [href]="loginUrl"
-          class="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#f97316] to-[#ea580c] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#f97316]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#f97316]/30"
+          class="rounded-full border-2 border-[#1e3a5f]/15 px-5 py-2.5 text-sm font-semibold text-[#1e3a5f] transition-all duration-300 hover:border-[#f97316]/40 hover:text-[#f97316]"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-          </svg>
-          <span class="flex flex-col items-start leading-tight">
-            <span class="text-[10px] font-normal text-white/80">Contactez-nous</span>
-            <span class="text-xs font-bold">+224 620 00 00 00</span>
-          </span>
+          Se connecter
+        </a>
+        <a
+          [routerLink]="['/auth/register']"
+          class="rounded-full bg-gradient-to-r from-[#f97316] to-[#ea580c] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#f97316]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#f97316]/30"
+        >
+          S'inscrire
         </a>
       </div>
 
@@ -86,13 +86,11 @@
           </a>
         }
         <div class="mt-2 flex items-center gap-3 border-t border-[#1e3a5f]/5 pt-4">
-          <a href="tel:+224620000000" class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#1e3a5f]/10 text-[#1e3a5f]" aria-label="Appelez-nous">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-            </svg>
+          <a [href]="loginUrl" (click)="closeMobile()" class="flex-1 rounded-full border-2 border-[#1e3a5f]/15 px-5 py-3 text-center text-sm font-semibold text-[#1e3a5f]">
+            Se connecter
           </a>
-          <a [href]="loginUrl" class="flex-1 rounded-full bg-gradient-to-r from-[#f97316] to-[#ea580c] px-5 py-3 text-center text-sm font-semibold text-white">
-            Contactez-nous
+          <a [routerLink]="['/auth/register']" (click)="closeMobile()" class="flex-1 rounded-full bg-gradient-to-r from-[#f97316] to-[#ea580c] px-5 py-3 text-center text-sm font-semibold text-white">
+            S'inscrire
           </a>
         </div>
       </nav>

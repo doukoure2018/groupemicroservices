@@ -6,10 +6,9 @@
                     <i class="pi pi-users text-surface-0 dark:text-surface-900 !text-4xl"></i>
                 </div>
                 <div class="mt-6">
-                    <h1 class="m-0 text-primary font-semibold text-4xl">Join us!</h1>
-                    <span class="block text-surface-700 dark:text-surface-100 mt-2">Please fill the fields to
-                        sign-up
-                        Ultima network</span>
+                    <h1 class="m-0 text-primary font-semibold text-4xl">Créer un compte</h1>
+                    <span class="block text-surface-700 dark:text-surface-100 mt-2">Renseignez les champs ci-dessous
+                        pour vous inscrire</span>
                 </div>
             </div>
             @if (state().message){
@@ -25,6 +24,29 @@
 
             <form #form="ngForm" (ngSubmit)="register(form)" class="flex flex-col gap-4 mt-6">
                 <div class="flex flex-col gap-4 mt-12">
+                    <!-- Type de compte -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer rounded-xl border-2 p-3 text-center transition-all"
+                            [class]="accountType === 'PARTICULIER' ? 'border-primary bg-primary/5 text-primary font-semibold' : 'border-surface-300 dark:border-surface-600 text-surface-600 dark:text-surface-300'">
+                            <input type="radio" name="accountType" value="PARTICULIER" [(ngModel)]="accountType"
+                                class="hidden" />
+                            <i class="pi pi-user block mb-1"></i>
+                            Particulier
+                        </label>
+                        <label class="cursor-pointer rounded-xl border-2 p-3 text-center transition-all"
+                            [class]="accountType === 'AGENCE' ? 'border-primary bg-primary/5 text-primary font-semibold' : 'border-surface-300 dark:border-surface-600 text-surface-600 dark:text-surface-300'">
+                            <input type="radio" name="accountType" value="AGENCE" [(ngModel)]="accountType"
+                                class="hidden" />
+                            <i class="pi pi-building block mb-1"></i>
+                            Agence immobilière
+                        </label>
+                    </div>
+                    @if (accountType === 'AGENCE') {
+                    <p-message severity="info" size="small">
+                        Après vérification de votre email, vous compléterez le profil de votre agence
+                        (RCCM/NIF, coordonnées…) depuis votre espace, avant validation par la conformité.
+                    </p-message>
+                    }
                     <p-input-group>
                         <p-inputgroup-addon>
                             <i class="pi pi-user"></i>
@@ -101,13 +123,32 @@
                         }
                     </p-input-group>
 
+                    <p-input-group>
+                        <p-inputgroup-addon>
+                            <i class="pi pi-phone"></i>
+                        </p-inputgroup-addon>
+                        <input pInputText name="phone" ngModel #phone="ngModel" placeholder="Téléphone (+224 ...)" />
+                    </p-input-group>
+
                     <div>
                         <button [disabled]="form.invalid || state().loading" type="submit" pButton pRipple
-                            class="w-full" label="Souscrire "></button>
+                            class="w-full" label="S'inscrire"></button>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <span class="h-px flex-1 bg-surface-300 dark:bg-surface-600"></span>
+                        <span class="text-sm text-surface-500">ou</span>
+                        <span class="h-px flex-1 bg-surface-300 dark:bg-surface-600"></span>
                     </div>
                     <div>
-                        <a href="http://localhost:8080/oauth2/authorize?response_type=code&client_id=client&scope=openid&redirect_uri=http://localhost:4200&code_challenge_method=S256&code_challenge=vesLhZA4cwKsKZAR7zvEJ9q3uI6dRM8nwna-IpuKkkk"
-                            pButton pRipple class="w-full text-primary-500" text label="BACK TO LOGIN">
+                        <!-- Lance le flux OAuth2 : le bouton Google est proposé sur la page de connexion -->
+                        <a [href]="loginUrl" pButton pRipple class="w-full" severity="secondary" outlined>
+                            <i class="pi pi-google mr-2"></i> Continuer avec Google
+                        </a>
+                    </div>
+                    <div>
+                        <a [href]="loginUrl" pButton pRipple class="w-full text-primary-500" text
+                            label="J'ai déjà un compte — Se connecter">
                         </a>
                     </div>
                 </div>

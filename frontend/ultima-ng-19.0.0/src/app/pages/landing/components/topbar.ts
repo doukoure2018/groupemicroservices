@@ -1,11 +1,12 @@
 import { Component, HostListener, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { loginUrl } from '@/utils/fileutils';
 
 @Component({
     selector: 'topbar',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, RouterModule],
     templateUrl: './topbar.html',
 })
 export class Topbar {

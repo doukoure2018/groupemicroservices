@@ -53,6 +53,9 @@ export interface IResponse {
         propriete?: IPropriete;
         proprietes?: IPropriete[];
         vendeur?: any;
+        // Onboarding agence (V31)
+        agence?: any;
+        agences?: any[];
         // Leads back-office (intermédiation)
         contacts?: ILeadContactView[];
         visites?: ILeadVisiteView[];

@@ -1,6 +1,7 @@
 import { AppConfigurator } from '@/layout/components/app.configurator';
 import { StorageService } from '@/service/storage.service';
 import { UserService } from '@/service/user.service';
+import { loginUrl } from '@/utils/fileutils';
 
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -38,6 +39,11 @@ export class RegisterComponent {
     value1: string = '';
 
     value2: string = '';
+
+    // Type de compte : PARTICULIER (défaut) ou AGENCE (agence immobilière → rôle ADMIN_IMMO côté serveur)
+    accountType: string = 'PARTICULIER';
+
+    loginUrl = loginUrl;
 
     ngOnInit(): void {
         console.log(this.storage.getRedirectUrl());
