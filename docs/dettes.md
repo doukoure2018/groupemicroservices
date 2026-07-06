@@ -121,6 +121,17 @@ notifications de userservice ne partent pas.
 `payment_screen.dart` : Orange Money / MTN MoMo / CB = simple code de mode envoyé avec
 la commande (`POST /billetterie/commandes`), aucun SDK ni callback de paiement réel.
 
+### T11b. Onboarding agences — suites (ajoutée le 2026-07-06)
+- **Audit conformité léger** : les décisions approuver/rejeter d'agences sont tracées
+  par logs + colonnes `motif_rejet`/`updated_at`, mais pas dans `immo_admin_action`
+  (table liée aux propriétés). Étendre l'audit aux agences (migration + adminUserId).
+- **Compte ADMIN_CONFORMITE de prod** : créé à la main en local
+  (`conformite@sira-guinee.local`) ; pour TEST/PROD, créer le compte via migration
+  (pattern V27/V28 ADMIN_BACKOFFICE).
+- **Document RCCM sur bucket public** : l'upload réutilise le bucket `immo-photos`
+  (public en download). Les RCCM sont des documents d'entreprise semi-sensibles —
+  prévoir un bucket privé + URLs présignées pour la conformité.
+
 ### T11. Divers backend
 - Dialect Hibernate obsolète `PostgreSQL82Dialect` (discoveryserver).
 - Double dépendance `commons-lang` 2.6 + `commons-lang3` (billetterie, immobilier).
@@ -141,6 +152,13 @@ la commande (`POST /billetterie/commandes`), aucun SDK ni callback de paiement r
 ---
 
 ## ✅ Réglées
+
+- **2026-07-06** — Parcours complet d'onboarding des agences immobilières livré et
+  validé E2E en local : inscription avec type de compte (V31, rôles ADMIN_IMMO /
+  ADMIN_CONFORMITE), complétion de profil + upload RCCM (MinIO), soumission,
+  backoffice conformité (approbation/rejet + emails Kafka). Au passage : réparation
+  du chemin `createAccountUser` (param `:service` fantôme, username auto-généré)
+  et du port du profil `local` des migrations Flyway (5433 → 5435).
 
 - **2026-07-05** — Double login web OAuth2 : le success handler ne reprenait pas le flux
   `/oauth2/authorize` quand la `SavedRequest` était perdue → mémorisation de l'URL
