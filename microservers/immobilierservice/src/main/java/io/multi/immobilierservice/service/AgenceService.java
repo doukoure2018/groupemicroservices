@@ -62,4 +62,7 @@ public interface AgenceService {
 
     /** Rejette le dossier → REJETE + motif + email à l'agence. */
     Agence rejeterConformite(String agenceUuid, String motif, Long adminUserId);
+
+    /** Flux du document RCCM d'une agence (depuis MinIO), pour la conformité. */
+    io.multi.immobilierservice.dto.DocumentStream getRccmStream(String agenceUuid);
 }

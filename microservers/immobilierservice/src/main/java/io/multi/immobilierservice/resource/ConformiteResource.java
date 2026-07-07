@@ -57,6 +57,17 @@ public class ConformiteResource {
                 "Agence approuvée — email de confirmation envoyé", HttpStatus.OK));
     }
 
+    /** Sert le document RCCM d'une agence (streaming MinIO), réservé à la conformité. */
+    @GetMapping("/agences/{agenceUuid}/rccm")
+    @PreAuthorize("hasAnyAuthority('immo:conformite:read','ADMIN_CONFORMITE','SUPER_ADMIN')")
+    public ResponseEntity<org.springframework.core.io.InputStreamResource> rccm(@PathVariable String agenceUuid) {
+        var doc = agenceService.getRccmStream(agenceUuid);
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.parseMediaType(doc.contentType()))
+                .cacheControl(org.springframework.http.CacheControl.noCache())
+                .body(new org.springframework.core.io.InputStreamResource(doc.stream()));
+    }
+
     /** Rejet avec motif obligatoire → statut REJETE + email automatique à l'agence. */
     @PatchMapping("/agences/{agenceUuid}/rejeter")
     @PreAuthorize("hasAnyAuthority('immo:conformite:update','ADMIN_CONFORMITE','SUPER_ADMIN')")

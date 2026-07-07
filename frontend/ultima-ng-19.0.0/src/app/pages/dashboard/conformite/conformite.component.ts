@@ -62,7 +62,7 @@ import { ConformiteService } from '@/service/conformite.service';
                         <td>{{ dossier.adresse }}</td>
                         <td>
                             @if (dossier.documentsKycUrl) {
-                                <a [href]="dossier.documentsKycUrl" target="_blank" pButton icon="pi pi-file-pdf" label="RCCM" [outlined]="true" size="small"></a>
+                                <button pButton icon="pi pi-file-pdf" label="RCCM" [outlined]="true" size="small" [loading]="rccmLoading() === dossier.agenceUuid" (click)="ouvrirRccm(dossier)"></button>
                             } @else {
                                 <p-tag severity="danger" value="Absent" />
                             }
@@ -115,6 +115,7 @@ export class ConformiteComponent implements OnInit {
     rejetVisible = false;
     motifRejet = '';
     dossierEnCours?: any;
+    rccmLoading = signal<string | undefined>(undefined);
 
     ngOnInit(): void {
         this.load();
@@ -131,6 +132,24 @@ export class ConformiteComponent implements OnInit {
             error: (error) => {
                 this.loading.set(false);
                 this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error });
+            }
+        });
+    }
+
+    /** Ouvre le RCCM dans un nouvel onglet via un blob authentifié (le lien direct MinIO exige un JWT). */
+    ouvrirRccm(dossier: any): void {
+        this.rccmLoading.set(dossier.agenceUuid);
+        this.conformiteService.getRccmBlob$(dossier.agenceUuid).subscribe({
+            next: (blob) => {
+                this.rccmLoading.set(undefined);
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                // Libère l'URL objet après ouverture (délai laissé au navigateur).
+                setTimeout(() => URL.revokeObjectURL(url), 60000);
+            },
+            error: (error) => {
+                this.rccmLoading.set(undefined);
+                this.messageService.add({ severity: 'error', summary: 'RCCM', detail: String(error) });
             }
         });
     }

@@ -17,6 +17,11 @@ export class ConformiteService {
     getDossiers$ = (limit = 50, offset = 0): Observable<IResponse> =>
         this.http.get<IResponse>(`${this.baseUrl}/agences?limit=${limit}&offset=${offset}&_t=${Date.now()}`).pipe(catchError(this.handleError));
 
+    /** Télécharge le RCCM (streaming authentifié) en blob — le token est ajouté par l'intercepteur.
+     *  _t contourne le CacheInterceptor (un blob ne doit pas être mis en cache mémoire). */
+    getRccmBlob$ = (agenceUuid: string): Observable<Blob> =>
+        this.http.get(`${this.baseUrl}/agences/${agenceUuid}/rccm?_t=${Date.now()}`, { responseType: 'blob' }).pipe(catchError(this.handleError));
+
     approuver$ = (agenceUuid: string): Observable<IResponse> =>
         this.http.patch<IResponse>(`${this.baseUrl}/agences/${agenceUuid}/approuver`, {}).pipe(tap(console.log), catchError(this.handleError));
 

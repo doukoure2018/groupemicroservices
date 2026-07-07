@@ -261,6 +261,26 @@ public class AgenceServiceImpl implements AgenceService {
         return updated;
     }
 
+    @Override
+    public io.multi.immobilierservice.dto.DocumentStream getRccmStream(String agenceUuid) {
+        Agence agence = getByUuid(agenceUuid);
+        String url = agence.getDocumentsKycUrl();
+        if (isBlank(url)) {
+            throw new ApiException("Aucun document RCCM pour cette agence");
+        }
+        // L'URL publique est "<minio-public>/<bucket>/<objectKey>". On récupère la
+        // clé (tout ce qui suit le nom du bucket) pour streamer depuis MinIO.
+        String bucket = photoStorageService.getBucketPhotos();
+        int idx = url.indexOf("/" + bucket + "/");
+        String objectKey = idx >= 0
+                ? url.substring(idx + bucket.length() + 2)
+                : url.substring(url.lastIndexOf('/') + 1);
+        var s3 = photoStorageService.downloadStream(bucket, objectKey);
+        String contentType = s3.response().contentType() != null
+                ? s3.response().contentType() : "application/octet-stream";
+        return new io.multi.immobilierservice.dto.DocumentStream(s3, contentType);
+    }
+
     private Agence ensureEnValidation(String agenceUuid) {
         Agence agence = getByUuid(agenceUuid);
         if (!"EN_VALIDATION".equals(agence.getStatutVerification())) {
