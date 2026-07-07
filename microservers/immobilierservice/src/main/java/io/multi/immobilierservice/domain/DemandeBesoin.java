@@ -25,7 +25,9 @@ public class DemandeBesoin {
     private String typeAnnonce;            // LOCATION | ACHAT
     private Long typeBienId;
     private Long communeId;
+    private String communeTexte;           // saisie libre si hors référentiel (V34)
     private Long quartierId;
+    private String quartierTexte;          // saisie libre si hors référentiel (V34)
     private BigDecimal budgetMin;
     private BigDecimal budgetMax;
     private String devise;

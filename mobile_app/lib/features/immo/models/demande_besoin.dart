@@ -8,7 +8,7 @@ class DemandeBesoin {
   final String reference; // DEM-YYYYMMDD-XXXX
   final String typeAnnonce; // LOCATION | ACHAT
   final int? typeBienId;
-  final int communeId;
+  final int? communeId; // null si commune saisie librement (V34)
   final int? quartierId;
   final num? budgetMin;
   final num? budgetMax;
@@ -31,7 +31,7 @@ class DemandeBesoin {
     required this.reference,
     required this.typeAnnonce,
     this.typeBienId,
-    required this.communeId,
+    this.communeId,
     this.quartierId,
     this.budgetMin,
     this.budgetMax,
@@ -53,7 +53,7 @@ class DemandeBesoin {
         reference: json['reference'] as String? ?? '',
         typeAnnonce: json['typeAnnonce'] as String,
         typeBienId: json['typeBienId'] as int?,
-        communeId: json['communeId'] as int,
+        communeId: json['communeId'] as int?,
         quartierId: json['quartierId'] as int?,
         budgetMin: json['budgetMin'] as num?,
         budgetMax: json['budgetMax'] as num?,
@@ -81,11 +81,14 @@ class DemandeBesoin {
 }
 
 /// Body de `POST /immo/demandes` — miroir du DTO backend DemandeCreateRequest.
+/// V34 : commune/quartier soit par id (référentiel), soit en texte libre.
 class DemandeCreateRequest {
   final String typeAnnonce; // LOCATION | ACHAT (⚠️ pas VENTE)
   final int? typeBienId;
-  final int communeId;
+  final int? communeId;
+  final String? communeTexte; // requis si communeId absent
   final int? quartierId;
+  final String? quartierTexte;
   final num? budgetMin;
   final num? budgetMax;
   final int? nbChambresMin;
@@ -97,8 +100,10 @@ class DemandeCreateRequest {
   const DemandeCreateRequest({
     required this.typeAnnonce,
     this.typeBienId,
-    required this.communeId,
+    this.communeId,
+    this.communeTexte,
     this.quartierId,
+    this.quartierTexte,
     this.budgetMin,
     this.budgetMax,
     this.nbChambresMin,
@@ -111,8 +116,10 @@ class DemandeCreateRequest {
   Map<String, dynamic> toJson() => {
         'typeAnnonce': typeAnnonce,
         if (typeBienId != null) 'typeBienId': typeBienId,
-        'communeId': communeId,
+        if (communeId != null) 'communeId': communeId,
+        if (communeTexte != null && communeTexte!.isNotEmpty) 'communeTexte': communeTexte,
         if (quartierId != null) 'quartierId': quartierId,
+        if (quartierTexte != null && quartierTexte!.isNotEmpty) 'quartierTexte': quartierTexte,
         if (budgetMin != null) 'budgetMin': budgetMin,
         if (budgetMax != null) 'budgetMax': budgetMax,
         if (nbChambresMin != null) 'nbChambresMin': nbChambresMin,

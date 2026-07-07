@@ -35,6 +35,12 @@ public class DemandeBesoinServiceImpl implements DemandeBesoinService {
     @Override
     @Transactional
     public DemandeBesoin create(DemandeCreateRequest request, Long userId) {
+        // V34 : commune du référentiel OU saisie libre — au moins l'une des deux
+        boolean communeTexteVide = request.getCommuneTexte() == null || request.getCommuneTexte().isBlank();
+        if (request.getCommuneId() == null && communeTexteVide) {
+            throw new ApiException("Indiquez la commune de votre recherche");
+        }
+
         String commoditesJson = request.getCommoditeIds() == null || request.getCommoditeIds().isEmpty()
                 ? null
                 : request.getCommoditeIds().stream().map(String::valueOf)
@@ -45,7 +51,9 @@ public class DemandeBesoinServiceImpl implements DemandeBesoinService {
                 .typeAnnonce(request.getTypeAnnonce())
                 .typeBienId(request.getTypeBienId())
                 .communeId(request.getCommuneId())
+                .communeTexte(request.getCommuneId() == null ? request.getCommuneTexte() : null)
                 .quartierId(request.getQuartierId())
+                .quartierTexte(request.getQuartierId() == null ? request.getQuartierTexte() : null)
                 .budgetMin(request.getBudgetMin())
                 .budgetMax(request.getBudgetMax())
                 .devise(request.getDevise())
@@ -67,7 +75,10 @@ public class DemandeBesoinServiceImpl implements DemandeBesoinService {
      */
     private void diffuserAuxAgences(DemandeBesoin demande) {
         try {
-            List<Agence> cibles = agenceRepository.findVerifieesByCommune(demande.getCommuneId());
+            // Commune hors référentiel (saisie libre) : pas de zone résoluble → toutes les agences
+            List<Agence> cibles = demande.getCommuneId() != null
+                    ? agenceRepository.findVerifieesByCommune(demande.getCommuneId())
+                    : List.of();
             String niveau = "COMMUNE";
             if (cibles.isEmpty() && demande.getRegionId() != null) {
                 cibles = agenceRepository.findVerifieesByRegion(demande.getRegionId());

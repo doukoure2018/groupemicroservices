@@ -19,10 +19,17 @@ public class DemandeCreateRequest {
 
     private Long typeBienId;
 
-    @NotNull
+    /** Commune du référentiel… */
     private Long communeId;
 
+    /** …ou saisie libre si absente du référentiel (au moins l'un des deux requis). */
+    @Size(max = 100)
+    private String communeTexte;
+
     private Long quartierId;
+
+    @Size(max = 100)
+    private String quartierTexte;
 
     private BigDecimal budgetMin;
 
