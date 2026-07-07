@@ -56,6 +56,10 @@ export interface IResponse {
         // Onboarding agence (V31)
         agence?: any;
         agences?: any[];
+        // Demandes de besoin clients (V32)
+        demande?: any;
+        demandes?: any[];
+        scope?: string;
         // Leads back-office (intermédiation)
         contacts?: ILeadContactView[];
         visites?: ILeadVisiteView[];

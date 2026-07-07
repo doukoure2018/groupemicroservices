@@ -129,6 +129,11 @@ export default [
         data: { breadcrumb: 'Mon agence' },
         loadComponent: () => import('./agence/agence-onboarding.component').then((c) => c.AgenceOnboardingComponent)
     },
+    {
+        path: 'agence/demandes',
+        data: { breadcrumb: 'Demandes clients' },
+        loadComponent: () => import('./agence/demandes-clients.component').then((c) => c.DemandesClientsComponent)
+    },
 
     // 9. Backoffice conformité (rôle ADMIN_CONFORMITE)
     {

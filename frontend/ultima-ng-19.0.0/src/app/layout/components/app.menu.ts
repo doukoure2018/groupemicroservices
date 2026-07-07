@@ -294,6 +294,11 @@ export class AppMenu {
                         label: 'Profil & validation',
                         icon: 'pi pi-fw pi-building',
                         routerLink: ['/dashboards/agence']
+                    },
+                    {
+                        label: 'Demandes clients',
+                        icon: 'pi pi-fw pi-megaphone',
+                        routerLink: ['/dashboards/agence/demandes']
                     }
                 ]
             }
