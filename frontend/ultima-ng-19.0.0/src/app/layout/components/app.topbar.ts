@@ -19,9 +19,31 @@ import { UserService } from '@/service/user.service';
     imports: [RouterModule, CommonModule, StyleClassModule, FormsModule, Ripple, InputText, ButtonModule, MegaMenuModule, BadgeModule],
     template: `
         <div class="layout-topbar-start">
-            <a class="layout-topbar-logo" routerLink="/" style="display:flex;align-items:center;text-decoration:none;">
-                <!-- Logo SIRA Guinée — affiché identique en full et slim mode (pas d'icône séparée). -->
-                <img src="/images/logo-sira-navbar.png" alt="SIRA Guinée — Transport & Immobilier" style="height:36px;width:auto;display:block;" />
+            <a class="layout-topbar-logo synergia-brand" routerLink="/" aria-label="SYNERGIA IMMO TRANS GUINEE">
+                <!-- Lockup CSS aux couleurs de marque (vert forêt + or) : net à toute
+                     taille, contrairement au PNG bannière trop dense en petit. -->
+                <span class="synergia-emblem" aria-hidden="true">
+                    <svg viewBox="0 0 40 40" width="40" height="40">
+                        <circle cx="20" cy="20" r="19" fill="#0f3019" stroke="#f2a900" stroke-width="1.5" />
+                        <!-- immeuble -->
+                        <rect x="15.5" y="12" width="8.5" height="18" rx="0.6" fill="#f2a900" />
+                        <rect x="17" y="14.5" width="1.6" height="1.6" fill="#0f3019" />
+                        <rect x="20" y="14.5" width="1.6" height="1.6" fill="#0f3019" />
+                        <rect x="17" y="17.5" width="1.6" height="1.6" fill="#0f3019" />
+                        <rect x="20" y="17.5" width="1.6" height="1.6" fill="#0f3019" />
+                        <rect x="17" y="20.5" width="1.6" height="1.6" fill="#0f3019" />
+                        <rect x="20" y="20.5" width="1.6" height="1.6" fill="#0f3019" />
+                        <!-- maison -->
+                        <path d="M24 22 l4 -3 l4 3 v8 h-8 z" fill="#e59500" />
+                        <rect x="26.6" y="25" width="2.8" height="2.8" fill="#0f3019" />
+                        <!-- sol / champs -->
+                        <path d="M7 30 q13 4 26 0 v1 q-13 4 -26 0 z" fill="#f2a900" />
+                    </svg>
+                </span>
+                <span class="synergia-word">
+                    <span class="synergia-name">SYNERGIA</span>
+                    <span class="synergia-tag">IMMO · TRANS · GUINÉE</span>
+                </span>
             </a>
             <a #menuButton class="layout-menu-button" (click)="onMenuButtonClick()">
                 <i class="pi pi-chevron-right"></i>
@@ -114,6 +136,61 @@ import { UserService } from '@/service/user.service';
     styles: `
         :host ::ng-deep .p-overlaybadge .p-badge {
             outline-width: 0px;
+        }
+
+        /* --- Branding SYNERGIA : topbar vert forêt (couleurs du logo) --- */
+        :host.layout-topbar {
+            background: linear-gradient(135deg, #0f3019 0%, #16451f 60%, #1a4d24 100%);
+            border-bottom: 2px solid #f2a900;
+        }
+
+        .synergia-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .synergia-emblem {
+            display: flex;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+        }
+        .synergia-word {
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+        }
+        .synergia-name {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: 2.5px;
+            color: #ffffff;
+        }
+        .synergia-tag {
+            margin-top: 3px;
+            font-size: 0.55rem;
+            font-weight: 600;
+            letter-spacing: 2.5px;
+            color: #f2a900;
+        }
+        /* Masque le wordmark en mode slim / petit écran, garde l'emblème */
+        @media (max-width: 640px) {
+            .synergia-word { display: none; }
+        }
+
+        /* Icônes et actions du topbar lisibles sur fond vert foncé */
+        :host.layout-topbar ::ng-deep .layout-topbar-start > a i,
+        :host.layout-topbar ::ng-deep .layout-topbar-end i,
+        :host.layout-topbar ::ng-deep .layout-menu-button i,
+        :host.layout-topbar ::ng-deep .app-config-button i,
+        :host.layout-topbar ::ng-deep .layout-topbar-mobile-button i {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        :host.layout-topbar ::ng-deep .layout-topbar-start > a:hover i,
+        :host.layout-topbar ::ng-deep .layout-topbar-end a:hover i {
+            color: #f2a900;
+        }
+        :host.layout-topbar ::ng-deep .layout-menu-button {
+            background: rgba(255, 255, 255, 0.12);
         }
     `
 })

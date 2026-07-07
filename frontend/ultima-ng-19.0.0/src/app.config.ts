@@ -11,20 +11,23 @@ import { StorageService } from '@/service/storage.service';
 import { TokenInterceptor } from '@/interceptors/token.interceptor';
 import { CacheInterceptor } from '@/interceptors/cache.interceptor';
 
+// Branding SYNERGIA : vert forêt en couleur primaire (dérivé du logo).
+// La palette 'green' de PrimeNG en est proche ; les tons 700/800 collent
+// au vert du logo. L'or (#f2a900) reste l'accent, appliqué au cas par cas.
 const MyPreset = definePreset(Material, {
     semantic: {
         primary: {
-            50: '{orange.50}',
-            100: '{orange.100}',
-            200: '{orange.200}',
-            300: '{orange.300}',
-            400: '{orange.400}',
-            500: '{orange.500}',
-            600: '{orange.600}',
-            700: '{orange.700}',
-            800: '{orange.800}',
-            900: '{orange.900}',
-            950: '{orange.950}'
+            50: '{green.50}',
+            100: '{green.100}',
+            200: '{green.200}',
+            300: '{green.300}',
+            400: '{green.400}',
+            500: '{green.600}',
+            600: '{green.700}',
+            700: '{green.800}',
+            800: '{green.900}',
+            900: '{green.950}',
+            950: '{green.950}'
         }
     }
 });
@@ -40,7 +43,6 @@ export const appConfig: ApplicationConfig = {
             withEnabledBlockingInitialNavigation()
         ),
         provideHttpClient(withFetch(), withInterceptors([TokenInterceptor, CacheInterceptor])),
-        provideHttpClient(withFetch()),
         provideAnimationsAsync(),
         providePrimeNG({
             ripple: true,
