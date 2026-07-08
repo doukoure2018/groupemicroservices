@@ -21,7 +21,8 @@ class AppColors {
   // Textes
   static const Color onBackground = Color(0xFF1A1A1A);
   static const Color onPrimary = Color(0xFFFFFFFF);
-  static const Color onSecondary = Color(0xFFFFFFFF);
+  // Texte/icône sur l'or : vert forêt foncé (l'or est trop clair pour du blanc).
+  static const Color onSecondary = Color(0xFF16451F);
   static const Color onSurface = Color(0xFF1A1A1A);
 
   // Séparation

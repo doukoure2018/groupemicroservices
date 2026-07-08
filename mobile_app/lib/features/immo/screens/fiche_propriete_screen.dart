@@ -745,10 +745,11 @@ class _SectionEnTete extends StatelessWidget {
                 ),
                 child: Text(
                   isLocation ? 'LOCATION' : 'VENTE',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    // Texte foncé sur l'or (LOCATION), blanc sur le vert (VENTE) — lisibilité.
+                    color: isLocation ? AppColors.primary : Colors.white,
                     fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,
                   ),
                 ),
