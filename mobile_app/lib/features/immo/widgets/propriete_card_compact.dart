@@ -212,7 +212,7 @@ class ProprieteCardCompact extends StatelessWidget {
       child: Text(
         label,
         style: const TextStyle(
-          color: Colors.white,
+          color: AppColors.onSecondary,
           fontSize: 10,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.5,

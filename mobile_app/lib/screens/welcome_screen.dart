@@ -217,17 +217,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       child: Column(
         children: [
           const Spacer(flex: 2),
-          // Embl\u00e8me SYNERGIA + wordmark horizontal (le logo porte le nom de
-          // marque \u2192 pas de titre texte, juste le slogan en dessous).
-          Image.asset(
-            'assets/images/synergia-emblem-512x512.png',
-            height: 150,
-            fit: BoxFit.contain,
-          ),
-          const SizedBox(height: 16),
+          // Logo horizontal SYNERGIA (porte le nom de marque \u2192 pas de titre
+          // texte, juste le slogan en dessous).
           Image.asset(
             'assets/images/synergia-logo-660x120.png',
-            width: 240,
+            width: 320,
             fit: BoxFit.contain,
           ),
           const SizedBox(height: 24),

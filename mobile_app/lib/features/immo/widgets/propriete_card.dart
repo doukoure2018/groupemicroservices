@@ -216,6 +216,8 @@ class ProprieteCard extends StatelessWidget {
 
   Widget _badge(bool isLocation) {
     final color = isLocation ? AppColors.secondary : AppColors.success;
+    // Texte foncé sur l'or (LOCATION), blanc sur le vert (VENTE).
+    final textColor = isLocation ? AppColors.onSecondary : Colors.white;
     final label = isLocation ? 'LOCATION' : 'VENTE';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -225,10 +227,10 @@ class ProprieteCard extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: textColor,
           fontSize: 11,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
         ),
       ),

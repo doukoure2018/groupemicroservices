@@ -168,11 +168,11 @@ class MesAnnonceCard extends StatelessWidget {
 
   Widget _statutBadge(String statut) {
     final (label, color) = switch (statut) {
-      'EN_ATTENTE_VALIDATION' => ('En attente de validation', Colors.orange),
-      'PUBLIE' => ('Publiée', Colors.green),
-      'RESERVE' => ('Réservée', Colors.blue),
-      'RETIRE' => ('Rejetée', Colors.red),
-      _ => (statut, Colors.grey),
+      'EN_ATTENTE_VALIDATION' => ('En attente de validation', AppColors.warning),
+      'PUBLIE' => ('Publiée', AppColors.success),
+      'RESERVE' => ('Réservée', AppColors.info),
+      'RETIRE' => ('Rejetée', AppColors.error),
+      _ => (statut, AppColors.onBackground),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
