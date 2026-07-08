@@ -1,163 +1,165 @@
-<div class="h-screen flex w-full bg-surface-50 dark:bg-surface-950">
-    <div class="flex flex-1 flex-col bg-surface-50 dark:bg-surface-950 items-center justify-center">
-        <div class="w-11/12 sm:w-[30rem]">
-            <div class="flex flex-col">
-                <div style="height: 56px; width: 56px" class="bg-primary rounded-full flex items-center justify-center">
-                    <i class="pi pi-users text-surface-0 dark:text-surface-900 !text-4xl"></i>
-                </div>
-                <div class="mt-6">
-                    <h1 class="m-0 text-primary font-semibold text-4xl">Créer un compte</h1>
-                    <span class="block text-surface-700 dark:text-surface-100 mt-2">Renseignez les champs ci-dessous
-                        pour vous inscrire</span>
-                </div>
-            </div>
-            @if (state().message){
-            <div class="flex flex-col gap-4 mb-4">
-                <p-message severity="success">{{ state().message }}</p-message>
-            </div>
+<div class="min-h-screen flex w-full bg-surface-50 dark:bg-surface-950">
+    <!-- Colonne formulaire -->
+    <div class="flex flex-1 flex-col items-center justify-center px-4 py-8 overflow-y-auto">
+        <div class="w-full max-w-[30rem]">
+            <!-- Logo -->
+            <a [href]="'/'" class="inline-block mb-8">
+                <img src="/images/synergia-logo-660x120.png" alt="SYNERGIA — Immo · Trans · Guinée" class="h-12 w-auto dark:hidden" />
+                <img src="/images/synergia-logo-blanc-660x120.png" alt="SYNERGIA" class="h-12 w-auto hidden dark:block" />
+            </a>
+
+            <h1 class="m-0 text-3xl font-bold text-surface-900 dark:text-surface-0">Créer un compte</h1>
+            <p class="mt-2 text-surface-600 dark:text-surface-300">
+                Rejoignez SYNERGIA pour trouver, louer ou vendre votre bien en Guinée.
+            </p>
+
+            @if (state().message) {
+                <div class="mt-5"><p-message severity="success" styleClass="w-full">{{ state().message }}</p-message></div>
             }
-            @if (state().error){
-            <div class="flex flex-col gap-4 mb-4">
-                <p-message severity="error"> {{ state().error }}</p-message>
-            </div>
+            @if (state().error) {
+                <div class="mt-5"><p-message severity="error" styleClass="w-full">{{ state().error }}</p-message></div>
             }
 
-            <form #form="ngForm" (ngSubmit)="register(form)" class="flex flex-col gap-4 mt-6">
-                <div class="flex flex-col gap-4 mt-12">
-                    <!-- Type de compte -->
+            <form #form="ngForm" (ngSubmit)="register(form)" class="flex flex-col gap-4 mt-8">
+                <!-- Type de compte -->
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-surface-700 dark:text-surface-200">Je suis</label>
                     <div class="grid grid-cols-2 gap-3">
                         <label class="cursor-pointer rounded-xl border-2 p-3 text-center transition-all"
-                            [class]="accountType === 'PARTICULIER' ? 'border-primary bg-primary/5 text-primary font-semibold' : 'border-surface-300 dark:border-surface-600 text-surface-600 dark:text-surface-300'">
-                            <input type="radio" name="accountType" value="PARTICULIER" [(ngModel)]="accountType"
-                                class="hidden" />
-                            <i class="pi pi-user block mb-1"></i>
+                            [class]="accountType === 'PARTICULIER' ? 'border-primary bg-primary/5 text-primary font-semibold' : 'border-surface-300 dark:border-surface-600 text-surface-600 dark:text-surface-300 hover:border-primary/40'">
+                            <input type="radio" name="accountType" value="PARTICULIER" [(ngModel)]="accountType" class="hidden" />
+                            <i class="pi pi-user block mb-1 text-lg"></i>
                             Particulier
                         </label>
                         <label class="cursor-pointer rounded-xl border-2 p-3 text-center transition-all"
-                            [class]="accountType === 'AGENCE' ? 'border-primary bg-primary/5 text-primary font-semibold' : 'border-surface-300 dark:border-surface-600 text-surface-600 dark:text-surface-300'">
-                            <input type="radio" name="accountType" value="AGENCE" [(ngModel)]="accountType"
-                                class="hidden" />
-                            <i class="pi pi-building block mb-1"></i>
+                            [class]="accountType === 'AGENCE' ? 'border-primary bg-primary/5 text-primary font-semibold' : 'border-surface-300 dark:border-surface-600 text-surface-600 dark:text-surface-300 hover:border-primary/40'">
+                            <input type="radio" name="accountType" value="AGENCE" [(ngModel)]="accountType" class="hidden" />
+                            <i class="pi pi-building block mb-1 text-lg"></i>
                             Agence immobilière
                         </label>
                     </div>
                     @if (accountType === 'AGENCE') {
-                    <p-message severity="info" size="small">
-                        Après vérification de votre email, vous compléterez le profil de votre agence
-                        (RCCM/NIF, coordonnées…) depuis votre espace, avant validation par la conformité.
-                    </p-message>
+                        <p-message severity="info" size="small" styleClass="w-full mt-3">
+                            Après vérification de votre email, vous compléterez le profil de votre agence
+                            (RCCM/NIF, coordonnées…) avant validation par la conformité.
+                        </p-message>
                     }
-                    <p-input-group>
-                        <p-inputgroup-addon>
-                            <i class="pi pi-user"></i>
-                        </p-inputgroup-addon>
-                        <input pInputText name="firstName" ngModel #firstName="ngModel" placeholder="First Name"
-                            required />
-                        @if(firstName.invalid && firstName.touched && firstName.invalid) {
-                        <p-message severity="error" size="small" styleClass="h-full w-full ">
-                            First name is required
-                        </p-message>
-                        }
-                    </p-input-group>
-                    <p-input-group>
-                        <p-inputgroup-addon>
-                            <i class="pi pi-user"></i>
-                        </p-inputgroup-addon>
-                        <input pInputText name="lastName" ngModel #lastName="ngModel" placeholder="Last Name"
-                            required />
-                        @if(lastName.invalid && lastName.touched && lastName.invalid) {
-                        <p-message severity="error" size="small" styleClass="h-full w-full ">
-                            Last name is required
-                        </p-message>
-                        }
-                    </p-input-group>
-                    <p-input-group>
-                        <p-inputgroup-addon>
-                            <i class="pi pi-at"></i>
-                        </p-inputgroup-addon>
-                        <input pInputText name="email" ngModel #email="ngModel" placeholder="Email" required email />
-                        @if(email.invalid && email.touched && email.invalid && email.errors?.['required']) {
-                        <p-message severity="error" size="small" styleClass="h-full w-full ">
-                            Email is required
-                        </p-message>
-                        }
-                        @if(email.invalid && email.touched && email.invalid && email.errors?.['email']) {
-                        <p-message severity="error" size="small" styleClass="h-full w-full ">
-                            Email format is invalid
-                        </p-message>
-                        }
-                    </p-input-group>
-                    <p-inputGroup>
-                        <p-inputGroupAddon>
-                            <i class="pi pi-user"></i>
-                        </p-inputGroupAddon>
-                        <input pInputText name="username" ngModel #username="ngModel" placeholder="Username" required
-                            pattern="^[a-zA-Z0-9]+$" minlength="4" />
-                        @if(username.invalid && username.touched && username.errors?.['pattern']) {
-                        <p-message severity="error" size="small" styleClass="h-full w-full">
-                            Username must be alphanumeric
-                        </p-message>
-                        }
-                        @if(username.invalid && username.touched && username.errors?.['required']) {
-                        <p-message severity="error" size="small" styleClass="h-full w-full">
-                            User name is required
-                        </p-message>
-                        }
-                    </p-inputGroup>
-                    <p-input-group>
-                        <p-inputgroup-addon>
-                            <i class="pi pi-key"></i>
-                        </p-inputgroup-addon>
-                        <input pInputText id="password" type="password" name="password" ngModel #password="ngModel"
-                            placeholder="Password" required minlength="6" />
+                </div>
 
-                        @if(password.invalid && password.touched && password.errors?.['required']) {
-                        <p-message severity="error" size="small" styleClass="h-full w-full">
-                            Password is required
-                        </p-message>
+                <!-- Prénom / Nom -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1">
+                        <label for="firstName" class="text-sm font-medium text-surface-700 dark:text-surface-200">Prénom</label>
+                        <input pInputText id="firstName" name="firstName" ngModel #firstName="ngModel" placeholder="Ex. : Amadou" required fluid />
+                        @if (firstName.invalid && firstName.touched) {
+                            <small class="text-red-500">Le prénom est requis</small>
                         }
-                        @if(password.invalid && password.touched && password.errors?.['minlength']) {
-                        <p-message severity="error" size="small" styleClass="h-full w-full">
-                            this password is too short
-                        </p-message>
-                        }
-                    </p-input-group>
-
-                    <p-input-group>
-                        <p-inputgroup-addon>
-                            <i class="pi pi-phone"></i>
-                        </p-inputgroup-addon>
-                        <input pInputText name="phone" ngModel #phone="ngModel" placeholder="Téléphone (+224 ...)" />
-                    </p-input-group>
-
-                    <div>
-                        <button [disabled]="form.invalid || state().loading" type="submit" pButton pRipple
-                            class="w-full" label="S'inscrire"></button>
                     </div>
-
-                    <div class="flex items-center gap-3">
-                        <span class="h-px flex-1 bg-surface-300 dark:bg-surface-600"></span>
-                        <span class="text-sm text-surface-500">ou</span>
-                        <span class="h-px flex-1 bg-surface-300 dark:bg-surface-600"></span>
-                    </div>
-                    <div>
-                        <!-- Lance le flux OAuth2 : le bouton Google est proposé sur la page de connexion -->
-                        <a [href]="loginUrl" pButton pRipple class="w-full" severity="secondary" outlined>
-                            <i class="pi pi-google mr-2"></i> Continuer avec Google
-                        </a>
-                    </div>
-                    <div>
-                        <a [href]="loginUrl" pButton pRipple class="w-full text-primary-500" text
-                            label="J'ai déjà un compte — Se connecter">
-                        </a>
+                    <div class="flex flex-col gap-1">
+                        <label for="lastName" class="text-sm font-medium text-surface-700 dark:text-surface-200">Nom</label>
+                        <input pInputText id="lastName" name="lastName" ngModel #lastName="ngModel" placeholder="Ex. : Diallo" required fluid />
+                        @if (lastName.invalid && lastName.touched) {
+                            <small class="text-red-500">Le nom est requis</small>
+                        }
                     </div>
                 </div>
+
+                <!-- Email -->
+                <div class="flex flex-col gap-1">
+                    <label for="email" class="text-sm font-medium text-surface-700 dark:text-surface-200">Email</label>
+                    <p-input-group>
+                        <p-inputgroup-addon><i class="pi pi-at"></i></p-inputgroup-addon>
+                        <input pInputText id="email" name="email" ngModel #email="ngModel" placeholder="nom@email.com" required email />
+                    </p-input-group>
+                    @if (email.invalid && email.touched && email.errors?.['required']) {
+                        <small class="text-red-500">L'email est requis</small>
+                    }
+                    @if (email.invalid && email.touched && email.errors?.['email']) {
+                        <small class="text-red-500">Format d'email invalide</small>
+                    }
+                </div>
+
+                <!-- Nom d'utilisateur -->
+                <div class="flex flex-col gap-1">
+                    <label for="username" class="text-sm font-medium text-surface-700 dark:text-surface-200">Nom d'utilisateur</label>
+                    <p-input-group>
+                        <p-inputgroup-addon><i class="pi pi-user"></i></p-inputgroup-addon>
+                        <input pInputText id="username" name="username" ngModel #username="ngModel" placeholder="au moins 4 caractères" required pattern="^[a-zA-Z0-9]+$" minlength="4" />
+                    </p-input-group>
+                    @if (username.invalid && username.touched && username.errors?.['pattern']) {
+                        <small class="text-red-500">Uniquement des lettres et chiffres</small>
+                    }
+                    @if (username.invalid && username.touched && username.errors?.['required']) {
+                        <small class="text-red-500">Le nom d'utilisateur est requis</small>
+                    }
+                </div>
+
+                <!-- Téléphone -->
+                <div class="flex flex-col gap-1">
+                    <label for="phone" class="text-sm font-medium text-surface-700 dark:text-surface-200">Téléphone</label>
+                    <p-input-group>
+                        <p-inputgroup-addon><i class="pi pi-phone"></i></p-inputgroup-addon>
+                        <input pInputText id="phone" name="phone" ngModel #phone="ngModel" placeholder="+224 6XX XX XX XX" />
+                    </p-input-group>
+                </div>
+
+                <!-- Mot de passe -->
+                <div class="flex flex-col gap-1">
+                    <label for="password" class="text-sm font-medium text-surface-700 dark:text-surface-200">Mot de passe</label>
+                    <p-input-group>
+                        <p-inputgroup-addon><i class="pi pi-key"></i></p-inputgroup-addon>
+                        <input pInputText id="password" type="password" name="password" ngModel #password="ngModel" placeholder="au moins 6 caractères" required minlength="6" />
+                    </p-input-group>
+                    @if (password.invalid && password.touched && password.errors?.['required']) {
+                        <small class="text-red-500">Le mot de passe est requis</small>
+                    }
+                    @if (password.invalid && password.touched && password.errors?.['minlength']) {
+                        <small class="text-red-500">Mot de passe trop court (min. 6 caractères)</small>
+                    }
+                </div>
+
+                <button [disabled]="form.invalid || state().loading" type="submit" pButton pRipple class="w-full mt-2" [label]="state().loading ? 'Inscription…' : 'S\'inscrire'"></button>
+
+                <div class="flex items-center gap-3">
+                    <span class="h-px flex-1 bg-surface-300 dark:bg-surface-600"></span>
+                    <span class="text-sm text-surface-500">ou</span>
+                    <span class="h-px flex-1 bg-surface-300 dark:bg-surface-600"></span>
+                </div>
+
+                <!-- Le bouton Google est proposé sur la page de connexion (flux OAuth2). -->
+                <a [href]="loginUrl" pButton pRipple class="w-full" severity="secondary" [outlined]="true">
+                    <i class="pi pi-google mr-2"></i> Continuer avec Google
+                </a>
+
+                <p class="text-center text-sm text-surface-600 dark:text-surface-300">
+                    Vous avez déjà un compte ?
+                    <a [href]="loginUrl" class="text-primary font-semibold hover:underline ml-1">Se connecter</a>
+                </p>
             </form>
         </div>
     </div>
-    <div [style]="{ backgroundImage: 'url(/images/pages/accessDenied-bg.jpg)' }"
-        class="hidden lg:flex flex-1 items-center justify-center bg-cover">
-        <img src="/layout/images/logo/vector_logo.png" alt="" />
+
+    <!-- Colonne visuelle (branding) -->
+    <div class="hidden lg:flex flex-1 items-center justify-center p-10 relative overflow-hidden"
+        style="background: linear-gradient(135deg, #0f3019 0%, #16451f 55%, #1a4d24 100%);">
+        <!-- halo décoratif -->
+        <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full" style="background: rgba(242,169,0,0.12);"></div>
+        <div class="absolute -bottom-32 -left-16 w-96 h-96 rounded-full" style="background: rgba(242,169,0,0.08);"></div>
+
+        <div class="relative z-10 flex flex-col items-center text-center max-w-md">
+            <div class="bg-white rounded-3xl shadow-2xl p-6 mb-8">
+                <img src="/images/bggenered.png" alt="Votre bien immobilier entre de bonnes mains" class="w-72 h-72 object-contain" />
+            </div>
+            <h2 class="text-white text-3xl font-bold leading-tight">Votre projet immobilier<br />entre de bonnes mains</h2>
+            <p class="text-white/80 mt-4 text-lg">
+                Achat, location, terrains et transport — SYNERGIA connecte particuliers
+                et agences vérifiées partout en Guinée.
+            </p>
+            <div class="flex items-center gap-6 mt-8 text-white/90 text-sm">
+                <span class="flex items-center gap-2"><i class="pi pi-verified" style="color:#f2a900"></i> Agences vérifiées</span>
+                <span class="flex items-center gap-2"><i class="pi pi-shield" style="color:#f2a900"></i> Sécurisé</span>
+            </div>
+        </div>
     </div>
 </div>
 <p-toast />
