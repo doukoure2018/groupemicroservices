@@ -68,10 +68,10 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo SIRA Guinée (PNG transparent) posé directement sur le
+                // Emblème SYNERGIA (PNG transparent) posé directement sur le
                 // fond clair du splash — pas de carte blanche nécessaire.
                 Image.asset(
-                  'assets/images/icon-no-bg.png',
+                  'assets/images/synergia-emblem-512x512.png',
                   width: 180,
                   height: 180,
                   fit: BoxFit.contain,

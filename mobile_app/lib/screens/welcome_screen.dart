@@ -6,13 +6,13 @@ import '../config/app_config.dart';
 import '../presentation/resource/color_manager.dart';
 import '../providers/auth_provider.dart';
 
-// Palette SIRA hybride — sarcelle (titres) + corail (CTA).
-const _kSarcelle = Color(0xFF1F6F8B);       // titres principaux
-const _kCorail = Color(0xFFF26430);         // CTA plein + accents corail
+// Palette SYNERGIA — vert forêt (titres + CTA) + or (accent).
+const _kSarcelle = Color(0xFF16451F);       // titres principaux (vert forêt)
+const _kCorail = Color(0xFF16451F);         // CTA plein (vert forêt)
 const _kTextSecondary = Color(0xFF6B7280);  // texte secondaire gris doux
 const _kFieldBg = Color(0xFFF4F5F7);        // fond champ gris très clair
-const _kFieldBorder = _kCorail;             // bordure focus corail
-const _kTitleColor = _kSarcelle;            // titres = sarcelle (alias)
+const _kFieldBorder = _kSarcelle;           // bordure focus vert
+const _kTitleColor = _kSarcelle;            // titres = vert forêt (alias)
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -217,11 +217,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       child: Column(
         children: [
           const Spacer(flex: 2),
-          // Logo SIRA Guin\u00e9e centr\u00e9, agrandi. Le logo porte d\u00e9j\u00e0 le nom de
-          // marque \u2192 pas de titre texte, juste le slogan en dessous.
+          // Embl\u00e8me SYNERGIA + wordmark horizontal (le logo porte le nom de
+          // marque \u2192 pas de titre texte, juste le slogan en dessous).
           Image.asset(
-            'assets/images/logo-sira-guinee-no-bg.png',
-            height: 240,
+            'assets/images/synergia-emblem-512x512.png',
+            height: 150,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(height: 16),
+          Image.asset(
+            'assets/images/synergia-logo-660x120.png',
+            width: 240,
             fit: BoxFit.contain,
           ),
           const SizedBox(height: 24),
