@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
 
-/// Palette SIRA mobile — sarcelle #1F6F8B (primary) + corail #F26430 (CTA).
-/// Validée 2026-05-29, palette officielle mobile.
+/// Palette SYNERGIA mobile — vert forêt #16451F (primary) + or #F2A900 (accent).
+/// Rebranding 2026-07-08 (logo SYNERGIA IMMO TRANS GUINEE).
 ///
-/// Distincte des couleurs billetterie héritées
-/// (lib/presentation/resource/color_manager.dart) qui restent en place pour
-/// les écrans existants. Cette palette n'est utilisée que par les écrans
-/// construits sur lib/shared/ — hub d'accueil (15.2) et features immo.
+/// Utilisée par les écrans construits sur lib/shared/ — hub d'accueil et
+/// features immo. Alignée sur ColorManager (billetterie) désormais rebrandé.
 class AppColors {
   AppColors._();
 
   // Marque
-  static const Color primary = Color(0xFF1F6F8B); // sarcelle profonde
-  static const Color primaryContainer = Color(0xFFE0EFF4); // sarcelle pâle
-  static const Color secondary = Color(0xFFF26430); // corail CTA
-  static const Color secondaryContainer = Color(0xFFFFE8DC); // corail pâle (badges, hover)
+  static const Color primary = Color(0xFF16451F); // vert forêt SYNERGIA
+  static const Color primaryContainer = Color(0xFFE6F0E8); // vert pâle
+  static const Color secondary = Color(0xFFF2A900); // or SYNERGIA (accent)
+  static const Color secondaryContainer = Color(0xFFFFF3D6); // or pâle (badges, hover)
 
   // Surfaces
   static const Color background = Color(0xFFFAFAFA);
