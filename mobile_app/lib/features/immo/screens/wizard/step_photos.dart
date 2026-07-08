@@ -429,19 +429,19 @@ class StepPhotosState extends State<StepPhotos>
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.9),
+                  color: AppColors.secondary.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.star, size: 12, color: Colors.white),
+                    Icon(Icons.star, size: 12, color: AppColors.onSecondary),
                     SizedBox(width: 2),
                     Text(
                       'Cover',
                       style: TextStyle(
                         fontSize: 10,
-                        color: Colors.white,
+                        color: AppColors.onSecondary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -504,17 +504,17 @@ class StepPhotosState extends State<StepPhotos>
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.9),
+                    color: AppColors.secondary.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.star, size: 14, color: Colors.white),
+                      Icon(Icons.star, size: 14, color: AppColors.onSecondary),
                       SizedBox(width: 4),
                       Text(
                         'Couverture',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: AppColors.onSecondary, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -696,7 +696,7 @@ class _PhotoTile extends StatelessWidget {
             Text('Photo ${index + 1}'),
             if (photo.estCouverture) ...[
               const SizedBox(width: 6),
-              const Icon(Icons.star, color: Colors.amber, size: 18),
+              Icon(Icons.star, color: AppColors.secondary, size: 18),
             ],
           ],
         ),

@@ -460,8 +460,11 @@ class _FicheProprieteScreenState extends State<FicheProprieteScreen>
           child: ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: CachedNetworkImage(
-              imageUrl: photo.urlThumbnail,
+              // Original (net en grille 200px) décodé à ~500px pour limiter la RAM.
+              imageUrl: photo.url,
               fit: BoxFit.cover,
+              filterQuality: FilterQuality.high,
+              memCacheWidth: 500,
               placeholder: (_, __) => Container(color: AppColors.divider),
               errorWidget: (_, __, ___) => Container(
                 color: AppColors.divider,
@@ -527,6 +530,8 @@ class _GalerieHeader extends StatelessWidget {
               child: CachedNetworkImage(
                 imageUrl: p.url,
                 fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
+                fadeInDuration: const Duration(milliseconds: 200),
                 placeholder: (_, __) => Container(color: AppColors.divider),
                 errorWidget: (_, __, ___) => Container(
                   color: AppColors.divider,
@@ -702,6 +707,7 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
           imageProvider: CachedNetworkImageProvider(widget.photos[i].url),
           minScale: PhotoViewComputedScale.contained,
           maxScale: PhotoViewComputedScale.covered * 3,
+          filterQuality: FilterQuality.high,
         ),
       ),
     );
