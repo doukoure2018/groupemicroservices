@@ -20,8 +20,8 @@ import { UserService } from '@/service/user.service';
     template: `
         <div class="layout-topbar-start">
             <a class="layout-topbar-logo synergia-brand" routerLink="/" aria-label="SYNERGIA IMMO TRANS GUINEE">
-                <!-- Logo horizontal (texte vert) sur fond clair ; emblème seul en mode compact/mobile. -->
-                <img class="synergia-logo-full" src="/images/synergia-logo-660x120.png" alt="SYNERGIA — Immo · Trans · Guinée" />
+                <!-- Topbar vert forêt : logo à texte blanc ; emblème seul en mode compact/mobile. -->
+                <img class="synergia-logo-full" src="/images/synergia-logo-blanc-660x120.png" alt="SYNERGIA — Immo · Trans · Guinée" />
                 <img class="synergia-logo-emblem" src="/images/synergia-emblem-512x512.png" alt="SYNERGIA" />
             </a>
             <a #menuButton class="layout-menu-button" (click)="onMenuButtonClick()">
@@ -117,8 +117,9 @@ import { UserService } from '@/service/user.service';
             outline-width: 0px;
         }
 
-        /* --- Branding SYNERGIA : accent or sous le topbar clair --- */
+        /* --- Branding SYNERGIA : topbar vert forêt (couleurs du logo) --- */
         :host.layout-topbar {
+            background: linear-gradient(135deg, #0f3019 0%, #16451f 60%, #1a4d24 100%);
             border-bottom: 2px solid #f2a900;
         }
         .synergia-brand {
@@ -126,7 +127,7 @@ import { UserService } from '@/service/user.service';
             align-items: center;
             text-decoration: none;
         }
-        /* Logo horizontal (texte vert) sur fond clair du topbar */
+        /* Logo horizontal (texte blanc) sur fond vert du topbar */
         .synergia-logo-full {
             height: 44px;
             width: auto;
@@ -137,10 +138,25 @@ import { UserService } from '@/service/user.service';
             width: 40px;
             display: none;
         }
-        /* Mode compact / mobile : emblème seul */
         @media (max-width: 640px) {
             .synergia-logo-full { display: none; }
             .synergia-logo-emblem { display: block; }
+        }
+
+        /* Icônes et actions du topbar lisibles sur fond vert foncé */
+        :host.layout-topbar ::ng-deep .layout-topbar-start > a i,
+        :host.layout-topbar ::ng-deep .layout-topbar-end i,
+        :host.layout-topbar ::ng-deep .layout-menu-button i,
+        :host.layout-topbar ::ng-deep .app-config-button i,
+        :host.layout-topbar ::ng-deep .layout-topbar-mobile-button i {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        :host.layout-topbar ::ng-deep .layout-topbar-start > a:hover i,
+        :host.layout-topbar ::ng-deep .layout-topbar-end a:hover i {
+            color: #f2a900;
+        }
+        :host.layout-topbar ::ng-deep .layout-menu-button {
+            background: rgba(255, 255, 255, 0.12);
         }
     `
 })

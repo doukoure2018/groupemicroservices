@@ -24,6 +24,9 @@
     <h1>Votre dossier agence a été refusé</h1>
   </div>
   <div class="body">
+    <div style="text-align:center; padding-bottom:12px;">
+      <img th:src="${uiUrl} + '/images/synergia-logo-white-512x120.png'" alt="SYNERGIA" width="220" style="max-width:220px; height:auto;">
+    </div>
     <p>Bonjour,</p>
     <p>Après examen par notre équipe conformité, le dossier de votre agence
        <strong th:text="${agenceNom}">[Agence]</strong> n'a pas pu être validé en l'état.</p>
