@@ -213,15 +213,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   Widget _buildWelcomeView() {
     return Padding(
       key: const ValueKey('welcome'),
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Spacer(flex: 2),
-          // Logo horizontal SYNERGIA (porte le nom de marque \u2192 pas de titre
-          // texte, juste le slogan en dessous).
+          // Logo horizontal SYNERGIA centr\u00e9, occupant toute la largeur
+          // disponible (padding r\u00e9duit \u00e0 20 pour l'agrandir).
           Image.asset(
             'assets/images/synergia-logo-660x120.png',
-            width: 320,
+            width: double.infinity,
             fit: BoxFit.contain,
           ),
           const SizedBox(height: 24),
