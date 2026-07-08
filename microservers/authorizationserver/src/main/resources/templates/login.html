@@ -92,7 +92,7 @@
                 <div class="mt-6 pt-5 border-t border-gray-200">
                     <p class="text-sm text-center text-gray-600">
                         Vous n'avez pas de compte ?
-                        <a th:href="@{/register}" class="text-green-800 hover:underline font-semibold ml-1">Créer un compte</a>
+                        <a th:href="${@environment.getProperty('ui.app.url') + '/auth/register'}" class="text-green-800 hover:underline font-semibold ml-1">Créer un compte</a>
                     </p>
                 </div>
             </div>
