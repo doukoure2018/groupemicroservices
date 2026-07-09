@@ -260,7 +260,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             Text(
                               'Noter',
                               style: getMediumStyle(
-                                color: ColorManager.accentDark,
+                                // Action en vert (lisible sur blanc) ; l'étoile reste jaune.
+                                color: ColorManager.primary,
                                 fontSize: FontSize.s12,
                               ),
                             ),
