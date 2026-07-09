@@ -235,7 +235,7 @@ class _PassengersScreenState extends State<PassengersScreen> {
                 child: ElevatedButton(
                   onPressed: _handleProceed,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorManager.accent,
+                    backgroundColor: ColorManager.primary,
                     foregroundColor: ColorManager.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.r16),

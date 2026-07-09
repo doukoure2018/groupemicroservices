@@ -153,6 +153,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                       onPressed: _saving ? null : _submit,
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.secondary,
+                        // Texte/spinner foncés : l'or est trop clair pour du blanc.
+                        foregroundColor: AppColors.onSecondary,
                         disabledBackgroundColor:
                             AppColors.secondary.withValues(alpha: 0.6),
                         shape: RoundedRectangleBorder(
@@ -164,7 +166,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                               width: 22,
                               height: 22,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2.5, color: Colors.white),
+                                  strokeWidth: 2.5, color: AppColors.onSecondary),
                             )
                           : const Text('Continuer',
                               style: TextStyle(

@@ -235,10 +235,11 @@ class _PublierCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  // Texte/icônes foncés (onSecondary) : l'or est trop clair pour du blanc.
+                  color: AppColors.onSecondary.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.add, color: Colors.white, size: 28),
+                child: const Icon(Icons.add, color: AppColors.onSecondary, size: 28),
               ),
               const SizedBox(width: 14),
               const Expanded(
@@ -248,7 +249,7 @@ class _PublierCard extends StatelessWidget {
                     Text(
                       'Publier une annonce',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.onSecondary,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
@@ -257,14 +258,14 @@ class _PublierCard extends StatelessWidget {
                     Text(
                       'Mettez votre bien en location ou en vente',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.onSecondary,
                         fontSize: 12,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.white),
+              const Icon(Icons.chevron_right, color: AppColors.onSecondary),
             ],
           ),
         ),

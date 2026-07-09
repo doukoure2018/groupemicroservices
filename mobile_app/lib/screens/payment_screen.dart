@@ -288,7 +288,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 child: ElevatedButton(
                   onPressed: _isProcessing ? null : _handlePayment,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorManager.accent,
+                    backgroundColor: ColorManager.primary,
                     foregroundColor: ColorManager.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.r16),

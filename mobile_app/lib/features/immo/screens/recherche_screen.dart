@@ -578,7 +578,8 @@ class _RechercheScreenState extends State<RechercheScreen> {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.secondary,
+                    // Lien en vert (lisible sur blanc ; l'or clair manque de contraste).
+                    color: AppColors.primary,
                   ),
                 ),
               ),

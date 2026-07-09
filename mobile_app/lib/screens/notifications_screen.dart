@@ -369,7 +369,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ElevatedButton(
               onPressed: _load,
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorManager.accent,
+                backgroundColor: ColorManager.primary,
                 foregroundColor: ColorManager.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.r12),

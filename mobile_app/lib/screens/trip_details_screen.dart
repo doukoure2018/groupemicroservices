@@ -427,7 +427,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                 child: ElevatedButton(
                   onPressed: widget.onBook,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorManager.accent,
+                    backgroundColor: ColorManager.primary,
                     foregroundColor: ColorManager.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.r16),

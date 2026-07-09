@@ -370,7 +370,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                   _loadOffers();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorManager.accent,
+                  backgroundColor: ColorManager.primary,
                   foregroundColor: ColorManager.white,
                 ),
                 child: const Text('Réessayer'),
@@ -803,7 +803,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                 child: ElevatedButton(
                   onPressed: () => widget.onSelectOffer?.call(offer),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorManager.accent,
+                    backgroundColor: ColorManager.primary,
                     foregroundColor: ColorManager.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.r12),

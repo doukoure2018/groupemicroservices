@@ -418,7 +418,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
           ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: ColorManager.accent,
+          backgroundColor: ColorManager.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

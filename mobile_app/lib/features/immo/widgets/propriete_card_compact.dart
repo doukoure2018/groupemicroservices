@@ -122,7 +122,8 @@ class ProprieteCardCompact extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.secondary,
+                          // Prix en vert (lisible sur blanc), cohérent avec propriete_card.
+                          color: AppColors.primary,
                           height: 1.1,
                         ),
                         maxLines: 1,

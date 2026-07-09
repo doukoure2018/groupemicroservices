@@ -238,7 +238,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorManager.accent,
+                        backgroundColor: ColorManager.primary,
                         foregroundColor: ColorManager.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -559,7 +559,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     child: ElevatedButton(
                       onPressed: _handleSearch,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorManager.accent,
+                        backgroundColor: ColorManager.primary,
                         foregroundColor: ColorManager.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
