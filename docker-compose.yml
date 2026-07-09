@@ -18,6 +18,9 @@ services:
   # ==============================================
   postgresdb:
     image: postgis/postgis:16-3.4
+    # Base critique : redémarrage auto après crash/reboot (sinon tous les
+    # services applicatifs échouent en 500 tant que postgres n'est pas relancé).
+    restart: unless-stopped
     command:
       - "postgres"
       - "-c"
