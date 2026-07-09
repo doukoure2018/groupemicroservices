@@ -42,6 +42,22 @@ load-balancing Eureka, bug Spring Cloud 4.2.0 — re-tester après montée de ve
 pointe sur les clés debug. Bloque la publication Play Store.
 **Cible** : keystore de release dédié, hors git, injecté en CI.
 
+### S4b. Clés RSA de l'auth server non provisionnées + fallback mémoire silencieux (2026-07-09)
+Le dossier `keys/` monté sur `/app/keys` était **vide** sur TEST **et** PROD :
+l'authorizationserver générait des clés RSA **jetables en mémoire** à chaque
+démarrage (`KeyUtils.generateInMemoryKeys`), invalidant tous les JWT au moindre
+redémarrage (déconnexion générale, échecs de validation JWKS en cascade).
+Révélé le 2026-07-09 par un redéploiement CD TEST.
+- **Réglé sur TEST** : `openssl genpkey -algorithm RSA` (PKCS8) + `openssl rsa -pubout`
+  (X509) dans `~/sira-guinee/test/keys/`, `chmod 644`, restart. Log de contrôle :
+  « Successfully loaded RSA keys from files ».
+- **PROD encore à faire** (dossier vide) — mêmes commandes, clés distinctes.
+- **Cibles** : (1) documenter la génération des clés dans `docs/deploy-ovh-sira.md`
+  (checklist nouveau serveur) ; (2) en prod, **échouer le démarrage** si les clés
+  fichier sont absentes au lieu de basculer silencieusement en mémoire (un flag
+  `key.require-file: true` sur le profil prod) ; (3) le `keyId` est codé en dur
+  dans `KeyUtils.buildRSAKey` (« Fixed UUID ») — acceptable mais à externaliser.
+
 ### S5. Logs fuitant des préfixes de tokens
 - `src/app/interceptors/token.interceptor.ts` : ~15 `console.log` par requête, dont le
   token tronqué.
