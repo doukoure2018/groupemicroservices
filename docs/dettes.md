@@ -169,6 +169,17 @@ la commande (`POST /billetterie/commandes`), aucun SDK ni callback de paiement r
 
 ## ✅ Réglées
 
+- **2026-07-09** — Projet 2 « déclaration de besoin » bouclé et validé E2E sur TEST :
+  déclaration mobile (Flutter) → diffusion Kafka aux agences vérifiées de la zone
+  (commune → région → toutes) + emails → backoffice agence « Demandes clients »
+  (Angular, filtrage par zone, coordonnées client). Migrations V32 (table
+  immo_demande_besoin) et V34 (commune/quartier en saisie libre) déployées.
+  Endpoints validés : POST /immo/demandes (201), mes-demandes (200), vue agence
+  protégée (403 pour non-ADMIN_IMMO).
+- **2026-07-08/09** — Rebranding SYNERGIA complet : web (topbar vert, logo, pages
+  auth 2 colonnes, emails) et mobile (ColorManager + AppColors vert/or, tous les
+  écrans, contraste sur l'or corrigé). Fix connexe : provideHttpClient dupliqué
+  (dette T8) retiré ; RCCM servi via endpoint authentifié (dette T11b).
 - **2026-07-06** — Parcours complet d'onboarding des agences immobilières livré et
   validé E2E en local : inscription avec type de compte (V31, rôles ADMIN_IMMO /
   ADMIN_CONFORMITE), complétion de profil + upload RCCM (MinIO), soumission,
