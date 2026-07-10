@@ -110,6 +110,11 @@ export default [
         data: { breadcrumb: 'Créer un Utilisateur' },
         loadComponent: () => import('./admin/create-user/create-user.component').then((c) => c.CreateUserComponent)
     },
+    {
+        path: 'admin/agences',
+        data: { breadcrumb: 'Agences immobilières' },
+        loadComponent: () => import('./admin/agences/agences.component').then((c) => c.AgencesComponent)
+    },
 
     // 7. Immobilier (SIRA Guinée)
     {

@@ -139,8 +139,16 @@
                     <td>{{ user.lastLogin ? (user.lastLogin | date:'dd/MM/yyyy HH:mm') : 'Jamais' }}</td>
                     <td>
                         <div class="actions-cell">
-                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                            <p-button icon="pi pi-user-edit" [rounded]="true" [text]="true" severity="secondary"
+                                (onClick)="openEditDialog(user)" pTooltip="Modifier les infos" tooltipPosition="top">
+                            </p-button>
+                            <p-button icon="pi pi-shield" [rounded]="true" [text]="true" severity="info"
                                 (onClick)="openRoleDialog(user)" pTooltip="Modifier le rôle" tooltipPosition="top">
+                            </p-button>
+                            <p-button [icon]="user.enabled ? 'pi pi-lock' : 'pi pi-lock-open'" [rounded]="true" [text]="true"
+                                [severity]="user.enabled ? 'danger' : 'success'" [disabled]="processing"
+                                (onClick)="toggleEnabled(user)"
+                                [pTooltip]="user.enabled ? 'Bloquer le compte' : 'Débloquer le compte'" tooltipPosition="top">
                             </p-button>
                         </div>
                     </td>
@@ -161,6 +169,34 @@
         }
     </p-card>
 </div>
+
+<!-- Dialog Modifier utilisateur -->
+<p-dialog header="Modifier l'utilisateur" [(visible)]="editDialogVisible" [modal]="true" [style]="{ width: '460px' }"
+    [draggable]="false" [resizable]="false">
+    <div class="flex flex-col gap-4 pt-2">
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Prénom</label>
+            <input pInputText [(ngModel)]="editModel.firstName" fluid />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Nom</label>
+            <input pInputText [(ngModel)]="editModel.lastName" fluid />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Email</label>
+            <input pInputText type="email" [(ngModel)]="editModel.email" fluid />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Téléphone</label>
+            <input pInputText [(ngModel)]="editModel.phone" placeholder="+224 6XX XX XX XX" fluid />
+        </div>
+    </div>
+    <div class="dialog-footer">
+        <p-button label="Annuler" [outlined]="true" severity="secondary" (onClick)="editDialogVisible = false"></p-button>
+        <p-button label="Enregistrer" icon="pi pi-check" (onClick)="confirmEdit()" [loading]="processing"
+            [disabled]="!editModel.firstName || !editModel.lastName || !editModel.email"></p-button>
+    </div>
+</p-dialog>
 
 <!-- Dialog Modifier Rôle -->
 <p-dialog header="Modifier le rôle" [(visible)]="roleDialogVisible" [modal]="true" [style]="{ width: '450px' }"

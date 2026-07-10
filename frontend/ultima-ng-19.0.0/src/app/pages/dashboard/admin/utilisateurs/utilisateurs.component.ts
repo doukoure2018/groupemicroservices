@@ -55,6 +55,12 @@ export class UtilisateursComponent implements OnInit {
     newRole: string | null = null;
     roleDialogVisible = false;
 
+    // Dialog d'édition d'un utilisateur
+    editDialogVisible = false;
+    editModel = { firstName: '', lastName: '', email: '', phone: '' };
+    editingUser: IUser | null = null;
+    processing = false;
+
     // Computed signals
     users = computed(() => this.state().users);
     roles = computed(() => this.state().roles);
@@ -174,6 +180,67 @@ export class UtilisateursComponent implements OnInit {
         });
     }
 
+    // ===== Bloquer / débloquer =====
+    toggleEnabled(user: IUser): void {
+        const action = user.enabled ? 'bloquer' : 'débloquer';
+        this.confirmationService.confirm({
+            header: 'Confirmation',
+            message: `Voulez-vous ${action} le compte de "${user.firstName} ${user.lastName}" ?`,
+            icon: 'pi pi-exclamation-triangle',
+            acceptLabel: `Oui, ${action}`,
+            rejectLabel: 'Non',
+            accept: () => {
+                this.processing = true;
+                this.userAdminService.toggleEnabled$(user.userUuid).subscribe({
+                    next: (response) => {
+                        this.processing = false;
+                        const updated = response.data.user;
+                        if (updated) {
+                            this.updateState({ users: this.users().map((u) => (u.userUuid === user.userUuid ? updated : u)) });
+                        }
+                        this.showSuccess(response.message || 'Statut du compte modifié');
+                    },
+                    error: (error) => {
+                        this.processing = false;
+                        this.showError(error);
+                    }
+                });
+            }
+        });
+    }
+
+    // ===== Édition d'un utilisateur =====
+    openEditDialog(user: IUser): void {
+        this.editingUser = user;
+        this.editModel = {
+            firstName: user.firstName ?? '',
+            lastName: user.lastName ?? '',
+            email: user.email ?? '',
+            phone: user.phone ?? ''
+        };
+        this.editDialogVisible = true;
+    }
+
+    confirmEdit(): void {
+        if (!this.editingUser) return;
+        this.processing = true;
+        this.userAdminService.updateUser$(this.editingUser.userUuid, this.editModel).subscribe({
+            next: (response) => {
+                this.processing = false;
+                this.editDialogVisible = false;
+                const updated = response.data.user;
+                if (updated) {
+                    this.updateState({ users: this.users().map((u) => (u.userUuid === this.editingUser!.userUuid ? updated : u)) });
+                }
+                this.showSuccess(response.message || 'Utilisateur mis à jour');
+            },
+            error: (error) => {
+                this.processing = false;
+                this.showError(error);
+            }
+        });
+    }
+
     onSearchChange(event: Event): void {
         const target = event.target as HTMLInputElement;
         this.searchTerm.set(target.value);
@@ -211,8 +278,11 @@ export class UtilisateursComponent implements OnInit {
             case 'ADMIN':
                 return 'warn';
             case 'MANAGER':
+            case 'ADMIN_IMMO':
                 return 'info';
             case 'CONTROLEUR':
+            case 'ADMIN_CONFORMITE':
+            case 'ADMIN_BACKOFFICE':
                 return 'contrast';
             case 'TECH_SUPPORT':
                 return 'secondary';

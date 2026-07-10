@@ -22,6 +22,25 @@ export class UserAdminService {
     updateUserRole$ = (userUuid: string, role: string): Observable<IResponse> =>
         this.http.patch<IResponse>(`${this.baseUrl}/${userUuid}/role`, { role }).pipe(tap(console.log), catchError(this.handleError));
 
+    /** Admin : crée un compte backoffice (rôle whitelisté, actif, mot de passe temporaire). */
+    createBackofficeUser$ = (payload: {
+        firstName: string;
+        lastName: string;
+        email: string;
+        phone?: string;
+        password: string;
+        roleName: string;
+    }): Observable<IResponse> =>
+        this.http.post<IResponse>(`${this.baseUrl}/admin/create`, payload).pipe(catchError(this.handleError));
+
+    /** Admin : bloque/débloque un compte (toggle enabled). */
+    toggleEnabled$ = (userUuid: string): Observable<IResponse> =>
+        this.http.patch<IResponse>(`${this.baseUrl}/${userUuid}/toggle-enabled`, {}).pipe(catchError(this.handleError));
+
+    /** Admin : modifie un utilisateur ciblé (nom, prénom, email, téléphone). */
+    updateUser$ = (userUuid: string, payload: { firstName: string; lastName: string; email: string; phone?: string }): Observable<IResponse> =>
+        this.http.patch<IResponse>(`${this.baseUrl}/${userUuid}/update`, payload).pipe(catchError(this.handleError));
+
     private handleError = (httpErrorResponse: HttpErrorResponse): Observable<never> => {
         console.error('UserAdminService Error:', httpErrorResponse);
         let error: string = 'Une erreur est survenue. Veuillez réessayer.';

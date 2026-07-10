@@ -49,14 +49,18 @@
                 <!-- Prénom / Nom -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="flex flex-col gap-1">
-                        <label for="firstName" class="text-sm font-medium text-surface-700 dark:text-surface-200">Prénom</label>
+                        <label for="firstName" class="text-sm font-medium text-surface-700 dark:text-surface-200">
+                            {{ accountType === 'AGENCE' ? 'Prénom du représentant' : 'Prénom' }}
+                        </label>
                         <input pInputText id="firstName" name="firstName" ngModel #firstName="ngModel" placeholder="Ex. : Amadou" required fluid />
                         @if (firstName.invalid && firstName.touched) {
                             <small class="text-red-500">Le prénom est requis</small>
                         }
                     </div>
                     <div class="flex flex-col gap-1">
-                        <label for="lastName" class="text-sm font-medium text-surface-700 dark:text-surface-200">Nom</label>
+                        <label for="lastName" class="text-sm font-medium text-surface-700 dark:text-surface-200">
+                            {{ accountType === 'AGENCE' ? 'Nom du représentant' : 'Nom' }}
+                        </label>
                         <input pInputText id="lastName" name="lastName" ngModel #lastName="ngModel" placeholder="Ex. : Diallo" required fluid />
                         @if (lastName.invalid && lastName.touched) {
                             <small class="text-red-500">Le nom est requis</small>

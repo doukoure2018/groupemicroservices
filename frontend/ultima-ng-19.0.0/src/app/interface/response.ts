@@ -53,9 +53,12 @@ export interface IResponse {
         propriete?: IPropriete;
         proprietes?: IPropriete[];
         vendeur?: any;
-        // Onboarding agence (V31)
+        // Onboarding agence (V31) + écran admin agences
         agence?: any;
         agences?: any[];
+        representantNom?: string;
+        agents?: any[];
+        annonces?: any[];
         // Demandes de besoin clients (V32)
         demande?: any;
         demandes?: any[];

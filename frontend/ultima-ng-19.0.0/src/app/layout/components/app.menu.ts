@@ -194,6 +194,11 @@ export class AppMenu {
                         label: 'Demandes (leads)',
                         icon: 'pi pi-fw pi-inbox',
                         routerLink: ['/dashboards/admin/immobilier/leads']
+                    },
+                    {
+                        label: 'Agences & activités',
+                        icon: 'pi pi-fw pi-building-columns',
+                        routerLink: ['/dashboards/admin/agences']
                     }
                 ]
             }
