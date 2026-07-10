@@ -28,6 +28,7 @@ import static org.springframework.http.HttpMethod.OPTIONS;
 @Slf4j
 @Configuration
 @EnableWebSecurity
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 @RequiredArgsConstructor
 public class ResourceServerConfig {
     @Value("${jwks.uri}")

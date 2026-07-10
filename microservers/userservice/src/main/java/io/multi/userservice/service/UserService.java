@@ -14,6 +14,8 @@ public interface UserService {
     User updateUser(String userUuid, String firstName, String lastName, String email, String phone, String bio, String address);
     void createUser(String firstName, String lastName, String email, String username, String password, String phone);
     void createAccountUser(String firstName, String lastName, String email, String username, String password, String roleName);
+    /** Création admin d'un compte backoffice : rôle whitelisté, actif immédiatement. */
+    User createBackofficeUser(String firstName, String lastName, String email, String phone, String password, String roleName);
 
     void verifyAccount(String token);
     User verifyPasswordToken(String token);

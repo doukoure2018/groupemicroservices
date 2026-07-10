@@ -147,12 +147,37 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User toggleAccountEnabled(String userUuid) {
-        return null;
+        // Corrigé : délègue au repo (SQL toggle_account_enabled) au lieu de renvoyer null.
+        return userRepository.toggleAccountEnabled(userUuid);
     }
 
     @Override
     public User toggleCredentialsExpired(String userUuid) {
         return userRepository.toggleAccountEnabled(userUuid);
+    }
+
+    /** Rôles qu'un admin peut assigner en créant/modifiant un compte backoffice. */
+    private static final java.util.Set<String> ROLES_BACKOFFICE_AUTORISES = java.util.Set.of(
+            "ADMIN_CONFORMITE", "ADMIN_BACKOFFICE", "CONTROLEUR", "MANAGER", "ADMIN");
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public User createBackofficeUser(String firstName, String lastName, String email,
+                                     String phone, String password, String roleName) {
+        if (roleName == null || !ROLES_BACKOFFICE_AUTORISES.contains(roleName)) {
+            throw new ApiException("Rôle non autorisé pour un compte backoffice : " + roleName);
+        }
+        // Crée le compte (username auto-généré), l'active immédiatement (pas d'email
+        // de vérification : c'est l'admin qui le crée avec un mot de passe temporaire).
+        userRepository.createAccountUser(firstName, lastName, email, null,
+                encoder.encode(password), roleName);
+        User user = userRepository.getUserByEmail(email);
+        userRepository.updateAccountSettings(user.getUserId());
+        if (phone != null && !phone.isBlank()) {
+            userRepository.updateUser(user.getUserUuid(), firstName, lastName, email, phone, null, null);
+        }
+        log.info("Compte backoffice créé et activé : {} (rôle {})", email, roleName);
+        return userRepository.getUserByUuid(user.getUserUuid());
     }
 
     @Override

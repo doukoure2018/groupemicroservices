@@ -6,7 +6,9 @@ import io.multi.userservice.dto.*;
 import io.multi.userservice.model.User;
 import io.multi.userservice.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -235,6 +237,44 @@ public class UserResource {
         log.info("PATCH /user/{}/role - role: {} by admin: {}", userUuid, role.getRole(), authentication.getName());
         var updatedUser = userService.updateRole(userUuid, role.getRole());
         return ok(getResponse(request, Map.of("user", updatedUser), "Role updated successfully", OK));
+    }
+
+    // ===== Gestion admin des comptes (créer / bloquer / modifier un user ciblé) =====
+
+    /** Admin : crée un compte backoffice (rôle whitelisté, actif, mot de passe temporaire). */
+    @PostMapping("/admin/create")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN','ADMIN','user:create')")
+    public ResponseEntity<Response> adminCreateUser(@Valid @RequestBody AdminCreateUserRequest req,
+                                                    @NotNull Authentication authentication,
+                                                    HttpServletRequest request) {
+        log.info("POST /user/admin/create - {} (rôle {}) par {}", req.getEmail(), req.getRoleName(), authentication.getName());
+        var user = userService.createBackofficeUser(req.getFirstName(), req.getLastName(),
+                req.getEmail(), req.getPhone(), req.getPassword(), req.getRoleName());
+        return created(getUri()).body(getResponse(request, Map.of("user", user), "Utilisateur créé et activé", CREATED));
+    }
+
+    /** Admin : bloque/débloque un user ciblé par uuid (toggle enabled). */
+    @PatchMapping("/{userUuid}/toggle-enabled")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN','ADMIN','user:update')")
+    public ResponseEntity<Response> adminToggleEnabled(@PathVariable("userUuid") String userUuid,
+                                                       @NotNull Authentication authentication,
+                                                       HttpServletRequest request) {
+        log.info("PATCH /user/{}/toggle-enabled par {}", userUuid, authentication.getName());
+        var user = userService.toggleAccountEnabled(userUuid);
+        return ok(getResponse(request, Map.of("user", user), "Statut du compte modifié", OK));
+    }
+
+    /** Admin : modifie un user ciblé par uuid (nom, prénom, email, téléphone). */
+    @PatchMapping("/{userUuid}/update")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN','ADMIN','user:update')")
+    public ResponseEntity<Response> adminUpdateUser(@PathVariable("userUuid") String userUuid,
+                                                    @RequestBody UserRequest user,
+                                                    @NotNull Authentication authentication,
+                                                    HttpServletRequest request) {
+        log.info("PATCH /user/{}/update par {}", userUuid, authentication.getName());
+        var updated = userService.updateUser(userUuid, user.getFirstName(), user.getLastName(),
+                user.getEmail(), user.getPhone(), user.getBio(), user.getAddress());
+        return ok(getResponse(request, Map.of("user", updated), "Utilisateur mis à jour", OK));
     }
     // When user is logged in
     @GetMapping("/photo")
