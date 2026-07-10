@@ -31,6 +31,7 @@ public class AgenceServiceImpl implements AgenceService {
     private final UserClient userClient;
     private final io.multi.immobilierservice.service.PhotoStorageService photoStorageService;
     private final io.multi.immobilierservice.service.ImmoNotificationProducer notificationProducer;
+    private final io.multi.immobilierservice.repository.ProprieteRepository proprieteRepository;
 
     @Override
     @Transactional
@@ -314,6 +315,50 @@ public class AgenceServiceImpl implements AgenceService {
         } catch (Exception e) {
             log.error("Échec publish {} pour agence {} : {}", type, agence.getAgenceUuid(), e.getMessage());
         }
+    }
+
+    // ---------- Écran admin : agences + activités ----------
+
+    @Override
+    public java.util.List<io.multi.immobilierservice.dto.AgenceActiviteView> listActivite(int limit, int offset) {
+        var vues = agenceRepository.findAllWithActivite(limit, offset);
+        // Résout le nom du représentant (propriétaire du compte) via Feign, best-effort.
+        for (var v : vues) {
+            v.setRepresentantNom(lookupClientNom(v.getProprietaireUserId()));
+        }
+        return vues;
+    }
+
+    @Override
+    public long countActives() {
+        return agenceRepository.countActives();
+    }
+
+    @Override
+    public java.util.Map<String, Object> getActiviteDetail(String agenceUuid) {
+        Agence agence = getByUuid(agenceUuid);
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("agence", agence);
+        data.put("representantNom", lookupClientNom(agence.getProprietaireUserId()));
+        data.put("agents", profilImmoRepository.findByAgence(agence.getAgenceId()));
+        data.put("annonces", proprieteRepository.findByAgence(agence.getAgenceId(), 100, 0));
+        return data;
+    }
+
+    /** Nom complet du user (représentant de l'agence) via Feign, vide si indisponible. */
+    private String lookupClientNom(Long userId) {
+        if (userId == null) return "";
+        try {
+            User user = userClient.getUserById(userId);
+            if (user != null) {
+                String prenom = user.getFirstName() != null ? user.getFirstName() : "";
+                String nom = user.getLastName() != null ? user.getLastName() : "";
+                return (prenom + " " + nom).trim();
+            }
+        } catch (Exception e) {
+            log.warn("Lookup représentant user {} impossible : {}", userId, e.getMessage());
+        }
+        return "";
     }
 
     private static boolean isBlank(String s) {

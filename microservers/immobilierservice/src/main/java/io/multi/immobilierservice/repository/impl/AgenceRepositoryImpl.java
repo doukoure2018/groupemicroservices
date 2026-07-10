@@ -19,6 +19,7 @@ public class AgenceRepositoryImpl implements AgenceRepository {
 
     private final JdbcClient jdbcClient;
     private final AgenceRowMapper rowMapper;
+    private final io.multi.immobilierservice.mapper.AgenceActiviteRowMapper activiteRowMapper;
 
     @Override
     public Agence save(Agence agence) {
@@ -193,6 +194,22 @@ public class AgenceRepositoryImpl implements AgenceRepository {
         return jdbcClient.sql(AgenceQuery.FIND_VERIFIEES_ALL)
                 .query(rowMapper)
                 .list();
+    }
+
+    @Override
+    public List<io.multi.immobilierservice.dto.AgenceActiviteView> findAllWithActivite(int limit, int offset) {
+        return jdbcClient.sql(AgenceQuery.FIND_ALL_WITH_ACTIVITE)
+                .param("limit", limit)
+                .param("offset", offset)
+                .query(activiteRowMapper)
+                .list();
+    }
+
+    @Override
+    public long countActives() {
+        return jdbcClient.sql(AgenceQuery.COUNT_ALL_ACTIVES)
+                .query(Long.class)
+                .single();
     }
 
     @Override

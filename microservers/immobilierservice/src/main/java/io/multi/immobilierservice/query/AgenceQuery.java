@@ -141,6 +141,27 @@ public final class AgenceQuery {
             WHERE statut_verification = 'VERIFIE' AND actif = TRUE
             """;
 
+    /** Liste des agences enrichie des compteurs d'activité (écran admin). */
+    public static final String FIND_ALL_WITH_ACTIVITE = """
+            SELECT a.*,
+                   c.libelle AS commune_libelle,
+                   r.libelle AS region_libelle,
+                   (SELECT COUNT(*) FROM immo_propriete p WHERE p.agence_id = a.agence_id) AS nb_annonces_total,
+                   (SELECT COUNT(*) FROM immo_propriete p WHERE p.agence_id = a.agence_id AND p.statut = 'PUBLIE') AS nb_annonces_publiees,
+                   (SELECT COUNT(*) FROM immo_profil pr WHERE pr.agence_id = a.agence_id AND pr.type_profil = 'AGENT_AGENCE' AND pr.actif = TRUE) AS nb_agents
+            FROM immo_agence a
+            LEFT JOIN communes c ON c.commune_id = a.commune_id
+            LEFT JOIN villes v   ON v.ville_id = c.ville_id
+            LEFT JOIN regions r  ON r.region_id = v.region_id
+            WHERE a.actif = TRUE
+            ORDER BY a.created_at DESC
+            LIMIT :limit OFFSET :offset
+            """;
+
+    public static final String COUNT_ALL_ACTIVES = """
+            SELECT COUNT(*) FROM immo_agence WHERE actif = TRUE
+            """;
+
     public static final String DECISION_CONFORMITE = """
             UPDATE immo_agence SET
                 statut_verification = :statut,

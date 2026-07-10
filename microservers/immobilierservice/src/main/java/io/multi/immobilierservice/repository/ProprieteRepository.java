@@ -21,6 +21,9 @@ public interface ProprieteRepository {
 
     List<Propriete> findByProfil(Long profilId, int limit, int offset);
 
+    /** Annonces d'une agence (écran admin activités). */
+    List<Propriete> findByAgence(Long agenceId, int limit, int offset);
+
     /** Liste paginée des annonces EN_ATTENTE_VALIDATION (file modération admin). */
     List<Propriete> findEnAttenteValidation(int limit, int offset);
 

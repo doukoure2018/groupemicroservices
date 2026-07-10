@@ -55,6 +55,29 @@ public class AgenceResource {
                 "Liste des agences", HttpStatus.OK));
     }
 
+    /** Admin : liste des agences avec compteurs d'activité + représentant. */
+    @GetMapping("/admin")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<Response> listActivite(@RequestParam(defaultValue = "50") int limit,
+                                                 @RequestParam(defaultValue = "0") int offset,
+                                                 HttpServletRequest httpRequest) {
+        var agences = agenceService.listActivite(limit, offset);
+        long total = agenceService.countActives();
+        return ResponseEntity.ok(RequestUtils.getResponse(httpRequest,
+                Map.of("agences", agences, "total", total, "limit", limit, "offset", offset),
+                "Agences et activités", HttpStatus.OK));
+    }
+
+    /** Admin : détail des activités d'une agence (annonces, agents, représentant). */
+    @GetMapping("/admin/{agenceUuid}/activites")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<Response> activiteDetail(@PathVariable String agenceUuid,
+                                                   HttpServletRequest httpRequest) {
+        var data = agenceService.getActiviteDetail(agenceUuid);
+        return ResponseEntity.ok(RequestUtils.getResponse(httpRequest, data,
+                "Détail de l'agence", HttpStatus.OK));
+    }
+
     @GetMapping("/mes-agences")
     public ResponseEntity<Response> findMine(@AuthenticationPrincipal Jwt jwt,
                                              HttpServletRequest httpRequest) {

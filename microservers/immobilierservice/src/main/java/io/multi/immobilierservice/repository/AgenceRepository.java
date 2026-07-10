@@ -46,4 +46,10 @@ public interface AgenceRepository {
     List<Agence> findVerifieesByRegion(Long regionId);
 
     List<Agence> findVerifieesAll();
+
+    // ---------- Écran admin : activités par agence ----------
+
+    List<io.multi.immobilierservice.dto.AgenceActiviteView> findAllWithActivite(int limit, int offset);
+
+    long countActives();
 }

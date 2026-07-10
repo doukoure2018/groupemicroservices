@@ -93,6 +93,14 @@ public final class ProprieteQuery {
             LIMIT :limit OFFSET :offset
             """;
 
+    /** Annonces d'une agence (écran admin activités). */
+    public static final String FIND_BY_AGENCE = """
+            SELECT * FROM immo_propriete
+            WHERE agence_id = :agenceId
+            ORDER BY created_at DESC
+            LIMIT :limit OFFSET :offset
+            """;
+
     /** Compte des annonces "actives" (consomment un slot de la limite par profil) — Phase 9a. */
     public static final String COUNT_ACTIVES_FOR_PROFIL = """
             SELECT COUNT(*) FROM immo_propriete

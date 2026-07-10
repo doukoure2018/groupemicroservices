@@ -132,6 +132,16 @@ public class ProprieteRepositoryImpl implements ProprieteRepository {
     }
 
     @Override
+    public List<Propriete> findByAgence(Long agenceId, int limit, int offset) {
+        return jdbcClient.sql(ProprieteQuery.FIND_BY_AGENCE)
+                .param("agenceId", agenceId)
+                .param("limit", limit)
+                .param("offset", offset)
+                .query(proprieteRowMapper)
+                .list();
+    }
+
+    @Override
     public void incrementVues(String proprieteUuid) {
         jdbcClient.sql(ProprieteQuery.INCREMENT_VUES)
                 .param("proprieteUuid", proprieteUuid)

@@ -65,4 +65,14 @@ public interface AgenceService {
 
     /** Flux du document RCCM d'une agence (depuis MinIO), pour la conformité. */
     io.multi.immobilierservice.dto.DocumentStream getRccmStream(String agenceUuid);
+
+    // ---------- Écran admin : agences + activités ----------
+
+    /** Liste des agences avec compteurs d'activité + nom du représentant (Feign). */
+    java.util.List<io.multi.immobilierservice.dto.AgenceActiviteView> listActivite(int limit, int offset);
+
+    long countActives();
+
+    /** Détail d'une agence : compteurs, représentant, annonces, agents. */
+    java.util.Map<String, Object> getActiviteDetail(String agenceUuid);
 }
