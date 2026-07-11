@@ -48,6 +48,11 @@ export default [
 
     // 2. Infrastructure Transport
     {
+        path: 'admin/nouvelle-liaison',
+        data: { breadcrumb: 'Assistant Nouvelle Liaison' },
+        loadComponent: () => import('./admin/nouvelle-liaison/nouvelle-liaison.component').then((c) => c.NouvelleLiaisonComponent)
+    },
+    {
         path: 'admin/sites-gares',
         data: { breadcrumb: 'Sites/Gares' },
         loadComponent: () => import('./admin/sites-gares/sites-gares.component').then((c) => c.SitesGaresComponent)

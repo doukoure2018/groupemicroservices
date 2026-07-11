@@ -101,6 +101,11 @@ export class AppMenu {
                 icon: 'pi pi-fw pi-sitemap',
                 items: [
                     {
+                        label: '⚡ Assistant Nouvelle Liaison',
+                        icon: 'pi pi-fw pi-bolt',
+                        routerLink: ['/dashboards/admin/nouvelle-liaison']
+                    },
+                    {
                         label: '2.1 Sites/Gares',
                         icon: 'pi pi-fw pi-building',
                         routerLink: ['/dashboards/admin/sites-gares']

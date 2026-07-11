@@ -214,7 +214,7 @@
     <div class="dialog-footer">
         <p-button label="Annuler" [outlined]="true" severity="secondary" (onClick)="createDialogVisible = false"></p-button>
         <p-button label="Créer le compte" icon="pi pi-check" (onClick)="confirmCreate()" [loading]="processing"
-            [disabled]="!createModel.firstName || !createModel.lastName || !createModel.email || !createModel.roleName || (createModel.password?.length || 0) < 6"></p-button>
+            [disabled]="!createModel.firstName || !createModel.lastName || !createModel.email || !createModel.roleName || createModel.password.length < 6"></p-button>
     </div>
 </p-dialog>
 

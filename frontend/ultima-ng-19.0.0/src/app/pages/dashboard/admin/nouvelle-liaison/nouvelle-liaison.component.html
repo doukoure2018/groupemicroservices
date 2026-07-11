@@ -1,0 +1,322 @@
+<p-toast></p-toast>
+
+<div class="liaison-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-left">
+            <h2><i class="pi pi-bolt"></i> Assistant Nouvelle Liaison</h2>
+            <p class="subtitle">Créez un trajet complet (sites, points, tarif, offre) en un seul parcours</p>
+        </div>
+    </div>
+
+    <!-- Stepper -->
+    <div class="stepper">
+        @for (etape of etapes; track $index) {
+        <div class="step" [class.active]="currentStep() === $index + 1" [class.done]="currentStep() > $index + 1"
+            [class.clickable]="$index + 1 < currentStep() && !enCours() && !termine()" (click)="allerA($index + 1)">
+            <span class="step-index">
+                @if (currentStep() > $index + 1) {
+                <i class="pi pi-check"></i>
+                } @else {
+                {{ $index + 1 }}
+                }
+            </span>
+            <span class="step-label">{{ etape }}</span>
+        </div>
+        @if ($index < etapes.length - 1) {
+        <div class="step-separator" [class.done]="currentStep() > $index + 1"></div>
+        }
+        }
+    </div>
+
+    <p-card>
+        <!-- ===== Étape 1 : Départ ===== -->
+        @if (currentStep() === 1) {
+        <div class="step-panel">
+            <h3><i class="pi pi-sign-out"></i> D'où part la liaison ?</h3>
+
+            <div class="form-field">
+                <label>Ville de départ <span class="required">*</span></label>
+                <p-dropdown [options]="villes()" [(ngModel)]="depart.villeUuid" optionLabel="libelle"
+                    optionValue="villeUuid" placeholder="Sélectionner la ville" [filter]="true" filterBy="libelle"
+                    styleClass="w-full" (onChange)="onVilleDepartChange()"></p-dropdown>
+            </div>
+
+            @if (depart.villeUuid) {
+            <div class="form-field">
+                <label>Site / gare de départ <span class="required">*</span></label>
+                <p-selectButton [options]="modesSite" [(ngModel)]="depart.mode" optionLabel="label"
+                    optionValue="value"></p-selectButton>
+            </div>
+
+            @if (depart.mode === 'existant') {
+            <div class="form-field">
+                @if (sitesVilleDepart().length > 0) {
+                <p-dropdown [options]="sitesVilleDepart()" [(ngModel)]="depart.siteUuid" optionLabel="nom"
+                    optionValue="siteUuid" placeholder="Sélectionner le site" [filter]="true" filterBy="nom"
+                    styleClass="w-full"></p-dropdown>
+                } @else {
+                <small class="hint"><i class="pi pi-info-circle"></i> Aucun site dans cette ville — créez-en un
+                    ci-dessus.</small>
+                }
+            </div>
+            } @else {
+            <div class="form-grid">
+                <div class="form-field">
+                    <label>Nom du site <span class="required">*</span></label>
+                    <input pInputText [(ngModel)]="depart.nouveauNom" placeholder="Ex: Gare Routière de Madina" />
+                </div>
+                <div class="form-field">
+                    <label>Type de site</label>
+                    <p-dropdown [options]="typeSites" [(ngModel)]="depart.nouveauType" optionLabel="label"
+                        optionValue="value" styleClass="w-full"></p-dropdown>
+                </div>
+                <div class="form-field full-width">
+                    <label>Adresse <span class="required">*</span></label>
+                    <input pInputText [(ngModel)]="depart.nouvelleAdresse"
+                        placeholder="Ex: Carrefour Madina, commune de Matam" />
+                    <small class="hint">L'adresse crée automatiquement la localisation du site.</small>
+                </div>
+            </div>
+            }
+            }
+        </div>
+        }
+
+        <!-- ===== Étape 2 : Arrivée ===== -->
+        @if (currentStep() === 2) {
+        <div class="step-panel">
+            <h3><i class="pi pi-sign-in"></i> Où arrive la liaison ?</h3>
+
+            <div class="form-field">
+                <label>Ville d'arrivée <span class="required">*</span></label>
+                <p-dropdown [options]="villes()" [(ngModel)]="arrivee.villeUuid" optionLabel="libelle"
+                    optionValue="villeUuid" placeholder="Sélectionner la ville" [filter]="true" filterBy="libelle"
+                    styleClass="w-full" (onChange)="onVilleArriveeChange()"></p-dropdown>
+            </div>
+
+            @if (arrivee.villeUuid) {
+            <div class="form-field">
+                <label>Site / gare d'arrivée <span class="required">*</span></label>
+                <p-selectButton [options]="modesSite" [(ngModel)]="arrivee.mode" optionLabel="label"
+                    optionValue="value"></p-selectButton>
+            </div>
+
+            @if (arrivee.mode === 'existant') {
+            <div class="form-field">
+                @if (sitesVilleArrivee().length > 0) {
+                <p-dropdown [options]="sitesVilleArrivee()" [(ngModel)]="arrivee.siteUuid" optionLabel="nom"
+                    optionValue="siteUuid" placeholder="Sélectionner le site" [filter]="true" filterBy="nom"
+                    styleClass="w-full"></p-dropdown>
+                @if (memeSiteDetecte()) {
+                <small class="p-error">Le site d'arrivée doit être différent du site de départ.</small>
+                }
+                } @else {
+                <small class="hint"><i class="pi pi-info-circle"></i> Aucun site dans cette ville — créez-en un
+                    ci-dessus.</small>
+                }
+            </div>
+            } @else {
+            <div class="form-grid">
+                <div class="form-field">
+                    <label>Nom du site <span class="required">*</span></label>
+                    <input pInputText [(ngModel)]="arrivee.nouveauNom" placeholder="Ex: Gare Routière de Kindia" />
+                </div>
+                <div class="form-field">
+                    <label>Type de site</label>
+                    <p-dropdown [options]="typeSites" [(ngModel)]="arrivee.nouveauType" optionLabel="label"
+                        optionValue="value" styleClass="w-full"></p-dropdown>
+                </div>
+                <div class="form-field full-width">
+                    <label>Adresse <span class="required">*</span></label>
+                    <input pInputText [(ngModel)]="arrivee.nouvelleAdresse"
+                        placeholder="Ex: Entrée de la ville, route nationale" />
+                    <small class="hint">L'adresse crée automatiquement la localisation du site.</small>
+                </div>
+            </div>
+            }
+            }
+        </div>
+        }
+
+        <!-- ===== Étape 3 : Trajet ===== -->
+        @if (currentStep() === 3) {
+        <div class="step-panel">
+            <h3><i class="pi pi-directions"></i> Caractéristiques du trajet</h3>
+            <p class="liaison-resume">
+                <p-tag [value]="villeLibelle(depart.villeUuid)" severity="info"></p-tag>
+                <i class="pi pi-arrow-right"></i>
+                <p-tag [value]="villeLibelle(arrivee.villeUuid)" severity="success"></p-tag>
+                <span class="sites-resume">{{ nomSiteDepart() }} → {{ nomSiteArrivee() }}</span>
+            </p>
+
+            <div class="form-grid">
+                <div class="form-field full-width">
+                    <label>Libellé du trajet <span class="required">*</span></label>
+                    <input pInputText [(ngModel)]="trajet.libelleTrajet" />
+                </div>
+                <div class="form-field">
+                    <label>Durée estimée (minutes) <span class="required">*</span></label>
+                    <p-inputNumber [(ngModel)]="trajet.dureeEstimeeMinutes" [min]="1" placeholder="Ex: 180"
+                        styleClass="w-full"></p-inputNumber>
+                </div>
+                <div class="form-field">
+                    <label>Distance (km)</label>
+                    <p-inputNumber [(ngModel)]="trajet.distanceKm" [min]="0" [maxFractionDigits]="1"
+                        placeholder="Ex: 135" styleClass="w-full"></p-inputNumber>
+                </div>
+                <div class="form-field">
+                    <label>Montant de base <span class="required">*</span></label>
+                    <p-inputNumber [(ngModel)]="trajet.montantBase" [min]="1" placeholder="Ex: 50000"
+                        styleClass="w-full"></p-inputNumber>
+                </div>
+                <div class="form-field">
+                    <label>Montant bagages</label>
+                    <p-inputNumber [(ngModel)]="trajet.montantBagages" [min]="0" placeholder="Ex: 10000"
+                        styleClass="w-full"></p-inputNumber>
+                </div>
+                <div class="form-field">
+                    <label>Devise</label>
+                    <p-dropdown [options]="devises" [(ngModel)]="trajet.devise" optionLabel="label" optionValue="value"
+                        styleClass="w-full"></p-dropdown>
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- ===== Étape 4 : Offre (optionnelle) ===== -->
+        @if (currentStep() === 4) {
+        <div class="step-panel">
+            <h3><i class="pi pi-ticket"></i> Première offre (optionnel)</h3>
+
+            <div class="form-field checkbox-row">
+                <p-checkbox [(ngModel)]="offre.creerOffre" [binary]="true" inputId="creerOffre"></p-checkbox>
+                <label for="creerOffre">Publier immédiatement une première offre sur ce trajet</label>
+            </div>
+
+            @if (offre.creerOffre) {
+            @if (vehicules().length === 0) {
+            <small class="p-error"><i class="pi pi-exclamation-triangle"></i> Aucun véhicule enregistré — créez d'abord
+                un véhicule dans l'écran Véhicules, ou décochez cette option.</small>
+            } @else {
+            <div class="form-grid">
+                <div class="form-field full-width">
+                    <label>Véhicule <span class="required">*</span></label>
+                    <p-dropdown [options]="getVehiculeOptions()" [(ngModel)]="offre.vehiculeUuid" optionLabel="label"
+                        optionValue="value" placeholder="Sélectionner le véhicule" [filter]="true" filterBy="label"
+                        styleClass="w-full" (onChange)="onVehiculeChange()"></p-dropdown>
+                </div>
+                <div class="form-field">
+                    <label>Date de départ <span class="required">*</span></label>
+                    <input type="date" pInputText [(ngModel)]="offre.dateDepart" />
+                </div>
+                <div class="form-field">
+                    <label>Heure de départ <span class="required">*</span></label>
+                    <input type="time" pInputText [(ngModel)]="offre.heureDepart" />
+                </div>
+                <div class="form-field">
+                    <label>Nombre de places <span class="required">*</span></label>
+                    <p-inputNumber [(ngModel)]="offre.nombrePlacesTotal" [min]="1" styleClass="w-full"></p-inputNumber>
+                </div>
+                <div class="form-field">
+                    <label>Montant par place <span class="required">*</span></label>
+                    <p-inputNumber [(ngModel)]="offre.montant" [min]="1" styleClass="w-full"></p-inputNumber>
+                </div>
+            </div>
+            }
+            } @else {
+            <small class="hint">Vous pourrez créer des offres plus tard depuis l'écran « Offres de Transport ».</small>
+            }
+        </div>
+        }
+
+        <!-- ===== Étape 5 : Récapitulatif + exécution ===== -->
+        @if (currentStep() === 5) {
+        <div class="step-panel">
+            <h3><i class="pi pi-list-check"></i> Récapitulatif</h3>
+
+            @if (execution().length === 0) {
+            <div class="recap">
+                <div class="recap-row">
+                    <span class="recap-label">Départ</span>
+                    <span>{{ nomSiteDepart() }} — {{ villeLibelle(depart.villeUuid) }}
+                        @if (depart.mode === 'nouveau') {<p-tag value="à créer" severity="warn"></p-tag>}
+                    </span>
+                </div>
+                <div class="recap-row">
+                    <span class="recap-label">Arrivée</span>
+                    <span>{{ nomSiteArrivee() }} — {{ villeLibelle(arrivee.villeUuid) }}
+                        @if (arrivee.mode === 'nouveau') {<p-tag value="à créer" severity="warn"></p-tag>}
+                    </span>
+                </div>
+                <div class="recap-row">
+                    <span class="recap-label">Trajet</span>
+                    <span>{{ trajet.libelleTrajet }} — {{ trajet.dureeEstimeeMinutes }} min —
+                        {{ trajet.montantBase | number }} {{ trajet.devise }}</span>
+                </div>
+                <div class="recap-row">
+                    <span class="recap-label">Offre</span>
+                    @if (offre.creerOffre) {
+                    <span>{{ vehiculeLibelle() }} — le {{ offre.dateDepart }} à {{ offre.heureDepart }} —
+                        {{ offre.nombrePlacesTotal }} places à {{ offre.montant | number }} {{ trajet.devise }}</span>
+                    } @else {
+                    <span class="text-muted">Aucune offre pour l'instant</span>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- Progression de l'exécution -->
+            @if (execution().length > 0) {
+            <ul class="execution-list">
+                @for (etape of execution(); track $index) {
+                <li [class]="'exec-' + etape.statut">
+                    <i [class]="getStatutIcon(etape.statut)"></i>
+                    <span class="exec-label">{{ etape.label }}</span>
+                    <span class="exec-statut">{{ getStatutLabel(etape.statut) }}</span>
+                    @if (etape.detail) {<small class="exec-detail">{{ etape.detail }}</small>}
+                </li>
+                }
+            </ul>
+            @if (executionEnErreur()) {
+            <small class="hint"><i class="pi pi-info-circle"></i> Les éléments déjà créés sont conservés (référentiels
+                réutilisables) : corrigez puis relancez, l'assistant les retrouvera.</small>
+            }
+            }
+
+            @if (termine()) {
+            <div class="success-panel">
+                <i class="pi pi-check-circle"></i>
+                <div>
+                    <strong>Liaison créée avec succès !</strong>
+                    <p>Le trajet « {{ trajetCree()?.libelleTrajet }} » est actif.
+                        @if (offreCreee()) { Une offre a été publiée (statut {{ offreCreee()?.statut }}). }
+                    </p>
+                    <div class="success-actions">
+                        <p-button label="Voir les trajets" icon="pi pi-directions" [outlined]="true"
+                            routerLink="/dashboards/admin/trajets"></p-button>
+                        <p-button label="Voir les offres" icon="pi pi-ticket" [outlined]="true"
+                            routerLink="/dashboards/admin/offres-transport"></p-button>
+                        <p-button label="Créer une autre liaison" icon="pi pi-plus" (onClick)="recommencer()"></p-button>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+        }
+
+        <!-- ===== Navigation ===== -->
+        <p-divider></p-divider>
+        <div class="wizard-footer">
+            <p-button label="Précédent" icon="pi pi-arrow-left" [outlined]="true" (onClick)="precedent()"
+                [disabled]="currentStep() === 1 || enCours() || termine()"></p-button>
+            @if (currentStep() < 5) {
+            <p-button label="Suivant" icon="pi pi-arrow-right" iconPos="right" (onClick)="suivant()"
+                [disabled]="!etapeCouranteValide()"></p-button>
+            } @else if (!termine()) {
+            <p-button label="Créer la liaison" icon="pi pi-bolt" severity="success" (onClick)="creerLiaison()"
+                [loading]="enCours()"></p-button>
+            }
+        </div>
+    </p-card>
+</div>

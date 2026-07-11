@@ -158,11 +158,8 @@ de colonnes). La Phase 0 (corrections sans risque) est faite — voir « Réglé
 - ~~**T12a — Phase 1 : dénormaliser la ville sur `sites`.**~~ **RÉGLÉE le 2026-07-11**
   (voir « Réglées »). Reste optionnel : rattacher `partenaires` (PartenaireQuery
   dérive encore la ville par la chaîne — hors du chemin de recherche des offres).
-- **T12b — Phase 2 : wizard « Nouvelle liaison » (frontend seul).** 10-11 écrans
-  isolés à visiter dans l'ordre des FK pour publier une offre, zéro lien entre eux.
-  Cible : un écran orchestrateur (p-stepper) qui enchaîne les POST existants
-  (ville → localisation+site départ → site arrivée → départ+arrivée+trajet → offre).
-  Les écrans actuels restent pour la gestion fine.
+- ~~**T12b — Phase 2 : wizard « Nouvelle liaison » (frontend seul).**~~ **RÉGLÉE le
+  2026-07-11** (voir « Réglées »).
 - **T12c — Phase 3 : factoriser le boilerplate CRUD.** ~60-70 % des ~5 700 lignes de
   composants admin sont dupliquées (villes vs communes : ~90-95 %) ; `handleError`
   copié dans ~14 services Angular ; côté Java, Region/Ville/Commune/Quartier et
@@ -201,6 +198,14 @@ de colonnes). La Phase 0 (corrections sans risque) est faite — voir « Réglé
 
 ## ✅ Réglées
 
+- **2026-07-11** — Phase 2 du refactoring transport (T12b) : écran « ⚡ Assistant
+  Nouvelle Liaison » (`admin/nouvelle-liaison`, menu SUPER_ADMIN section 2).
+  Wizard 5 étapes (Départ → Arrivée → Trajet → Offre optionnelle → Récapitulatif)
+  qui orchestre les POST existants : création de site inline (localisation sans
+  quartier, possible grâce à V35), réutilisation intelligente des points de
+  départ/arrivée existants (libellé+site), trajet + première offre. Progression
+  visible par étape ; en cas d'erreur, les objets déjà créés sont conservés et
+  retrouvés au relancement. Frontend uniquement — aucun changement backend.
 - **2026-07-11** — Phase 1 du refactoring transport (T12a) : migration **V35**
   additive `sites.ville_id` (FK RESTRICT + index + backfill par la chaîne existante,
   8/8 sites locaux renseignés). Les `*Query` billetterie (Site, Depart, Arrivee,
