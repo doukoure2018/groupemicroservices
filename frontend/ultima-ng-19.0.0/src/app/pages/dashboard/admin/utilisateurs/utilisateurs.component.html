@@ -72,6 +72,9 @@
         <p-button icon="pi pi-refresh" [outlined]="true" [loading]="loading()" (onClick)="loadUsers()"
             pTooltip="Actualiser" tooltipPosition="top">
         </p-button>
+
+        <p-button label="Nouvel utilisateur" icon="pi pi-user-plus" (onClick)="openCreateDialog()">
+        </p-button>
     </div>
 
     <!-- Table des utilisateurs -->
@@ -169,6 +172,51 @@
         }
     </p-card>
 </div>
+
+<!-- Dialog Créer utilisateur backoffice -->
+<p-dialog header="Créer un utilisateur backoffice" [(visible)]="createDialogVisible" [modal]="true"
+    [style]="{ width: '480px' }" [draggable]="false" [resizable]="false">
+    <p class="text-sm text-surface-500 mt-0 mb-4">
+        Le compte est activé immédiatement. Communiquez le mot de passe temporaire à l'utilisateur.
+    </p>
+    <div class="flex flex-col gap-4">
+        <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium">Prénom *</label>
+                <input pInputText [(ngModel)]="createModel.firstName" fluid />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium">Nom *</label>
+                <input pInputText [(ngModel)]="createModel.lastName" fluid />
+            </div>
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Email *</label>
+            <input pInputText type="email" [(ngModel)]="createModel.email" fluid />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Téléphone</label>
+            <input pInputText [(ngModel)]="createModel.phone" placeholder="+224 6XX XX XX XX" fluid />
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Rôle *</label>
+            <p-select [(ngModel)]="createModel.roleName" [options]="rolesAssignables" optionLabel="label"
+                optionValue="value" placeholder="Choisir un rôle" [appendTo]="'body'" fluid></p-select>
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Mot de passe temporaire *</label>
+            <div class="flex gap-2">
+                <input pInputText [(ngModel)]="createModel.password" class="flex-1" />
+                <p-button icon="pi pi-refresh" [outlined]="true" (onClick)="genererMotDePasse()" pTooltip="Générer"></p-button>
+            </div>
+        </div>
+    </div>
+    <div class="dialog-footer">
+        <p-button label="Annuler" [outlined]="true" severity="secondary" (onClick)="createDialogVisible = false"></p-button>
+        <p-button label="Créer le compte" icon="pi pi-check" (onClick)="confirmCreate()" [loading]="processing"
+            [disabled]="!createModel.firstName || !createModel.lastName || !createModel.email || !createModel.roleName || (createModel.password?.length || 0) < 6"></p-button>
+    </div>
+</p-dialog>
 
 <!-- Dialog Modifier utilisateur -->
 <p-dialog header="Modifier l'utilisateur" [(visible)]="editDialogVisible" [modal]="true" [style]="{ width: '460px' }"

@@ -173,11 +173,6 @@ export class AppMenu {
                         label: 'Liste des Utilisateurs',
                         icon: 'pi pi-fw pi-list',
                         routerLink: ['/dashboards/admin/utilisateurs']
-                    },
-                    {
-                        label: 'Créer un Utilisateur',
-                        icon: 'pi pi-fw pi-user-plus',
-                        routerLink: ['/dashboards/admin/utilisateurs/create']
                     }
                 ]
             },

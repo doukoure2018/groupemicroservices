@@ -61,6 +61,20 @@ export class UtilisateursComponent implements OnInit {
     editingUser: IUser | null = null;
     processing = false;
 
+    // Dialog de création d'un utilisateur backoffice
+    createDialogVisible = false;
+    createModel = { firstName: '', lastName: '', email: '', phone: '', password: '', roleName: '' };
+    // Whitelist alignée sur le backend (createBackofficeUser).
+    private readonly rolesWhitelist = ['ADMIN_CONFORMITE', 'ADMIN_BACKOFFICE', 'CONTROLEUR', 'MANAGER', 'ADMIN'];
+    private readonly roleLibelles: Record<string, string> = {
+        ADMIN_CONFORMITE: 'Conformité (validation agences)',
+        ADMIN_BACKOFFICE: 'Back-office (leads immo)',
+        CONTROLEUR: 'Contrôleur (validation billets)',
+        MANAGER: 'Manager',
+        ADMIN: 'Administrateur'
+    };
+    rolesAssignables: { label: string; value: string }[] = [];
+
     // Computed signals
     users = computed(() => this.state().users);
     roles = computed(() => this.state().roles);
@@ -175,6 +189,40 @@ export class UtilisateursComponent implements OnInit {
             },
             error: (error) => {
                 this.updateState({ loading: false });
+                this.showError(error);
+            }
+        });
+    }
+
+    // ===== Création d'un utilisateur backoffice (modal) =====
+    openCreateDialog(): void {
+        this.createModel = { firstName: '', lastName: '', email: '', phone: '', password: '', roleName: '' };
+        // Les rôles assignables = intersection roles serveur ∩ whitelist (fallback whitelist statique).
+        const noms = this.roles().map((r) => r.name!);
+        const dispo = this.rolesWhitelist.filter((r) => noms.includes(r));
+        const source = dispo.length ? dispo : this.rolesWhitelist;
+        this.rolesAssignables = source.map((n) => ({ label: this.roleLibelles[n] ?? n, value: n }));
+        this.createDialogVisible = true;
+    }
+
+    genererMotDePasse(): void {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+        let pwd = '';
+        for (let i = 0; i < 10; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+        this.createModel.password = pwd + '#1';
+    }
+
+    confirmCreate(): void {
+        this.processing = true;
+        this.userAdminService.createBackofficeUser$(this.createModel).subscribe({
+            next: (response) => {
+                this.processing = false;
+                this.createDialogVisible = false;
+                this.showSuccess(response.message || 'Utilisateur créé et activé');
+                this.loadUsers();
+            },
+            error: (error) => {
+                this.processing = false;
                 this.showError(error);
             }
         });
