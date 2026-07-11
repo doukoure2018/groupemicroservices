@@ -41,6 +41,9 @@ public class OffreServiceImpl implements OffreService {
     private static final String STATUT_EN_ATTENTE = "EN_ATTENTE";
     private static final String STATUT_OUVERT = "OUVERT";
     private static final String STATUT_FERME = "FERME";
+    // COMPLET = plein automatiquement (même statut que le trigger SQL update_offre_places) ;
+    // FERME reste réservé à la fermeture manuelle par le transporteur.
+    private static final String STATUT_COMPLET = "COMPLET";
     private static final String STATUT_CLOTURE = "CLOTURE";
     private static final String STATUT_ANNULE = "ANNULE";
     private static final String STATUT_EN_COURS = "EN_COURS";
@@ -464,9 +467,9 @@ public class OffreServiceImpl implements OffreService {
 
         offreRepository.updatePlaces(uuid, newDisponibles, newReservees, niveauRemplissage);
 
-        // Si plus de places disponibles, fermer automatiquement
+        // Si plus de places disponibles, marquer complet (aligné sur le trigger SQL)
         if (newDisponibles == 0) {
-            offreRepository.updateStatut(uuid, STATUT_FERME);
+            offreRepository.updateStatut(uuid, STATUT_COMPLET);
         }
 
         return offreRepository.findByUuid(uuid).orElse(offre);
@@ -491,8 +494,10 @@ public class OffreServiceImpl implements OffreService {
 
         offreRepository.updatePlaces(uuid, newDisponibles, newReservees, niveauRemplissage);
 
-        // Si l'offre était fermée (complet) et qu'on libère des places, la rouvrir
-        if (STATUT_FERME.equals(offre.getStatut()) && newDisponibles > 0) {
+        // Si l'offre était pleine et qu'on libère des places, la rouvrir.
+        // FERME est conservé ici pour les anciennes offres passées pleines par
+        // le chemin Java historique (avant l'alignement sur COMPLET).
+        if ((STATUT_COMPLET.equals(offre.getStatut()) || STATUT_FERME.equals(offre.getStatut())) && newDisponibles > 0) {
             offreRepository.updateStatut(uuid, STATUT_OUVERT);
         }
 

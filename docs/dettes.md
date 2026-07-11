@@ -203,6 +203,17 @@ de colonnes). La Phase 0 (corrections sans risque) est faite — voir « Réglé
 
 ## ✅ Réglées
 
+- **2026-07-11** — Alertes passagers aux paliers de remplissage **20/50/80/100 %**
+  (in-app + **push FCM** + email/SMS), scheduler à 5 min. Anti-rafale : un passager
+  ne reçoit que le palier le plus élevé non encore notifié (un retardataire qui
+  réserve à 85 % reçoit une seule alerte, pas trois). Au passage, deux bugs
+  corrigés qui faussaient le taux de remplissage : **double libération des places
+  à l'annulation** (trigger SQL + libererPlaces Java → surbooking possible ;
+  le trigger est désormais seule source de vérité) et **statuts COMPLET/FERME
+  incohérents** (le chemin Java pose maintenant COMPLET comme le trigger, FERME
+  reste la fermeture manuelle). Les 4 requêtes du scheduler passent au COALESCE
+  ville V35 et incluent FERME. Mobile : tap sur une push REMPLISSAGE_* → écran
+  notifications.
 - **2026-07-11** — Phase 3 (frontend) du refactoring transport (T12c) : composant
   générique `ReferentielCrudComponent` (`admin/shared/`) — stats, recherche,
   filtres en cascade, table paginée, modal création/édition dynamique (config

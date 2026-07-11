@@ -413,13 +413,10 @@ public class CommandeServiceImpl implements CommandeService {
 
         log.info("Commande {} annulée avec succès ({} billets annulés)", commandeUuid, commande.getBillets().size());
 
-        // 4. Restituer les places sur l'offre
-        try {
-            offreService.libererPlaces(commande.getOffreUuid(), commande.getNombrePlaces());
-            log.info("Places restituées: {} places sur offre {}", commande.getNombrePlaces(), commande.getOffreUuid());
-        } catch (Exception e) {
-            log.warn("Impossible de restituer les places pour offre {}: {}", commande.getOffreUuid(), e.getMessage());
-        }
+        // 4. Restitution des places : gérée EXCLUSIVEMENT par le trigger SQL
+        // update_offre_places (branche statut → ANNULEE de l'étape 2). Appeler
+        // libererPlaces ici libérerait les places une seconde fois (disponibles
+        // surévaluées, niveau_remplissage faussé → surbooking possible).
 
         // 5. Envoyer notification Kafka d'annulation (non-bloquant)
         try {

@@ -44,23 +44,23 @@ public class ScheduledNotificationService {
     @Value("${billetterie.avis.delai-heures:24}")
     private int avisDelaiHeures;
 
-    @Scheduled(fixedRate = 900000) // 15 minutes
+    /** Paliers de remplissage notifiés aux passagers, en ordre décroissant. */
+    private static final int[] SEUILS_REMPLISSAGE = {100, 80, 50, 20};
+
+    /**
+     * Alerte les passagers aux paliers de remplissage (20/50/80/100 %).
+     * Anti-rafale : chaque passager ne reçoit qu'UNE alerte (in-app + push FCM +
+     * email/SMS) par franchissement — celle du palier le plus élevé atteint et
+     * non encore notifié. Un passager qui réserve tard (ex. offre déjà à 85 %)
+     * reçoit uniquement le palier 80, pas 20+50+80. L'idempotence s'appuie sur
+     * les notifications in-app (existsByReference) : un palier — ou un palier
+     * supérieur — déjà notifié n'est jamais renvoyé, même si le taux redescend
+     * (annulation) puis remonte.
+     */
+    @Scheduled(fixedRate = 300000) // 5 minutes (à 100 %, le départ est imminent)
     public void checkRemplissage() {
-        for (int seuil : new int[]{50, 75, 100}) {
-            checkRemplissageAtSeuil(seuil);
-        }
-    }
-
-    private void checkRemplissageAtSeuil(int seuil) {
-        String categorie = "REMPLISSAGE_" + seuil;
-        EventType eventType = switch (seuil) {
-            case 50 -> EventType.REMPLISSAGE_50;
-            case 75 -> EventType.REMPLISSAGE_75;
-            default -> EventType.REMPLISSAGE_100;
-        };
-
         var offres = jdbcClient.sql(ScheduledNotificationQuery.FIND_OFFRES_AT_REMPLISSAGE)
-                .param("seuil", seuil)
+                .param("seuil", SEUILS_REMPLISSAGE[SEUILS_REMPLISSAGE.length - 1])
                 .query((rs, rowNum) -> new Object[]{
                         rs.getLong("offre_id"),
                         rs.getString("offre_uuid"),
@@ -74,8 +74,19 @@ public class ScheduledNotificationService {
 
         for (var offre : offres) {
             Long offreId = (Long) offre[0];
-            String trajet = offre[5] + " → " + offre[6];
+            String offreUuid = (String) offre[1];
             int remplissage = (int) offre[2];
+            String trajet = offre[5] + " → " + offre[6];
+
+            // Palier courant = plus haut seuil atteint par l'offre
+            int palier = 0;
+            for (int seuil : SEUILS_REMPLISSAGE) {
+                if (remplissage >= seuil) {
+                    palier = seuil;
+                    break;
+                }
+            }
+            if (palier == 0) continue;
 
             var commandes = jdbcClient.sql(ScheduledNotificationQuery.FIND_COMMANDES_BY_OFFRE_ID)
                     .param("offreId", offreId)
@@ -94,19 +105,29 @@ public class ScheduledNotificationService {
                 String passagerNoms = cmd[4] != null ? (String) cmd[4] : "";
                 String passagerPhone = cmd[5] != null ? (String) cmd[5] : "";
 
-                if (inAppNotificationService.existsByReference(userId, offreId, "OFFRE", categorie)) {
-                    continue;
+                // Déjà notifié de ce palier OU d'un palier supérieur → rien à faire
+                boolean dejaNotifie = false;
+                for (int seuil : SEUILS_REMPLISSAGE) {
+                    if (seuil < palier) break;
+                    if (inAppNotificationService.existsByReference(userId, offreId, "OFFRE", "REMPLISSAGE_" + seuil)) {
+                        dejaNotifie = true;
+                        break;
+                    }
                 }
+                if (dejaNotifie) continue;
 
-                String titre = seuil == 100
-                        ? "Véhicule complet - Départ imminent"
-                        : "Remplissage à " + remplissage + "%";
-                String message = seuil == 100
-                        ? "Votre véhicule pour " + trajet + " est complet. Préparez-vous, le départ approche!"
-                        : "Votre véhicule pour " + trajet + " est rempli à " + remplissage + "%.";
+                String categorie = "REMPLISSAGE_" + palier;
+                String titre = titreRemplissage(palier, remplissage);
+                String message = messageRemplissage(palier, remplissage, trajet);
 
                 inAppNotificationService.createNotification(userId, "IN_APP", categorie,
                         titre, message, false, offreId, "OFFRE");
+
+                // Push système (FCM/APNs), même garde d'idempotence que l'in-app
+                fcmSender.sendToTokens(
+                        deviceTokenService.getTokensByUser(userId),
+                        titre, message,
+                        Map.of("categorie", categorie, "offreUuid", offreUuid));
 
                 // Kafka → email + SMS
                 String userEmail = getUserEmail(userId);
@@ -119,9 +140,33 @@ public class ScheduledNotificationService {
                 data.put("dateDepart", offre[3].toString());
                 data.put("heureDepart", offre[4].toString());
                 data.put("niveauRemplissage", String.valueOf(remplissage));
-                sendKafkaNotification(eventType, data);
+                sendKafkaNotification(eventTypeRemplissage(palier), data);
             }
         }
+    }
+
+    private String titreRemplissage(int palier, int remplissage) {
+        return palier == 100
+                ? "Véhicule complet - Départ imminent"
+                : "Remplissage à " + remplissage + "%";
+    }
+
+    private String messageRemplissage(int palier, int remplissage, String trajet) {
+        return switch (palier) {
+            case 100 -> "Votre véhicule pour " + trajet + " est complet. Préparez-vous, le départ approche!";
+            case 80 -> "Votre véhicule pour " + trajet + " est rempli à " + remplissage + "%. Le départ approche, préparez-vous!";
+            case 50 -> "Votre véhicule pour " + trajet + " est rempli à " + remplissage + "%. Pensez à vous préparer.";
+            default -> "Votre véhicule pour " + trajet + " est rempli à " + remplissage + "%. Les réservations avancent.";
+        };
+    }
+
+    private EventType eventTypeRemplissage(int palier) {
+        return switch (palier) {
+            case 100 -> EventType.REMPLISSAGE_100;
+            case 80 -> EventType.REMPLISSAGE_80;
+            case 50 -> EventType.REMPLISSAGE_50;
+            default -> EventType.REMPLISSAGE_20;
+        };
     }
 
     @Scheduled(cron = "0 0 18 * * *") // Every day at 18:00

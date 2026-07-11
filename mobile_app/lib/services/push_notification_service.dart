@@ -3,6 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'billetterie_service.dart';
 import '../screens/rate_trip_sheet.dart';
+import '../screens/notifications_screen.dart';
 
 /// Clé de navigation globale : permet d'ouvrir un écran (ex notation) suite au
 /// tap sur une push, sans BuildContext local.
@@ -61,11 +62,20 @@ class PushNotificationService {
 
   void _handleTap(RemoteMessage message) {
     final data = message.data;
-    if (data['categorie'] == 'DEMANDE_AVIS') {
+    final categorie = data['categorie'];
+    final ctx = navigatorKey.currentContext;
+    if (categorie == 'DEMANDE_AVIS') {
       final uuid = data['commandeUuid'];
-      final ctx = navigatorKey.currentContext;
       if (uuid is String && uuid.isNotEmpty && ctx != null) {
         RateTripSheet.show(ctx, commandeUuid: uuid);
+      }
+    } else if (categorie is String && categorie.startsWith('REMPLISSAGE_')) {
+      // Alerte de remplissage (20/50/80/100 %) : ouvrir l'écran notifications,
+      // où figure le détail in-app correspondant.
+      if (ctx != null) {
+        Navigator.of(ctx).push(
+          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+        );
       }
     }
   }

@@ -108,7 +108,7 @@ public class NotificationListener {
                     );
                 }
             }
-            case REMPLISSAGE_50, REMPLISSAGE_75, REMPLISSAGE_100 -> {
+            case REMPLISSAGE_20, REMPLISSAGE_50, REMPLISSAGE_75, REMPLISSAGE_80, REMPLISSAGE_100 -> {
                 var data = mapper.convertValue(notification.getPayload().getData(), Data.class);
                 if (data.getEmail() != null && !data.getEmail().isBlank()) {
                     emailService.sendRemplissageUpdateEmail(
