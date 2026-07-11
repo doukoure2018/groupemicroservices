@@ -173,6 +173,45 @@
     }
 }
 
+// ===== Bannières =====
+.info-banner,
+.warn-banner {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.85rem 1rem;
+    border-radius: var(--border-radius, 8px);
+    margin-bottom: 1.25rem;
+
+    > i {
+        font-size: 1.25rem;
+        margin-top: 0.1rem;
+    }
+
+    p {
+        margin: 0.25rem 0 0;
+        color: var(--text-color-secondary);
+    }
+}
+
+.info-banner {
+    background: var(--blue-50);
+    border: 1px solid var(--blue-200);
+
+    > i {
+        color: var(--blue-500);
+    }
+}
+
+.warn-banner {
+    background: var(--yellow-50);
+    border: 1px solid var(--yellow-200);
+
+    > i {
+        color: var(--yellow-600);
+    }
+}
+
 // ===== Récapitulatif =====
 .recap {
     display: flex;

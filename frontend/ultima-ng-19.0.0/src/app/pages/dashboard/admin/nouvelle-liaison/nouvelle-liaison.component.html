@@ -150,35 +150,53 @@
                 <span class="sites-resume">{{ nomSiteDepart() }} → {{ nomSiteArrivee() }}</span>
             </p>
 
+            @if (verificationTrajet()) {
+            <div class="info-banner">
+                <i class="pi pi-spin pi-spinner"></i>
+                <span>Vérification des trajets existants…</span>
+            </div>
+            }
+
+            @if (trajetExistant()) {
+            <div class="warn-banner">
+                <i class="pi pi-exclamation-triangle"></i>
+                <div>
+                    <strong>Un trajet existe déjà pour cette combinaison départ/arrivée.</strong>
+                    <p>« {{ trajetExistant()?.libelleTrajet }} » sera réutilisé tel quel — ses caractéristiques
+                        ci-dessous sont en lecture seule. Pour les modifier, passez par l'écran Trajets.</p>
+                </div>
+            </div>
+            }
+
             <div class="form-grid">
                 <div class="form-field full-width">
                     <label>Libellé du trajet <span class="required">*</span></label>
-                    <input pInputText [(ngModel)]="trajet.libelleTrajet" />
+                    <input pInputText [(ngModel)]="trajet.libelleTrajet" [disabled]="!!trajetExistant()" />
                 </div>
                 <div class="form-field">
                     <label>Durée estimée (minutes) <span class="required">*</span></label>
                     <p-inputNumber [(ngModel)]="trajet.dureeEstimeeMinutes" [min]="1" placeholder="Ex: 180"
-                        styleClass="w-full"></p-inputNumber>
+                        [disabled]="!!trajetExistant()" styleClass="w-full"></p-inputNumber>
                 </div>
                 <div class="form-field">
                     <label>Distance (km)</label>
                     <p-inputNumber [(ngModel)]="trajet.distanceKm" [min]="0" [maxFractionDigits]="1"
-                        placeholder="Ex: 135" styleClass="w-full"></p-inputNumber>
+                        placeholder="Ex: 135" [disabled]="!!trajetExistant()" styleClass="w-full"></p-inputNumber>
                 </div>
                 <div class="form-field">
                     <label>Montant de base <span class="required">*</span></label>
                     <p-inputNumber [(ngModel)]="trajet.montantBase" [min]="1" placeholder="Ex: 50000"
-                        styleClass="w-full"></p-inputNumber>
+                        [disabled]="!!trajetExistant()" styleClass="w-full"></p-inputNumber>
                 </div>
                 <div class="form-field">
                     <label>Montant bagages</label>
                     <p-inputNumber [(ngModel)]="trajet.montantBagages" [min]="0" placeholder="Ex: 10000"
-                        styleClass="w-full"></p-inputNumber>
+                        [disabled]="!!trajetExistant()" styleClass="w-full"></p-inputNumber>
                 </div>
                 <div class="form-field">
                     <label>Devise</label>
                     <p-dropdown [options]="devises" [(ngModel)]="trajet.devise" optionLabel="label" optionValue="value"
-                        styleClass="w-full"></p-dropdown>
+                        [disabled]="!!trajetExistant()" styleClass="w-full"></p-dropdown>
                 </div>
             </div>
         </div>
@@ -196,8 +214,9 @@
 
             @if (offre.creerOffre) {
             @if (vehicules().length === 0) {
-            <small class="p-error"><i class="pi pi-exclamation-triangle"></i> Aucun véhicule enregistré — créez d'abord
-                un véhicule dans l'écran Véhicules, ou décochez cette option.</small>
+            <small class="p-error"><i class="pi pi-exclamation-triangle"></i> Aucun véhicule ne vous appartient — une
+                offre exige un véhicule dont vous êtes propriétaire. Créez d'abord votre véhicule dans l'écran
+                Véhicules, ou décochez cette option.</small>
             } @else {
             <div class="form-grid">
                 <div class="form-field full-width">
@@ -208,7 +227,10 @@
                 </div>
                 <div class="form-field">
                     <label>Date de départ <span class="required">*</span></label>
-                    <input type="date" pInputText [(ngModel)]="offre.dateDepart" />
+                    <input type="date" pInputText [(ngModel)]="offre.dateDepart" [min]="aujourdHui" />
+                    @if (dateDepartEnErreur()) {
+                    <small class="p-error">La date et l'heure de départ doivent être postérieures à maintenant.</small>
+                    }
                 </div>
                 <div class="form-field">
                     <label>Heure de départ <span class="required">*</span></label>

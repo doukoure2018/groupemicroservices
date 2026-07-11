@@ -90,11 +90,18 @@ export class NouvelleLiaisonComponent implements OnInit {
     readonly etapes = ['Départ', 'Arrivée', 'Trajet', 'Offre', 'Récapitulatif'];
     currentStep = signal(1);
 
+    /** Borne inférieure du champ date de l'offre (aujourd'hui, format yyyy-MM-dd). */
+    readonly aujourdHui = new Date().toISOString().split('T')[0];
+
     // ===== Saisie (ngModel) =====
     depart: ChoixSite = { villeUuid: '', mode: 'existant', siteUuid: '', nouveauNom: '', nouveauType: 'GARE_ROUTIERE', nouvelleAdresse: '' };
     arrivee: ChoixSite = { villeUuid: '', mode: 'existant', siteUuid: '', nouveauNom: '', nouveauType: 'GARE_ROUTIERE', nouvelleAdresse: '' };
     trajet = { libelleTrajet: '', dureeEstimeeMinutes: null as number | null, distanceKm: null as number | null, montantBase: null as number | null, montantBagages: null as number | null, devise: 'GNF' };
     offre = { creerOffre: false, vehiculeUuid: '', dateDepart: '', heureDepart: '', nombrePlacesTotal: null as number | null, montant: null as number | null };
+
+    // ===== Trajet existant (pré-contrôle de l'étape 3) =====
+    trajetExistant = signal<Trajet | null>(null);
+    verificationTrajet = signal(false);
 
     // ===== Exécution =====
     execution = signal<EtapeExecution[]>([]);
@@ -108,15 +115,19 @@ export class NouvelleLiaisonComponent implements OnInit {
             next: (response: IResponse) => this.villes.set(response.data?.villes || []),
             error: (err) => this.showError(err, 'Impossible de charger les villes')
         });
-        this.vehiculeService.getAll().subscribe({
+        // Seuls les véhicules de l'utilisateur connecté sont proposables :
+        // le backend refuse la création d'une offre sur le véhicule d'un autre
+        // (« Ce véhicule ne vous appartient pas »)
+        this.vehiculeService.getMesVehicules().subscribe({
             next: (data) => this.vehicules.set(data),
-            error: (err) => this.showError(err, 'Impossible de charger les véhicules')
+            error: (err) => this.showError(err, 'Impossible de charger vos véhicules')
         });
     }
 
     // ===== Chargement des sites par ville =====
     onVilleDepartChange(): void {
         this.depart.siteUuid = '';
+        this.trajetExistant.set(null);
         this.sitesVilleDepart.set([]);
         if (!this.depart.villeUuid) return;
         this.siteService.getByVille(this.depart.villeUuid).subscribe({
@@ -131,6 +142,7 @@ export class NouvelleLiaisonComponent implements OnInit {
 
     onVilleArriveeChange(): void {
         this.arrivee.siteUuid = '';
+        this.trajetExistant.set(null);
         this.sitesVilleArrivee.set([]);
         if (!this.arrivee.villeUuid) return;
         this.siteService.getByVille(this.arrivee.villeUuid).subscribe({
@@ -168,11 +180,31 @@ export class NouvelleLiaisonComponent implements OnInit {
         return true;
     };
 
-    etape3Valide = (): boolean => !!this.trajet.libelleTrajet.trim() && (this.trajet.dureeEstimeeMinutes ?? 0) > 0 && (this.trajet.montantBase ?? 0) > 0;
+    etape3Valide = (): boolean => {
+        if (this.verificationTrajet()) return false;
+        if (this.trajetExistant()) return true; // le trajet existant sera réutilisé tel quel
+        return !!this.trajet.libelleTrajet.trim() && (this.trajet.dureeEstimeeMinutes ?? 0) > 0 && (this.trajet.montantBase ?? 0) > 0;
+    };
+
+    /** La date/heure de départ de l'offre doit être dans le futur. */
+    dateDepartValide(): boolean {
+        if (!this.offre.dateDepart) return false;
+        const aujourdHui = new Date().toISOString().split('T')[0];
+        if (this.offre.dateDepart > aujourdHui) return true;
+        if (this.offre.dateDepart < aujourdHui) return false;
+        // Départ aujourd'hui : l'heure doit être postérieure à maintenant
+        if (!this.offre.heureDepart) return true; // l'heure est validée séparément
+        const maintenant = new Date().toTimeString().slice(0, 5);
+        return this.offre.heureDepart > maintenant;
+    }
+
+    dateDepartEnErreur(): boolean {
+        return !!this.offre.dateDepart && !!this.offre.heureDepart && !this.dateDepartValide();
+    }
 
     etape4Valide = (): boolean => {
         if (!this.offre.creerOffre) return true;
-        return !!this.offre.vehiculeUuid && !!this.offre.dateDepart && !!this.offre.heureDepart && (this.offre.nombrePlacesTotal ?? 0) > 0 && (this.offre.montant ?? 0) > 0;
+        return !!this.offre.vehiculeUuid && this.dateDepartValide() && !!this.offre.heureDepart && (this.offre.nombrePlacesTotal ?? 0) > 0 && (this.offre.montant ?? 0) > 0;
     };
 
     etapeCouranteValide(): boolean {
@@ -217,11 +249,52 @@ export class NouvelleLiaisonComponent implements OnInit {
     // ===== Navigation =====
     suivant(): void {
         if (!this.etapeCouranteValide()) return;
-        // Pré-remplir le libellé du trajet en arrivant sur l'étape 3
-        if (this.currentStep() === 2 && !this.trajet.libelleTrajet) {
-            this.trajet.libelleTrajet = `${this.villeLibelle(this.depart.villeUuid)} → ${this.villeLibelle(this.arrivee.villeUuid)}`;
+        // Pré-remplir le libellé du trajet et vérifier les doublons en arrivant sur l'étape 3
+        if (this.currentStep() === 2) {
+            if (!this.trajet.libelleTrajet) {
+                this.trajet.libelleTrajet = `${this.villeLibelle(this.depart.villeUuid)} → ${this.villeLibelle(this.arrivee.villeUuid)}`;
+            }
+            this.verifierTrajetExistant();
         }
         this.currentStep.update((s) => Math.min(s + 1, this.etapes.length));
+    }
+
+    /**
+     * Pré-contrôle de l'étape 3 : si les deux sites sont existants et que le point
+     * de départ / point d'arrivée que l'assistant réutiliserait portent déjà un
+     * trajet, on le signale tout de suite (au lieu d'échouer à l'exécution avec
+     * « Un trajet existe déjà pour cette combinaison départ/arrivée »).
+     */
+    private async verifierTrajetExistant(): Promise<void> {
+        this.trajetExistant.set(null);
+        // Un site nouvellement créé ne peut pas avoir de trajet préexistant
+        if (this.depart.mode !== 'existant' || this.arrivee.mode !== 'existant') return;
+
+        this.verificationTrajet.set(true);
+        try {
+            const siteDepart = this.sitesVilleDepart().find((s) => s.siteUuid === this.depart.siteUuid);
+            if (!siteDepart) return;
+            const departs = await firstValueFrom(this.departService.getBySiteActifs(siteDepart.siteUuid!));
+            const pointDepart = departs.find((d) => d.libelle.trim().toLowerCase() === siteDepart.nom.trim().toLowerCase());
+            if (!pointDepart) return;
+
+            const trajets = await firstValueFrom(this.trajetService.getByDepart(pointDepart.departUuid!));
+            const existant = trajets.find((t) => t.arriveeSiteUuid === this.arrivee.siteUuid);
+            if (existant) {
+                this.trajetExistant.set(existant);
+                // Refléter les caractéristiques du trajet réutilisé (lecture seule)
+                this.trajet.libelleTrajet = existant.libelleTrajet || this.trajet.libelleTrajet;
+                this.trajet.dureeEstimeeMinutes = existant.dureeEstimeeMinutes ?? null;
+                this.trajet.distanceKm = existant.distanceKm ?? null;
+                this.trajet.montantBase = existant.montantBase ?? null;
+                this.trajet.montantBagages = existant.montantBagages ?? null;
+                this.trajet.devise = existant.devise || 'GNF';
+            }
+        } catch {
+            // Pré-contrôle best-effort : en cas d'échec, l'exécution signalera le doublon
+        } finally {
+            this.verificationTrajet.set(false);
+        }
     }
 
     precedent(): void {
@@ -244,7 +317,7 @@ export class NouvelleLiaisonComponent implements OnInit {
             { label: this.arrivee.mode === 'nouveau' ? `Créer le site d'arrivée « ${this.nomSiteArrivee()} »` : `Site d'arrivée « ${this.nomSiteArrivee()} »`, statut: 'attente' },
             { label: 'Point de départ', statut: 'attente' },
             { label: "Point d'arrivée", statut: 'attente' },
-            { label: `Trajet « ${this.trajet.libelleTrajet} »`, statut: 'attente' },
+            { label: this.trajetExistant() ? `Trajet « ${this.trajet.libelleTrajet} » (existant)` : `Trajet « ${this.trajet.libelleTrajet} »`, statut: 'attente' },
             { label: this.offre.creerOffre ? `Offre du ${this.offre.dateDepart} à ${this.offre.heureDepart}` : 'Offre (non demandée)', statut: this.offre.creerOffre ? 'attente' : 'ignore' }
         ];
         this.execution.set(plan);
@@ -299,30 +372,36 @@ export class NouvelleLiaisonComponent implements OnInit {
                 maj(3, 'fait', pointArrivee.libelle);
             }
 
-            // 5. Trajet
+            // 5. Trajet (réutilisé s'il a été détecté à l'étape 3)
             maj(4, 'en_cours');
-            const trajetCree = await firstValueFrom(
-                this.trajetService.create({
-                    departUuid: pointDepart.departUuid!,
-                    arriveeUuid: pointArrivee.arriveeUuid!,
-                    libelleTrajet: this.trajet.libelleTrajet.trim(),
-                    dureeEstimeeMinutes: this.trajet.dureeEstimeeMinutes!,
-                    distanceKm: this.trajet.distanceKm ?? undefined,
-                    montantBase: this.trajet.montantBase!,
-                    montantBagages: this.trajet.montantBagages ?? undefined,
-                    devise: this.trajet.devise,
-                    actif: true
-                })
-            );
-            this.trajetCree.set(trajetCree);
-            maj(4, 'fait', trajetCree.libelleTrajet);
+            let trajetFinal: Trajet;
+            if (this.trajetExistant()) {
+                trajetFinal = this.trajetExistant()!;
+                maj(4, 'reutilise', trajetFinal.libelleTrajet);
+            } else {
+                trajetFinal = await firstValueFrom(
+                    this.trajetService.create({
+                        departUuid: pointDepart.departUuid!,
+                        arriveeUuid: pointArrivee.arriveeUuid!,
+                        libelleTrajet: this.trajet.libelleTrajet.trim(),
+                        dureeEstimeeMinutes: this.trajet.dureeEstimeeMinutes!,
+                        distanceKm: this.trajet.distanceKm ?? undefined,
+                        montantBase: this.trajet.montantBase!,
+                        montantBagages: this.trajet.montantBagages ?? undefined,
+                        devise: this.trajet.devise,
+                        actif: true
+                    })
+                );
+                maj(4, 'fait', trajetFinal.libelleTrajet);
+            }
+            this.trajetCree.set(trajetFinal);
 
             // 6. Offre (optionnelle)
             if (this.offre.creerOffre) {
                 maj(5, 'en_cours');
                 const offreCreee = await firstValueFrom(
                     this.offreService.create({
-                        trajetUuid: trajetCree.trajetUuid!,
+                        trajetUuid: trajetFinal.trajetUuid!,
                         vehiculeUuid: this.offre.vehiculeUuid,
                         dateDepart: this.offre.dateDepart,
                         heureDepart: this.offre.heureDepart,
@@ -384,6 +463,7 @@ export class NouvelleLiaisonComponent implements OnInit {
         this.offre = { creerOffre: false, vehiculeUuid: '', dateDepart: '', heureDepart: '', nombrePlacesTotal: null, montant: null };
         this.sitesVilleDepart.set([]);
         this.sitesVilleArrivee.set([]);
+        this.trajetExistant.set(null);
         this.execution.set([]);
         this.termine.set(false);
         this.trajetCree.set(null);
