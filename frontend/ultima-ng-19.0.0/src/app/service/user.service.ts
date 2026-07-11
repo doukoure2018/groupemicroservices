@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { StorageService } from './storage.service';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { catchError, Observable, tap, throwError } from 'rxjs';
+import { catchError, Observable, throwError } from 'rxjs';
 import { tokenEndpoint, server } from '@/utils/fileutils';
 import { Key } from '@/enum/cache.key';
 import { IAuthentication } from '@/interface/IAuthentication';
@@ -15,27 +15,27 @@ export class UserService {
 
     constructor() {}
 
-    register$ = (user: any) => <Observable<IResponse>>this.http.post<IResponse>(`${server}/user/register`, user).pipe(tap(console.log), catchError(this.handleError));
+    register$ = (user: any) => <Observable<IResponse>>this.http.post<IResponse>(`${server}/user/register`, user).pipe(catchError(this.handleError));
 
-    verifyAccountToken$ = (token: string) => <Observable<IResponse>>this.http.get<IResponse>(`${server}/user/verify/account?token=${token}`).pipe(tap(console.log), catchError(this.handleError));
+    verifyAccountToken$ = (token: string) => <Observable<IResponse>>this.http.get<IResponse>(`${server}/user/verify/account?token=${token}`).pipe(catchError(this.handleError));
 
     // Web-bridge Phase 2 : vérifie + active le compte ET renvoie les tokens
     // (format generateTokens : access_token/refresh_token/id_token). Endpoint
     // authorizationserver via gateway (préfixe /authorization). Pas d'enveloppe IResponse.
-    verifyMobile$ = (token: string) => <Observable<any>>this.http.post<any>(`${server}/authorization/api/auth/verify-mobile`, { token }).pipe(tap(console.log), catchError(this.handleError));
+    verifyMobile$ = (token: string) => <Observable<any>>this.http.post<any>(`${server}/authorization/api/auth/verify-mobile`, { token }).pipe(catchError(this.handleError));
 
-    resetPassword$ = (form: FormData) => <Observable<IResponse>>this.http.post<IResponse>(`${server}/user/resetpassword`, form).pipe(tap(console.log), catchError(this.handleError));
+    resetPassword$ = (form: FormData) => <Observable<IResponse>>this.http.post<IResponse>(`${server}/user/resetpassword`, form).pipe(catchError(this.handleError));
 
-    verifyPasswordToken$ = (token: string) => <Observable<IResponse>>this.http.get<IResponse>(`${server}/user/verify/password?token=${token}`).pipe(tap(console.log), catchError(this.handleError));
+    verifyPasswordToken$ = (token: string) => <Observable<IResponse>>this.http.get<IResponse>(`${server}/user/verify/password?token=${token}`).pipe(catchError(this.handleError));
 
     createNewPassword$ = (request: { userUuid: string; token: string; password: string; confirmPassword: string }) =>
-        <Observable<IResponse>>this.http.post<IResponse>(`${server}/user/resetpassword/reset`, request).pipe(tap(console.log), catchError(this.handleError));
+        <Observable<IResponse>>this.http.post<IResponse>(`${server}/user/resetpassword/reset`, request).pipe(catchError(this.handleError));
 
-    validateCode$ = (form: FormData) => <Observable<IAuthentication>>this.http.post<IAuthentication>(tokenEndpoint, form).pipe(tap(console.log), catchError(this.handleError));
+    validateCode$ = (form: FormData) => <Observable<IAuthentication>>this.http.post<IAuthentication>(tokenEndpoint, form).pipe(catchError(this.handleError));
 
-    getInstanceUser$ = () => <Observable<IResponse>>this.http.get<IResponse>(`${server}/user/instanceUser`).pipe(tap(console.log), catchError(this.handleError));
+    getInstanceUser$ = () => <Observable<IResponse>>this.http.get<IResponse>(`${server}/user/instanceUser`).pipe(catchError(this.handleError));
 
-    profile$ = () => <Observable<IResponse>>this.http.get<IResponse>(`${server}/user/profile`).pipe(tap(console.log), catchError(this.handleError));
+    profile$ = () => <Observable<IResponse>>this.http.get<IResponse>(`${server}/user/profile`).pipe(catchError(this.handleError));
 
     handleError = (httpErrorResponse: HttpErrorResponse): Observable<never> => {
         console.log(httpErrorResponse);

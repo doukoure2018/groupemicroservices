@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { catchError, Observable, tap, throwError } from 'rxjs';
+import { catchError, Observable, throwError } from 'rxjs';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 import { IRegionCreateRequest, IRegionUpdateRequest, IRegionStatusRequest } from '@/interface/region';
@@ -17,32 +17,32 @@ export class RegionService {
     /**
      * Récupère toutes les régions
      */
-    getAllRegions$ = (): Observable<IResponse> => this.http.get<IResponse>(this.baseUrl).pipe(tap(console.log), catchError(this.handleError));
+    getAllRegions$ = (): Observable<IResponse> => this.http.get<IResponse>(this.baseUrl).pipe(catchError(this.handleError));
 
     /**
      * Récupère uniquement les régions actives
      */
-    getActiveRegions$ = (): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/active`).pipe(tap(console.log), catchError(this.handleError));
+    getActiveRegions$ = (): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/active`).pipe(catchError(this.handleError));
 
     /**
      * Récupère une région par son UUID
      */
-    getRegionByUuid$ = (regionUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/${regionUuid}`).pipe(tap(console.log), catchError(this.handleError));
+    getRegionByUuid$ = (regionUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/${regionUuid}`).pipe(catchError(this.handleError));
 
     /**
      * Crée une nouvelle région
      */
-    createRegion$ = (request: IRegionCreateRequest): Observable<IResponse> => this.http.post<IResponse>(this.baseUrl, request).pipe(tap(console.log), catchError(this.handleError));
+    createRegion$ = (request: IRegionCreateRequest): Observable<IResponse> => this.http.post<IResponse>(this.baseUrl, request).pipe(catchError(this.handleError));
 
     /**
      * Met à jour le libellé et le code d'une région
      */
-    updateRegion$ = (regionUuid: string, request: IRegionUpdateRequest): Observable<IResponse> => this.http.put<IResponse>(`${this.baseUrl}/${regionUuid}`, request).pipe(tap(console.log), catchError(this.handleError));
+    updateRegion$ = (regionUuid: string, request: IRegionUpdateRequest): Observable<IResponse> => this.http.put<IResponse>(`${this.baseUrl}/${regionUuid}`, request).pipe(catchError(this.handleError));
 
     /**
      * Active ou désactive une région
      */
-    updateRegionStatus$ = (regionUuid: string, request: IRegionStatusRequest): Observable<IResponse> => this.http.patch<IResponse>(`${this.baseUrl}/${regionUuid}/status`, request).pipe(tap(console.log), catchError(this.handleError));
+    updateRegionStatus$ = (regionUuid: string, request: IRegionStatusRequest): Observable<IResponse> => this.http.patch<IResponse>(`${this.baseUrl}/${regionUuid}/status`, request).pipe(catchError(this.handleError));
 
     /**
      * Gestion des erreurs HTTP

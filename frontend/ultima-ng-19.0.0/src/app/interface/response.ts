@@ -10,6 +10,12 @@ import { ILocalisation, IPlacePrediction } from './localisation';
 import { Site } from './site.model';
 import { Depart } from './depart.model';
 import { Arrivee } from './arrivee.model';
+import { Trajet } from './trajet.model';
+import { Offre } from './offre.model';
+import { Vehicule } from './vehicule.model';
+import { TypeVehicule } from './type-vehicule.model';
+import { ModeReglement } from './mode-reglement.model';
+import { Partenaire } from './partenaire.model';
 
 // Immobilier (SIRA Guinée)
 import { IPropriete } from './propriete';
@@ -48,6 +54,41 @@ export interface IResponse {
         departs?: Depart[];
         arrivee?: Arrivee;
         arrivees?: Arrivee[];
+
+        // Billetterie - Trajets, Offres, Véhicules, Modes de règlement, Partenaires
+        trajet?: Trajet;
+        trajets?: Trajet[];
+        offre?: Offre;
+        offres?: Offre[];
+        vehicule?: Vehicule;
+        vehicules?: Vehicule[];
+        typeVehicule?: TypeVehicule;
+        typesVehicules?: TypeVehicule[];
+        modeReglement?: ModeReglement;
+        modesReglement?: ModeReglement[];
+        partenaire?: Partenaire;
+        partenaires?: Partenaire[];
+
+        // Statistiques (offres, véhicules, trajets)
+        actifs?: number;
+        inactifs?: number;
+        enMaintenance?: number;
+        suspendus?: number;
+        enAttente?: number;
+        enCours?: number;
+        ouvertes?: number;
+        fermees?: number;
+        terminees?: number;
+        annulees?: number;
+        suspendues?: number;
+        aujourd_hui?: number;
+
+        // Calculs de frais / commissions
+        montant?: number;
+        frais?: number;
+        montantBrut?: number;
+        montantNet?: number;
+        commission?: number;
 
         // Immobilier (SIRA Guinée)
         propriete?: IPropriete;

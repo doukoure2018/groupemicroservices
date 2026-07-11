@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { catchError, map, Observable, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 import { TypeVehicule, TypeVehiculeRequest, TypeVehiculeStats } from '@/interface/type-vehicule.model';
@@ -16,7 +16,6 @@ export class TypeVehiculeService {
 
     getAll(): Observable<TypeVehicule[]> {
         return this.http.get<IResponse>(this.baseUrl).pipe(
-            tap(console.log),
             map((response) => response.data?.typesVehicules || []),
             catchError(this.handleError)
         );
@@ -24,7 +23,6 @@ export class TypeVehiculeService {
 
     getAllActifs(): Observable<TypeVehicule[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/actifs`).pipe(
-            tap(console.log),
             map((response) => response.data?.typesVehicules || []),
             catchError(this.handleError)
         );
@@ -32,7 +30,6 @@ export class TypeVehiculeService {
 
     getByUuid(uuid: string): Observable<TypeVehicule> {
         return this.http.get<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.typeVehicule as TypeVehicule),
             catchError(this.handleError)
         );
@@ -40,7 +37,6 @@ export class TypeVehiculeService {
 
     getByLibelle(libelle: string): Observable<TypeVehicule> {
         return this.http.get<IResponse>(`${this.baseUrl}/libelle/${libelle}`).pipe(
-            tap(console.log),
             map((response) => response.data?.typeVehicule as TypeVehicule),
             catchError(this.handleError)
         );
@@ -48,7 +44,6 @@ export class TypeVehiculeService {
 
     getByCapacite(capacite: number): Observable<TypeVehicule[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/capacite/${capacite}`).pipe(
-            tap(console.log),
             map((response) => response.data?.typesVehicules || []),
             catchError(this.handleError)
         );
@@ -56,7 +51,6 @@ export class TypeVehiculeService {
 
     search(query: string): Observable<TypeVehicule[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/search`, { params: { q: query } }).pipe(
-            tap(console.log),
             map((response) => response.data?.typesVehicules || []),
             catchError(this.handleError)
         );
@@ -66,7 +60,6 @@ export class TypeVehiculeService {
 
     create(request: TypeVehiculeRequest): Observable<TypeVehicule> {
         return this.http.post<IResponse>(this.baseUrl, request).pipe(
-            tap(console.log),
             map((response) => response.data?.typeVehicule as TypeVehicule),
             catchError(this.handleError)
         );
@@ -74,7 +67,6 @@ export class TypeVehiculeService {
 
     update(uuid: string, request: TypeVehiculeRequest): Observable<TypeVehicule> {
         return this.http.put<IResponse>(`${this.baseUrl}/${uuid}`, request).pipe(
-            tap(console.log),
             map((response) => response.data?.typeVehicule as TypeVehicule),
             catchError(this.handleError)
         );
@@ -82,7 +74,6 @@ export class TypeVehiculeService {
 
     activate(uuid: string): Observable<TypeVehicule> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/activer`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.typeVehicule as TypeVehicule),
             catchError(this.handleError)
         );
@@ -90,7 +81,6 @@ export class TypeVehiculeService {
 
     deactivate(uuid: string): Observable<TypeVehicule> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/desactiver`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.typeVehicule as TypeVehicule),
             catchError(this.handleError)
         );
@@ -98,7 +88,6 @@ export class TypeVehiculeService {
 
     toggleActif(uuid: string): Observable<TypeVehicule> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/toggle-actif`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.typeVehicule as TypeVehicule),
             catchError(this.handleError)
         );
@@ -106,7 +95,6 @@ export class TypeVehiculeService {
 
     delete(uuid: string): Observable<void> {
         return this.http.delete<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map(() => void 0),
             catchError(this.handleError)
         );
@@ -116,7 +104,6 @@ export class TypeVehiculeService {
 
     getStats(): Observable<TypeVehiculeStats> {
         return this.http.get<IResponse>(`${this.baseUrl}/stats`).pipe(
-            tap(console.log),
             map((response) => ({
                 total: response.data?.total || 0,
                 actifs: response.data?.actifs || 0,

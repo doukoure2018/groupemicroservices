@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { catchError, map, Observable, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 import { Arrivee, ArriveeRequest } from '@/interface/arrivee.model';
@@ -17,7 +17,6 @@ export class ArriveeService {
      */
     getAll(): Observable<Arrivee[]> {
         return this.http.get<IResponse>(this.baseUrl).pipe(
-            tap(console.log),
             map((response) => response.data?.arrivees || []),
             catchError(this.handleError)
         );
@@ -28,7 +27,6 @@ export class ArriveeService {
      */
     getAllActifs(): Observable<Arrivee[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/actifs`).pipe(
-            tap(console.log),
             map((response) => response.data?.arrivees || []),
             catchError(this.handleError)
         );
@@ -39,7 +37,6 @@ export class ArriveeService {
      */
     getByUuid(uuid: string): Observable<Arrivee> {
         return this.http.get<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.arrivee as Arrivee),
             catchError(this.handleError)
         );
@@ -50,7 +47,6 @@ export class ArriveeService {
      */
     getBySite(siteUuid: string): Observable<Arrivee[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/site/${siteUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.arrivees || []),
             catchError(this.handleError)
         );
@@ -61,7 +57,6 @@ export class ArriveeService {
      */
     getByDepart(departUuid: string): Observable<Arrivee[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/depart/${departUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.arrivees || []),
             catchError(this.handleError)
         );
@@ -72,7 +67,6 @@ export class ArriveeService {
      */
     getByVilleArrivee(villeUuid: string): Observable<Arrivee[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/ville-arrivee/${villeUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.arrivees || []),
             catchError(this.handleError)
         );
@@ -83,7 +77,6 @@ export class ArriveeService {
      */
     getByVilleDepart(villeUuid: string): Observable<Arrivee[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/ville-depart/${villeUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.arrivees || []),
             catchError(this.handleError)
         );
@@ -98,7 +91,6 @@ export class ArriveeService {
                 params: { departUuid, villeArriveeUuid }
             })
             .pipe(
-                tap(console.log),
                 map((response) => response.data?.arrivees || []),
                 catchError(this.handleError)
             );
@@ -109,7 +101,6 @@ export class ArriveeService {
      */
     search(query: string): Observable<Arrivee[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/search`, { params: { q: query } }).pipe(
-            tap(console.log),
             map((response) => response.data?.arrivees || []),
             catchError(this.handleError)
         );
@@ -120,7 +111,6 @@ export class ArriveeService {
      */
     create(request: ArriveeRequest): Observable<Arrivee> {
         return this.http.post<IResponse>(this.baseUrl, request).pipe(
-            tap(console.log),
             map((response) => response.data?.arrivee as Arrivee),
             catchError(this.handleError)
         );
@@ -131,7 +121,6 @@ export class ArriveeService {
      */
     update(uuid: string, request: ArriveeRequest): Observable<Arrivee> {
         return this.http.put<IResponse>(`${this.baseUrl}/${uuid}`, request).pipe(
-            tap(console.log),
             map((response) => response.data?.arrivee as Arrivee),
             catchError(this.handleError)
         );
@@ -142,7 +131,6 @@ export class ArriveeService {
      */
     toggleActif(uuid: string): Observable<Arrivee> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/toggle-actif`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.arrivee as Arrivee),
             catchError(this.handleError)
         );
@@ -153,7 +141,6 @@ export class ArriveeService {
      */
     delete(uuid: string): Observable<void> {
         return this.http.delete<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map(() => void 0),
             catchError(this.handleError)
         );

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { catchError, Observable, tap, throwError } from 'rxjs';
+import { catchError, Observable, throwError } from 'rxjs';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 import { ILocalisationCreateRequest, ILocalisationUpdateRequest } from '@/interface/localisation';
@@ -17,62 +17,62 @@ export class LocalisationService {
     /**
      * Récupère toutes les localisations
      */
-    getAllLocalisations$ = (): Observable<IResponse> => this.http.get<IResponse>(this.baseUrl).pipe(tap(console.log), catchError(this.handleError));
+    getAllLocalisations$ = (): Observable<IResponse> => this.http.get<IResponse>(this.baseUrl).pipe(catchError(this.handleError));
 
     /**
      * Récupère les localisations avec quartier
      */
-    getLocalisationsWithQuartier$ = (): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/with-quartier`).pipe(tap(console.log), catchError(this.handleError));
+    getLocalisationsWithQuartier$ = (): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/with-quartier`).pipe(catchError(this.handleError));
 
     /**
      * Récupère les localisations sans quartier
      */
-    getLocalisationsWithoutQuartier$ = (): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/without-quartier`).pipe(tap(console.log), catchError(this.handleError));
+    getLocalisationsWithoutQuartier$ = (): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/without-quartier`).pipe(catchError(this.handleError));
 
     /**
      * Récupère une localisation par son UUID
      */
-    getLocalisationByUuid$ = (localisationUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/${localisationUuid}`).pipe(tap(console.log), catchError(this.handleError));
+    getLocalisationByUuid$ = (localisationUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/${localisationUuid}`).pipe(catchError(this.handleError));
 
     /**
      * Récupère les localisations d'un quartier
      */
-    getLocalisationsByQuartier$ = (quartierUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/quartier/${quartierUuid}`).pipe(tap(console.log), catchError(this.handleError));
+    getLocalisationsByQuartier$ = (quartierUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/quartier/${quartierUuid}`).pipe(catchError(this.handleError));
 
     /**
      * Récupère les localisations d'une commune
      */
-    getLocalisationsByCommune$ = (communeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/commune/${communeUuid}`).pipe(tap(console.log), catchError(this.handleError));
+    getLocalisationsByCommune$ = (communeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/commune/${communeUuid}`).pipe(catchError(this.handleError));
 
     /**
      * Récupère les localisations d'une ville
      */
-    getLocalisationsByVille$ = (villeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/ville/${villeUuid}`).pipe(tap(console.log), catchError(this.handleError));
+    getLocalisationsByVille$ = (villeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/ville/${villeUuid}`).pipe(catchError(this.handleError));
 
     /**
      * Récupère les localisations d'une région
      */
-    getLocalisationsByRegion$ = (regionUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/region/${regionUuid}`).pipe(tap(console.log), catchError(this.handleError));
+    getLocalisationsByRegion$ = (regionUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/region/${regionUuid}`).pipe(catchError(this.handleError));
 
     /**
      * Recherche des localisations par adresse
      */
-    searchLocalisations$ = (searchTerm: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/search?q=${encodeURIComponent(searchTerm)}`).pipe(tap(console.log), catchError(this.handleError));
+    searchLocalisations$ = (searchTerm: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/search?q=${encodeURIComponent(searchTerm)}`).pipe(catchError(this.handleError));
 
     /**
      * Crée une nouvelle localisation
      */
-    createLocalisation$ = (request: ILocalisationCreateRequest): Observable<IResponse> => this.http.post<IResponse>(this.baseUrl, request).pipe(tap(console.log), catchError(this.handleError));
+    createLocalisation$ = (request: ILocalisationCreateRequest): Observable<IResponse> => this.http.post<IResponse>(this.baseUrl, request).pipe(catchError(this.handleError));
 
     /**
      * Met à jour une localisation
      */
-    updateLocalisation$ = (localisationUuid: string, request: ILocalisationUpdateRequest): Observable<IResponse> => this.http.put<IResponse>(`${this.baseUrl}/${localisationUuid}`, request).pipe(tap(console.log), catchError(this.handleError));
+    updateLocalisation$ = (localisationUuid: string, request: ILocalisationUpdateRequest): Observable<IResponse> => this.http.put<IResponse>(`${this.baseUrl}/${localisationUuid}`, request).pipe(catchError(this.handleError));
 
     /**
      * Supprime une localisation
      */
-    deleteLocalisation$ = (localisationUuid: string): Observable<IResponse> => this.http.delete<IResponse>(`${this.baseUrl}/${localisationUuid}`).pipe(tap(console.log), catchError(this.handleError));
+    deleteLocalisation$ = (localisationUuid: string): Observable<IResponse> => this.http.delete<IResponse>(`${this.baseUrl}/${localisationUuid}`).pipe(catchError(this.handleError));
 
     /**
      * Gestion des erreurs HTTP

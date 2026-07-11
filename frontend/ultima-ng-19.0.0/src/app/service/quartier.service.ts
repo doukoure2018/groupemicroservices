@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { catchError, Observable, tap, throwError } from 'rxjs';
+import { catchError, Observable, throwError } from 'rxjs';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 import { IQuartierCreateRequest, IQuartierUpdateRequest } from '@/interface/quartier';
@@ -17,52 +17,52 @@ export class QuartierService {
     /**
      * Récupère tous les quartiers
      */
-    getAllQuartiers$ = (): Observable<IResponse> => this.http.get<IResponse>(this.baseUrl).pipe(tap(console.log), catchError(this.handleError));
+    getAllQuartiers$ = (): Observable<IResponse> => this.http.get<IResponse>(this.baseUrl).pipe(catchError(this.handleError));
 
     /**
      * Récupère uniquement les quartiers actifs
      */
-    getActiveQuartiers$ = (): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/active`).pipe(tap(console.log), catchError(this.handleError));
+    getActiveQuartiers$ = (): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/active`).pipe(catchError(this.handleError));
 
     /**
      * Récupère un quartier par son UUID
      */
-    getQuartierByUuid$ = (quartierUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/${quartierUuid}`).pipe(tap(console.log), catchError(this.handleError));
+    getQuartierByUuid$ = (quartierUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/${quartierUuid}`).pipe(catchError(this.handleError));
 
     /**
      * Récupère les quartiers d'une commune
      */
-    getQuartiersByCommune$ = (communeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/commune/${communeUuid}`).pipe(tap(console.log), catchError(this.handleError));
+    getQuartiersByCommune$ = (communeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/commune/${communeUuid}`).pipe(catchError(this.handleError));
 
     /**
      * Récupère les quartiers actifs d'une commune
      */
-    getActiveQuartiersByCommune$ = (communeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/commune/${communeUuid}/active`).pipe(tap(console.log), catchError(this.handleError));
+    getActiveQuartiersByCommune$ = (communeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/commune/${communeUuid}/active`).pipe(catchError(this.handleError));
 
     /**
      * Récupère les quartiers d'une ville
      */
-    getQuartiersByVille$ = (villeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/ville/${villeUuid}`).pipe(tap(console.log), catchError(this.handleError));
+    getQuartiersByVille$ = (villeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/ville/${villeUuid}`).pipe(catchError(this.handleError));
 
     /**
      * Récupère les quartiers d'une région
      */
-    getQuartiersByRegion$ = (regionUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/region/${regionUuid}`).pipe(tap(console.log), catchError(this.handleError));
+    getQuartiersByRegion$ = (regionUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/region/${regionUuid}`).pipe(catchError(this.handleError));
 
     /**
      * Crée un nouveau quartier
      */
-    createQuartier$ = (request: IQuartierCreateRequest): Observable<IResponse> => this.http.post<IResponse>(this.baseUrl, request).pipe(tap(console.log), catchError(this.handleError));
+    createQuartier$ = (request: IQuartierCreateRequest): Observable<IResponse> => this.http.post<IResponse>(this.baseUrl, request).pipe(catchError(this.handleError));
 
     /**
      * Met à jour un quartier
      */
-    updateQuartier$ = (quartierUuid: string, request: IQuartierUpdateRequest): Observable<IResponse> => this.http.put<IResponse>(`${this.baseUrl}/${quartierUuid}`, request).pipe(tap(console.log), catchError(this.handleError));
+    updateQuartier$ = (quartierUuid: string, request: IQuartierUpdateRequest): Observable<IResponse> => this.http.put<IResponse>(`${this.baseUrl}/${quartierUuid}`, request).pipe(catchError(this.handleError));
 
     /**
      * Active ou désactive un quartier
      */
-    updateQuartierStatus$ = (quartierUuid: string, actif: boolean): Observable<IResponse> => this.http.patch<IResponse>(`${this.baseUrl}/${quartierUuid}/status`, { actif }).pipe(tap(console.log), catchError(this.handleError));
+    updateQuartierStatus$ = (quartierUuid: string, actif: boolean): Observable<IResponse> => this.http.patch<IResponse>(`${this.baseUrl}/${quartierUuid}/status`, { actif }).pipe(catchError(this.handleError));
 
     /**
      * Gestion des erreurs HTTP

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { catchError, Observable, tap, throwError } from 'rxjs';
+import { catchError, Observable, throwError } from 'rxjs';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 
@@ -14,13 +14,13 @@ export class UserAdminService {
     constructor() {}
 
     getAllUsers$ = (): Observable<IResponse> =>
-        this.http.get<IResponse>(`${this.baseUrl}/list`).pipe(tap(console.log), catchError(this.handleError));
+        this.http.get<IResponse>(`${this.baseUrl}/list`).pipe(catchError(this.handleError));
 
     getRoles$ = (): Observable<IResponse> =>
-        this.http.get<IResponse>(`${this.baseUrl}/roles`).pipe(tap(console.log), catchError(this.handleError));
+        this.http.get<IResponse>(`${this.baseUrl}/roles`).pipe(catchError(this.handleError));
 
     updateUserRole$ = (userUuid: string, role: string): Observable<IResponse> =>
-        this.http.patch<IResponse>(`${this.baseUrl}/${userUuid}/role`, { role }).pipe(tap(console.log), catchError(this.handleError));
+        this.http.patch<IResponse>(`${this.baseUrl}/${userUuid}/role`, { role }).pipe(catchError(this.handleError));
 
     /** Admin : crée un compte backoffice (rôle whitelisté, actif, mot de passe temporaire). */
     createBackofficeUser$ = (payload: {

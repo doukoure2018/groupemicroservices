@@ -121,11 +121,10 @@ export class SitesGaresComponent implements OnInit {
                 this.loading.set(false);
             },
             error: (err: any) => {
-                console.error('Erreur chargement sites:', err);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erreur',
-                    detail: 'Impossible de charger les sites'
+                    detail: this.errorMessage(err, 'Impossible de charger les sites')
                 });
                 this.loading.set(false);
             }
@@ -141,11 +140,10 @@ export class SitesGaresComponent implements OnInit {
                 this.localisations.set(localisationsList);
             },
             error: (err: any) => {
-                console.error('Erreur chargement localisations:', err);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erreur',
-                    detail: 'Impossible de charger les localisations'
+                    detail: this.errorMessage(err, 'Impossible de charger les localisations')
                 });
             }
         });
@@ -209,11 +207,10 @@ export class SitesGaresComponent implements OnInit {
                     this.closeDialog();
                 },
                 error: (err: any) => {
-                    console.error('Erreur mise à jour:', err);
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Erreur',
-                        detail: err.error?.message || 'Impossible de mettre à jour le site'
+                        detail: this.errorMessage(err, 'Impossible de mettre à jour le site')
                     });
                     this.loading.set(false);
                 }
@@ -230,11 +227,10 @@ export class SitesGaresComponent implements OnInit {
                     this.closeDialog();
                 },
                 error: (err: any) => {
-                    console.error('Erreur création:', err);
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Erreur',
-                        detail: err.error?.message || 'Impossible de créer le site'
+                        detail: this.errorMessage(err, 'Impossible de créer le site')
                     });
                     this.loading.set(false);
                 }
@@ -254,11 +250,10 @@ export class SitesGaresComponent implements OnInit {
                 this.loadSites();
             },
             error: (err: any) => {
-                console.error('Erreur toggle actif:', err);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erreur',
-                    detail: 'Impossible de modifier le statut'
+                    detail: this.errorMessage(err, 'Impossible de modifier le statut')
                 });
             }
         });
@@ -287,11 +282,10 @@ export class SitesGaresComponent implements OnInit {
                 this.loadSites();
             },
             error: (err: any) => {
-                console.error('Erreur suppression:', err);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erreur',
-                    detail: err.error?.message || 'Impossible de supprimer le site'
+                    detail: this.errorMessage(err, 'Impossible de supprimer le site')
                 });
             }
         });
@@ -334,5 +328,10 @@ export class SitesGaresComponent implements OnInit {
     onSearch(event: Event): void {
         const input = event.target as HTMLInputElement;
         this.searchQuery.set(input.value);
+    }
+
+    // Les services transforment les erreurs HTTP en string (handleError) avant de les relancer.
+    private errorMessage(err: unknown, fallback: string): string {
+        return typeof err === 'string' && err ? err : fallback;
     }
 }

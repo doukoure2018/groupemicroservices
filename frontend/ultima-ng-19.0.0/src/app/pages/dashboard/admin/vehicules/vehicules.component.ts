@@ -169,7 +169,7 @@ export class VehiculesComponent implements OnInit {
     loadTypesVehicules(): void {
         this.typeVehiculeService.getAllActifs().subscribe({
             next: (data) => this.typesVehicules.set(data),
-            error: (err) => console.error('Erreur chargement types:', err)
+            error: (err) => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err || 'Impossible de charger les types de véhicules (liste déroulante indisponible)' })
         });
     }
 
@@ -289,10 +289,6 @@ export class VehiculesComponent implements OnInit {
 
     onSearch(event: Event): void {
         this.searchQuery.set((event.target as HTMLInputElement).value);
-    }
-
-    private formatDate(date: Date): string {
-        return date.toISOString().split('T')[0];
     }
 
     getStatutSeverity = getStatutVehiculeSeverity;

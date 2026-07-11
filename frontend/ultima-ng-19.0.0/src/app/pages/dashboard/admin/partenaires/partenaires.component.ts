@@ -142,7 +142,7 @@ export class PartenairesComponent implements OnInit {
             next: (response: IResponse) => {
                 this.localisations.set(response.data?.localisations || []);
             },
-            error: (err) => console.error('Erreur chargement localisations:', err)
+            error: (err) => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err || 'Impossible de charger les localisations (liste déroulante indisponible)' })
         });
     }
 

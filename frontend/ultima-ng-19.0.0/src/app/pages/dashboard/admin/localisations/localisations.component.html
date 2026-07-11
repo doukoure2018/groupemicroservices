@@ -272,6 +272,12 @@
                         optionLabel="libelle" optionValue="quartierUuid" placeholder="Sélectionner un quartier"
                         [showClear]="true" [filter]="true" filterPlaceholder="Rechercher..." styleClass="w-full">
                     </p-dropdown>
+                    @if (!localisationForm.get('quartierUuid')?.value) {
+                    <small class="p-text-secondary">
+                        <i class="pi pi-info-circle"></i>
+                        Sans quartier, les sites/gares rattachés à cette localisation n'apparaîtront pas dans les recherches par ville.
+                    </small>
+                    }
                 </div>
 
                 @if (isEditMode() && selectedLocalisation()?.quartierId) {

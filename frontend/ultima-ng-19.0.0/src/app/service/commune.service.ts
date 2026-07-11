@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { catchError, Observable, tap, throwError } from 'rxjs';
+import { catchError, Observable, throwError } from 'rxjs';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 import { ICommuneCreateRequest, ICommuneUpdateRequest } from '@/interface/commune';
@@ -17,47 +17,47 @@ export class CommuneService {
     /**
      * Récupère toutes les communes
      */
-    getAllCommunes$ = (): Observable<IResponse> => this.http.get<IResponse>(this.baseUrl).pipe(tap(console.log), catchError(this.handleError));
+    getAllCommunes$ = (): Observable<IResponse> => this.http.get<IResponse>(this.baseUrl).pipe(catchError(this.handleError));
 
     /**
      * Récupère uniquement les communes actives
      */
-    getActiveCommunes$ = (): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/active`).pipe(tap(console.log), catchError(this.handleError));
+    getActiveCommunes$ = (): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/active`).pipe(catchError(this.handleError));
 
     /**
      * Récupère une commune par son UUID
      */
-    getCommuneByUuid$ = (communeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/${communeUuid}`).pipe(tap(console.log), catchError(this.handleError));
+    getCommuneByUuid$ = (communeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/${communeUuid}`).pipe(catchError(this.handleError));
 
     /**
      * Récupère les communes d'une ville
      */
-    getCommunesByVille$ = (villeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/ville/${villeUuid}`).pipe(tap(console.log), catchError(this.handleError));
+    getCommunesByVille$ = (villeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/ville/${villeUuid}`).pipe(catchError(this.handleError));
 
     /**
      * Récupère les communes actives d'une ville
      */
-    getActiveCommunesByVille$ = (villeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/ville/${villeUuid}/active`).pipe(tap(console.log), catchError(this.handleError));
+    getActiveCommunesByVille$ = (villeUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/ville/${villeUuid}/active`).pipe(catchError(this.handleError));
 
     /**
      * Récupère les communes d'une région
      */
-    getCommunesByRegion$ = (regionUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/region/${regionUuid}`).pipe(tap(console.log), catchError(this.handleError));
+    getCommunesByRegion$ = (regionUuid: string): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/region/${regionUuid}`).pipe(catchError(this.handleError));
 
     /**
      * Crée une nouvelle commune
      */
-    createCommune$ = (request: ICommuneCreateRequest): Observable<IResponse> => this.http.post<IResponse>(this.baseUrl, request).pipe(tap(console.log), catchError(this.handleError));
+    createCommune$ = (request: ICommuneCreateRequest): Observable<IResponse> => this.http.post<IResponse>(this.baseUrl, request).pipe(catchError(this.handleError));
 
     /**
      * Met à jour une commune
      */
-    updateCommune$ = (communeUuid: string, request: ICommuneUpdateRequest): Observable<IResponse> => this.http.put<IResponse>(`${this.baseUrl}/${communeUuid}`, request).pipe(tap(console.log), catchError(this.handleError));
+    updateCommune$ = (communeUuid: string, request: ICommuneUpdateRequest): Observable<IResponse> => this.http.put<IResponse>(`${this.baseUrl}/${communeUuid}`, request).pipe(catchError(this.handleError));
 
     /**
      * Active ou désactive une commune
      */
-    updateCommuneStatus$ = (communeUuid: string, actif: boolean): Observable<IResponse> => this.http.patch<IResponse>(`${this.baseUrl}/${communeUuid}/status`, { actif }).pipe(tap(console.log), catchError(this.handleError));
+    updateCommuneStatus$ = (communeUuid: string, actif: boolean): Observable<IResponse> => this.http.patch<IResponse>(`${this.baseUrl}/${communeUuid}/status`, { actif }).pipe(catchError(this.handleError));
 
     /**
      * Gestion des erreurs HTTP

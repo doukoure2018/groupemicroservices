@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { catchError, map, Observable, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 import { ModeReglement, ModeReglementRequest } from '@/interface/mode-reglement.model';
@@ -16,7 +16,6 @@ export class ModeReglementService {
 
     getAll(): Observable<ModeReglement[]> {
         return this.http.get<IResponse>(this.baseUrl).pipe(
-            tap(console.log),
             map((response) => response.data?.modesReglement || []),
             catchError(this.handleError)
         );
@@ -24,7 +23,6 @@ export class ModeReglementService {
 
     getAllActifs(): Observable<ModeReglement[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/actifs`).pipe(
-            tap(console.log),
             map((response) => response.data?.modesReglement || []),
             catchError(this.handleError)
         );
@@ -32,7 +30,6 @@ export class ModeReglementService {
 
     getByUuid(uuid: string): Observable<ModeReglement> {
         return this.http.get<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.modeReglement as ModeReglement),
             catchError(this.handleError)
         );
@@ -40,7 +37,6 @@ export class ModeReglementService {
 
     getByCode(code: string): Observable<ModeReglement> {
         return this.http.get<IResponse>(`${this.baseUrl}/code/${code}`).pipe(
-            tap(console.log),
             map((response) => response.data?.modeReglement as ModeReglement),
             catchError(this.handleError)
         );
@@ -48,7 +44,6 @@ export class ModeReglementService {
 
     getSansFrais(): Observable<ModeReglement[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/sans-frais`).pipe(
-            tap(console.log),
             map((response) => response.data?.modesReglement || []),
             catchError(this.handleError)
         );
@@ -56,7 +51,6 @@ export class ModeReglementService {
 
     search(query: string): Observable<ModeReglement[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/search`, { params: { q: query } }).pipe(
-            tap(console.log),
             map((response) => response.data?.modesReglement || []),
             catchError(this.handleError)
         );
@@ -64,7 +58,6 @@ export class ModeReglementService {
 
     calculerFrais(uuid: string, montant: number): Observable<{ montant: number; frais: number; total: number }> {
         return this.http.get<IResponse>(`${this.baseUrl}/${uuid}/calculer-frais`, { params: { montant: montant.toString() } }).pipe(
-            tap(console.log),
             map((response) => ({
                 montant: response.data?.montant || 0,
                 frais: response.data?.frais || 0,
@@ -78,7 +71,6 @@ export class ModeReglementService {
 
     create(request: ModeReglementRequest): Observable<ModeReglement> {
         return this.http.post<IResponse>(this.baseUrl, request).pipe(
-            tap(console.log),
             map((response) => response.data?.modeReglement as ModeReglement),
             catchError(this.handleError)
         );
@@ -86,7 +78,6 @@ export class ModeReglementService {
 
     update(uuid: string, request: ModeReglementRequest): Observable<ModeReglement> {
         return this.http.put<IResponse>(`${this.baseUrl}/${uuid}`, request).pipe(
-            tap(console.log),
             map((response) => response.data?.modeReglement as ModeReglement),
             catchError(this.handleError)
         );
@@ -102,7 +93,6 @@ export class ModeReglementService {
         }
 
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/frais`, {}, { params }).pipe(
-            tap(console.log),
             map((response) => response.data?.modeReglement as ModeReglement),
             catchError(this.handleError)
         );
@@ -110,7 +100,6 @@ export class ModeReglementService {
 
     activate(uuid: string): Observable<ModeReglement> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/activer`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.modeReglement as ModeReglement),
             catchError(this.handleError)
         );
@@ -118,7 +107,6 @@ export class ModeReglementService {
 
     deactivate(uuid: string): Observable<ModeReglement> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/desactiver`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.modeReglement as ModeReglement),
             catchError(this.handleError)
         );
@@ -126,7 +114,6 @@ export class ModeReglementService {
 
     toggleActif(uuid: string): Observable<ModeReglement> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/toggle-actif`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.modeReglement as ModeReglement),
             catchError(this.handleError)
         );
@@ -134,7 +121,6 @@ export class ModeReglementService {
 
     delete(uuid: string): Observable<void> {
         return this.http.delete<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map(() => void 0),
             catchError(this.handleError)
         );
@@ -144,7 +130,6 @@ export class ModeReglementService {
 
     getStats(): Observable<{ total: number; actifs: number; inactifs: number }> {
         return this.http.get<IResponse>(`${this.baseUrl}/stats`).pipe(
-            tap(console.log),
             map((response) => ({
                 total: response.data?.total || 0,
                 actifs: response.data?.actifs || 0,

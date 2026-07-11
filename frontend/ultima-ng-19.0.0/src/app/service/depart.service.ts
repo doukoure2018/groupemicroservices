@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { catchError, map, Observable, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 import { Depart, DepartRequest } from '@/interface/depart.model';
@@ -17,7 +17,6 @@ export class DepartService {
      */
     getAll(): Observable<Depart[]> {
         return this.http.get<IResponse>(this.baseUrl).pipe(
-            tap(console.log),
             map((response) => response.data?.departs || []),
             catchError(this.handleError)
         );
@@ -28,7 +27,6 @@ export class DepartService {
      */
     getAllActifs(): Observable<Depart[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/actifs`).pipe(
-            tap(console.log),
             map((response) => response.data?.departs || []),
             catchError(this.handleError)
         );
@@ -39,7 +37,6 @@ export class DepartService {
      */
     getByUuid(uuid: string): Observable<Depart> {
         return this.http.get<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.depart as Depart),
             catchError(this.handleError)
         );
@@ -50,7 +47,6 @@ export class DepartService {
      */
     getBySite(siteUuid: string): Observable<Depart[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/site/${siteUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.departs || []),
             catchError(this.handleError)
         );
@@ -61,7 +57,6 @@ export class DepartService {
      */
     getBySiteActifs(siteUuid: string): Observable<Depart[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/site/${siteUuid}/actifs`).pipe(
-            tap(console.log),
             map((response) => response.data?.departs || []),
             catchError(this.handleError)
         );
@@ -72,7 +67,6 @@ export class DepartService {
      */
     getByVille(villeUuid: string): Observable<Depart[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/ville/${villeUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.departs || []),
             catchError(this.handleError)
         );
@@ -83,7 +77,6 @@ export class DepartService {
      */
     search(query: string): Observable<Depart[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/search`, { params: { q: query } }).pipe(
-            tap(console.log),
             map((response) => response.data?.departs || []),
             catchError(this.handleError)
         );
@@ -94,7 +87,6 @@ export class DepartService {
      */
     create(request: DepartRequest): Observable<Depart> {
         return this.http.post<IResponse>(this.baseUrl, request).pipe(
-            tap(console.log),
             map((response) => response.data?.depart as Depart),
             catchError(this.handleError)
         );
@@ -105,7 +97,6 @@ export class DepartService {
      */
     update(uuid: string, request: DepartRequest): Observable<Depart> {
         return this.http.put<IResponse>(`${this.baseUrl}/${uuid}`, request).pipe(
-            tap(console.log),
             map((response) => response.data?.depart as Depart),
             catchError(this.handleError)
         );
@@ -116,7 +107,6 @@ export class DepartService {
      */
     toggleActif(uuid: string): Observable<Depart> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/toggle-actif`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.depart as Depart),
             catchError(this.handleError)
         );
@@ -127,7 +117,6 @@ export class DepartService {
      */
     delete(uuid: string): Observable<void> {
         return this.http.delete<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map(() => void 0),
             catchError(this.handleError)
         );

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 
@@ -23,10 +23,10 @@ export class ConformiteService {
         this.http.get(`${this.baseUrl}/agences/${agenceUuid}/rccm?_t=${Date.now()}`, { responseType: 'blob' }).pipe(catchError(this.handleError));
 
     approuver$ = (agenceUuid: string): Observable<IResponse> =>
-        this.http.patch<IResponse>(`${this.baseUrl}/agences/${agenceUuid}/approuver`, {}).pipe(tap(console.log), catchError(this.handleError));
+        this.http.patch<IResponse>(`${this.baseUrl}/agences/${agenceUuid}/approuver`, {}).pipe(catchError(this.handleError));
 
     rejeter$ = (agenceUuid: string, motif: string): Observable<IResponse> =>
-        this.http.patch<IResponse>(`${this.baseUrl}/agences/${agenceUuid}/rejeter`, { motif }).pipe(tap(console.log), catchError(this.handleError));
+        this.http.patch<IResponse>(`${this.baseUrl}/agences/${agenceUuid}/rejeter`, { motif }).pipe(catchError(this.handleError));
 
     private handleError(error: any): Observable<never> {
         console.error(error);

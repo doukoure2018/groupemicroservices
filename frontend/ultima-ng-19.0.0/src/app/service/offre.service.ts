@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { catchError, map, Observable, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 import { Offre, OffreRequest, OffreStats } from '@/interface/offre.model';
@@ -19,7 +19,6 @@ export class OffreService {
      */
     getAll(): Observable<Offre[]> {
         return this.http.get<IResponse>(this.baseUrl).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -30,7 +29,6 @@ export class OffreService {
      */
     getOuvertes(): Observable<Offre[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/ouvertes`).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -41,7 +39,6 @@ export class OffreService {
      */
     getByUuid(uuid: string): Observable<Offre> {
         return this.http.get<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.offre as Offre),
             catchError(this.handleError)
         );
@@ -52,7 +49,6 @@ export class OffreService {
      */
     getByToken(token: string): Observable<Offre> {
         return this.http.get<IResponse>(`${this.baseUrl}/token/${token}`).pipe(
-            tap(console.log),
             map((response) => response.data?.offre as Offre),
             catchError(this.handleError)
         );
@@ -63,7 +59,6 @@ export class OffreService {
      */
     getMesOffres(): Observable<Offre[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/mes-offres`).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -74,7 +69,6 @@ export class OffreService {
      */
     getByTrajet(trajetUuid: string): Observable<Offre[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/trajet/${trajetUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -85,7 +79,6 @@ export class OffreService {
      */
     getByVehicule(vehiculeUuid: string): Observable<Offre[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/vehicule/${vehiculeUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -96,7 +89,6 @@ export class OffreService {
      */
     getByStatut(statut: string): Observable<Offre[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/statut/${statut}`).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -107,7 +99,6 @@ export class OffreService {
      */
     getByDate(dateDepart: string): Observable<Offre[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/date/${dateDepart}`).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -126,7 +117,6 @@ export class OffreService {
         }
 
         return this.http.get<IResponse>(`${this.baseUrl}/recherche`, { params }).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -137,7 +127,6 @@ export class OffreService {
      */
     getByVilleDepart(villeUuid: string): Observable<Offre[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/ville-depart/${villeUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -148,7 +137,6 @@ export class OffreService {
      */
     getByVilleArrivee(villeUuid: string): Observable<Offre[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/ville-arrivee/${villeUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -159,7 +147,6 @@ export class OffreService {
      */
     getByPlacesDisponibles(nombrePlaces: number): Observable<Offre[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/places-disponibles/${nombrePlaces}`).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -170,7 +157,6 @@ export class OffreService {
      */
     getAujourdHui(): Observable<Offre[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/aujourd-hui`).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -181,7 +167,6 @@ export class OffreService {
      */
     getAVenir(): Observable<Offre[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/a-venir`).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -192,7 +177,6 @@ export class OffreService {
      */
     getPassees(): Observable<Offre[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/passees`).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -203,7 +187,6 @@ export class OffreService {
      */
     getPromotions(): Observable<Offre[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/promotions`).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -214,7 +197,6 @@ export class OffreService {
      */
     search(query: string): Observable<Offre[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/search`, { params: { q: query } }).pipe(
-            tap(console.log),
             map((response) => response.data?.offres || []),
             catchError(this.handleError)
         );
@@ -227,7 +209,6 @@ export class OffreService {
      */
     create(request: OffreRequest): Observable<Offre> {
         return this.http.post<IResponse>(this.baseUrl, request).pipe(
-            tap(console.log),
             map((response) => response.data?.offre as Offre),
             catchError(this.handleError)
         );
@@ -238,7 +219,6 @@ export class OffreService {
      */
     update(uuid: string, request: OffreRequest): Observable<Offre> {
         return this.http.put<IResponse>(`${this.baseUrl}/${uuid}`, request).pipe(
-            tap(console.log),
             map((response) => response.data?.offre as Offre),
             catchError(this.handleError)
         );
@@ -249,7 +229,6 @@ export class OffreService {
      */
     delete(uuid: string): Observable<void> {
         return this.http.delete<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map(() => void 0),
             catchError(this.handleError)
         );
@@ -262,7 +241,6 @@ export class OffreService {
      */
     ouvrir(uuid: string): Observable<Offre> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/ouvrir`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.offre as Offre),
             catchError(this.handleError)
         );
@@ -273,7 +251,6 @@ export class OffreService {
      */
     fermer(uuid: string): Observable<Offre> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/fermer`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.offre as Offre),
             catchError(this.handleError)
         );
@@ -284,7 +261,6 @@ export class OffreService {
      */
     cloturer(uuid: string): Observable<Offre> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/cloturer`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.offre as Offre),
             catchError(this.handleError)
         );
@@ -295,7 +271,6 @@ export class OffreService {
      */
     annuler(uuid: string): Observable<Offre> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/annuler`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.offre as Offre),
             catchError(this.handleError)
         );
@@ -306,7 +281,6 @@ export class OffreService {
      */
     demarrer(uuid: string): Observable<Offre> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/demarrer`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.offre as Offre),
             catchError(this.handleError)
         );
@@ -317,7 +291,6 @@ export class OffreService {
      */
     terminer(uuid: string): Observable<Offre> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/terminer`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.offre as Offre),
             catchError(this.handleError)
         );
@@ -328,7 +301,6 @@ export class OffreService {
      */
     suspendre(uuid: string): Observable<Offre> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/suspendre`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.offre as Offre),
             catchError(this.handleError)
         );
@@ -339,7 +311,6 @@ export class OffreService {
      */
     reprendre(uuid: string): Observable<Offre> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/reprendre`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.offre as Offre),
             catchError(this.handleError)
         );
@@ -352,7 +323,6 @@ export class OffreService {
      */
     appliquerPromotion(uuid: string, montantPromotion: number): Observable<Offre> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/promotion`, {}, { params: { montantPromotion: montantPromotion.toString() } }).pipe(
-            tap(console.log),
             map((response) => response.data?.offre as Offre),
             catchError(this.handleError)
         );
@@ -363,7 +333,6 @@ export class OffreService {
      */
     retirerPromotion(uuid: string): Observable<Offre> {
         return this.http.delete<IResponse>(`${this.baseUrl}/${uuid}/promotion`).pipe(
-            tap(console.log),
             map((response) => response.data?.offre as Offre),
             catchError(this.handleError)
         );
@@ -376,7 +345,6 @@ export class OffreService {
      */
     getStats(): Observable<OffreStats> {
         return this.http.get<IResponse>(`${this.baseUrl}/stats`).pipe(
-            tap(console.log),
             map((response) => ({
                 total: response.data?.total || 0,
                 enAttente: response.data?.enAttente || 0,
@@ -397,7 +365,6 @@ export class OffreService {
      */
     getMesStats(): Observable<OffreStats> {
         return this.http.get<IResponse>(`${this.baseUrl}/mes-stats`).pipe(
-            tap(console.log),
             map((response) => ({
                 total: response.data?.total || 0,
                 enAttente: response.data?.enAttente || 0,

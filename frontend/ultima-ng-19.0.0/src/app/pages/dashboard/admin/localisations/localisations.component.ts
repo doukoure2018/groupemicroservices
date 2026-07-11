@@ -351,13 +351,11 @@ export class LocalisationsComponent implements OnInit {
             return;
         }
 
-        console.log('🔍 Recherche:', query);
         this.loadingAddress.set(true);
         this.searchPerformed.set(true);
 
         this.osmService.searchGuinea$(query).subscribe({
             next: (suggestions) => {
-                console.log('✅ Résultats:', suggestions);
                 this.addressSuggestions.set(suggestions);
                 this.loadingAddress.set(false);
 
@@ -368,7 +366,6 @@ export class LocalisationsComponent implements OnInit {
                 }
             },
             error: (error) => {
-                console.error('❌ Erreur:', error);
                 this.addressSuggestions.set([]);
                 this.loadingAddress.set(false);
                 this.showError('Erreur lors de la recherche');
@@ -380,8 +377,6 @@ export class LocalisationsComponent implements OnInit {
      * Sélection d'une adresse dans la liste
      */
     selectAddress(place: IPlacePrediction): void {
-        console.log('📍 Adresse sélectionnée:', place);
-
         // Mettre à jour le formulaire
         this.localisationForm.patchValue({
             adresseComplete: place.description,
@@ -483,6 +478,26 @@ export class LocalisationsComponent implements OnInit {
 
         const formValue = this.localisationForm.value;
 
+        // Sans quartier, la chaîne quartier→commune→ville est rompue : les sites rattachés
+        // à cette localisation n'apparaîtront dans aucune recherche par ville (web et mobile).
+        const sansQuartier = !formValue.quartierUuid || formValue.removeQuartier;
+        if (sansQuartier) {
+            this.confirmationService.confirm({
+                header: 'Localisation sans quartier',
+                message: "Aucun quartier n'est rattaché à cette localisation. Les sites/gares qui l'utiliseront ne remonteront pas dans les recherches par ville (site web et application mobile). Voulez-vous quand même enregistrer ?",
+                icon: 'pi pi-exclamation-triangle',
+                acceptLabel: 'Enregistrer sans quartier',
+                rejectLabel: 'Revenir au formulaire',
+                acceptButtonStyleClass: 'p-button-warning',
+                accept: () => this.submitForm(formValue)
+            });
+            return;
+        }
+
+        this.submitForm(formValue);
+    }
+
+    private submitForm(formValue: any): void {
         if (this.isEditMode() && this.selectedLocalisation()) {
             const updateData = {
                 quartierUuid: formValue.quartierUuid || null,

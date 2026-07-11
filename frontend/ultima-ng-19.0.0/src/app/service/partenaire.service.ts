@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { catchError, map, Observable, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 import { Partenaire, PartenaireRequest } from '@/interface/partenaire.model';
@@ -16,7 +16,6 @@ export class PartenaireService {
 
     getAll(): Observable<Partenaire[]> {
         return this.http.get<IResponse>(this.baseUrl).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaires || []),
             catchError(this.handleError)
         );
@@ -24,7 +23,6 @@ export class PartenaireService {
 
     getAllActifs(): Observable<Partenaire[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/actifs`).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaires || []),
             catchError(this.handleError)
         );
@@ -32,7 +30,6 @@ export class PartenaireService {
 
     getByUuid(uuid: string): Observable<Partenaire> {
         return this.http.get<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaire as Partenaire),
             catchError(this.handleError)
         );
@@ -40,7 +37,6 @@ export class PartenaireService {
 
     getByNom(nom: string): Observable<Partenaire> {
         return this.http.get<IResponse>(`${this.baseUrl}/nom/${nom}`).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaire as Partenaire),
             catchError(this.handleError)
         );
@@ -48,7 +44,6 @@ export class PartenaireService {
 
     getByType(typePartenaire: string): Observable<Partenaire[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/type/${typePartenaire}`).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaires || []),
             catchError(this.handleError)
         );
@@ -56,7 +51,6 @@ export class PartenaireService {
 
     getByStatut(statut: string): Observable<Partenaire[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/statut/${statut}`).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaires || []),
             catchError(this.handleError)
         );
@@ -64,7 +58,6 @@ export class PartenaireService {
 
     getByVille(villeUuid: string): Observable<Partenaire[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/ville/${villeUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaires || []),
             catchError(this.handleError)
         );
@@ -72,7 +65,6 @@ export class PartenaireService {
 
     getByRegion(regionUuid: string): Observable<Partenaire[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/region/${regionUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaires || []),
             catchError(this.handleError)
         );
@@ -80,7 +72,6 @@ export class PartenaireService {
 
     search(query: string): Observable<Partenaire[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/search`, { params: { q: query } }).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaires || []),
             catchError(this.handleError)
         );
@@ -88,7 +79,6 @@ export class PartenaireService {
 
     getPartenariatsExpires(): Observable<Partenaire[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/expires`).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaires || []),
             catchError(this.handleError)
         );
@@ -96,7 +86,6 @@ export class PartenaireService {
 
     getPartenariatsExpirantBientot(): Observable<Partenaire[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/expirant-bientot`).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaires || []),
             catchError(this.handleError)
         );
@@ -104,7 +93,6 @@ export class PartenaireService {
 
     calculerCommission(uuid: string, montant: number): Observable<{ montantBrut: number; commission: number; montantNet: number }> {
         return this.http.get<IResponse>(`${this.baseUrl}/${uuid}/calculer-commission`, { params: { montant: montant.toString() } }).pipe(
-            tap(console.log),
             map((response) => ({
                 montantBrut: response.data?.montantBrut || 0,
                 commission: response.data?.commission || 0,
@@ -118,7 +106,6 @@ export class PartenaireService {
 
     create(request: PartenaireRequest): Observable<Partenaire> {
         return this.http.post<IResponse>(this.baseUrl, request).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaire as Partenaire),
             catchError(this.handleError)
         );
@@ -126,7 +113,6 @@ export class PartenaireService {
 
     update(uuid: string, request: PartenaireRequest): Observable<Partenaire> {
         return this.http.put<IResponse>(`${this.baseUrl}/${uuid}`, request).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaire as Partenaire),
             catchError(this.handleError)
         );
@@ -134,7 +120,6 @@ export class PartenaireService {
 
     updateStatut(uuid: string, statut: string): Observable<Partenaire> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/statut`, {}, { params: { statut } }).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaire as Partenaire),
             catchError(this.handleError)
         );
@@ -150,7 +135,6 @@ export class PartenaireService {
         }
 
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/commissions`, {}, { params }).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaire as Partenaire),
             catchError(this.handleError)
         );
@@ -158,7 +142,6 @@ export class PartenaireService {
 
     activer(uuid: string): Observable<Partenaire> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/activer`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaire as Partenaire),
             catchError(this.handleError)
         );
@@ -166,7 +149,6 @@ export class PartenaireService {
 
     desactiver(uuid: string): Observable<Partenaire> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/desactiver`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaire as Partenaire),
             catchError(this.handleError)
         );
@@ -174,7 +156,6 @@ export class PartenaireService {
 
     suspendre(uuid: string): Observable<Partenaire> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/suspendre`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaire as Partenaire),
             catchError(this.handleError)
         );
@@ -182,7 +163,6 @@ export class PartenaireService {
 
     mettreEnAttente(uuid: string): Observable<Partenaire> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/en-attente`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.partenaire as Partenaire),
             catchError(this.handleError)
         );
@@ -190,7 +170,6 @@ export class PartenaireService {
 
     delete(uuid: string): Observable<void> {
         return this.http.delete<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map(() => void 0),
             catchError(this.handleError)
         );
@@ -200,7 +179,6 @@ export class PartenaireService {
 
     getStats(): Observable<any> {
         return this.http.get<IResponse>(`${this.baseUrl}/stats`).pipe(
-            tap(console.log),
             map((response) => ({
                 total: response.data?.total || 0,
                 actifs: response.data?.actifs || 0,
@@ -214,7 +192,6 @@ export class PartenaireService {
 
     getStatsByType(): Observable<any> {
         return this.http.get<IResponse>(`${this.baseUrl}/stats/types`).pipe(
-            tap(console.log),
             map((response) => response.data),
             catchError(this.handleError)
         );

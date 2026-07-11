@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { catchError, map, Observable, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 import { Site, SiteRequest } from '@/interface/site.model';
@@ -17,7 +17,6 @@ export class SiteService {
      */
     getAll(): Observable<Site[]> {
         return this.http.get<IResponse>(this.baseUrl).pipe(
-            tap(console.log),
             map((response) => response.data?.sites || []),
             catchError(this.handleError)
         );
@@ -28,7 +27,6 @@ export class SiteService {
      */
     getAllActifs(): Observable<Site[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/actifs`).pipe(
-            tap(console.log),
             map((response) => response.data?.sites || []),
             catchError(this.handleError)
         );
@@ -39,7 +37,6 @@ export class SiteService {
      */
     getByUuid(uuid: string): Observable<Site> {
         return this.http.get<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.site as Site),
             catchError(this.handleError)
         );
@@ -50,7 +47,6 @@ export class SiteService {
      */
     getByType(typeSite: string): Observable<Site[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/type/${typeSite}`).pipe(
-            tap(console.log),
             map((response) => response.data?.sites || []),
             catchError(this.handleError)
         );
@@ -61,7 +57,6 @@ export class SiteService {
      */
     getByLocalisation(localisationUuid: string): Observable<Site[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/localisation/${localisationUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.sites || []),
             catchError(this.handleError)
         );
@@ -72,7 +67,6 @@ export class SiteService {
      */
     getByVille(villeUuid: string): Observable<Site[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/ville/${villeUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.sites || []),
             catchError(this.handleError)
         );
@@ -83,7 +77,6 @@ export class SiteService {
      */
     getByCommune(communeUuid: string): Observable<Site[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/commune/${communeUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.sites || []),
             catchError(this.handleError)
         );
@@ -94,7 +87,6 @@ export class SiteService {
      */
     search(query: string): Observable<Site[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/search`, { params: { q: query } }).pipe(
-            tap(console.log),
             map((response) => response.data?.sites || []),
             catchError(this.handleError)
         );
@@ -105,7 +97,6 @@ export class SiteService {
      */
     create(request: SiteRequest): Observable<Site> {
         return this.http.post<IResponse>(this.baseUrl, request).pipe(
-            tap(console.log),
             map((response) => response.data?.site as Site),
             catchError(this.handleError)
         );
@@ -116,7 +107,6 @@ export class SiteService {
      */
     update(uuid: string, request: SiteRequest): Observable<Site> {
         return this.http.put<IResponse>(`${this.baseUrl}/${uuid}`, request).pipe(
-            tap(console.log),
             map((response) => response.data?.site as Site),
             catchError(this.handleError)
         );
@@ -127,7 +117,6 @@ export class SiteService {
      */
     toggleActif(uuid: string): Observable<Site> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/toggle-actif`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.site as Site),
             catchError(this.handleError)
         );
@@ -138,7 +127,6 @@ export class SiteService {
      */
     delete(uuid: string): Observable<void> {
         return this.http.delete<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map(() => void 0),
             catchError(this.handleError)
         );

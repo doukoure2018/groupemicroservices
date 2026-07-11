@@ -157,11 +157,10 @@ export class PointsArriveeComponent implements OnInit {
                 this.loading.set(false);
             },
             error: (err: any) => {
-                console.error('Erreur chargement arrivées:', err);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erreur',
-                    detail: "Impossible de charger les points d'arrivée"
+                    detail: this.errorMessage(err, "Impossible de charger les points d'arrivée")
                 });
                 this.loading.set(false);
             }
@@ -174,7 +173,11 @@ export class PointsArriveeComponent implements OnInit {
                 this.departs.set(data);
             },
             error: (err: any) => {
-                console.error('Erreur chargement départs:', err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Erreur',
+                    detail: this.errorMessage(err, 'Impossible de charger les points de départ (liste déroulante indisponible)')
+                });
             }
         });
     }
@@ -185,7 +188,11 @@ export class PointsArriveeComponent implements OnInit {
                 this.sites.set(data);
             },
             error: (err: any) => {
-                console.error('Erreur chargement sites:', err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Erreur',
+                    detail: this.errorMessage(err, 'Impossible de charger les sites (liste déroulante indisponible)')
+                });
             }
         });
     }
@@ -270,11 +277,10 @@ export class PointsArriveeComponent implements OnInit {
                     this.closeDialog();
                 },
                 error: (err: any) => {
-                    console.error('Erreur mise à jour:', err);
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Erreur',
-                        detail: err.error?.message || "Impossible de mettre à jour le point d'arrivée"
+                        detail: this.errorMessage(err, "Impossible de mettre à jour le point d'arrivée")
                     });
                     this.loading.set(false);
                 }
@@ -291,11 +297,10 @@ export class PointsArriveeComponent implements OnInit {
                     this.closeDialog();
                 },
                 error: (err: any) => {
-                    console.error('Erreur création:', err);
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Erreur',
-                        detail: err.error?.message || "Impossible de créer le point d'arrivée"
+                        detail: this.errorMessage(err, "Impossible de créer le point d'arrivée")
                     });
                     this.loading.set(false);
                 }
@@ -315,11 +320,10 @@ export class PointsArriveeComponent implements OnInit {
                 this.loadArrivees();
             },
             error: (err: any) => {
-                console.error('Erreur toggle actif:', err);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erreur',
-                    detail: 'Impossible de modifier le statut'
+                    detail: this.errorMessage(err, 'Impossible de modifier le statut')
                 });
             }
         });
@@ -348,11 +352,10 @@ export class PointsArriveeComponent implements OnInit {
                 this.loadArrivees();
             },
             error: (err: any) => {
-                console.error('Erreur suppression:', err);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erreur',
-                    detail: err.error?.message || "Impossible de supprimer le point d'arrivée"
+                    detail: this.errorMessage(err, "Impossible de supprimer le point d'arrivée")
                 });
             }
         });
@@ -387,5 +390,10 @@ export class PointsArriveeComponent implements OnInit {
 
     hasActiveFilters(): boolean {
         return !!(this.searchQuery() || this.selectedDepartFilter() || this.selectedSiteFilter());
+    }
+
+    // Les services transforment les erreurs HTTP en string (handleError) avant de les relancer.
+    private errorMessage(err: unknown, fallback: string): string {
+        return typeof err === 'string' && err ? err : fallback;
     }
 }

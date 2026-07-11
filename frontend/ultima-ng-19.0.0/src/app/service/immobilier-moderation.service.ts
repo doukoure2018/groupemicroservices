@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { catchError, Observable, tap, throwError } from 'rxjs';
+import { catchError, Observable, throwError } from 'rxjs';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 import { IRejeterRequest } from '@/interface/propriete';
@@ -14,17 +14,17 @@ export class ImmobilierModerationService {
 
     findEnAttenteModeration$ = (limit: number = 20, offset: number = 0): Observable<IResponse> => {
         const params = new HttpParams().set('limit', limit).set('offset', offset);
-        return this.http.get<IResponse>(`${this.baseUrl}/moderation`, { params }).pipe(tap(console.log), catchError(this.handleError));
+        return this.http.get<IResponse>(`${this.baseUrl}/moderation`, { params }).pipe(catchError(this.handleError));
     };
 
     getForModeration$ = (proprieteUuid: string): Observable<IResponse> =>
-        this.http.get<IResponse>(`${this.baseUrl}/moderation/${proprieteUuid}`).pipe(tap(console.log), catchError(this.handleError));
+        this.http.get<IResponse>(`${this.baseUrl}/moderation/${proprieteUuid}`).pipe(catchError(this.handleError));
 
     valider$ = (proprieteUuid: string): Observable<IResponse> =>
-        this.http.patch<IResponse>(`${this.baseUrl}/${proprieteUuid}/valider`, {}).pipe(tap(console.log), catchError(this.handleError));
+        this.http.patch<IResponse>(`${this.baseUrl}/${proprieteUuid}/valider`, {}).pipe(catchError(this.handleError));
 
     rejeter$ = (proprieteUuid: string, request: IRejeterRequest): Observable<IResponse> =>
-        this.http.patch<IResponse>(`${this.baseUrl}/${proprieteUuid}/rejeter`, request).pipe(tap(console.log), catchError(this.handleError));
+        this.http.patch<IResponse>(`${this.baseUrl}/${proprieteUuid}/rejeter`, request).pipe(catchError(this.handleError));
 
     private handleError = (httpErrorResponse: HttpErrorResponse): Observable<never> => {
         console.log(httpErrorResponse);

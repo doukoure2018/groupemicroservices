@@ -233,21 +233,21 @@ export class OffresTransportComponent implements OnInit {
     loadTrajets(): void {
         this.trajetService.getAllActifs().subscribe({
             next: (data) => this.trajets.set(data),
-            error: (err) => console.error('Erreur chargement trajets:', err)
+            error: (err) => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err || 'Impossible de charger les trajets (liste déroulante indisponible)' })
         });
     }
 
     loadVehicules(): void {
         this.vehiculeService.getAll().subscribe({
             next: (data) => this.vehicules.set(data),
-            error: (err) => console.error('Erreur chargement véhicules:', err)
+            error: (err) => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err || 'Impossible de charger les véhicules (liste déroulante indisponible)' })
         });
     }
 
     loadStats(): void {
         this.offreService.getStats().subscribe({
             next: (data) => this.stats.set(data),
-            error: (err) => console.error('Erreur chargement stats:', err)
+            error: (err) => this.messageService.add({ severity: 'warn', summary: 'Statistiques indisponibles', detail: err || 'Impossible de charger les statistiques des offres' })
         });
     }
 

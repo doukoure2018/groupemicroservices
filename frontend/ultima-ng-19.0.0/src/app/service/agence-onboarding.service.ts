@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 
@@ -29,7 +29,7 @@ export class AgenceOnboardingService {
 
     getMe$ = (): Observable<IResponse> => this.http.get<IResponse>(`${this.baseUrl}/me`).pipe(catchError(this.handleError));
 
-    save$ = (request: IOnboardingAgenceRequest): Observable<IResponse> => this.http.put<IResponse>(this.baseUrl, request).pipe(tap(console.log), catchError(this.handleError));
+    save$ = (request: IOnboardingAgenceRequest): Observable<IResponse> => this.http.put<IResponse>(this.baseUrl, request).pipe(catchError(this.handleError));
 
     uploadRccm$ = (file: File): Observable<IResponse> => {
         const formData = new FormData();

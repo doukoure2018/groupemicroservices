@@ -124,11 +124,10 @@ export class PointsDepartComponent implements OnInit {
                 this.loading.set(false);
             },
             error: (err: any) => {
-                console.error('Erreur chargement départs:', err);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erreur',
-                    detail: 'Impossible de charger les points de départ'
+                    detail: this.errorMessage(err, 'Impossible de charger les points de départ')
                 });
                 this.loading.set(false);
             }
@@ -141,7 +140,11 @@ export class PointsDepartComponent implements OnInit {
                 this.sites.set(data);
             },
             error: (err: any) => {
-                console.error('Erreur chargement sites:', err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Erreur',
+                    detail: this.errorMessage(err, 'Impossible de charger les sites (liste déroulante indisponible)')
+                });
             }
         });
     }
@@ -198,11 +201,10 @@ export class PointsDepartComponent implements OnInit {
                     this.closeDialog();
                 },
                 error: (err: any) => {
-                    console.error('Erreur mise à jour:', err);
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Erreur',
-                        detail: err.error?.message || 'Impossible de mettre à jour le point de départ'
+                        detail: this.errorMessage(err, 'Impossible de mettre à jour le point de départ')
                     });
                     this.loading.set(false);
                 }
@@ -219,11 +221,10 @@ export class PointsDepartComponent implements OnInit {
                     this.closeDialog();
                 },
                 error: (err: any) => {
-                    console.error('Erreur création:', err);
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Erreur',
-                        detail: err.error?.message || 'Impossible de créer le point de départ'
+                        detail: this.errorMessage(err, 'Impossible de créer le point de départ')
                     });
                     this.loading.set(false);
                 }
@@ -243,11 +244,10 @@ export class PointsDepartComponent implements OnInit {
                 this.loadDeparts();
             },
             error: (err: any) => {
-                console.error('Erreur toggle actif:', err);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erreur',
-                    detail: 'Impossible de modifier le statut'
+                    detail: this.errorMessage(err, 'Impossible de modifier le statut')
                 });
             }
         });
@@ -276,11 +276,10 @@ export class PointsDepartComponent implements OnInit {
                 this.loadDeparts();
             },
             error: (err: any) => {
-                console.error('Erreur suppression:', err);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Erreur',
-                    detail: err.error?.message || 'Impossible de supprimer le point de départ'
+                    detail: this.errorMessage(err, 'Impossible de supprimer le point de départ')
                 });
             }
         });
@@ -302,5 +301,10 @@ export class PointsDepartComponent implements OnInit {
     clearFilters(): void {
         this.searchQuery.set('');
         this.selectedSiteFilter.set(null);
+    }
+
+    // Les services transforment les erreurs HTTP en string (handleError) avant de les relancer.
+    private errorMessage(err: unknown, fallback: string): string {
+        return typeof err === 'string' && err ? err : fallback;
     }
 }

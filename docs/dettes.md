@@ -1,6 +1,6 @@
 # Registre des dettes techniques — SIRA Guinée / SYNERGIA
 
-> Dernière mise à jour : 2026-07-05.
+> Dernière mise à jour : 2026-07-11.
 > Priorités : 🔴 sécurité (à traiter en premier) · 🟠 technique · 📄 documentation.
 > Quand une dette est réglée, la déplacer dans la section « Réglées » en bas avec la date.
 
@@ -148,6 +148,43 @@ la commande (`POST /billetterie/commandes`), aucun SDK ni callback de paiement r
   (public en download). Les RCCM sont des documents d'entreprise semi-sensibles —
   prévoir un bucket privé + URLs présignées pour la conformité.
 
+### T12. Refactoring du parcours transport billetterie (ajoutée le 2026-07-11)
+Analyse complète du parcours de configuration (géo 5 niveaux + infra transport) faite
+le 2026-07-11. Principe directeur : **tout doit rester additif** (l'immobilier lit les
+tables géo en SQL direct, le mobile consomme `villes/active`, `sites/actifs`,
+`offres/recherche`, `communes`, `quartiers/commune/*`, et 3 vues SQL figent les noms
+de colonnes). La Phase 0 (corrections sans risque) est faite — voir « Réglées ».
+
+- **T12a — Phase 1 : dénormaliser la ville sur `sites`.** La ville d'un site est
+  reconstituée par 6-8 LEFT JOIN via `localisations.quartier_id` **nullable** : une
+  localisation sans quartier rend son site invisible dans toutes les recherches par
+  ville (dont `offres/recherche` utilisé par le mobile). Cible : migration additive
+  V35 `sites.ville_id BIGINT NULL REFERENCES villes` + backfill par la chaîne
+  actuelle + obligatoire à la création côté API ; réécrire les `WHERE vd.ville_uuid`
+  des `*Query` billetterie avec `COALESCE(s.ville_id, <chaîne actuelle>)`. Aucune
+  route ne change.
+- **T12b — Phase 2 : wizard « Nouvelle liaison » (frontend seul).** 10-11 écrans
+  isolés à visiter dans l'ordre des FK pour publier une offre, zéro lien entre eux.
+  Cible : un écran orchestrateur (p-stepper) qui enchaîne les POST existants
+  (ville → localisation+site départ → site arrivée → départ+arrivée+trajet → offre).
+  Les écrans actuels restent pour la gestion fine.
+- **T12c — Phase 3 : factoriser le boilerplate CRUD.** ~60-70 % des ~5 700 lignes de
+  composants admin sont dupliquées (villes vs communes : ~90-95 %) ; `handleError`
+  copié dans ~14 services Angular ; côté Java, Region/Ville/Commune/Quartier et
+  Site/Depart/Arrivee sont des familles copiées-collées (DTO `RegionStatusRequest`
+  partagé). Cible : `CrudTableComponent<T>` + `BaseCrudService<T>` (migrer d'abord
+  régions/villes/communes/quartiers), `AbstractReferentielService` backend, DTO de
+  statut dédiés. Routes et payloads inchangés.
+- **T12d — Reportés (coût/risque disproportionné pour l'instant)** : fusion
+  `departs`/`arrivees` dans `sites` (le lien départ↔arrivée est encodé 2 fois :
+  `arrivees.depart_id` + `trajets` ; `arrivees.libelle_depart` duplique
+  `departs.libelle` ; explosion combinatoire N×M) — cible long terme :
+  `trajets.site_depart_id/site_arrivee_id` additifs puis dépréciation ; suppression
+  du niveau quartier (l'immobilier V32/V34 et l'auto-complétion mobile en dépendent) ;
+  pagination serveur généralisée (à déclencher au premier signe de lenteur — mais un
+  endpoint de recherche `?q=` pour les dropdowns quartiers/localisations serait déjà
+  utile).
+
 ### T11. Divers backend
 - Dialect Hibernate obsolète `PostgreSQL82Dialect` (discoveryserver).
 - Double dépendance `commons-lang` 2.6 + `commons-lang3` (billetterie, immobilier).
@@ -169,6 +206,14 @@ la commande (`POST /billetterie/commandes`), aucun SDK ni callback de paiement r
 
 ## ✅ Réglées
 
+- **2026-07-11** — Phase 0 du refactoring transport (T12) : handlers d'erreur de la
+  famille B corrigés (`err.error?.message` sur une string → les messages backend
+  s'affichent enfin dans sites-gares/points-depart/points-arrivee) ; toasts ajoutés
+  quand le chargement d'un dropdown parent échoue (points-depart, points-arrivee,
+  vehicules, partenaires, offres-transport, stats) ; 224 `tap(console.log)` supprimés
+  des 19 services Angular + imports nettoyés ; logs emojis retirés de localisations ;
+  garde-fou quartier (confirmation + hint dans le formulaire localisations) ;
+  code mort `formatDate` retiré de vehicules.
 - **2026-07-09** — Projet 2 « déclaration de besoin » bouclé et validé E2E sur TEST :
   déclaration mobile (Flutter) → diffusion Kafka aux agences vérifiées de la zone
   (commune → région → toutes) + emails → backoffice agence « Demandes clients »

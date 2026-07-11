@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { catchError, map, Observable, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import { server } from '@/utils/fileutils';
 import { IResponse } from '@/interface/response';
 import { Trajet, TrajetRequest, TrajetStats } from '@/interface/trajet.model';
@@ -19,7 +19,6 @@ export class TrajetService {
      */
     getAll(): Observable<Trajet[]> {
         return this.http.get<IResponse>(this.baseUrl).pipe(
-            tap(console.log),
             map((response) => response.data?.trajets || []),
             catchError(this.handleError)
         );
@@ -30,7 +29,6 @@ export class TrajetService {
      */
     getAllActifs(): Observable<Trajet[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/actifs`).pipe(
-            tap(console.log),
             map((response) => response.data?.trajets || []),
             catchError(this.handleError)
         );
@@ -41,7 +39,6 @@ export class TrajetService {
      */
     getByUuid(uuid: string): Observable<Trajet> {
         return this.http.get<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.trajet as Trajet),
             catchError(this.handleError)
         );
@@ -52,7 +49,6 @@ export class TrajetService {
      */
     getByDepart(departUuid: string): Observable<Trajet[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/depart/${departUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.trajets || []),
             catchError(this.handleError)
         );
@@ -63,7 +59,6 @@ export class TrajetService {
      */
     getByArrivee(arriveeUuid: string): Observable<Trajet[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/arrivee/${arriveeUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.trajets || []),
             catchError(this.handleError)
         );
@@ -74,7 +69,6 @@ export class TrajetService {
      */
     getByVilleDepart(villeUuid: string): Observable<Trajet[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/ville-depart/${villeUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.trajets || []),
             catchError(this.handleError)
         );
@@ -85,7 +79,6 @@ export class TrajetService {
      */
     getByVilleArrivee(villeUuid: string): Observable<Trajet[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/ville-arrivee/${villeUuid}`).pipe(
-            tap(console.log),
             map((response) => response.data?.trajets || []),
             catchError(this.handleError)
         );
@@ -98,7 +91,6 @@ export class TrajetService {
         const params = new HttpParams().set('villeDepartUuid', villeDepartUuid).set('villeArriveeUuid', villeArriveeUuid);
 
         return this.http.get<IResponse>(`${this.baseUrl}/villes`, { params }).pipe(
-            tap(console.log),
             map((response) => response.data?.trajets || []),
             catchError(this.handleError)
         );
@@ -109,7 +101,6 @@ export class TrajetService {
      */
     search(query: string): Observable<Trajet[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/search`, { params: { q: query } }).pipe(
-            tap(console.log),
             map((response) => response.data?.trajets || []),
             catchError(this.handleError)
         );
@@ -120,7 +111,6 @@ export class TrajetService {
      */
     getMesTrajets(): Observable<Trajet[]> {
         return this.http.get<IResponse>(`${this.baseUrl}/mes-trajets`).pipe(
-            tap(console.log),
             map((response) => response.data?.trajets || []),
             catchError(this.handleError)
         );
@@ -133,7 +123,6 @@ export class TrajetService {
      */
     create(request: TrajetRequest): Observable<Trajet> {
         return this.http.post<IResponse>(this.baseUrl, request).pipe(
-            tap(console.log),
             map((response) => response.data?.trajet as Trajet),
             catchError(this.handleError)
         );
@@ -144,7 +133,6 @@ export class TrajetService {
      */
     update(uuid: string, request: TrajetRequest): Observable<Trajet> {
         return this.http.put<IResponse>(`${this.baseUrl}/${uuid}`, request).pipe(
-            tap(console.log),
             map((response) => response.data?.trajet as Trajet),
             catchError(this.handleError)
         );
@@ -160,7 +148,6 @@ export class TrajetService {
         }
 
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/montants`, {}, { params }).pipe(
-            tap(console.log),
             map((response) => response.data?.trajet as Trajet),
             catchError(this.handleError)
         );
@@ -171,7 +158,6 @@ export class TrajetService {
      */
     activate(uuid: string): Observable<Trajet> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/activer`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.trajet as Trajet),
             catchError(this.handleError)
         );
@@ -182,7 +168,6 @@ export class TrajetService {
      */
     deactivate(uuid: string): Observable<Trajet> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/desactiver`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.trajet as Trajet),
             catchError(this.handleError)
         );
@@ -193,7 +178,6 @@ export class TrajetService {
      */
     toggleActif(uuid: string): Observable<Trajet> {
         return this.http.patch<IResponse>(`${this.baseUrl}/${uuid}/toggle-actif`, {}).pipe(
-            tap(console.log),
             map((response) => response.data?.trajet as Trajet),
             catchError(this.handleError)
         );
@@ -204,7 +188,6 @@ export class TrajetService {
      */
     delete(uuid: string): Observable<void> {
         return this.http.delete<IResponse>(`${this.baseUrl}/${uuid}`).pipe(
-            tap(console.log),
             map(() => void 0),
             catchError(this.handleError)
         );
@@ -217,7 +200,6 @@ export class TrajetService {
      */
     getStats(): Observable<TrajetStats> {
         return this.http.get<IResponse>(`${this.baseUrl}/stats`).pipe(
-            tap(console.log),
             map((response) => ({
                 total: response.data?.total || 0,
                 actifs: response.data?.actifs || 0,
