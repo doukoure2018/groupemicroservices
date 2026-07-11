@@ -160,13 +160,18 @@ de colonnes). La Phase 0 (corrections sans risque) est faite — voir « Réglé
   dérive encore la ville par la chaîne — hors du chemin de recherche des offres).
 - ~~**T12b — Phase 2 : wizard « Nouvelle liaison » (frontend seul).**~~ **RÉGLÉE le
   2026-07-11** (voir « Réglées »).
-- **T12c — Phase 3 : factoriser le boilerplate CRUD.** ~60-70 % des ~5 700 lignes de
-  composants admin sont dupliquées (villes vs communes : ~90-95 %) ; `handleError`
-  copié dans ~14 services Angular ; côté Java, Region/Ville/Commune/Quartier et
-  Site/Depart/Arrivee sont des familles copiées-collées (DTO `RegionStatusRequest`
-  partagé). Cible : `CrudTableComponent<T>` + `BaseCrudService<T>` (migrer d'abord
-  régions/villes/communes/quartiers), `AbstractReferentielService` backend, DTO de
-  statut dédiés. Routes et payloads inchangés.
+- **T12c — Phase 3 : factoriser le boilerplate CRUD.** **Frontend RÉGLÉ le
+  2026-07-11** (voir « Réglées » : ReferentielCrudComponent générique, 4 écrans géo
+  migrés, -2 823 lignes). Restent au fil de l'eau :
+  - `handleError` encore copié dans ~14 services Angular (mutualiser un
+    `buildHandleError(entite)` partagé) ;
+  - migrer la famille B (sites-gares, points-depart, points-arrivee,
+    types-vehicules, modes-reglement…) vers le composant générique — nécessite
+    d'ajouter le support delete/toggle-actif et des types de champs
+    supplémentaires (number, time, textarea) ;
+  - côté Java : `AbstractReferentielService` pour Region/Ville/Commune/Quartier
+    et DTO de statut dédiés (le DTO `RegionStatusRequest` est partagé par les 4
+    resources). Routes et payloads inchangés.
 - **T12d — Reportés (coût/risque disproportionné pour l'instant)** : fusion
   `departs`/`arrivees` dans `sites` (le lien départ↔arrivée est encodé 2 fois :
   `arrivees.depart_id` + `trajets` ; `arrivees.libelle_depart` duplique
@@ -198,6 +203,13 @@ de colonnes). La Phase 0 (corrections sans risque) est faite — voir « Réglé
 
 ## ✅ Réglées
 
+- **2026-07-11** — Phase 3 (frontend) du refactoring transport (T12c) : composant
+  générique `ReferentielCrudComponent` (`admin/shared/`) — stats, recherche,
+  filtres en cascade, table paginée, modal création/édition dynamique (config
+  colonnes/champs/filtres), toggle statut avec confirmation. Les 4 écrans géo
+  (régions, villes, communes, quartiers) sont devenus des wrappers de ~60 lignes
+  (config + adaptateur API) : 3 924 → 1 101 lignes (-72 %, moteur inclus).
+  Routes, payloads et endpoints inchangés.
 - **2026-07-11** — Phase 2 du refactoring transport (T12b) : écran « ⚡ Assistant
   Nouvelle Liaison » (`admin/nouvelle-liaison`, menu SUPER_ADMIN section 2).
   Wizard 5 étapes (Départ → Arrivée → Trajet → Offre optionnelle → Récapitulatif)

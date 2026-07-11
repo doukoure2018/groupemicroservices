@@ -1,0 +1,204 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="referentiel-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>{{ config().titre }}</h1>
+            <p class="subtitle">{{ config().sousTitre }}</p>
+        </div>
+        <p-button [label]="boutonCreation" icon="pi pi-plus" (onClick)="openCreateModal()" [raised]="true">
+        </p-button>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="stats-grid">
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon total">
+                    <i [class]="config().icone"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ total() }}</span>
+                    <span class="stat-label">Total {{ config().entitePluriel }}</span>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon active">
+                    <i class="pi pi-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ actifs() }}</span>
+                    <span class="stat-label">{{ labelActifs }}</span>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="stat-card">
+            <div class="stat-content">
+                <div class="stat-icon inactive">
+                    <i class="pi pi-ban"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ inactifs() }}</span>
+                    <span class="stat-label">{{ labelInactifs }}</span>
+                </div>
+            </div>
+        </p-card>
+    </div>
+
+    <!-- Barre de recherche + filtres -->
+    <div class="toolbar">
+        <p-iconField iconPosition="left" class="search-field">
+            <p-inputIcon styleClass="pi pi-search"></p-inputIcon>
+            <input type="text" pInputText [placeholder]="placeholderRecherche" [value]="searchTerm()"
+                (input)="onSearchChange($event)" />
+        </p-iconField>
+
+        @for (filtre of config().filtres || []; track filtre.rowKey; let i = $index) {
+        <p-dropdown [options]="optionsPourFiltre(filtre)" [optionLabel]="filtre.optionLabel"
+            [optionValue]="filtre.optionValue" [placeholder]="filtre.label" [showClear]="true" [filter]="true"
+            [ngModel]="valeursFiltres()[i]" (onChange)="onFiltreChange(i, $event.value)" class="filtre-dropdown">
+        </p-dropdown>
+        }
+
+        @if (hasFiltresActifs()) {
+        <p-button icon="pi pi-filter-slash" [outlined]="true" severity="secondary" (onClick)="clearFiltres()"
+            pTooltip="Effacer les filtres" tooltipPosition="top">
+        </p-button>
+        }
+
+        <p-button icon="pi pi-refresh" [outlined]="true" [loading]="loading()" (onClick)="load()"
+            pTooltip="Actualiser" tooltipPosition="top">
+        </p-button>
+    </div>
+
+    <!-- Table -->
+    <p-card>
+        @if (loading()) {
+        <div class="loading-container">
+            <p-progressSpinner strokeWidth="4" ariaLabel="Chargement"></p-progressSpinner>
+            <span>Chargement…</span>
+        </div>
+        } @else {
+        <p-table [value]="filteredItems()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25, 50]"
+            [showCurrentPageReport]="true"
+            [currentPageReportTemplate]="'Affichage de {first} à {last} sur {totalRecords} ' + config().entitePluriel"
+            [tableStyle]="{ 'min-width': '50rem' }" styleClass="p-datatable-sm p-datatable-striped">
+
+            <ng-template pTemplate="header">
+                <tr>
+                    @for (col of config().colonnes; track col.key) {
+                    <th [pSortableColumn]="col.key">
+                        {{ col.header }} <p-sortIcon [field]="col.key"></p-sortIcon>
+                    </th>
+                    }
+                    <th pSortableColumn="actif">
+                        Statut <p-sortIcon field="actif"></p-sortIcon>
+                    </th>
+                    <th style="width: 130px">Actions</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-row>
+                <tr [class.inactive-row]="!row.actif">
+                    @for (col of config().colonnes; track col.key) {
+                    <td>
+                        @switch (col.type || 'text') {
+                        @case ('badge') {
+                        <span class="code-badge">{{ row[col.key] || '-' }}</span>
+                        }
+                        @case ('date') {
+                        {{ row[col.key] | date:'dd/MM/yyyy HH:mm' }}
+                        }
+                        @default {
+                        <div class="cell-main">
+                            @if (col.icon) {<i [class]="col.icon"></i>}
+                            <div class="cell-text">
+                                <span>{{ row[col.key] || '-' }}</span>
+                                @if (col.subKey && row[col.subKey]) {
+                                <small class="cell-sub">{{ row[col.subKey] }}</small>
+                                }
+                            </div>
+                        </div>
+                        }
+                        }
+                    </td>
+                    }
+                    <td>
+                        <p-tag [value]="row.actif ? 'Actif' : 'Inactif'" [severity]="getStatusSeverity(row.actif)">
+                        </p-tag>
+                    </td>
+                    <td>
+                        <div class="actions-cell">
+                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                (onClick)="openEditModal(row)" pTooltip="Modifier" tooltipPosition="top">
+                            </p-button>
+                            <p-button [icon]="row.actif ? 'pi pi-lock' : 'pi pi-lock-open'" [rounded]="true"
+                                [text]="true" [severity]="row.actif ? 'danger' : 'success'"
+                                (onClick)="confirmToggleStatus(row)" [pTooltip]="row.actif ? 'Désactiver' : 'Activer'"
+                                tooltipPosition="top">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td [attr.colspan]="config().colonnes.length + 2">
+                        <div class="empty-state">
+                            <i class="pi pi-inbox"></i>
+                            <p>{{ messageVide }}</p>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+        }
+    </p-card>
+</div>
+
+<!-- Modal Création/Édition -->
+<p-dialog [header]="modalTitle" [visible]="isModalOpen()" (visibleChange)="!$event && closeModal()" [modal]="true"
+    [style]="{ width: config().largeurModal || '450px' }" [draggable]="false" [resizable]="false">
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="form-content">
+            @for (champ of config().champs; track champ.key) {
+            <div class="form-field">
+                <label [for]="champ.key">{{ champ.label }}{{ champ.required ? ' *' : '' }}</label>
+                @switch (champ.type) {
+                @case ('dropdown') {
+                <p-dropdown [id]="champ.key" [formControlName]="champ.key" [options]="optionsPourChamp(champ)"
+                    [optionLabel]="champ.optionLabel || 'libelle'" [optionValue]="champ.optionValue || 'uuid'"
+                    [placeholder]="champ.placeholder || 'Sélectionner'" [filter]="true" [showClear]="!champ.required"
+                    appendTo="body" styleClass="w-full">
+                </p-dropdown>
+                }
+                @default {
+                <input pInputText [id]="champ.key" [formControlName]="champ.key"
+                    [placeholder]="champ.placeholder || ''" [class.ng-invalid]="isFieldInvalid(champ.key)"
+                    [class.ng-dirty]="isFieldInvalid(champ.key)" />
+                }
+                }
+                @if (isFieldInvalid(champ.key)) {
+                <small class="p-error">{{ getFieldError(champ.key) }}</small>
+                }
+            </div>
+            }
+        </div>
+
+        <div class="dialog-footer">
+            <p-button label="Annuler" [outlined]="true" severity="secondary" (onClick)="closeModal()">
+            </p-button>
+            <p-button [label]="isEditMode() ? 'Modifier' : 'Créer'" type="submit" [loading]="loading()"
+                icon="pi pi-check">
+            </p-button>
+        </div>
+    </form>
+</p-dialog>

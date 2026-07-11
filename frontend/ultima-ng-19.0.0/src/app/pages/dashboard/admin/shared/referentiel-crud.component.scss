@@ -1,4 +1,4 @@
-.quartiers-container {
+.referentiel-container {
     padding: 1.5rem;
     max-width: 1400px;
     margin: 0 auto;
@@ -32,7 +32,7 @@
 // Stats Grid
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1rem;
     margin-bottom: 1.5rem;
 }
@@ -73,10 +73,6 @@
     &.inactive {
         background: linear-gradient(135deg, var(--surface-400), var(--surface-500));
     }
-
-    &.communes {
-        background: linear-gradient(135deg, var(--teal-500), var(--teal-700));
-    }
 }
 
 .stat-info {
@@ -105,52 +101,15 @@
 
     .search-field {
         flex: 1;
-        min-width: 200px;
+        min-width: 250px;
 
         input {
             width: 100%;
         }
     }
 
-    .filter-dropdown {
+    .filtre-dropdown {
         min-width: 200px;
-    }
-}
-
-// Active filter indicator
-.active-filter {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background-color: var(--primary-100);
-    border-radius: var(--border-radius);
-    margin-bottom: 1rem;
-    color: var(--primary-700);
-    font-size: 0.875rem;
-
-    strong {
-        color: var(--primary-900);
-    }
-}
-
-// Dropdown items
-.dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-
-    i {
-        color: var(--primary-color);
-    }
-
-    .parent-tag {
-        margin-left: auto;
-        padding: 0.125rem 0.5rem;
-        background-color: var(--surface-200);
-        border-radius: 4px;
-        font-size: 0.7rem;
-        color: var(--text-color-secondary);
     }
 }
 
@@ -168,8 +127,8 @@
     }
 }
 
-// Table styles
-.quartier-name {
+// Table
+.cell-main {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -178,42 +137,27 @@
     i {
         color: var(--primary-color);
     }
-}
 
-.commune-cell {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text-color-secondary);
+    .cell-text {
+        display: flex;
+        flex-direction: column;
 
-    i {
-        color: var(--teal-500);
-        font-size: 0.875rem;
+        .cell-sub {
+            color: var(--text-color-secondary);
+            font-weight: 400;
+            font-size: 0.75rem;
+        }
     }
 }
 
-.ville-cell {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+.code-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background-color: var(--surface-100);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
     color: var(--text-color-secondary);
-
-    i {
-        color: var(--blue-500);
-        font-size: 0.875rem;
-    }
-}
-
-.region-cell {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text-color-secondary);
-
-    i {
-        color: var(--purple-500);
-        font-size: 0.875rem;
-    }
 }
 
 .inactive-row {
@@ -239,11 +183,11 @@
     }
 
     p {
-        margin: 0 0 1rem;
+        margin: 0;
     }
 }
 
-// Form styles
+// Dialog / Form
 .form-content {
     display: flex;
     flex-direction: column;
@@ -268,19 +212,6 @@
     .p-error {
         font-size: 0.75rem;
     }
-
-    .hint {
-        font-size: 0.75rem;
-        color: var(--text-color-secondary);
-    }
-
-    :host ::ng-deep .p-dropdown {
-        width: 100%;
-    }
-}
-
-.w-full {
-    width: 100%;
 }
 
 .dialog-footer {
@@ -294,44 +225,25 @@
 
 // Responsive
 @media (max-width: 768px) {
-    .quartiers-container {
+    .referentiel-container {
         padding: 1rem;
     }
 
     .page-header {
         flex-direction: column;
         align-items: flex-start;
-
-        :host ::ng-deep p-button {
-            width: 100%;
-
-            button {
-                width: 100%;
-                justify-content: center;
-            }
-        }
     }
 
     .toolbar {
         flex-direction: column;
+        align-items: stretch;
 
         .search-field,
-        .filter-dropdown {
-            width: 100%;
-            min-width: unset;
-        }
-
-        :host ::ng-deep .p-dropdown {
+        .filtre-dropdown {
             width: 100%;
         }
     }
 
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 480px) {
     .stats-grid {
         grid-template-columns: 1fr;
     }
