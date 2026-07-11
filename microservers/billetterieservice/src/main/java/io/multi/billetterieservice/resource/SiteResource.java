@@ -161,7 +161,7 @@ public class SiteResource {
                 .actif(siteRequest.getActif() != null ? siteRequest.getActif() : true)
                 .build();
 
-        Site createdSite = siteService.createSite(site, siteRequest.getLocalisationUuid());
+        Site createdSite = siteService.createSite(site, siteRequest.getLocalisationUuid(), siteRequest.getVilleUuid());
 
         return ResponseEntity.status(CREATED).body(
                 getResponse(request, Map.of("site", createdSite), "Site créé avec succès", CREATED)
@@ -191,7 +191,7 @@ public class SiteResource {
                 .actif(siteRequest.getActif())
                 .build();
 
-        Site updatedSite = siteService.updateSite(uuid, site, siteRequest.getLocalisationUuid());
+        Site updatedSite = siteService.updateSite(uuid, site, siteRequest.getLocalisationUuid(), siteRequest.getVilleUuid());
 
         return ResponseEntity.ok(
                 getResponse(request, Map.of("site", updatedSite), "Site mis à jour avec succès", OK)

@@ -8,8 +8,11 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class SiteQuery {
 
+    // V35 : la ville est portée directement par sites.ville_id (prioritaire) ;
+    // la chaîne localisation→quartier→commune→ville reste en fallback pour
+    // les sites créés avant la migration (COALESCE).
     public static final String SELECT_BASE = """
-        SELECT s.site_id, s.site_uuid, s.localisation_id, s.nom, s.description,
+        SELECT s.site_id, s.site_uuid, s.localisation_id, s.ville_id, s.nom, s.description,
                s.type_site, s.capacite_vehicules, s.telephone, s.email,
                s.horaire_ouverture, s.horaire_fermeture, s.image_url,
                s.actif, s.created_at, s.updated_at,
@@ -17,14 +20,18 @@ public class SiteQuery {
                l.quartier_id,
                q.quartier_uuid, q.libelle AS quartier_libelle,
                c.commune_uuid, c.libelle AS commune_libelle,
-               v.ville_uuid, v.libelle AS ville_libelle,
-               r.region_uuid, r.libelle AS region_libelle
+               COALESCE(vs.ville_uuid, v.ville_uuid) AS ville_uuid,
+               COALESCE(vs.libelle, v.libelle) AS ville_libelle,
+               COALESCE(rs.region_uuid, r.region_uuid) AS region_uuid,
+               COALESCE(rs.libelle, r.libelle) AS region_libelle
         FROM sites s
         INNER JOIN localisations l ON s.localisation_id = l.localisation_id
         LEFT JOIN quartiers q ON l.quartier_id = q.quartier_id
         LEFT JOIN communes c ON q.commune_id = c.commune_id
         LEFT JOIN villes v ON c.ville_id = v.ville_id
         LEFT JOIN regions r ON v.region_id = r.region_id
+        LEFT JOIN villes vs ON s.ville_id = vs.ville_id
+        LEFT JOIN regions rs ON vs.region_id = rs.region_id
         """;
 
     public static final String FIND_ALL = SELECT_BASE + " ORDER BY s.nom ASC";
@@ -42,7 +49,7 @@ public class SiteQuery {
             " WHERE s.localisation_id = :localisationId ORDER BY s.nom ASC";
 
     public static final String FIND_BY_VILLE = SELECT_BASE +
-            " WHERE v.ville_uuid = :villeUuid AND s.actif = true ORDER BY s.nom ASC";
+            " WHERE COALESCE(vs.ville_uuid, v.ville_uuid) = :villeUuid AND s.actif = true ORDER BY s.nom ASC";
 
     public static final String FIND_BY_COMMUNE = SELECT_BASE +
             " WHERE c.commune_uuid = :communeUuid AND s.actif = true ORDER BY s.nom ASC";
@@ -61,9 +68,9 @@ public class SiteQuery {
         """;
 
     public static final String INSERT = """
-        INSERT INTO sites (localisation_id, nom, description, type_site, capacite_vehicules,
+        INSERT INTO sites (localisation_id, ville_id, nom, description, type_site, capacite_vehicules,
                           telephone, email, horaire_ouverture, horaire_fermeture, image_url, actif)
-        VALUES (:localisationId, :nom, :description, :typeSite, :capaciteVehicules,
+        VALUES (:localisationId, :villeId, :nom, :description, :typeSite, :capaciteVehicules,
                 :telephone, :email, :horaireOuverture, :horaireFermeture, :imageUrl, :actif)
         RETURNING site_id, site_uuid, created_at, updated_at
         """;
@@ -71,6 +78,7 @@ public class SiteQuery {
     public static final String UPDATE = """
         UPDATE sites SET
             localisation_id = :localisationId,
+            ville_id = :villeId,
             nom = :nom,
             description = :description,
             type_site = :typeSite,

@@ -8,6 +8,8 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class DepartQuery {
 
+    // V35 : ville directe du site (sites.ville_id) prioritaire, chaîne
+    // quartier→commune→ville en fallback (COALESCE).
     public static final String SELECT_BASE = """
         SELECT d.depart_id, d.depart_uuid, d.site_id, d.libelle, d.description,
                d.ordre_affichage, d.actif, d.created_at, d.updated_at,
@@ -15,8 +17,9 @@ public class DepartQuery {
                l.localisation_uuid, l.adresse_complete, l.latitude, l.longitude,
                q.libelle AS quartier_libelle,
                c.libelle AS commune_libelle,
-               v.ville_uuid, v.libelle AS ville_libelle,
-               r.libelle AS region_libelle
+               COALESCE(vs.ville_uuid, v.ville_uuid) AS ville_uuid,
+               COALESCE(vs.libelle, v.libelle) AS ville_libelle,
+               COALESCE(rs.libelle, r.libelle) AS region_libelle
         FROM departs d
         INNER JOIN sites s ON d.site_id = s.site_id
         INNER JOIN localisations l ON s.localisation_id = l.localisation_id
@@ -24,6 +27,8 @@ public class DepartQuery {
         LEFT JOIN communes c ON q.commune_id = c.commune_id
         LEFT JOIN villes v ON c.ville_id = v.ville_id
         LEFT JOIN regions r ON v.region_id = r.region_id
+        LEFT JOIN villes vs ON s.ville_id = vs.ville_id
+        LEFT JOIN regions rs ON vs.region_id = rs.region_id
         """;
 
     public static final String FIND_ALL = SELECT_BASE + " ORDER BY d.ordre_affichage ASC, d.libelle ASC";
@@ -45,7 +50,7 @@ public class DepartQuery {
             " WHERE s.site_uuid = :siteUuid AND d.actif = true ORDER BY d.ordre_affichage ASC, d.libelle ASC";
 
     public static final String FIND_BY_VILLE = SELECT_BASE +
-            " WHERE v.ville_uuid = :villeUuid AND d.actif = true ORDER BY d.ordre_affichage ASC, d.libelle ASC";
+            " WHERE COALESCE(vs.ville_uuid, v.ville_uuid) = :villeUuid AND d.actif = true ORDER BY d.ordre_affichage ASC, d.libelle ASC";
 
     public static final String SEARCH_BY_LIBELLE = SELECT_BASE +
             " WHERE LOWER(d.libelle) LIKE LOWER(:searchTerm) ORDER BY d.libelle ASC";

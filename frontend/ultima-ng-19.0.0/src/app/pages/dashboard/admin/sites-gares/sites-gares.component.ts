@@ -24,10 +24,12 @@ import { TextareaModule } from 'primeng/textarea';
 // Services
 import { SiteService } from '@/service/site.service';
 import { LocalisationService } from '@/service/localisation.service';
+import { VilleService } from '@/service/ville.service';
 
 // Models
 import { Site, SiteRequest, TYPE_SITES } from '@/interface/site.model';
 import { ILocalisation } from '@/interface/localisation';
+import { IVille } from '@/interface/ville';
 import { IResponse } from '@/interface/response';
 
 @Component({
@@ -62,6 +64,7 @@ export class SitesGaresComponent implements OnInit {
     // Services
     private readonly siteService = inject(SiteService);
     private readonly localisationService = inject(LocalisationService);
+    private readonly villeService = inject(VilleService);
     private readonly messageService = inject(MessageService);
     private readonly confirmationService = inject(ConfirmationService);
     private readonly fb = inject(FormBuilder);
@@ -69,6 +72,7 @@ export class SitesGaresComponent implements OnInit {
     // Signals
     sites = signal<Site[]>([]);
     localisations = signal<ILocalisation[]>([]);
+    villes = signal<IVille[]>([]);
     loading = signal(false);
     dialogVisible = signal(false);
     isEditMode = signal(false);
@@ -95,11 +99,15 @@ export class SitesGaresComponent implements OnInit {
         this.initForm();
         this.loadSites();
         this.loadLocalisations();
+        this.loadVilles();
     }
 
     private initForm(): void {
         this.siteForm = this.fb.group({
             localisationUuid: ['', Validators.required],
+            // V35 : la ville du site est saisie directement (ne dépend plus du
+            // quartier de la localisation)
+            villeUuid: ['', Validators.required],
             nom: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
             description: [''],
             typeSite: ['GARE_ROUTIERE'],
@@ -149,6 +157,28 @@ export class SitesGaresComponent implements OnInit {
         });
     }
 
+    loadVilles(): void {
+        this.villeService.getActiveVilles$().subscribe({
+            next: (response: IResponse) => this.villes.set(response.data?.villes || []),
+            error: (err: any) => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Erreur',
+                    detail: this.errorMessage(err, 'Impossible de charger les villes (liste déroulante indisponible)')
+                });
+            }
+        });
+    }
+
+    // Pré-remplit la ville quand la localisation choisie en a une (dérivée du quartier)
+    onLocalisationChange(localisationUuid: string | null): void {
+        if (!localisationUuid || this.siteForm.get('villeUuid')?.value) return;
+        const loc = this.localisations().find((l) => l.localisationUuid === localisationUuid);
+        if (loc?.villeUuid) {
+            this.siteForm.patchValue({ villeUuid: loc.villeUuid });
+        }
+    }
+
     openNewDialog(): void {
         this.isEditMode.set(false);
         this.selectedSite.set(null);
@@ -161,6 +191,7 @@ export class SitesGaresComponent implements OnInit {
         this.selectedSite.set(site);
         this.siteForm.patchValue({
             localisationUuid: site.localisationUuid,
+            villeUuid: site.villeUuid || '',
             nom: site.nom,
             description: site.description,
             typeSite: site.typeSite,

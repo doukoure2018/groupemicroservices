@@ -196,13 +196,26 @@
 
     <form [formGroup]="siteForm" class="site-form">
         <div class="form-grid">
+            <!-- Ville (V35 : rattachement direct, ne dépend plus du quartier) -->
+            <div class="form-field full-width">
+                <label for="villeUuid">Ville <span class="required">*</span></label>
+                <p-dropdown id="villeUuid" formControlName="villeUuid" [options]="villes()" optionLabel="libelle"
+                    optionValue="villeUuid" placeholder="Sélectionner la ville du site" [filter]="true"
+                    filterBy="libelle" [showClear]="true" styleClass="w-full">
+                </p-dropdown>
+                @if (siteForm.get('villeUuid')?.invalid && siteForm.get('villeUuid')?.touched) {
+                <small class="p-error">La ville est obligatoire</small>
+                }
+            </div>
+
             <!-- Localisation -->
             <div class="form-field full-width">
-                <label for="localisationUuid">Localisation <span class="required">*</span></label>
+                <label for="localisationUuid">Localisation (adresse) <span class="required">*</span></label>
                 <p-dropdown id="localisationUuid" formControlName="localisationUuid" [options]="localisations()"
                     optionLabel="adresseComplete" optionValue="localisationUuid"
                     placeholder="Sélectionner une localisation" [filter]="true"
-                    filterBy="adresseComplete,villeLibelle,communeLibelle" [showClear]="true" styleClass="w-full">
+                    filterBy="adresseComplete,villeLibelle,communeLibelle" [showClear]="true" styleClass="w-full"
+                    (onChange)="onLocalisationChange($event.value)">
                     <ng-template let-loc pTemplate="item">
                         <div class="localisation-option">
                             <span>{{ getLocalisationLabel(loc) }}</span>

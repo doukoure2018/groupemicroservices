@@ -34,6 +34,8 @@ export interface Site {
 
 export interface SiteRequest {
     localisationUuid: string;
+    // V35 : ville directe du site — obligatoire à la création
+    villeUuid?: string;
     nom: string;
     description?: string;
     typeSite?: string;

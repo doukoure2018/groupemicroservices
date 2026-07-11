@@ -155,14 +155,9 @@ tables géo en SQL direct, le mobile consomme `villes/active`, `sites/actifs`,
 `offres/recherche`, `communes`, `quartiers/commune/*`, et 3 vues SQL figent les noms
 de colonnes). La Phase 0 (corrections sans risque) est faite — voir « Réglées ».
 
-- **T12a — Phase 1 : dénormaliser la ville sur `sites`.** La ville d'un site est
-  reconstituée par 6-8 LEFT JOIN via `localisations.quartier_id` **nullable** : une
-  localisation sans quartier rend son site invisible dans toutes les recherches par
-  ville (dont `offres/recherche` utilisé par le mobile). Cible : migration additive
-  V35 `sites.ville_id BIGINT NULL REFERENCES villes` + backfill par la chaîne
-  actuelle + obligatoire à la création côté API ; réécrire les `WHERE vd.ville_uuid`
-  des `*Query` billetterie avec `COALESCE(s.ville_id, <chaîne actuelle>)`. Aucune
-  route ne change.
+- ~~**T12a — Phase 1 : dénormaliser la ville sur `sites`.**~~ **RÉGLÉE le 2026-07-11**
+  (voir « Réglées »). Reste optionnel : rattacher `partenaires` (PartenaireQuery
+  dérive encore la ville par la chaîne — hors du chemin de recherche des offres).
 - **T12b — Phase 2 : wizard « Nouvelle liaison » (frontend seul).** 10-11 écrans
   isolés à visiter dans l'ordre des FK pour publier une offre, zéro lien entre eux.
   Cible : un écran orchestrateur (p-stepper) qui enchaîne les POST existants
@@ -206,6 +201,14 @@ de colonnes). La Phase 0 (corrections sans risque) est faite — voir « Réglé
 
 ## ✅ Réglées
 
+- **2026-07-11** — Phase 1 du refactoring transport (T12a) : migration **V35**
+  additive `sites.ville_id` (FK RESTRICT + index + backfill par la chaîne existante,
+  8/8 sites locaux renseignés). Les `*Query` billetterie (Site, Depart, Arrivee,
+  Trajet, Offre) résolvent la ville par `COALESCE(ville directe, ville dérivée)` —
+  une localisation sans quartier ne rend plus son site invisible dans les recherches
+  par ville (validé en SQL : quartier_id NULL simulé → ville toujours résolue).
+  `villeUuid` obligatoire à la création d'un site (API + formulaire sites-gares,
+  pré-rempli depuis la localisation). Aucune route ni colonne existante modifiée.
 - **2026-07-11** — Phase 0 du refactoring transport (T12) : handlers d'erreur de la
   famille B corrigés (`err.error?.message` sur une string → les messages backend
   s'affichent enfin dans sites-gares/points-depart/points-arrivee) ; toasts ajoutés

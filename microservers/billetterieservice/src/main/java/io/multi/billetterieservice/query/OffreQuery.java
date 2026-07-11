@@ -47,20 +47,20 @@ public final class OffreQuery {
             t.libelle_trajet AS trajet_libelle,
             t.distance_km AS trajet_distance_km,
             t.duree_estimee_minutes AS trajet_duree_minutes,
-            -- Départ
+            -- Départ (V35 : ville directe du site prioritaire, chaîne en fallback)
             dep.depart_uuid,
             dep.libelle AS depart_libelle,
             sd.nom AS site_depart,
-            vd.libelle AS ville_depart_libelle,
-            vd.ville_uuid AS ville_depart_uuid,
-            rd.libelle AS region_depart_libelle,
-            -- Arrivée
+            COALESCE(vsd.libelle, vd.libelle) AS ville_depart_libelle,
+            COALESCE(vsd.ville_uuid, vd.ville_uuid) AS ville_depart_uuid,
+            COALESCE(rsd.libelle, rd.libelle) AS region_depart_libelle,
+            -- Arrivée (V35 : idem)
             arr.arrivee_uuid,
             arr.libelle AS arrivee_libelle,
             sa.nom AS site_arrivee,
-            va.libelle AS ville_arrivee_libelle,
-            va.ville_uuid AS ville_arrivee_uuid,
-            ra.libelle AS region_arrivee_libelle,
+            COALESCE(vsa.libelle, va.libelle) AS ville_arrivee_libelle,
+            COALESCE(vsa.ville_uuid, va.ville_uuid) AS ville_arrivee_uuid,
+            COALESCE(rsa.libelle, ra.libelle) AS region_arrivee_libelle,
             -- Véhicule
             v.vehicule_uuid,
             v.immatriculation AS vehicule_immatriculation,
@@ -88,6 +88,8 @@ public final class OffreQuery {
         LEFT JOIN communes cd ON qd.commune_id = cd.commune_id
         LEFT JOIN villes vd ON cd.ville_id = vd.ville_id
         LEFT JOIN regions rd ON vd.region_id = rd.region_id
+        LEFT JOIN villes vsd ON sd.ville_id = vsd.ville_id
+        LEFT JOIN regions rsd ON vsd.region_id = rsd.region_id
         INNER JOIN arrivees arr ON t.arrivee_id = arr.arrivee_id
         INNER JOIN sites sa ON arr.site_id = sa.site_id
         INNER JOIN localisations la ON sa.localisation_id = la.localisation_id
@@ -95,6 +97,8 @@ public final class OffreQuery {
         LEFT JOIN communes ca ON qa.commune_id = ca.commune_id
         LEFT JOIN villes va ON ca.ville_id = va.ville_id
         LEFT JOIN regions ra ON va.region_id = ra.region_id
+        LEFT JOIN villes vsa ON sa.ville_id = vsa.ville_id
+        LEFT JOIN regions rsa ON vsa.region_id = rsa.region_id
         INNER JOIN vehicules v ON o.vehicule_id = v.vehicule_id
         LEFT JOIN types_vehicules tv ON v.type_vehicule_id = tv.type_vehicule_id
         INNER JOIN users u ON o.user_id = u.user_id
@@ -151,16 +155,16 @@ public final class OffreQuery {
         """;
 
     public static final String FIND_BY_VILLES = BASE_SELECT + """
-        WHERE vd.ville_uuid = :villeDepartUuid
-          AND va.ville_uuid = :villeArriveeUuid
+        WHERE COALESCE(vsd.ville_uuid, vd.ville_uuid) = :villeDepartUuid
+          AND COALESCE(vsa.ville_uuid, va.ville_uuid) = :villeArriveeUuid
           AND o.statut IN ('EN_ATTENTE', 'OUVERT')
           AND o.date_depart >= CURRENT_DATE
         ORDER BY o.date_depart ASC, o.heure_depart ASC
         """;
 
     public static final String FIND_BY_VILLES_AND_DATE = BASE_SELECT + """
-        WHERE vd.ville_uuid = :villeDepartUuid
-          AND va.ville_uuid = :villeArriveeUuid
+        WHERE COALESCE(vsd.ville_uuid, vd.ville_uuid) = :villeDepartUuid
+          AND COALESCE(vsa.ville_uuid, va.ville_uuid) = :villeArriveeUuid
           AND o.date_depart = :dateDepart
           AND o.statut IN ('EN_ATTENTE', 'OUVERT')
         ORDER BY o.heure_depart ASC
@@ -174,14 +178,14 @@ public final class OffreQuery {
         """;
 
     public static final String FIND_BY_VILLE_DEPART = BASE_SELECT + """
-        WHERE vd.ville_uuid = :villeDepartUuid
+        WHERE COALESCE(vsd.ville_uuid, vd.ville_uuid) = :villeDepartUuid
           AND o.statut IN ('EN_ATTENTE', 'OUVERT')
           AND o.date_depart >= CURRENT_DATE
         ORDER BY o.date_depart ASC, o.heure_depart ASC
         """;
 
     public static final String FIND_BY_VILLE_ARRIVEE = BASE_SELECT + """
-        WHERE va.ville_uuid = :villeArriveeUuid
+        WHERE COALESCE(vsa.ville_uuid, va.ville_uuid) = :villeArriveeUuid
           AND o.statut IN ('EN_ATTENTE', 'OUVERT')
           AND o.date_depart >= CURRENT_DATE
         ORDER BY o.date_depart ASC, o.heure_depart ASC
@@ -217,8 +221,8 @@ public final class OffreQuery {
     public static final String SEARCH = BASE_SELECT + """
         WHERE (
             LOWER(t.libelle_trajet) LIKE :searchTerm
-            OR LOWER(vd.libelle) LIKE :searchTerm
-            OR LOWER(va.libelle) LIKE :searchTerm
+            OR LOWER(COALESCE(vsd.libelle, vd.libelle)) LIKE :searchTerm
+            OR LOWER(COALESCE(vsa.libelle, va.libelle)) LIKE :searchTerm
             OR LOWER(sd.nom) LIKE :searchTerm
             OR LOWER(sa.nom) LIKE :searchTerm
             OR LOWER(v.immatriculation) LIKE :searchTerm

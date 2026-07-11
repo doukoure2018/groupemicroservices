@@ -39,6 +39,7 @@ public class SiteRepositoryImpl implements SiteRepository {
             .siteId(rs.getLong("site_id"))
             .siteUuid(rs.getString("site_uuid"))
             .localisationId(rs.getLong("localisation_id"))
+            .villeId(rs.getObject("ville_id", Long.class))
             .nom(rs.getString("nom"))
             .description(rs.getString("description"))
             .typeSite(rs.getString("type_site"))
@@ -175,6 +176,7 @@ public class SiteRepositoryImpl implements SiteRepository {
         log.debug("Exécution de save({})", site.getNom());
         return jdbcClient.sql(SiteQuery.INSERT)
                 .param("localisationId", site.getLocalisationId())
+                .param("villeId", site.getVilleId())
                 .param("nom", site.getNom())
                 .param("description", site.getDescription())
                 .param("typeSite", site.getTypeSite() != null ? site.getTypeSite() : "GARE_ROUTIERE")
@@ -200,6 +202,7 @@ public class SiteRepositoryImpl implements SiteRepository {
         log.debug("Exécution de update({})", site.getSiteUuid());
         return jdbcClient.sql(SiteQuery.UPDATE)
                 .param("localisationId", site.getLocalisationId())
+                .param("villeId", site.getVilleId())
                 .param("nom", site.getNom())
                 .param("description", site.getDescription())
                 .param("typeSite", site.getTypeSite())

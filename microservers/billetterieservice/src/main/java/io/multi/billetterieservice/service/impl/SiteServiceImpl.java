@@ -2,9 +2,11 @@ package io.multi.billetterieservice.service.impl;
 
 import io.multi.billetterieservice.domain.Localisation;
 import io.multi.billetterieservice.domain.Site;
+import io.multi.billetterieservice.domain.Ville;
 import io.multi.billetterieservice.exception.ApiException;
 import io.multi.billetterieservice.repository.LocalisationRepository;
 import io.multi.billetterieservice.repository.SiteRepository;
+import io.multi.billetterieservice.repository.VilleRepository;
 import io.multi.billetterieservice.service.SiteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,7 @@ public class SiteServiceImpl implements SiteService {
 
     private final SiteRepository siteRepository;
     private final LocalisationRepository localisationRepository;
+    private final VilleRepository villeRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -85,8 +88,16 @@ public class SiteServiceImpl implements SiteService {
     }
 
     @Override
-    public Site createSite(Site site, String localisationUuid) {
-        log.info("Création d'un nouveau site: {} pour localisation: {}", site.getNom(), localisationUuid);
+    public Site createSite(Site site, String localisationUuid, String villeUuid) {
+        log.info("Création d'un nouveau site: {} pour localisation: {} et ville: {}", site.getNom(), localisationUuid, villeUuid);
+
+        // V35 : la ville directe est obligatoire à la création (sinon le site
+        // dépend de la chaîne quartier→commune→ville, fragile car quartier nullable)
+        if (villeUuid == null || villeUuid.trim().isEmpty()) {
+            throw new ApiException("La ville du site est obligatoire");
+        }
+        Ville ville = villeRepository.findByUuid(villeUuid)
+                .orElseThrow(() -> new ApiException("Ville non trouvée avec l'UUID: " + villeUuid));
 
         // Vérifier que la localisation existe
         Localisation localisation = localisationRepository.findByUuid(localisationUuid)
@@ -98,6 +109,7 @@ public class SiteServiceImpl implements SiteService {
         }
 
         site.setLocalisationId(localisation.getLocalisationId());
+        site.setVilleId(ville.getVilleId());
         Site savedSite = siteRepository.save(site);
 
         // Recharger avec toutes les informations jointes
@@ -106,7 +118,7 @@ public class SiteServiceImpl implements SiteService {
     }
 
     @Override
-    public Site updateSite(String uuid, Site site, String localisationUuid) {
+    public Site updateSite(String uuid, Site site, String localisationUuid, String villeUuid) {
         log.info("Mise à jour du site: {}", uuid);
 
         // Vérifier que le site existe
@@ -121,6 +133,15 @@ public class SiteServiceImpl implements SiteService {
             localisationId = localisation.getLocalisationId();
         }
 
+        // V35 : ville directe — si fournie, la résoudre ; sinon conserver l'existante
+        // (les anciens sites sans ville restent valides tant qu'on ne les touche pas)
+        Long villeId = existingSite.getVilleId();
+        if (villeUuid != null && !villeUuid.isEmpty()) {
+            Ville ville = villeRepository.findByUuid(villeUuid)
+                    .orElseThrow(() -> new ApiException("Ville non trouvée avec l'UUID: " + villeUuid));
+            villeId = ville.getVilleId();
+        }
+
         // Vérifier l'unicité du nom si modifié
         if (!existingSite.getNom().equalsIgnoreCase(site.getNom()) ||
                 !existingSite.getLocalisationId().equals(localisationId)) {
@@ -131,6 +152,7 @@ public class SiteServiceImpl implements SiteService {
 
         // Mettre à jour
         existingSite.setLocalisationId(localisationId);
+        existingSite.setVilleId(villeId);
         existingSite.setNom(site.getNom());
         existingSite.setDescription(site.getDescription());
         existingSite.setTypeSite(site.getTypeSite());

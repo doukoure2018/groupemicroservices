@@ -16,6 +16,8 @@ public class Site {
     private Long siteId;
     private String siteUuid;
     private Long localisationId;
+    // V35 : ville directe du site (prioritaire sur la ville dérivée de la localisation)
+    private Long villeId;
     private String nom;
     private String description;
     private String typeSite;

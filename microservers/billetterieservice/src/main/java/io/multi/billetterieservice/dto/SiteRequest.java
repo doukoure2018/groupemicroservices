@@ -17,6 +17,10 @@ public class SiteRequest {
     @NotBlank(message = "L'UUID de la localisation est obligatoire")
     private String localisationUuid;
 
+    // V35 : ville directe du site. Obligatoire à la création (validé côté service
+    // pour ne pas casser les mises à jour d'anciens sites sans ville).
+    private String villeUuid;
+
     @NotBlank(message = "Le nom du site est obligatoire")
     @Size(min = 2, max = 100, message = "Le nom doit contenir entre 2 et 100 caractères")
     private String nom;

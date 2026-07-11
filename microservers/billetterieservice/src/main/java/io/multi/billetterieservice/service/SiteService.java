@@ -22,9 +22,9 @@ public interface SiteService {
 
     List<Site> searchSites(String searchTerm);
 
-    Site createSite(Site site, String localisationUuid);
+    Site createSite(Site site, String localisationUuid, String villeUuid);
 
-    Site updateSite(String uuid, Site site, String localisationUuid);
+    Site updateSite(String uuid, Site site, String localisationUuid, String villeUuid);
 
     Site toggleActif(String uuid);
 

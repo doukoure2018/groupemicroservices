@@ -39,9 +39,9 @@ public final class TrajetQuery {
             ld.adresse_complete AS depart_adresse_complete,
             ld.latitude AS depart_latitude,
             ld.longitude AS depart_longitude,
-            vd.ville_uuid AS depart_ville_uuid,
-            vd.libelle AS depart_ville_libelle,
-            rd.libelle AS depart_region_libelle,
+            COALESCE(vsd.ville_uuid, vd.ville_uuid) AS depart_ville_uuid,
+            COALESCE(vsd.libelle, vd.libelle) AS depart_ville_libelle,
+            COALESCE(rsd.libelle, rd.libelle) AS depart_region_libelle,
             -- Arrivée
             a.arrivee_uuid,
             a.libelle AS arrivee_libelle,
@@ -51,9 +51,9 @@ public final class TrajetQuery {
             la.adresse_complete AS arrivee_adresse_complete,
             la.latitude AS arrivee_latitude,
             la.longitude AS arrivee_longitude,
-            va.ville_uuid AS arrivee_ville_uuid,
-            va.libelle AS arrivee_ville_libelle,
-            ra.libelle AS arrivee_region_libelle,
+            COALESCE(vsa.ville_uuid, va.ville_uuid) AS arrivee_ville_uuid,
+            COALESCE(vsa.libelle, va.libelle) AS arrivee_ville_libelle,
+            COALESCE(rsa.libelle, ra.libelle) AS arrivee_region_libelle,
             -- Utilisateur créateur
             u.user_uuid,
             u.username AS user_username,
@@ -67,6 +67,9 @@ public final class TrajetQuery {
         LEFT JOIN communes cd ON qd.commune_id = cd.commune_id
         LEFT JOIN villes vd ON cd.ville_id = vd.ville_id
         LEFT JOIN regions rd ON vd.region_id = rd.region_id
+        -- V35 : ville directe du site de départ (prioritaire, COALESCE)
+        LEFT JOIN villes vsd ON sd.ville_id = vsd.ville_id
+        LEFT JOIN regions rsd ON vsd.region_id = rsd.region_id
         -- Jointures Arrivée
         INNER JOIN arrivees a ON t.arrivee_id = a.arrivee_id
         INNER JOIN sites sa ON a.site_id = sa.site_id
@@ -75,6 +78,9 @@ public final class TrajetQuery {
         LEFT JOIN communes ca ON qa.commune_id = ca.commune_id
         LEFT JOIN villes va ON ca.ville_id = va.ville_id
         LEFT JOIN regions ra ON va.region_id = ra.region_id
+        -- V35 : ville directe du site d'arrivée (prioritaire, COALESCE)
+        LEFT JOIN villes vsa ON sa.ville_id = vsa.ville_id
+        LEFT JOIN regions rsa ON vsa.region_id = rsa.region_id
         -- Jointure Utilisateur
         INNER JOIN users u ON t.user_id = u.user_id
         """;
@@ -124,18 +130,18 @@ public final class TrajetQuery {
         """;
 
     public static final String FIND_BY_VILLE_DEPART = BASE_SELECT + """
-        WHERE vd.ville_uuid = :villeUuid
+        WHERE COALESCE(vsd.ville_uuid, vd.ville_uuid) = :villeUuid
         ORDER BY t.libelle_trajet ASC
         """;
 
     public static final String FIND_BY_VILLE_ARRIVEE = BASE_SELECT + """
-        WHERE va.ville_uuid = :villeUuid
+        WHERE COALESCE(vsa.ville_uuid, va.ville_uuid) = :villeUuid
         ORDER BY t.libelle_trajet ASC
         """;
 
     public static final String FIND_BY_VILLES = BASE_SELECT + """
-        WHERE vd.ville_uuid = :villeDepartUuid 
-          AND va.ville_uuid = :villeArriveeUuid
+        WHERE COALESCE(vsd.ville_uuid, vd.ville_uuid) = :villeDepartUuid
+          AND COALESCE(vsa.ville_uuid, va.ville_uuid) = :villeArriveeUuid
         ORDER BY t.montant_base ASC
         """;
 
@@ -148,8 +154,8 @@ public final class TrajetQuery {
         WHERE LOWER(t.libelle_trajet) LIKE :searchTerm
            OR LOWER(d.libelle) LIKE :searchTerm
            OR LOWER(a.libelle) LIKE :searchTerm
-           OR LOWER(vd.libelle) LIKE :searchTerm
-           OR LOWER(va.libelle) LIKE :searchTerm
+           OR LOWER(COALESCE(vsd.libelle, vd.libelle)) LIKE :searchTerm
+           OR LOWER(COALESCE(vsa.libelle, va.libelle)) LIKE :searchTerm
         ORDER BY t.libelle_trajet ASC
         """;
 
