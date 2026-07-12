@@ -14,11 +14,13 @@ import { TooltipModule } from 'primeng/tooltip';
 import { CardModule } from 'primeng/card';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DropdownModule } from 'primeng/dropdown';
+import { TextareaModule } from 'primeng/textarea';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
-import { ChampRef, FiltreRef, ReferentielApi, ReferentielCrudConfig } from '@/interface/referentiel-crud.config';
+import { firstValueFrom } from 'rxjs';
+import { ChampRef, FiltreRef, LigneLot, ReferentielApi, ReferentielCrudConfig } from '@/interface/referentiel-crud.config';
 
 /**
  * Écran CRUD générique pour les référentiels « famille A » (régions, villes,
@@ -29,7 +31,7 @@ import { ChampRef, FiltreRef, ReferentielApi, ReferentielCrudConfig } from '@/in
 @Component({
     selector: 'app-referentiel-crud',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, TableModule, ButtonModule, InputTextModule, DialogModule, ToastModule, ConfirmDialogModule, TagModule, TooltipModule, CardModule, ProgressSpinnerModule, DropdownModule, IconFieldModule, InputIconModule],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, TableModule, ButtonModule, InputTextModule, DialogModule, ToastModule, ConfirmDialogModule, TagModule, TooltipModule, CardModule, ProgressSpinnerModule, DropdownModule, TextareaModule, IconFieldModule, InputIconModule],
     providers: [MessageService, ConfirmationService],
     templateUrl: './referentiel-crud.component.html',
     styleUrl: './referentiel-crud.component.scss'
@@ -54,6 +56,12 @@ export class ReferentielCrudComponent implements OnInit {
     searchTerm = signal('');
     /** Valeur courante de chaque filtre (même index que config.filtres) */
     valeursFiltres = signal<(string | null)[]>([]);
+
+    // ===== Saisie en lot =====
+    isLotOpen = signal(false);
+    lotEnCours = signal(false);
+    lotTexte = '';
+    lotResultats = signal<LigneLot[]>([]);
 
     form!: FormGroup;
 
@@ -235,6 +243,107 @@ export class ReferentielCrudComponent implements OnInit {
                     this.showError(error);
                 }
             });
+        }
+    }
+
+    // ===== Saisie en lot =====
+    /** Champs dropdown (parents) affichés dans le dialog de lot. */
+    champsLot(): ChampRef[] {
+        return this.config().champs.filter((c) => c.type === 'dropdown');
+    }
+
+    /** Le champ texte alimenté par les lignes du textarea (le libellé). */
+    private champLibelleLot(): ChampRef | undefined {
+        return this.config().champs.find((c) => c.type === 'text' && c.required);
+    }
+
+    openLotModal(): void {
+        this.form.reset(undefined, { emitEvent: false });
+        this.lotTexte = '';
+        this.lotResultats.set([]);
+        this.isLotOpen.set(true);
+    }
+
+    closeLotModal(): void {
+        if (this.lotEnCours()) return;
+        this.isLotOpen.set(false);
+        this.lotTexte = '';
+        this.lotResultats.set([]);
+        this.form.reset(undefined, { emitEvent: false });
+    }
+
+    lignesLot(): string[] {
+        const vues = new Set<string>();
+        return this.lotTexte
+            .split('\n')
+            .map((l) => l.trim())
+            .filter((l) => {
+                if (!l) return false;
+                const cle = l.toLowerCase();
+                if (vues.has(cle)) return false;
+                vues.add(cle);
+                return true;
+            });
+    }
+
+    lotValide(): boolean {
+        if (this.lignesLot().length === 0) return false;
+        // Tous les parents obligatoires doivent être choisis
+        return this.champsLot()
+            .filter((c) => c.required)
+            .every((c) => !!this.form.get(c.key)?.value);
+    }
+
+    async lancerLot(): Promise<void> {
+        if (!this.lotValide() || this.lotEnCours()) return;
+
+        const libelleChamp = this.champLibelleLot();
+        if (!libelleChamp) return;
+
+        // Parents communs à toutes les lignes (les champs d'aide ne partent pas)
+        const base: Record<string, any> = {};
+        for (const champ of this.config().champs) {
+            if (champ.exclu || champ === libelleChamp) continue;
+            base[champ.key] = this.form.value[champ.key] || null;
+        }
+
+        const resultats: LigneLot[] = this.lignesLot().map((libelle) => ({ libelle, statut: 'attente' }));
+        this.lotResultats.set(resultats);
+        this.lotEnCours.set(true);
+
+        let crees = 0;
+        for (let i = 0; i < resultats.length; i++) {
+            const maj = (statut: LigneLot['statut'], detail?: string) =>
+                this.lotResultats.update((list) => list.map((l, j) => (j === i ? { ...l, statut, detail } : l)));
+            try {
+                await firstValueFrom(this.api().create({ ...base, [libelleChamp.key]: resultats[i].libelle }));
+                maj('cree');
+                crees++;
+            } catch (err) {
+                const message = typeof err === 'string' ? err : 'Erreur';
+                if (message.toLowerCase().includes('existe déjà') || message.toLowerCase().includes('existe deja')) {
+                    maj('ignore', 'Existe déjà');
+                } else {
+                    maj('erreur', message);
+                }
+            }
+        }
+
+        this.lotEnCours.set(false);
+        if (crees > 0) {
+            const nom = crees > 1 ? this.config().entitePluriel : this.config().entite;
+            const accord = (this.config().genre === 'f' ? 'créée' : 'créé') + (crees > 1 ? 's' : '');
+            this.showSuccess(`${crees} ${nom} ${accord}`);
+            this.load();
+        }
+    }
+
+    getLotIcon(statut: LigneLot['statut']): string {
+        switch (statut) {
+            case 'cree': return 'pi pi-check-circle';
+            case 'ignore': return 'pi pi-minus-circle';
+            case 'erreur': return 'pi pi-times-circle';
+            default: return 'pi pi-circle';
         }
     }
 

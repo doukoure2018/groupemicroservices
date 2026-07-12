@@ -46,7 +46,9 @@ export class QuartiersComponent implements OnInit {
             { label: 'Filtrer par ville', rowKey: 'villeUuid', optionsKey: 'villes', optionLabel: 'libelle', optionValue: 'villeUuid' },
             { label: 'Filtrer par commune', rowKey: 'communeUuid', optionsKey: 'communes', optionLabel: 'libelle', optionValue: 'communeUuid', dependsOn: { filtre: 0, matchKey: 'villeUuid' } }
         ],
-        rechercheKeys: ['libelle', 'communeLibelle', 'villeLibelle', 'regionLibelle']
+        rechercheKeys: ['libelle', 'communeLibelle', 'villeLibelle', 'regionLibelle'],
+        // Des dizaines de quartiers par commune → saisie en lot
+        saisieParLot: true
     };
 
     readonly api: ReferentielApi = {

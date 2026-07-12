@@ -39,7 +39,9 @@ export class CommunesComponent implements OnInit {
             { key: 'libelle', label: 'Libellé', type: 'text', required: true, minLength: 2, maxLength: 100, placeholder: 'Ex: Matam' }
         ],
         filtres: [{ label: 'Filtrer par ville', rowKey: 'villeUuid', optionsKey: 'villes', optionLabel: 'libelle', optionValue: 'villeUuid' }],
-        rechercheKeys: ['libelle', 'villeLibelle', 'regionLibelle']
+        rechercheKeys: ['libelle', 'villeLibelle', 'regionLibelle'],
+        // Communes rurales nombreuses par préfecture → saisie en lot
+        saisieParLot: true
     };
 
     readonly api: ReferentielApi = {

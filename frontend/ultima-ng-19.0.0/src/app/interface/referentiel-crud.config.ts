@@ -64,6 +64,19 @@ export interface ReferentielCrudConfig {
     /** Clés des lignes parcourues par la recherche texte */
     rechercheKeys: string[];
     largeurModal?: string;
+    /**
+     * Active le bouton « Ajout en lot » : les champs dropdown du formulaire +
+     * un textarea « un libellé par ligne » ; chaque ligne devient un POST de
+     * création (les doublons signalés par le backend sont ignorés).
+     */
+    saisieParLot?: boolean;
+}
+
+/** Résultat d'une ligne lors d'une saisie en lot. */
+export interface LigneLot {
+    libelle: string;
+    statut: 'attente' | 'cree' | 'ignore' | 'erreur';
+    detail?: string;
 }
 
 /** Résultat normalisé des mutations (l'adaptateur extrait l'entité de IResponse). */

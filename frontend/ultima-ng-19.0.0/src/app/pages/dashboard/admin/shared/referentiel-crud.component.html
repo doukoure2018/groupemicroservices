@@ -8,8 +8,14 @@
             <h1>{{ config().titre }}</h1>
             <p class="subtitle">{{ config().sousTitre }}</p>
         </div>
-        <p-button [label]="boutonCreation" icon="pi pi-plus" (onClick)="openCreateModal()" [raised]="true">
-        </p-button>
+        <div class="header-actions">
+            @if (config().saisieParLot) {
+            <p-button label="Ajout en lot" icon="pi pi-list" [outlined]="true" (onClick)="openLotModal()">
+            </p-button>
+            }
+            <p-button [label]="boutonCreation" icon="pi pi-plus" (onClick)="openCreateModal()" [raised]="true">
+            </p-button>
+        </div>
     </div>
 
     <!-- Statistiques -->
@@ -198,6 +204,57 @@
             </p-button>
             <p-button [label]="isEditMode() ? 'Modifier' : 'Créer'" type="submit" [loading]="loading()"
                 icon="pi pi-check">
+            </p-button>
+        </div>
+    </form>
+</p-dialog>
+
+<!-- Modal Saisie en lot -->
+<p-dialog [header]="'Ajout en lot — ' + config().entitePluriel" [visible]="isLotOpen()"
+    (visibleChange)="!$event && closeLotModal()" [modal]="true" [style]="{ width: '520px' }" [draggable]="false"
+    [resizable]="false" [closable]="!lotEnCours()">
+
+    <form [formGroup]="form">
+        <div class="form-content">
+            @for (champ of champsLot(); track champ.key) {
+            <div class="form-field">
+                <label>{{ champ.label }}{{ champ.required ? ' *' : '' }}</label>
+                <p-dropdown [formControlName]="champ.key" [options]="optionsPourChamp(champ)"
+                    [optionLabel]="champ.optionLabel || 'libelle'" [optionValue]="champ.optionValue || 'uuid'"
+                    [placeholder]="champ.placeholder || 'Sélectionner'" [filter]="true" [showClear]="!champ.required"
+                    appendTo="body" styleClass="w-full">
+                </p-dropdown>
+            </div>
+            }
+
+            <div class="form-field">
+                <label>Libellés — un par ligne *</label>
+                <textarea pInputTextarea rows="8" [(ngModel)]="lotTexte" [ngModelOptions]="{ standalone: true }"
+                    [disabled]="lotEnCours()" placeholder="Ex:&#10;Almamya&#10;Sandervalia&#10;Kouléwondy"
+                    class="lot-textarea"></textarea>
+                <small class="hint-lot">{{ lignesLot().length }} libellé(s) à créer — les doublons déjà en base seront
+                    ignorés.</small>
+            </div>
+
+            @if (lotResultats().length > 0) {
+            <ul class="lot-resultats">
+                @for (ligne of lotResultats(); track ligne.libelle) {
+                <li [class]="'lot-' + ligne.statut">
+                    <i [class]="getLotIcon(ligne.statut)"></i>
+                    <span>{{ ligne.libelle }}</span>
+                    @if (ligne.detail) {<small>{{ ligne.detail }}</small>}
+                </li>
+                }
+            </ul>
+            }
+        </div>
+
+        <div class="dialog-footer">
+            <p-button label="Fermer" [outlined]="true" severity="secondary" (onClick)="closeLotModal()"
+                [disabled]="lotEnCours()">
+            </p-button>
+            <p-button [label]="'Créer ' + lignesLot().length + ' ' + config().entitePluriel" icon="pi pi-check"
+                (onClick)="lancerLot()" [loading]="lotEnCours()" [disabled]="!lotValide()">
             </p-button>
         </div>
     </form>
