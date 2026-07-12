@@ -14,7 +14,6 @@ import { TooltipModule } from 'primeng/tooltip';
 import { CardModule } from 'primeng/card';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DropdownModule } from 'primeng/dropdown';
-import { TextareaModule } from 'primeng/textarea';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -31,7 +30,7 @@ import { ChampRef, FiltreRef, LigneLot, ReferentielApi, ReferentielCrudConfig } 
 @Component({
     selector: 'app-referentiel-crud',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, TableModule, ButtonModule, InputTextModule, DialogModule, ToastModule, ConfirmDialogModule, TagModule, TooltipModule, CardModule, ProgressSpinnerModule, DropdownModule, TextareaModule, IconFieldModule, InputIconModule],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, TableModule, ButtonModule, InputTextModule, DialogModule, ToastModule, ConfirmDialogModule, TagModule, TooltipModule, CardModule, ProgressSpinnerModule, DropdownModule, IconFieldModule, InputIconModule],
     providers: [MessageService, ConfirmationService],
     templateUrl: './referentiel-crud.component.html',
     styleUrl: './referentiel-crud.component.scss'
@@ -60,7 +59,10 @@ export class ReferentielCrudComponent implements OnInit {
     // ===== Saisie en lot =====
     isLotOpen = signal(false);
     lotEnCours = signal(false);
-    lotTexte = '';
+    /** Libellés validés, affichés en tags */
+    lotLibelles = signal<string[]>([]);
+    /** Saisie en cours (devient un tag sur Entrée ou au collage multi-lignes) */
+    lotSaisie = '';
     lotResultats = signal<LigneLot[]>([]);
 
     form!: FormGroup;
@@ -259,7 +261,8 @@ export class ReferentielCrudComponent implements OnInit {
 
     openLotModal(): void {
         this.form.reset(undefined, { emitEvent: false });
-        this.lotTexte = '';
+        this.lotLibelles.set([]);
+        this.lotSaisie = '';
         this.lotResultats.set([]);
         this.isLotOpen.set(true);
     }
@@ -267,27 +270,68 @@ export class ReferentielCrudComponent implements OnInit {
     closeLotModal(): void {
         if (this.lotEnCours()) return;
         this.isLotOpen.set(false);
-        this.lotTexte = '';
+        this.lotLibelles.set([]);
+        this.lotSaisie = '';
         this.lotResultats.set([]);
         this.form.reset(undefined, { emitEvent: false });
     }
 
     lignesLot(): string[] {
-        const vues = new Set<string>();
-        return this.lotTexte
-            .split('\n')
-            .map((l) => l.trim())
-            .filter((l) => {
-                if (!l) return false;
-                const cle = l.toLowerCase();
-                if (vues.has(cle)) return false;
-                vues.add(cle);
-                return true;
-            });
+        return this.lotLibelles();
+    }
+
+    /** Nombre affiché : tags + la saisie en cours non encore validée par Entrée. */
+    nbLot(): number {
+        return this.lotLibelles().length + (this.lotSaisie.trim() ? 1 : 0);
+    }
+
+    /** Ajoute un ou plusieurs libellés (dédoublonnés, insensible à la casse). */
+    private ajouterLibelles(valeurs: string[]): void {
+        this.lotLibelles.update((liste) => {
+            const vues = new Set(liste.map((l) => l.toLowerCase()));
+            const ajouts = valeurs
+                .map((v) => v.trim())
+                .filter((v) => {
+                    if (!v) return false;
+                    const cle = v.toLowerCase();
+                    if (vues.has(cle)) return false;
+                    vues.add(cle);
+                    return true;
+                });
+            return [...liste, ...ajouts];
+        });
+    }
+
+    /** Entrée → transforme la saisie en tag ; Backspace sur champ vide → retire le dernier. */
+    onLotKeydown(event: KeyboardEvent): void {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            if (this.lotSaisie.trim()) {
+                this.ajouterLibelles([this.lotSaisie]);
+                this.lotSaisie = '';
+            }
+        } else if (event.key === 'Backspace' && !this.lotSaisie) {
+            this.lotLibelles.update((liste) => liste.slice(0, -1));
+        }
+    }
+
+    /** Collage multi-lignes → un tag par ligne. */
+    onLotPaste(event: ClipboardEvent): void {
+        const texte = event.clipboardData?.getData('text') ?? '';
+        if (texte.includes('\n')) {
+            event.preventDefault();
+            this.ajouterLibelles(texte.split('\n'));
+            this.lotSaisie = '';
+        }
+    }
+
+    retirerLibelle(index: number): void {
+        if (this.lotEnCours()) return;
+        this.lotLibelles.update((liste) => liste.filter((_, i) => i !== index));
     }
 
     lotValide(): boolean {
-        if (this.lignesLot().length === 0) return false;
+        if (this.lignesLot().length === 0 && !this.lotSaisie.trim()) return false;
         // Tous les parents obligatoires doivent être choisis
         return this.champsLot()
             .filter((c) => c.required)
@@ -295,6 +339,11 @@ export class ReferentielCrudComponent implements OnInit {
     }
 
     async lancerLot(): Promise<void> {
+        // La saisie en cours non validée par Entrée compte aussi
+        if (this.lotSaisie.trim()) {
+            this.ajouterLibelles([this.lotSaisie]);
+            this.lotSaisie = '';
+        }
         if (!this.lotValide() || this.lotEnCours()) return;
 
         const libelleChamp = this.champLibelleLot();

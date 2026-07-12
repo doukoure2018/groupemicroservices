@@ -228,12 +228,21 @@
             }
 
             <div class="form-field">
-                <label>Libellés — un par ligne *</label>
-                <textarea pInputTextarea rows="8" [(ngModel)]="lotTexte" [ngModelOptions]="{ standalone: true }"
-                    [disabled]="lotEnCours()" placeholder="Ex:&#10;Almamya&#10;Sandervalia&#10;Kouléwondy"
-                    class="lot-textarea"></textarea>
-                <small class="hint-lot">{{ lignesLot().length }} libellé(s) à créer — les doublons déjà en base seront
-                    ignorés.</small>
+                <label>Libellés *</label>
+                <div class="lot-chips" [class.disabled]="lotEnCours()">
+                    @for (libelle of lotLibelles(); track libelle) {
+                    <span class="lot-chip">
+                        {{ libelle }}
+                        <i class="pi pi-times" (click)="retirerLibelle($index)"></i>
+                    </span>
+                    }
+                    <input type="text" [(ngModel)]="lotSaisie" [ngModelOptions]="{ standalone: true }"
+                        [disabled]="lotEnCours()" (keydown)="onLotKeydown($event)" (paste)="onLotPaste($event)"
+                        [placeholder]="lotLibelles().length === 0 ? 'Tapez un libellé puis Entrée (ou collez une liste)' : ''"
+                        class="lot-chip-input" />
+                </div>
+                <small class="hint-lot">Entrée pour valider chaque libellé — un collage multi-lignes crée un tag par
+                    ligne. {{ nbLot() }} libellé(s) à créer ; les doublons déjà en base seront ignorés.</small>
             </div>
 
             @if (lotResultats().length > 0) {
@@ -253,7 +262,7 @@
             <p-button label="Fermer" [outlined]="true" severity="secondary" (onClick)="closeLotModal()"
                 [disabled]="lotEnCours()">
             </p-button>
-            <p-button [label]="'Créer ' + lignesLot().length + ' ' + config().entitePluriel" icon="pi pi-check"
+            <p-button [label]="'Créer ' + nbLot() + ' ' + config().entitePluriel" icon="pi pi-check"
                 (onClick)="lancerLot()" [loading]="lotEnCours()" [disabled]="!lotValide()">
             </p-button>
         </div>
