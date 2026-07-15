@@ -45,7 +45,19 @@ export const TokenInterceptor: HttpInterceptorFn = (request: HttpRequest<unknown
 
 // Helper functions
 function shouldSkipAuthorization(request: HttpRequest<unknown>): boolean {
-    const skipUrls = ['verify', 'login', 'refresh', 'resetpassword', 'oauth2/token', 'search'];
+    const skipUrls = [
+        'verify',
+        'login',
+        'refresh',
+        'resetpassword',
+        'oauth2/token',
+        'search',
+        // Endpoints publics (home avant connexion) : ne JAMAIS y attacher de
+        // Bearer — un token expiré/invalide provoque un 401 même sur du
+        // permitAll (le resource server rejette avant l'autorisation).
+        'billetterie/villes/active',
+        'billetterie/offres/recherche'
+    ];
     return skipUrls.some((url) => request.url.includes(url));
 }
 
