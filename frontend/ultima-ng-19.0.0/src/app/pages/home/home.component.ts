@@ -6,19 +6,26 @@ import { UserService } from '@/service/user.service';
 import { getFormData, loginUrl, redirectUri } from '@/utils/fileutils';
 import { ScrollAnimationDirective, CountUpDirective } from '@/directives/scroll-animation.directive';
 import { GuineaMapComponent } from './components/guinea-map.component';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { catchError, delay, take, tap, throwError } from 'rxjs';
+
+import { VilleService } from '@/service/ville.service';
+import { OffreService } from '@/service/offre.service';
+import { IVille } from '@/interface/ville';
+import { Offre } from '@/interface/offre.model';
+import { CONSEILS_PRATIQUES, GRANDS_AXES, AXES_INTERVILLES, PREFECTURES, REGIONS_NATURELLES, RegionNaturelle } from './referentiel-voyage';
 
 interface Destination {
     id: string;
     name: string;
     badge: string;
-    trips: string;
+    distanceLabel: string;
     price: string;
     image: string;
     rating: number;
@@ -31,7 +38,7 @@ interface FooterColumn {
 
 @Component({
     selector: 'app-home',
-    imports: [CommonModule, ProgressSpinnerModule, Topbar, ScrollAnimationDirective, CountUpDirective, GuineaMapComponent],
+    imports: [CommonModule, FormsModule, ProgressSpinnerModule, Topbar, ScrollAnimationDirective, CountUpDirective, GuineaMapComponent],
     templateUrl: './home.component.html',
     providers: [MessageService]
 })
@@ -48,6 +55,28 @@ export class HomeComponent {
     private userService = inject(UserService);
     private activatedRoute = inject(ActivatedRoute);
     private messageService = inject(MessageService);
+    private villeService = inject(VilleService);
+    private offreService = inject(OffreService);
+
+    // ===== Recherche publique de voyages (endpoints ouverts en lecture au gateway) =====
+    villes = signal<IVille[]>([]);
+    villeDepartUuid = '';
+    villeArriveeUuid = '';
+    dateDepart = '';
+    readonly aujourdHui = new Date().toISOString().split('T')[0];
+    rechercheEnCours = signal(false);
+    rechercheEffectuee = signal(false);
+    resultats = signal<Offre[]>([]);
+    erreurRecherche = signal<string | null>(null);
+
+    // ===== Guide de voyage (référentiel statique) =====
+    readonly regionsNaturelles = REGIONS_NATURELLES;
+    regionActive = signal<RegionNaturelle>('Basse Guinée');
+    prefecturesRegion = computed(() => PREFECTURES.filter((p) => p.region === this.regionActive()));
+    grandsAxes = GRANDS_AXES;
+    axesIntervilles = AXES_INTERVILLES;
+    conseils = CONSEILS_PRATIQUES;
+    conseilOuvert = signal<number>(0);
 
     // Hero stats
     heroStats = [
@@ -56,17 +85,14 @@ export class HomeComponent {
         { end: 10, suffix: 'K+', label: 'Voyageurs' },
     ];
 
-    cities = ['Conakry', 'Kankan', 'Labe', 'Nzerekore', 'Mamou', 'Boke'];
-    times = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00'];
-
-    // Destinations
+    // Destinations (distances/durées du référentiel, tarifs indicatifs depuis Conakry)
     destinations: Destination[] = [
-        { id: 'conakry', name: 'Conakry', badge: 'Capitale', trips: '15+ trajets/jour', price: '150 000 GNF', image: 'images/conakry.jpg', rating: 4.8 },
-        { id: 'kankan', name: 'Kankan', badge: 'Haute Guinee', trips: '10+ trajets/jour', price: '250 000 GNF', image: 'images/kankan.jpg', rating: 4.6 },
-        { id: 'labe', name: 'Labe', badge: 'Moyenne Guinee', trips: '12+ trajets/jour', price: '200 000 GNF', image: 'images/labe.jpg', rating: 4.7 },
-        { id: 'nzerekore', name: 'Nzerekore', badge: 'Guinee Forestiere', trips: '8+ trajets/jour', price: '300 000 GNF', image: 'images/nzerekore.jpg', rating: 4.5 },
-        { id: 'mamou', name: 'Mamou', badge: 'Carrefour', trips: '14+ trajets/jour', price: '180 000 GNF', image: 'images/mamou.jpg', rating: 4.4 },
-        { id: 'boke', name: 'Boke', badge: 'Basse Guinee', trips: '6+ trajets/jour', price: '220 000 GNF', image: 'images/boke.jpg', rating: 4.3 },
+        { id: 'conakry', name: 'Conakry', badge: 'Capitale', distanceLabel: 'Hub national — départs toutes régions', price: '15 000 GNF', image: 'images/conakry.jpg', rating: 4.8 },
+        { id: 'kankan', name: 'Kankan', badge: 'Haute Guinee', distanceLabel: '660 km · ~10 h', price: '200 000 GNF', image: 'images/kankan.jpg', rating: 4.6 },
+        { id: 'labe', name: 'Labe', badge: 'Moyenne Guinee', distanceLabel: '440 km · ~7 h', price: '160 000 GNF', image: 'images/labe.jpg', rating: 4.7 },
+        { id: 'nzerekore', name: 'Nzerekore', badge: 'Guinee Forestiere', distanceLabel: '960 km · 15-20 h', price: '280 000 GNF', image: 'images/nzerekore.jpg', rating: 4.5 },
+        { id: 'mamou', name: 'Mamou', badge: 'Carrefour', distanceLabel: '270 km · ~4 h 30', price: '100 000 GNF', image: 'images/mamou.jpg', rating: 4.4 },
+        { id: 'boke', name: 'Boke', badge: 'Basse Guinee', distanceLabel: '300 km · ~5 h 30', price: '70 000 GNF', image: 'images/boke.jpg', rating: 4.3 },
     ];
 
     // Services
@@ -146,6 +172,7 @@ export class HomeComponent {
 
     ngOnInit(): void {
         this.loading.set(true);
+        this.loadVilles();
 
         if (this.userService.isAuthenticated() && !this.userService.isTokenExpired()) {
             const redirectUrl = this.storage.getRedirectUrl() || '/dashboards';
@@ -202,6 +229,94 @@ export class HomeComponent {
                     }, 100);
                 }
             });
+    }
+
+    // ===== Recherche publique =====
+    private loadVilles(): void {
+        this.villeService.getActiveVilles$().subscribe({
+            next: (response) => this.villes.set(response.data.villes || []),
+            error: () => this.villes.set([])
+        });
+    }
+
+    rechercher(): void {
+        this.erreurRecherche.set(null);
+        if (!this.villeDepartUuid || !this.villeArriveeUuid) {
+            this.erreurRecherche.set('Choisissez une ville de départ et une ville d’arrivée.');
+            return;
+        }
+        if (this.villeDepartUuid === this.villeArriveeUuid) {
+            this.erreurRecherche.set('La ville d’arrivée doit être différente de la ville de départ.');
+            return;
+        }
+
+        this.rechercheEnCours.set(true);
+        this.offreService.rechercher(this.villeDepartUuid, this.villeArriveeUuid, this.dateDepart || undefined).subscribe({
+            next: (offres) => {
+                this.resultats.set(offres);
+                this.rechercheEffectuee.set(true);
+                this.rechercheEnCours.set(false);
+                setTimeout(() => document.getElementById('resultats')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+            },
+            error: (err) => {
+                this.rechercheEnCours.set(false);
+                this.rechercheEffectuee.set(true);
+                this.resultats.set([]);
+                this.erreurRecherche.set(typeof err === 'string' ? err : 'La recherche a échoué, réessayez.');
+            }
+        });
+    }
+
+    echangerVilles(): void {
+        [this.villeDepartUuid, this.villeArriveeUuid] = [this.villeArriveeUuid, this.villeDepartUuid];
+    }
+
+    /** Card destination → pré-remplit la recherche (départ Conakry) et lance. */
+    prefillRecherche(destinationId: string): void {
+        const arrivee = this.trouverVille(destinationId);
+        const conakry = this.trouverVille('conakry');
+        if (arrivee) {
+            this.villeArriveeUuid = arrivee.villeUuid;
+            if (conakry && conakry.villeUuid !== arrivee.villeUuid) {
+                this.villeDepartUuid = conakry.villeUuid;
+            }
+        }
+        this.scrollToTop();
+        if (this.villeDepartUuid && this.villeArriveeUuid && this.villeDepartUuid !== this.villeArriveeUuid) {
+            this.rechercher();
+        }
+    }
+
+    private trouverVille(nom: string): IVille | undefined {
+        const cible = this.normaliser(nom);
+        return this.villes().find((v) => this.normaliser(v.libelle) === cible);
+    }
+
+    private normaliser(s: string): string {
+        // Retire les accents (diacritiques Unicode) pour comparer 'Labe' et 'Labé'
+        return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+    }
+
+    villeLibelle(villeUuid: string): string {
+        return this.villes().find((v) => v.villeUuid === villeUuid)?.libelle || '';
+    }
+
+    formatHeure(heure?: string | number[]): string {
+        if (!heure) return '--:--';
+        if (Array.isArray(heure)) {
+            const [h, m] = heure;
+            return `${String(h).padStart(2, '0')}:${String(m ?? 0).padStart(2, '0')}`;
+        }
+        return heure.substring(0, 5);
+    }
+
+    formatGNF(montant?: number): string {
+        if (montant == null) return '-';
+        return new Intl.NumberFormat('fr-FR').format(montant) + ' GNF';
+    }
+
+    prixAffiche(offre: Offre): number | undefined {
+        return offre.montantPromotion && offre.montantPromotion > 0 && offre.montantPromotion < (offre.montant ?? 0) ? offre.montantPromotion : offre.montant;
     }
 
     onMapVisible(): void {

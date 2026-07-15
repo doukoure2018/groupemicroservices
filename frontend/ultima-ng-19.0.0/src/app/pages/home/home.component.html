@@ -99,7 +99,7 @@
         <!-- Booking form -->
         <div class="relative mx-auto mt-16 max-w-5xl px-4 lg:px-8 animate-fade-in-up" style="animation-delay: 0.3s;">
             <div class="rounded-2xl bg-white p-6 shadow-2xl shadow-black/15 lg:p-8">
-                <div class="grid gap-4 md:grid-cols-3 lg:grid-cols-6 lg:gap-3">
+                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4 lg:gap-3">
                     <!-- From -->
                     <div class="lg:col-span-1">
                         <label
@@ -112,18 +112,31 @@
                                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
                                 <circle cx="12" cy="10" r="3" />
                             </svg>
-                            <select
+                            <select [(ngModel)]="villeDepartUuid"
                                 class="w-full appearance-none rounded-xl border border-[#d1d8e0] bg-[#f0f2f5] py-3 pr-4 pl-9 text-sm font-medium text-[#1a2a3a] transition-all duration-300 focus:border-[#f97316] focus:ring-2 focus:ring-[#f97316]/20 focus:outline-none">
-                                @for (city of cities; track city) {
-                                <option>{{ city }}</option>
+                                <option value="">Ville de d&eacute;part</option>
+                                @for (v of villes(); track v.villeUuid) {
+                                <option [value]="v.villeUuid">{{ v.libelle }}</option>
                                 }
                             </select>
                         </div>
                     </div>
                     <!-- To -->
                     <div class="lg:col-span-1">
-                        <label
-                            class="mb-1.5 block text-xs font-semibold text-[#1e3a5f] uppercase tracking-wide">Arriv&eacute;e</label>
+                        <label class="mb-1.5 flex items-center justify-between text-xs font-semibold text-[#1e3a5f] uppercase tracking-wide">
+                            Arriv&eacute;e
+                            <button type="button" (click)="echangerVilles()" title="Inverser d&eacute;part / arriv&eacute;e"
+                                class="rounded-md p-0.5 text-[#64748b] transition-colors hover:text-[#f97316]">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="m3 16 4 4 4-4" />
+                                    <path d="M7 20V4" />
+                                    <path d="m21 8-4-4-4 4" />
+                                    <path d="M17 4v16" />
+                                </svg>
+                            </button>
+                        </label>
                         <div class="relative">
                             <svg xmlns="http://www.w3.org/2000/svg"
                                 class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-emerald-500"
@@ -132,10 +145,11 @@
                                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
                                 <circle cx="12" cy="10" r="3" />
                             </svg>
-                            <select
+                            <select [(ngModel)]="villeArriveeUuid"
                                 class="w-full appearance-none rounded-xl border border-[#d1d8e0] bg-[#f0f2f5] py-3 pr-4 pl-9 text-sm font-medium text-[#1a2a3a] transition-all duration-300 focus:border-[#f97316] focus:ring-2 focus:ring-[#f97316]/20 focus:outline-none">
-                                @for (city of cities; track city) {
-                                <option>{{ city }}</option>
+                                <option value="">Ville d'arriv&eacute;e</option>
+                                @for (v of villes(); track v.villeUuid) {
+                                <option [value]="v.villeUuid">{{ v.libelle }}</option>
                                 }
                             </select>
                         </div>
@@ -154,58 +168,24 @@
                                 <line x1="8" x2="8" y1="2" y2="6" />
                                 <line x1="3" x2="21" y1="10" y2="10" />
                             </svg>
-                            <input type="date"
+                            <input type="date" [(ngModel)]="dateDepart" [min]="aujourdHui"
                                 class="w-full rounded-xl border border-[#d1d8e0] bg-[#f0f2f5] py-3 pr-3 pl-9 text-sm font-medium text-[#1a2a3a] transition-all duration-300 focus:border-[#f97316] focus:ring-2 focus:ring-[#f97316]/20 focus:outline-none" />
-                        </div>
-                    </div>
-                    <!-- Time -->
-                    <div class="lg:col-span-1">
-                        <label
-                            class="mb-1.5 block text-xs font-semibold text-[#1e3a5f] uppercase tracking-wide">Heure</label>
-                        <div class="relative">
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#64748b]"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10" />
-                                <polyline points="12 6 12 12 16 14" />
-                            </svg>
-                            <select
-                                class="w-full appearance-none rounded-xl border border-[#d1d8e0] bg-[#f0f2f5] py-3 pr-3 pl-9 text-sm font-medium text-[#1a2a3a] transition-all duration-300 focus:border-[#f97316] focus:ring-2 focus:ring-[#f97316]/20 focus:outline-none">
-                                @for (t of times; track t) {
-                                <option>{{ t }}</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
-                    <!-- Passengers -->
-                    <div class="lg:col-span-1">
-                        <label
-                            class="mb-1.5 block text-xs font-semibold text-[#1e3a5f] uppercase tracking-wide">Places</label>
-                        <div class="relative">
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#64748b]"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                                <circle cx="9" cy="7" r="4" />
-                                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                            </svg>
-                            <select
-                                class="w-full appearance-none rounded-xl border border-[#d1d8e0] bg-[#f0f2f5] py-3 pr-3 pl-9 text-sm font-medium text-[#1a2a3a] transition-all duration-300 focus:border-[#f97316] focus:ring-2 focus:ring-[#f97316]/20 focus:outline-none">
-                                <option>1 place</option>
-                                <option>2 places</option>
-                                <option>3 places</option>
-                                <option>4 places</option>
-                                <option>5+ places</option>
-                            </select>
                         </div>
                     </div>
                     <!-- Search button -->
                     <div class="flex items-end lg:col-span-1">
-                        <button type="button"
-                            class="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#f97316] to-[#ea580c] py-3 text-sm font-semibold text-white shadow-lg shadow-[#f97316]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#f97316]/35">
+                        <button type="button" (click)="rechercher()" [disabled]="rechercheEnCours()"
+                            class="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#f97316] to-[#ea580c] py-3 text-sm font-semibold text-white shadow-lg shadow-[#f97316]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#f97316]/35 disabled:cursor-not-allowed disabled:opacity-70">
+                            @if (rechercheEnCours()) {
+                            <svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4" />
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z" />
+                            </svg>
+                            Recherche…
+                            } @else {
                             <svg xmlns="http://www.w3.org/2000/svg"
                                 class="h-4 w-4 transition-transform duration-300 group-hover:rotate-12"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -214,12 +194,107 @@
                                 <path d="m21 21-4.3-4.3" />
                             </svg>
                             Rechercher
+                            }
                         </button>
                     </div>
                 </div>
+                @if (erreurRecherche()) {
+                <p class="mt-3 flex items-center gap-1.5 text-xs font-medium text-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" x2="12" y1="8" y2="12" />
+                        <line x1="12" x2="12.01" y1="16" y2="16" />
+                    </svg>
+                    {{ erreurRecherche() }}
+                </p>
+                }
             </div>
         </div>
     </section>
+
+    <!-- ==================== RESULTATS DE RECHERCHE ==================== -->
+    @if (rechercheEffectuee()) {
+    <section id="resultats" class="bg-white py-14 lg:py-20">
+        <div class="mx-auto max-w-5xl px-4 lg:px-8">
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <span
+                        class="mb-2 inline-flex items-center gap-2 rounded-full bg-[#f97316]/10 px-4 py-1.5 text-sm font-semibold text-[#f97316]">
+                        D&eacute;parts disponibles
+                    </span>
+                    <h2 class="font-display text-2xl font-bold text-[#1a2a3a] sm:text-3xl">
+                        {{ villeLibelle(villeDepartUuid) }}
+                        <span class="text-[#f97316]">&rarr;</span>
+                        {{ villeLibelle(villeArriveeUuid) }}
+                    </h2>
+                    <p class="mt-1 text-sm text-[#64748b]">
+                        {{ resultats().length }} offre(s)
+                        @if (dateDepart) { pour le {{ dateDepart }} } @else { &agrave; venir }
+                    </p>
+                </div>
+            </div>
+
+            @if (resultats().length === 0) {
+            <div class="mt-8 rounded-2xl border border-dashed border-[#d1d8e0] bg-[#f5f7fa] p-10 text-center">
+                <p class="font-semibold text-[#1a2a3a]">Aucun d&eacute;part trouv&eacute; sur cet axe
+                    @if (dateDepart) { &agrave; cette date }
+                </p>
+                <p class="mt-1 text-sm text-[#64748b]">Essayez une autre date ou consultez le guide des tarifs
+                    indicatifs ci-dessous.</p>
+            </div>
+            } @else {
+            <div class="mt-8 flex flex-col gap-4">
+                @for (o of resultats(); track o.offreUuid) {
+                <article
+                    class="flex flex-col gap-4 rounded-2xl border border-[#d1d8e0] bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg sm:flex-row sm:items-center">
+                    <!-- Horaire -->
+                    <div class="flex items-center gap-4 sm:w-44 sm:flex-col sm:items-start sm:gap-1">
+                        <p class="text-2xl font-bold text-[#1a2a3a]">{{ formatHeure(o.heureDepart) }}</p>
+                        <p class="text-xs font-medium text-[#64748b]">{{ o.dateDepart }}</p>
+                    </div>
+                    <!-- Trajet -->
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-[#1a2a3a]">{{ o.siteDepart }} &rarr; {{ o.siteArrivee }}
+                        </p>
+                        <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#64748b]">
+                            @if (o.vehiculeMarque || o.typeVehiculeLibelle) {
+                            <span>{{ o.typeVehiculeLibelle || 'V&eacute;hicule' }} {{ o.vehiculeMarque }}
+                                @if (o.vehiculeClimatise) { &middot; Climatis&eacute; }</span>
+                            }
+                            @if (o.trajetDureeMinutes) {
+                            <span>~{{ o.trajetDureeMinutes }} min de route</span>
+                            }
+                            <span class="font-medium"
+                                [class]="(o.nombrePlacesDisponibles ?? 0) <= 3 ? 'text-red-500' : 'text-emerald-600'">
+                                {{ o.nombrePlacesDisponibles }} place(s) restante(s)
+                            </span>
+                        </p>
+                    </div>
+                    <!-- Prix + CTA -->
+                    <div class="flex items-center justify-between gap-4 sm:flex-col sm:items-end sm:gap-2">
+                        <div class="text-right">
+                            @if (o.montantPromotion && o.montantPromotion > 0 && o.montantPromotion < (o.montant ?? 0)) {
+                            <p class="text-xs text-[#64748b] line-through">{{ formatGNF(o.montant) }}</p>
+                            }
+                            <p class="text-lg font-bold text-[#f97316]">{{ formatGNF(prixAffiche(o)) }}</p>
+                        </div>
+                        <a [href]="loginUrl"
+                            class="rounded-xl bg-[#1e3a5f] px-5 py-2.5 text-xs font-semibold text-white transition-all duration-300 hover:bg-[#f97316]">
+                            Se connecter pour r&eacute;server
+                        </a>
+                    </div>
+                </article>
+                }
+            </div>
+            <p class="mt-4 text-center text-xs text-[#64748b]">
+                La r&eacute;servation en ligne s'effectue apr&egrave;s connexion (ou depuis l'application mobile
+                SYNERGIA).
+            </p>
+            }
+        </div>
+    </section>
+    }
 
     <!-- ==================== DESTINATIONS ==================== -->
     <section id="destinations" class="bg-[#f5f7fa] py-20 lg:py-28">
@@ -362,15 +437,15 @@
                                         <path d="M9 18h5" />
                                         <circle cx="16" cy="18" r="2" />
                                     </svg>
-                                    {{ d.trips }}
+                                    {{ d.distanceLabel }}
                                 </div>
                                 <p class="text-xs font-semibold text-[#1a2a3a]">
                                     A partir de <span class="text-[#f97316]">{{ d.price }}</span>
                                 </p>
                             </div>
-                            <button
+                            <button (click)="prefillRecherche(d.id)"
                                 class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1e3a5f]/5 py-2.5 text-xs font-semibold text-[#1e3a5f] transition-all duration-300 group-hover:bg-[#f97316] group-hover:text-white group-hover:shadow-md group-hover:shadow-[#f97316]/20">
-                                D&eacute;couvrir
+                                Voir les d&eacute;parts
                                 <svg xmlns="http://www.w3.org/2000/svg"
                                     class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -381,6 +456,173 @@
                             </button>
                         </div>
                     </article>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== GUIDE DES DISTANCES & TARIFS ==================== -->
+    <section id="guide" class="bg-white py-20 lg:py-28">
+        <div class="mx-auto max-w-7xl px-4 lg:px-8">
+            <div appScrollAnimation="fade-up" class="text-center">
+                <span
+                    class="mb-2 inline-flex items-center gap-2 rounded-full bg-[#1e3a5f]/10 px-4 py-1.5 text-sm font-semibold text-[#1e3a5f]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 20l-5.5-2.5v-13L9 7l6-3 5.5 2.5v13L15 17l-6 3z" />
+                        <path d="M9 7v13" />
+                        <path d="M15 4v13" />
+                    </svg>
+                    Guide du voyageur
+                </span>
+                <h2 class="mt-3 font-display text-2xl font-bold text-[#1a2a3a] sm:text-3xl lg:text-4xl text-balance">
+                    Distances &amp; tarifs depuis Conakry
+                </h2>
+                <p class="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-[#64748b]">
+                    Les 33 pr&eacute;fectures de Guin&eacute;e : distance routi&egrave;re, dur&eacute;e estim&eacute;e
+                    en taxi-brousse et tarif indicatif. Les prix r&eacute;els sont ceux des offres publi&eacute;es par
+                    les transporteurs — utilisez la recherche ci-dessus.
+                </p>
+            </div>
+
+            <!-- Onglets régions naturelles -->
+            <div appScrollAnimation="fade-up" class="mt-10 flex flex-wrap justify-center gap-2">
+                @for (r of regionsNaturelles; track r) {
+                <button (click)="regionActive.set(r)"
+                    class="rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-300"
+                    [class]="regionActive() === r ? 'bg-[#1e3a5f] text-white shadow-lg shadow-[#1e3a5f]/20' : 'bg-[#f0f2f5] text-[#64748b] hover:bg-[#1e3a5f]/10 hover:text-[#1e3a5f]'">
+                    {{ r }}
+                </button>
+                }
+            </div>
+
+            <!-- Tableau -->
+            <div appScrollAnimation="fade-up" class="mt-8 overflow-x-auto rounded-2xl border border-[#d1d8e0]">
+                <table class="w-full min-w-[560px] text-left text-sm">
+                    <thead>
+                        <tr class="bg-[#f5f7fa] text-xs uppercase tracking-wide text-[#64748b]">
+                            <th class="px-5 py-3.5 font-semibold">Pr&eacute;fecture</th>
+                            <th class="px-5 py-3.5 font-semibold">Distance</th>
+                            <th class="px-5 py-3.5 font-semibold">Dur&eacute;e estim&eacute;e</th>
+                            <th class="px-5 py-3.5 font-semibold">Tarif indicatif (GNF)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (p of prefecturesRegion(); track p.nom) {
+                        <tr class="border-t border-[#e8ecf0] transition-colors hover:bg-[#f97316]/[0.04]">
+                            <td class="px-5 py-3 font-semibold text-[#1a2a3a]">
+                                {{ p.nom }}
+                                @if (p.note) {
+                                <span class="ml-1 block text-[11px] font-normal text-[#64748b] sm:inline">— {{ p.note
+                                    }}</span>
+                                }
+                            </td>
+                            <td class="px-5 py-3 text-[#64748b]">{{ p.distance }}</td>
+                            <td class="px-5 py-3 text-[#64748b]">{{ p.duree }}</td>
+                            <td class="px-5 py-3 font-semibold text-[#f97316]">{{ p.tarif }}</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <p class="mt-3 text-center text-xs text-[#64748b]">
+                Donn&eacute;es indicatives (taxi-brousse, hors saison des pluies) — les distances varient de 20 &agrave;
+                50 km selon l'axe emprunt&eacute;.
+            </p>
+
+            <!-- Axes inter-villes -->
+            <div appScrollAnimation="fade-up" class="mt-12">
+                <h3 class="text-center font-display text-lg font-bold text-[#1a2a3a]">Liaisons entre villes de
+                    l'int&eacute;rieur</h3>
+                <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    @for (a of axesIntervilles; track a.de + a.vers) {
+                    <div
+                        class="flex items-center justify-between rounded-xl border border-[#e8ecf0] bg-[#f5f7fa] px-4 py-3 text-sm">
+                        <span class="font-medium text-[#1a2a3a]">{{ a.de }} <span class="text-[#f97316]">&rarr;</span>
+                            {{ a.vers }}</span>
+                        <span class="text-xs text-[#64748b]">{{ a.distance }} &middot; {{ a.duree }}</span>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== GRANDS AXES ==================== -->
+    <section class="bg-[#f5f7fa] py-20 lg:py-28">
+        <div class="mx-auto max-w-7xl px-4 lg:px-8">
+            <div appScrollAnimation="fade-up" class="text-center">
+                <span
+                    class="mb-2 inline-flex items-center gap-2 rounded-full bg-[#f97316]/10 px-4 py-1.5 text-sm font-semibold text-[#f97316]">
+                    Longue distance
+                </span>
+                <h2 class="mt-3 font-display text-2xl font-bold text-[#1a2a3a] sm:text-3xl lg:text-4xl text-balance">
+                    Les grands axes du pays
+                </h2>
+            </div>
+            <div class="mt-10 grid gap-6 lg:grid-cols-3">
+                @for (axe of grandsAxes; track axe.titre; let i = $index) {
+                <article appScrollAnimation="fade-up" [animDelay]="i * 100"
+                    class="flex flex-col rounded-2xl border border-[#d1d8e0] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                    <h3 class="font-display text-lg font-bold text-[#1a2a3a]">{{ axe.titre }}</h3>
+                    <p class="mt-1 text-xs leading-relaxed text-[#64748b]">{{ axe.itineraire }}</p>
+                    <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+                        <div class="rounded-xl bg-[#f5f7fa] px-2 py-2.5">
+                            <p class="text-[10px] uppercase tracking-wide text-[#64748b]">Distance</p>
+                            <p class="mt-0.5 text-xs font-bold text-[#1a2a3a]">{{ axe.distance }}</p>
+                        </div>
+                        <div class="rounded-xl bg-[#f5f7fa] px-2 py-2.5">
+                            <p class="text-[10px] uppercase tracking-wide text-[#64748b]">Dur&eacute;e</p>
+                            <p class="mt-0.5 text-xs font-bold text-[#1a2a3a]">{{ axe.duree }}</p>
+                        </div>
+                        <div class="rounded-xl bg-[#f5f7fa] px-2 py-2.5">
+                            <p class="text-[10px] uppercase tracking-wide text-[#64748b]">Tarif</p>
+                            <p class="mt-0.5 text-xs font-bold text-[#f97316]">{{ axe.tarif }}</p>
+                        </div>
+                    </div>
+                    <ul class="mt-4 flex flex-col gap-2">
+                        @for (pt of axe.points; track pt) {
+                        <li class="flex items-start gap-2 text-xs leading-relaxed text-[#64748b]">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 6 9 17l-5-5" />
+                            </svg>
+                            {{ pt }}
+                        </li>
+                        }
+                    </ul>
+                </article>
+                }
+            </div>
+
+            <!-- Conseils pratiques -->
+            <div appScrollAnimation="fade-up" class="mx-auto mt-16 max-w-3xl">
+                <h3 class="text-center font-display text-lg font-bold text-[#1a2a3a]">Conseils pratiques avant de
+                    partir</h3>
+                <div class="mt-6 flex flex-col gap-3">
+                    @for (c of conseils; track c.titre; let i = $index) {
+                    <div class="overflow-hidden rounded-2xl border border-[#d1d8e0] bg-white">
+                        <button (click)="conseilOuvert.set(conseilOuvert() === i ? -1 : i)"
+                            class="flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                            <span class="flex items-center gap-3 text-sm font-semibold text-[#1a2a3a]">
+                                <i class="pi {{ c.icone }} text-[#f97316]"></i>
+                                {{ c.titre }}
+                            </span>
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-4 w-4 shrink-0 text-[#64748b] transition-transform duration-300"
+                                [class.rotate-180]="conseilOuvert() === i" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </button>
+                        @if (conseilOuvert() === i) {
+                        <p class="border-t border-[#e8ecf0] px-5 py-4 text-sm leading-relaxed text-[#64748b]">
+                            {{ c.texte }}
+                        </p>
+                        }
+                    </div>
                     }
                 </div>
             </div>

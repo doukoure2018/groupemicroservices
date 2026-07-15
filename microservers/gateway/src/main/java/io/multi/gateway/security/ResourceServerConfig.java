@@ -81,6 +81,14 @@ public class ResourceServerConfig {
                                 "/immo/commodites",
                                 "/immo/photos/*"                    // Phase 13b serve photo reverse-proxy
                         ).permitAll()
+                        // --- Recherche billetterie publique (home web, avant login) ---
+                        // DOIT rester strictement aligné avec billetterieservice ResourceServerConfig.
+                        // Volontairement SANS joker /billetterie/offres/* : il rendrait publics
+                        // mes-offres, stats, etc. (endpoints nominatifs → NPE/fuite sans JWT).
+                        .requestMatchers(HttpMethod.GET,
+                                "/billetterie/villes/active",
+                                "/billetterie/offres/recherche"
+                        ).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .accessDeniedHandler(new GatewayAccessDeniedHandler())

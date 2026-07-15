@@ -40,6 +40,13 @@ public class ResourceServerConfig {
                 .authorizeHttpRequests( authorize -> authorize
                         .requestMatchers("/actuator/health","/actuator/info", "/billetterie/image/**","/billetterie/docs/**").permitAll()
                         .requestMatchers("/billetterie/files/**").permitAll()
+                        // Recherche publique (home web, avant login) — DOIT rester aligné
+                        // avec gateway ResourceServerConfig (cf dette T5). Pas de joker
+                        // /billetterie/offres/* (protégerait mal mes-offres, stats…).
+                        .requestMatchers(GET,
+                                "/billetterie/villes/active",
+                                "/billetterie/offres/recherche"
+                        ).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .accessDeniedHandler(new CustomAccessDeniedHandler())
