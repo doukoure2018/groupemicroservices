@@ -98,7 +98,7 @@ export class HomeComponent {
     // Services
     services = [
         { icon: 'shield', title: 'Securite garantie', desc: 'Vehicules controles, chauffeurs certifies et assurance voyage incluse pour tous les passagers.', color: '#3b82f6' },
-        { icon: 'clock', title: 'Ponctualite assuree', desc: 'Departs a l\'heure avec un suivi GPS en temps reel de tous nos vehicules sur chaque trajet.', color: '#f97316' },
+        { icon: 'clock', title: 'Ponctualite assuree', desc: 'Departs a l\'heure avec un suivi GPS en temps reel de tous nos vehicules sur chaque trajet.', color: '#F2A900' },
         { icon: 'wallet', title: 'Prix competitifs', desc: 'Les meilleurs tarifs du marche avec des offres speciales et des reductions pour les voyageurs frequents.', color: '#10b981' },
         { icon: 'headphones', title: 'Support 24/7', desc: 'Une equipe dediee disponible jour et nuit pour vous accompagner avant, pendant et apres votre voyage.', color: '#8b5cf6' },
         { icon: 'map', title: 'Large couverture', desc: 'Plus de 50 destinations a travers toute la Guinee avec des connexions vers toutes les regions.', color: '#ef4444' },
@@ -107,7 +107,7 @@ export class HomeComponent {
 
     // How it works
     steps = [
-        { step: 1, icon: 'search', title: 'Recherchez', desc: 'Choisissez votre trajet, date et nombre de passagers.', colorFrom: '#f97316', colorTo: '#fbbf24', ringColor: 'rgba(249,115,22,0.2)' },
+        { step: 1, icon: 'search', title: 'Recherchez', desc: 'Choisissez votre trajet, date et nombre de passagers.', colorFrom: '#F2A900', colorTo: '#fbbf24', ringColor: 'rgba(242,169,0,0.2)' },
         { step: 2, icon: 'bar-chart', title: 'Comparez', desc: 'Consultez les offres, horaires et prix disponibles.', colorFrom: '#3b82f6', colorTo: '#22d3ee', ringColor: 'rgba(59,130,246,0.2)' },
         { step: 3, icon: 'credit-card', title: 'Payez', desc: 'Mobile money ou carte bancaire, en toute securite.', colorFrom: '#8b5cf6', colorTo: '#a855f7', ringColor: 'rgba(139,92,246,0.2)' },
         { step: 4, icon: 'ticket', title: 'Voyagez', desc: 'Recevez votre billet electronique et partez sereinement.', colorFrom: '#10b981', colorTo: '#14b8a6', ringColor: 'rgba(16,185,129,0.2)' },

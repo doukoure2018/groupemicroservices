@@ -17,11 +17,11 @@
           <a
             [href]="link.href"
             class="relative rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-300"
-            [class]="link.active ? 'text-[#f97316]' : 'text-[#1e3a5f]/70 hover:text-[#1e3a5f]'"
+            [class]="link.active ? 'text-[#F2A900]' : 'text-[#16451F]/70 hover:text-[#16451F]'"
           >
             {{ link.label }}
             @if (link.active) {
-              <span class="absolute bottom-0.5 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-[#f97316]"></span>
+              <span class="absolute bottom-0.5 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-[#F2A900]"></span>
             }
           </a>
         }
@@ -31,7 +31,7 @@
       <div class="hidden items-center gap-3 lg:flex shrink-0">
         <a
           href="tel:+224620000000"
-          class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#1e3a5f]/10 text-[#1e3a5f] transition-all duration-300 hover:border-[#f97316]/30 hover:bg-[#f97316]/5 hover:text-[#f97316]"
+          class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#16451F]/10 text-[#16451F] transition-all duration-300 hover:border-[#F2A900]/30 hover:bg-[#F2A900] hover:text-[#16451F]/5 hover:text-[#F2A900]"
           aria-label="Appelez-nous"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -40,13 +40,13 @@
         </a>
         <a
           [href]="loginUrl"
-          class="rounded-full border-2 border-[#1e3a5f]/15 px-5 py-2.5 text-sm font-semibold text-[#1e3a5f] transition-all duration-300 hover:border-[#f97316]/40 hover:text-[#f97316]"
+          class="rounded-full border-2 border-[#16451F]/15 px-5 py-2.5 text-sm font-semibold text-[#16451F] transition-all duration-300 hover:border-[#F2A900]/40 hover:text-[#F2A900]"
         >
           Se connecter
         </a>
         <a
           [routerLink]="['/auth/register']"
-          class="rounded-full bg-gradient-to-r from-[#f97316] to-[#ea580c] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#f97316]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#f97316]/30"
+          class="rounded-full bg-gradient-to-r from-[#F2A900] to-[#D99700] px-5 py-2.5 text-sm font-semibold text-[#16451F] shadow-lg shadow-[#F2A900]/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#F2A900]/30"
         >
           S'inscrire
         </a>
@@ -55,7 +55,7 @@
       <!-- Mobile burger -->
       <button
         (click)="toggleMobile()"
-        class="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#1e3a5f]/10 text-[#1e3a5f] transition-all duration-300 hover:bg-[#f97316]/5 hover:text-[#f97316] lg:hidden"
+        class="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#16451F]/10 text-[#16451F] transition-all duration-300 hover:bg-[#F2A900] hover:text-[#16451F]/5 hover:text-[#F2A900] lg:hidden"
         [attr.aria-label]="mobileOpen() ? 'Fermer le menu' : 'Ouvrir le menu'"
       >
         <div class="transition-all duration-300" [class.rotate-90]="mobileOpen()" [class.scale-110]="mobileOpen()">
@@ -71,7 +71,7 @@
     <!-- Mobile menu -->
     <div
       class="overflow-hidden border-t transition-all duration-500 lg:hidden"
-      [class]="mobileOpen() ? 'max-h-[500px] border-[#1e3a5f]/5 opacity-100' : 'max-h-0 border-transparent opacity-0'"
+      [class]="mobileOpen() ? 'max-h-[500px] border-[#16451F]/5 opacity-100' : 'max-h-0 border-transparent opacity-0'"
     >
       <nav class="flex flex-col gap-1 px-4 py-4" aria-label="Navigation mobile">
         @for (link of navLinks; track link.label; let i = $index) {
@@ -79,17 +79,17 @@
             [href]="link.href"
             (click)="closeMobile()"
             class="rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300"
-            [class]="link.active ? 'bg-[#f97316]/10 text-[#f97316]' : 'text-[#1e3a5f]/70 hover:bg-[#1e3a5f]/5 hover:pl-6 hover:text-[#1e3a5f]'"
+            [class]="link.active ? 'bg-[#F2A900]/10 text-[#F2A900]' : 'text-[#16451F]/70 hover:bg-[#16451F]/5 hover:pl-6 hover:text-[#16451F]'"
             [style.transition-delay]="mobileOpen() ? (i * 50) + 'ms' : '0ms'"
           >
             {{ link.label }}
           </a>
         }
-        <div class="mt-2 flex items-center gap-3 border-t border-[#1e3a5f]/5 pt-4">
-          <a [href]="loginUrl" (click)="closeMobile()" class="flex-1 rounded-full border-2 border-[#1e3a5f]/15 px-5 py-3 text-center text-sm font-semibold text-[#1e3a5f]">
+        <div class="mt-2 flex items-center gap-3 border-t border-[#16451F]/5 pt-4">
+          <a [href]="loginUrl" (click)="closeMobile()" class="flex-1 rounded-full border-2 border-[#16451F]/15 px-5 py-3 text-center text-sm font-semibold text-[#16451F]">
             Se connecter
           </a>
-          <a [routerLink]="['/auth/register']" (click)="closeMobile()" class="flex-1 rounded-full bg-gradient-to-r from-[#f97316] to-[#ea580c] px-5 py-3 text-center text-sm font-semibold text-white">
+          <a [routerLink]="['/auth/register']" (click)="closeMobile()" class="flex-1 rounded-full bg-gradient-to-r from-[#F2A900] to-[#D99700] px-5 py-3 text-center text-sm font-semibold text-[#16451F]">
             S'inscrire
           </a>
         </div>
