@@ -55,6 +55,10 @@ export interface IResponse {
         arrivee?: Arrivee;
         arrivees?: Arrivee[];
 
+        // Billetterie - Commandes / réservations (client web)
+        commande?: any;
+        commandes?: any[];
+
         // Billetterie - Trajets, Offres, Véhicules, Modes de règlement, Partenaires
         trajet?: Trajet;
         trajets?: Trajet[];

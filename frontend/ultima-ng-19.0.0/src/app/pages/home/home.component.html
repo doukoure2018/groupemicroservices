@@ -279,10 +279,10 @@
                             }
                             <p class="text-lg font-bold text-[#F2A900]">{{ formatGNF(prixAffiche(o)) }}</p>
                         </div>
-                        <a [href]="loginUrl"
+                        <button type="button" (click)="reserverOffre(o)"
                             class="rounded-xl bg-[#16451F] px-5 py-2.5 text-xs font-semibold text-white transition-all duration-300 hover:bg-[#F2A900] hover:text-[#16451F]">
-                            Se connecter pour r&eacute;server
-                        </a>
+                            {{ estConnecte() ? 'Réserver' : 'Se connecter pour réserver' }}
+                        </button>
                     </div>
                 </article>
                 }

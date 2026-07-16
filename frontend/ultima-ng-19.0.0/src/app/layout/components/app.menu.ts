@@ -348,6 +348,23 @@ export class AppMenu {
                         routerLink: ['/dashboards']
                     }
                 ]
+            },
+            {
+                label: 'MES VOYAGES',
+                icon: 'pi pi-ticket',
+                items: [
+                    {
+                        label: 'Mes réservations & billets',
+                        icon: 'pi pi-fw pi-ticket',
+                        routerLink: ['/dashboards/voyages']
+                    },
+                    {
+                        label: 'Réserver un voyage',
+                        icon: 'pi pi-fw pi-search',
+                        routerLink: ['/'],
+                        queryParams: { rechercher: 1 }
+                    }
+                ]
             }
         ];
     }

@@ -1,0 +1,162 @@
+<p-toast></p-toast>
+
+<div class="voyages-container">
+    @if (chargement()) {
+    <div class="loading-container">
+        <p-progressSpinner strokeWidth="4"></p-progressSpinner>
+        <span>Chargement de l'offre…</span>
+    </div>
+    } @else if (erreurChargement()) {
+    <p-card>
+        <div class="empty-state">
+            <i class="pi pi-exclamation-triangle"></i>
+            <p>{{ erreurChargement() }}</p>
+            <p-button label="Rechercher un voyage" icon="pi pi-search" routerLink="/"></p-button>
+        </div>
+    </p-card>
+    } @else if (commandeCreee()) {
+    <!-- ===== Confirmation + billets ===== -->
+    <div class="confirmation-panel">
+        <div class="confirmation-header">
+            <i class="pi pi-check-circle"></i>
+            <div>
+                <h2>Réservation confirmée !</h2>
+                <p>Commande <strong>{{ commandeCreee()?.numeroCommande }}</strong> —
+                    {{ commandeCreee()?.nombrePlaces }} place(s) ·
+                    {{ formatGNF(commandeCreee()?.montantTotal) }}</p>
+                <p class="hint">Un email de confirmation vous a été envoyé. Présentez le QR code du billet au
+                    contrôleur le jour du départ (également disponible dans l'application mobile).</p>
+            </div>
+        </div>
+
+        <div class="billets-grid">
+            @for (b of commandeCreee()?.billets || []; track b.codeBillet) {
+            <div class="billet-card">
+                <div class="billet-header">
+                    <span class="billet-route">{{ offre()?.villeDepartLibelle }} → {{ offre()?.villeArriveeLibelle
+                        }}</span>
+                    <p-tag [value]="b.statut || 'VALIDE'" severity="success"></p-tag>
+                </div>
+                <div class="billet-body">
+                    <div class="billet-qr">
+                        <qrcode [qrdata]="qrValeur(b)" [width]="150" [errorCorrectionLevel]="'M'"></qrcode>
+                    </div>
+                    <div class="billet-infos">
+                        <p class="billet-passager">{{ b.nomPassager }}</p>
+                        <p class="billet-code">{{ b.codeBillet }}</p>
+                        <p class="billet-detail">{{ offre()?.dateDepart }} à {{ formatHeure(offre()?.heureDepart) }}
+                        </p>
+                        <p class="billet-detail">Départ : {{ offre()?.siteDepart }}</p>
+                        @if (b.numeroSiege) {
+                        <p class="billet-detail">Siège : {{ b.numeroSiege }}</p>
+                        }
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+
+        <div class="confirmation-actions">
+            <p-button label="Voir mes voyages" icon="pi pi-ticket" routerLink="/dashboards/voyages"></p-button>
+            <p-button label="Réserver un autre voyage" icon="pi pi-search" [outlined]="true"
+                routerLink="/"></p-button>
+        </div>
+    </div>
+    } @else {
+    <!-- ===== Formulaire de réservation ===== -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Réserver ce voyage</h1>
+            <p class="subtitle">Renseignez les passagers puis confirmez votre réservation</p>
+        </div>
+    </div>
+
+    <div class="reservation-grid">
+        <!-- Récap offre -->
+        <p-card styleClass="offre-recap">
+            <h3><i class="pi pi-directions"></i> Votre voyage</h3>
+            <div class="recap-route">
+                <p-tag [value]="offre()?.villeDepartLibelle || ''" severity="info"></p-tag>
+                <i class="pi pi-arrow-right"></i>
+                <p-tag [value]="offre()?.villeArriveeLibelle || ''" severity="success"></p-tag>
+            </div>
+            <ul class="recap-liste">
+                <li><i class="pi pi-calendar"></i> {{ offre()?.dateDepart }} à {{ formatHeure(offre()?.heureDepart) }}
+                </li>
+                <li><i class="pi pi-map-marker"></i> {{ offre()?.siteDepart }} → {{ offre()?.siteArrivee }}</li>
+                @if (offre()?.pointRendezvous) {
+                <li><i class="pi pi-flag"></i> RDV : {{ offre()?.pointRendezvous }}</li>
+                }
+                @if (offre()?.typeVehiculeLibelle || offre()?.vehiculeMarque) {
+                <li><i class="pi pi-car"></i> {{ offre()?.typeVehiculeLibelle }} {{ offre()?.vehiculeMarque }}
+                    @if (offre()?.vehiculeClimatise) { · Climatisé }
+                </li>
+                }
+                <li><i class="pi pi-users"></i> {{ offre()?.nombrePlacesDisponibles }} place(s) disponible(s)</li>
+            </ul>
+            <p-divider></p-divider>
+            <div class="recap-total">
+                <div class="recap-prix-ligne">
+                    <span>Prix par place</span>
+                    <span>{{ formatGNF(prixUnitaire()) }}</span>
+                </div>
+                <div class="recap-prix-ligne">
+                    <span>Places</span>
+                    <span>× {{ nombrePlaces() }}</span>
+                </div>
+                <div class="recap-prix-ligne total">
+                    <span>Total</span>
+                    <span>{{ formatGNF(montantTotal()) }}</span>
+                </div>
+            </div>
+        </p-card>
+
+        <!-- Passagers + paiement -->
+        <p-card>
+            <h3><i class="pi pi-users"></i> Passagers</h3>
+            <div class="form-field" style="max-width: 220px">
+                <label>Nombre de places</label>
+                <p-inputNumber [ngModel]="nombrePlaces()" (ngModelChange)="onNombrePlacesChange($event)" [min]="1"
+                    [max]="maxPlaces()" [showButtons]="true" styleClass="w-full"></p-inputNumber>
+            </div>
+
+            @for (p of passagers; track $index) {
+            <div class="passager-bloc">
+                <span class="passager-titre">Passager {{ $index + 1 }}</span>
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label>Prénom *</label>
+                        <input pInputText [(ngModel)]="p.prenom" placeholder="Ex: Mamadou" />
+                    </div>
+                    <div class="form-field">
+                        <label>Nom *</label>
+                        <input pInputText [(ngModel)]="p.nom" placeholder="Ex: Diallo" />
+                    </div>
+                    <div class="form-field">
+                        <label>Téléphone *</label>
+                        <input pInputText [(ngModel)]="p.telephone" placeholder="+224 6XX XX XX XX" />
+                    </div>
+                    <div class="form-field">
+                        <label>Pièce d'identité (optionnel)</label>
+                        <input pInputText [(ngModel)]="p.pieceIdentite" placeholder="N° CNI / passeport" />
+                    </div>
+                </div>
+            </div>
+            }
+
+            <p-divider></p-divider>
+            <h3><i class="pi pi-credit-card"></i> Mode de règlement</h3>
+            <div class="form-field" style="max-width: 320px">
+                <p-dropdown [options]="modesReglement()" [(ngModel)]="modeReglementCode" optionLabel="libelle"
+                    optionValue="code" placeholder="Choisir un mode de paiement" styleClass="w-full"
+                    appendTo="body"></p-dropdown>
+            </div>
+
+            <div class="reservation-footer">
+                <p-button [label]="'Confirmer — ' + formatGNF(montantTotal())" icon="pi pi-check" severity="success"
+                    (onClick)="reserver()" [loading]="envoiEnCours()" [disabled]="!formulaireValide()"></p-button>
+            </div>
+        </p-card>
+    </div>
+    }
+</div>

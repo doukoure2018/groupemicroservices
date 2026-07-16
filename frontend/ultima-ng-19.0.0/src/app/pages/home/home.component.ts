@@ -68,6 +68,8 @@ export class HomeComponent {
     rechercheEffectuee = signal(false);
     resultats = signal<Offre[]>([]);
     erreurRecherche = signal<string | null>(null);
+    /** Utilisateur déjà connecté (peut réserver directement, sans repasser par le login) */
+    estConnecte = signal(false);
 
     // ===== Guide de voyage (référentiel statique) =====
     readonly regionsNaturelles = REGIONS_NATURELLES;
@@ -174,12 +176,22 @@ export class HomeComponent {
         this.loading.set(true);
         this.loadVilles();
 
-        if (this.userService.isAuthenticated() && !this.userService.isTokenExpired()) {
+        this.estConnecte.set(this.userService.isAuthenticated() && !this.userService.isTokenExpired());
+
+        // ?rechercher=1 : un utilisateur connecté (menu « Réserver un voyage »)
+        // reste sur la home pour chercher un départ au lieu d'être renvoyé
+        // vers son tableau de bord.
+        const modeRecherche = new URLSearchParams(window.location.search).has('rechercher');
+
+        if (this.estConnecte() && !modeRecherche) {
             const redirectUrl = this.storage.getRedirectUrl() || '/dashboards';
             setTimeout(() => {
                 this.router.navigate([redirectUrl]);
             }, 0);
             return;
+        }
+        if (modeRecherche) {
+            this.loading.set(false);
         }
 
         this.activatedRoute.queryParamMap
@@ -269,6 +281,20 @@ export class HomeComponent {
 
     echangerVilles(): void {
         [this.villeDepartUuid, this.villeArriveeUuid] = [this.villeArriveeUuid, this.villeDepartUuid];
+    }
+
+    /**
+     * CTA de réservation d'une offre : déjà connecté → page de réservation ;
+     * sinon login OAuth avec retour automatique sur l'offre (redirect url).
+     */
+    reserverOffre(offre: Offre): void {
+        const cible = `/dashboards/voyages/reserver/${offre.offreUuid}`;
+        if (this.estConnecte()) {
+            this.router.navigate([cible]);
+            return;
+        }
+        this.storage.setRedirectUrl(cible);
+        window.location.href = this.loginUrl;
     }
 
     /** Card destination → pré-remplit la recherche (départ Conakry) et lance. */

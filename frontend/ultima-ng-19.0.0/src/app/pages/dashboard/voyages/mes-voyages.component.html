@@ -1,0 +1,85 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="voyages-container">
+    <div class="page-header">
+        <div class="header-content">
+            <h1>Mes voyages</h1>
+            <p class="subtitle">Vos réservations et billets électroniques</p>
+        </div>
+        <p-button label="Réserver un voyage" icon="pi pi-search" routerLink="/"></p-button>
+    </div>
+
+    @if (chargement()) {
+    <div class="loading-container">
+        <p-progressSpinner strokeWidth="4"></p-progressSpinner>
+        <span>Chargement de vos voyages…</span>
+    </div>
+    } @else if (commandes().length === 0) {
+    <p-card>
+        <div class="empty-state">
+            <i class="pi pi-ticket"></i>
+            <p>Vous n'avez pas encore de réservation.</p>
+            <p-button label="Rechercher un voyage" icon="pi pi-search" routerLink="/"></p-button>
+        </div>
+    </p-card>
+    } @else {
+    <div class="commandes-liste">
+        @for (c of commandes(); track c.commandeUuid) {
+        <p-card styleClass="commande-card">
+            <div class="commande-header">
+                <div class="commande-route">
+                    <span class="route-libelle">{{ c.villeDepartLibelle }} <i class="pi pi-arrow-right"></i> {{
+                        c.villeArriveeLibelle }}</span>
+                    <span class="commande-numero">{{ c.numeroCommande }}</span>
+                </div>
+                <p-tag [value]="c.statut || ''" [severity]="statutSeverity(c.statut)"></p-tag>
+            </div>
+
+            <div class="commande-infos">
+                <span><i class="pi pi-calendar"></i> {{ c.dateDepart }} à {{ formatHeure(c.heureDepart) }}</span>
+                <span><i class="pi pi-map-marker"></i> {{ c.siteDepart }} → {{ c.siteArrivee }}</span>
+                <span><i class="pi pi-users"></i> {{ c.nombrePlaces }} place(s)</span>
+                <span class="commande-montant"><i class="pi pi-wallet"></i> {{ formatGNF(c.montantTotal) }}</span>
+            </div>
+
+            <div class="commande-actions">
+                <p-button [label]="commandeOuverte() === c.commandeUuid ? 'Masquer les billets' : 'Voir les billets'"
+                    icon="pi pi-qrcode" [text]="true" (onClick)="toggleBillets(c)"></p-button>
+                @if (peutAnnuler(c)) {
+                <p-button label="Annuler" icon="pi pi-times" [text]="true" severity="danger"
+                    [loading]="annulationEnCours() === c.commandeUuid" (onClick)="confirmerAnnulation(c)"></p-button>
+                }
+            </div>
+
+            @if (commandeOuverte() === c.commandeUuid) {
+            <div class="billets-grid">
+                @for (b of c.billets || []; track b.codeBillet) {
+                <div class="billet-card">
+                    <div class="billet-header">
+                        <span class="billet-route">{{ c.villeDepartLibelle }} → {{ c.villeArriveeLibelle }}</span>
+                        <p-tag [value]="b.statut || ''" [severity]="b.statut === 'VALIDE' ? 'success' : 'secondary'">
+                        </p-tag>
+                    </div>
+                    <div class="billet-body">
+                        <div class="billet-qr">
+                            <qrcode [qrdata]="qrValeur(b)" [width]="140" [errorCorrectionLevel]="'M'"></qrcode>
+                        </div>
+                        <div class="billet-infos">
+                            <p class="billet-passager">{{ b.nomPassager }}</p>
+                            <p class="billet-code">{{ b.codeBillet }}</p>
+                            <p class="billet-detail">{{ c.dateDepart }} à {{ formatHeure(c.heureDepart) }}</p>
+                            @if (b.numeroSiege) {
+                            <p class="billet-detail">Siège : {{ b.numeroSiege }}</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </p-card>
+        }
+    </div>
+    }
+</div>

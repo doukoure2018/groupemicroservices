@@ -12,6 +12,18 @@ export default [
         loadComponent: () => import('./home/home.component').then((c) => c.HomeComponent)
     },
 
+    // ===== VOYAGES (client web) =====
+    {
+        path: 'voyages',
+        data: { breadcrumb: 'Mes voyages' },
+        loadComponent: () => import('./voyages/mes-voyages.component').then((c) => c.MesVoyagesComponent)
+    },
+    {
+        path: 'voyages/reserver/:offreUuid',
+        data: { breadcrumb: 'Réserver un voyage' },
+        loadComponent: () => import('./voyages/reserver-voyage.component').then((c) => c.ReserverVoyageComponent)
+    },
+
     // ===== ROUTES ADMIN =====
     {
         path: 'admin',
