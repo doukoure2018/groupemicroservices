@@ -645,7 +645,8 @@ services:
         max-size: "10m"
         max-file: "5"
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/health || exit 1"]
+      # busybox wget résout localhost en ::1 et ne bascule pas en IPv4 : viser 127.0.0.1.
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -35,11 +35,24 @@ Les deux applications restent servables tant que la bascule n'est pas décidée.
 Basculer ou revenir en arrière ne touche ni les images ni le compose : c'est un
 changement de port dans le vhost nginx de l'hôte.
 
+## État au 2026-09-10
+
+`WEB_HOST_PORT` et `WEB_IMAGE_TAG` sont posés sur les **deux** piles du VPS, et
+le service `web` tourne sur TEST, en bonne santé, à côté du service Angular
+resté intact.
+
+Nuance importante : cette première mise en service a utilisé une image
+**construite sur le VPS**, parce qu'aucune session Docker Hub n'était ouverte
+depuis le poste et que le poste est en arm64 alors que le serveur est en
+x86_64. L'image n'est donc **pas encore publiée sur Docker Hub**, et le
+`docker pull` de la chaîne échouera tant qu'elle n'aura pas tourné une première
+fois depuis GitHub avec les identifiants du dépôt.
+
 ## Prérequis, une seule fois par pile
 
 La convention du projet préfixe les ports du test par un `1`.
 
-Sur le VPS, ajouter la ligne au fichier d'environnement de chaque pile :
+Déjà fait le 2026-09-10 sur les deux piles. Pour rejouer l'opération ailleurs :
 
 ```bash
 # ~/sira-guinee/test/.env
