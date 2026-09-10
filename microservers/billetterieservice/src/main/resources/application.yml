@@ -65,7 +65,9 @@ spring:
 
 eureka:
   instance:
-    prefer-ip-address: true
+    # Dev local : toujours s'inscrire comme localhost (l'IP change avec le Wi-Fi)
+    hostname: localhost
+    prefer-ip-address: false
   client:
     service-url:
       defaultZone: http://manager:manager2711@localhost:5003/eureka/
