@@ -615,6 +615,42 @@ services:
       retries: 3
       start_period: 30s
 
+  # ==============================================
+  # WEB REACT (migration en cours)
+  # ==============================================
+  # Tourne EN PARALLÈLE du service `frontend` Angular, sur un port distinct :
+  # les deux restent servables tant que la bascule n'est pas décidée, et le
+  # retour arrière consiste à repointer le vhost nginx de l'hôte.
+  #
+  # Une seule image pour tous les environnements : le client API utilise des
+  # chemins relatifs et nginx les relaie au gateway du réseau interne. Aucun
+  # build-arg d'URL, contrairement à l'image Angular.
+  web:
+    image: doukoure93/sira-web:${WEB_IMAGE_TAG:-prod-latest}
+    ports:
+      - "127.0.0.1:${WEB_HOST_PORT:-4203}:80"
+    networks:
+      - sira-network
+    depends_on:
+      - gateway
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
 # ==============================================
 # VOLUMES (préfixés par docker compose -p sira-{env})
 # ==============================================
