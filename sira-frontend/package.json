@@ -1,0 +1,19 @@
+{
+    "name": "sira-frontend",
+    "private": true,
+    "description": "Monorepo frontend SIRA Guinée / SYNERGIA — paquets partagés (core, api-client, auth), app web React, app mobile Expo",
+    "workspaces": [
+        "packages/*",
+        "apps/*",
+        "e2e"
+    ],
+    "scripts": {
+        "dev:web": "npm run dev --workspace @sira/web",
+        "build": "npm run build --workspaces --if-present",
+        "typecheck": "npm run typecheck --workspaces --if-present",
+        "test:e2e": "npm run test --workspace @sira/e2e"
+    },
+    "devDependencies": {
+        "typescript": "~5.7.3"
+    }
+}
