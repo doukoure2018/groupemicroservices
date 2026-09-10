@@ -1,5 +1,11 @@
 import type {
+    AgenceAdmin,
+    AgenceAgent,
+    AgenceAnnonce,
+    AgenceOnboarding,
+    AgenceOnboardingRequest,
     Commodite,
+    DemandeBesoin,
     LeadContactView,
     LeadVisiteView,
     PageMeta,
@@ -38,10 +44,11 @@ export function proprieteApi(client: SiraClient) {
         uploadPhoto: (uuid: string, formData: FormData) => client.post<{ photo: unknown }>(`${BASE}/proprietes/${uuid}/photos`, { formData }),
 
         // ---- Modération (ADMIN / SUPER_ADMIN) ----
-        moderation: () => client.get<{ proprietes: Propriete[] }>(`${BASE}/proprietes/moderation`),
+        moderation: (params?: { limit?: number; offset?: number }) =>
+            client.get<{ proprietes: Propriete[] } & PageMeta>(`${BASE}/proprietes/moderation`, { params }),
         moderationDetail: (uuid: string) => client.get<ProprieteDetail>(`${BASE}/proprietes/moderation/${uuid}`),
-        valider: (uuid: string) => client.post<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/valider`),
-        rejeter: (uuid: string, body: RejeterRequest) => client.post<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/rejeter`, { body })
+        valider: (uuid: string) => client.patch<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/valider`),
+        rejeter: (uuid: string, body: RejeterRequest) => client.patch<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/rejeter`, { body })
     };
 }
 
@@ -57,7 +64,8 @@ export function immoClientApi(client: SiraClient) {
         demanderVisite: (proprieteUuid: string, body: { dateVisite: string; heureVisite?: string; notesVisiteur?: string }) =>
             client.post<Record<string, never>>(`${BASE}/proprietes/${proprieteUuid}/visites`, { body }),
 
-        mesDemandes: (scope?: string) => client.get<{ demandes: unknown[]; scope?: string }>(`${BASE}/demandes`, { params: { scope } }),
+        mesDemandes: (params?: { scope?: string; limit?: number; offset?: number }) =>
+            client.get<{ demandes: DemandeBesoin[]; scope?: string } & PageMeta>(`${BASE}/demandes`, { params }),
         declarerBesoin: (body: Record<string, unknown>) => client.post<{ demande: unknown }>(`${BASE}/demandes`, { body }),
 
         brouillons: () => client.get<{ brouillons: unknown[] }>(`${BASE}/brouillons`),
@@ -72,21 +80,26 @@ export function immoClientApi(client: SiraClient) {
 export function agenceApi(client: SiraClient) {
     return {
         // Onboarding (ADMIN_IMMO)
-        onboardingMe: () => client.get<{ agence: unknown }>(`${BASE}/agences/onboarding/me`),
-        onboardingUpdate: (body: Record<string, unknown>) => client.put<{ agence: unknown }>(`${BASE}/agences/onboarding`, { body }),
+        onboardingMe: () => client.get<{ agence: AgenceOnboarding }>(`${BASE}/agences/onboarding/me`),
+        onboardingUpdate: (body: AgenceOnboardingRequest) => client.put<{ agence: AgenceOnboarding }>(`${BASE}/agences/onboarding`, { body }),
         onboardingUploadRccm: (formData: FormData) => client.post<Record<string, never>>(`${BASE}/agences/onboarding/rccm`, { formData }),
-        onboardingSoumettre: () => client.post<{ agence: unknown }>(`${BASE}/agences/onboarding/soumettre`),
+        onboardingSoumettre: () => client.post<{ agence: AgenceOnboarding }>(`${BASE}/agences/onboarding/soumettre`),
 
         // Back-office admin
-        adminList: () => client.get<{ agences: unknown[] }>(`${BASE}/agences/admin`),
+        adminList: (params?: { limit?: number; offset?: number }) =>
+            client.get<{ agences: AgenceAdmin[] } & PageMeta>(`${BASE}/agences/admin`, { params }),
         adminActivites: (uuid: string) =>
-            client.get<{ annonces: unknown[]; agents: unknown[]; representantNom?: string }>(`${BASE}/agences/${uuid}/activites`),
+            client.get<{ agence?: AgenceAdmin; annonces: AgenceAnnonce[]; agents: AgenceAgent[]; representantNom?: string }>(
+                `${BASE}/agences/admin/${uuid}/activites`
+            ),
 
         // Conformité (ADMIN_CONFORMITE)
-        conformiteList: () => client.get<{ agences: unknown[] }>(`${BASE}/conformite/agences`),
-        conformiteRccm: (uuid: string) => client.get<{ url: string }>(`${BASE}/conformite/agences/${uuid}/rccm`),
-        approuver: (uuid: string) => client.post<{ agence: unknown }>(`${BASE}/conformite/agences/${uuid}/approuver`),
-        rejeterAgence: (uuid: string, body: RejeterRequest) => client.post<{ agence: unknown }>(`${BASE}/conformite/agences/${uuid}/rejeter`, { body })
+        conformiteList: (params?: { limit?: number; offset?: number }) =>
+            client.get<{ agences: AgenceAdmin[] } & PageMeta>(`${BASE}/conformite/agences`, { params }),
+        /** Le backend renvoie le document lui-même (InputStreamResource), pas une URL. */
+        conformiteRccm: (uuid: string) => client.getBlob(`${BASE}/conformite/agences/${uuid}/rccm`),
+        approuver: (uuid: string) => client.patch<{ agence: AgenceAdmin }>(`${BASE}/conformite/agences/${uuid}/approuver`),
+        rejeterAgence: (uuid: string, body: RejeterRequest) => client.patch<{ agence: AgenceAdmin }>(`${BASE}/conformite/agences/${uuid}/rejeter`, { body })
     };
 }
 

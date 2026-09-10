@@ -35,6 +35,10 @@ export function AdminLayout() {
                     ⚡ Assistant Nouvelle liaison
                 </NavLink>
 
+                <NavLink to="/admin" end>
+                    Tableau de bord
+                </NavLink>
+
                 <span className="admin-nav-section">Offres</span>
                 <NavLink to="/admin/offres">Offres de transport</NavLink>
 
@@ -60,9 +64,16 @@ export function AdminLayout() {
                         <span className="admin-nav-section">Commercial</span>
                         <NavLink to="/admin/modes-reglement">Modes de règlement</NavLink>
                         <NavLink to="/admin/partenaires">Partenaires</NavLink>
+
+                        <span className="admin-nav-section">Immobilier</span>
+                        <NavLink to="/admin/moderation">Modération des annonces</NavLink>
+                        <NavLink to="/admin/leads">Demandes (leads)</NavLink>
+                        <NavLink to="/admin/agences">Agences</NavLink>
+
+                        <span className="admin-nav-section">Comptes</span>
+                        <NavLink to="/admin/utilisateurs">Utilisateurs</NavLink>
                     </>
                 )}
-                {/* Écrans suivants de la phase 2 : utilisateurs, dashboards, immo admin */}
             </nav>
             <div className="admin-contenu">
                 <ConfirmDialog />

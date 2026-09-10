@@ -3,7 +3,12 @@ import type { ReactNode } from 'react';
 import { AuthProvider, useAuth } from './auth-context';
 import { hasRole } from '@sira/core';
 import { AdminLayout, RequireRole, ROLES_ADMIN } from './pages/admin/AdminLayout';
+import { AgencesAdminPage } from './pages/admin/AgencesAdminPage';
 import { ArriveesAdminPage } from './pages/admin/ArriveesAdminPage';
+import { DashboardAdminPage } from './pages/admin/DashboardAdminPage';
+import { LeadsAdminPage } from './pages/admin/LeadsAdminPage';
+import { ModerationAdminPage } from './pages/admin/ModerationAdminPage';
+import { UtilisateursAdminPage } from './pages/admin/UtilisateursAdminPage';
 import { CommunesAdminPage } from './pages/admin/CommunesAdminPage';
 import { DepartsAdminPage } from './pages/admin/DepartsAdminPage';
 import { LocalisationsAdminPage } from './pages/admin/LocalisationsAdminPage';
@@ -18,10 +23,19 @@ import { TrajetsAdminPage } from './pages/admin/TrajetsAdminPage';
 import { TypesVehiculesAdminPage } from './pages/admin/TypesVehiculesAdminPage';
 import { VehiculesAdminPage } from './pages/admin/VehiculesAdminPage';
 import { VillesAdminPage } from './pages/admin/VillesAdminPage';
+import { AgenceOnboardingPage } from './pages/AgenceOnboardingPage';
+import { ConformitePage } from './pages/ConformitePage';
+import { DashboardHomePage } from './pages/DashboardHomePage';
+import { DemandesClientsPage } from './pages/DemandesClientsPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { MesVoyagesPage } from './pages/MesVoyagesPage';
+import { RegisterPage } from './pages/RegisterPage';
 import { ReservationPage } from './pages/ReservationPage';
+import { VerifyAccountPage } from './pages/VerifyAccountPage';
+import { VerifyMobilePage } from './pages/VerifyMobilePage';
+import { VerifyPasswordPage } from './pages/VerifyPasswordPage';
 
 export function App() {
     return (
@@ -33,11 +47,55 @@ export function App() {
                         <Routes>
                             <Route path="/" element={<HomePage />} />
                             <Route path="/login" element={<LoginPage />} />
+                            {/* Chemins conservés à l'identique : ce sont ceux des liens envoyés par email. */}
+                            <Route path="/auth/register" element={<RegisterPage />} />
+                            <Route path="/auth/forgotpassword" element={<ForgotPasswordPage />} />
+                            <Route path="/auth/verify/account" element={<VerifyAccountPage />} />
+                            <Route path="/auth/verify/password" element={<VerifyPasswordPage />} />
+                            <Route path="/auth/verify/mobile" element={<VerifyMobilePage />} />
                             <Route
                                 path="/reserver/:offreUuid"
                                 element={
                                     <RequireAuth>
                                         <ReservationPage />
+                                    </RequireAuth>
+                                }
+                            />
+                            <Route
+                                path="/tableau-de-bord"
+                                element={
+                                    <RequireAuth>
+                                        <DashboardHomePage />
+                                    </RequireAuth>
+                                }
+                            />
+                            <Route
+                                path="/agence"
+                                element={
+                                    <RequireAuth>
+                                        <RequireRole roles={['ADMIN_IMMO', 'SUPER_ADMIN']}>
+                                            <AgenceOnboardingPage />
+                                        </RequireRole>
+                                    </RequireAuth>
+                                }
+                            />
+                            <Route
+                                path="/agence/demandes"
+                                element={
+                                    <RequireAuth>
+                                        <RequireRole roles={['ADMIN_IMMO', 'SUPER_ADMIN']}>
+                                            <DemandesClientsPage />
+                                        </RequireRole>
+                                    </RequireAuth>
+                                }
+                            />
+                            <Route
+                                path="/conformite"
+                                element={
+                                    <RequireAuth>
+                                        <RequireRole roles={['ADMIN_CONFORMITE', 'SUPER_ADMIN']}>
+                                            <ConformitePage />
+                                        </RequireRole>
                                     </RequireAuth>
                                 }
                             />
@@ -59,7 +117,7 @@ export function App() {
                                     </RequireAuth>
                                 }
                             >
-                                <Route index element={<Navigate to="offres" replace />} />
+                                <Route index element={<DashboardAdminPage />} />
                                 <Route path="offres" element={<OffresAdminPage />} />
                                 {/* Référentiel géographique */}
                                 <Route path="regions" element={<RegionsAdminPage />} />
@@ -79,6 +137,11 @@ export function App() {
                                 {/* Configuration commerciale */}
                                 <Route path="modes-reglement" element={<ModesReglementAdminPage />} />
                                 <Route path="partenaires" element={<PartenairesAdminPage />} />
+                                {/* Utilisateurs et immobilier */}
+                                <Route path="utilisateurs" element={<UtilisateursAdminPage />} />
+                                <Route path="agences" element={<AgencesAdminPage />} />
+                                <Route path="moderation" element={<ModerationAdminPage />} />
+                                <Route path="leads" element={<LeadsAdminPage />} />
                             </Route>
                             <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
@@ -106,6 +169,9 @@ function Topbar() {
                                 Administration
                             </Link>
                         )}
+                        <Link to="/tableau-de-bord" className="login-link">
+                            Mon espace
+                        </Link>
                         <Link to="/mes-voyages" className="login-link">
                             Mes voyages
                         </Link>
@@ -117,9 +183,14 @@ function Topbar() {
                         </button>
                     </>
                 ) : (
-                    <Link to="/login" className="login-link">
-                        Se connecter
-                    </Link>
+                    <>
+                        <Link to="/auth/register" className="login-link">
+                            Créer un compte
+                        </Link>
+                        <Link to="/login" className="login-link">
+                            Se connecter
+                        </Link>
+                    </>
                 )}
             </span>
         </header>

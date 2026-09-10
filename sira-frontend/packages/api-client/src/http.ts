@@ -129,6 +129,27 @@ export class SiraClient {
     get<T>(path: string, options?: RequestOptions): Promise<ApiResponse<T>> {
         return this.request<T>('GET', path, options);
     }
+
+    /**
+     * Télécharge un binaire protégé par JWT (document RCCM servi depuis MinIO).
+     * Le lien direct MinIO n'accepte pas le header Authorization : il faut passer
+     * par le backend, récupérer un Blob, puis en faire une URL objet côté appelant.
+     */
+    async getBlob(path: string, options: RequestOptions = {}): Promise<Blob> {
+        const { auth = true } = options;
+        let response = await this.doFetch('GET', path, options, auth);
+
+        if (response.status === 401 && auth && this.config.tokenProvider) {
+            const refreshed = await this.config.tokenProvider.refresh();
+            if (refreshed) response = await this.doFetch('GET', path, options, auth);
+            if (response.status === 401) this.config.onSessionExpired?.();
+        }
+
+        if (!response.ok) {
+            throw new ApiError(`Erreur HTTP ${response.status}`, response.status);
+        }
+        return response.blob();
+    }
     post<T>(path: string, options?: RequestOptions): Promise<ApiResponse<T>> {
         return this.request<T>('POST', path, options);
     }

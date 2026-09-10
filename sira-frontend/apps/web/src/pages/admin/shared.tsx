@@ -64,6 +64,6 @@ export function tronquer(texte: string | undefined | null, max: number): string 
 }
 
 /** Les helpers @sira/core parlent « warn » (convention PrimeNG) ; PrimeReact attend « warning ». */
-export function tagSeverity(s: 'success' | 'info' | 'warn' | 'danger' | 'secondary'): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
+export function tagSeverity(s: 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast'): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' {
     return s === 'warn' ? 'warning' : s;
 }

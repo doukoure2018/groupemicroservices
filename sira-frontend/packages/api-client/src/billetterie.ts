@@ -234,7 +234,9 @@ export function commercialApi(client: SiraClient) {
             client.patch<{ modeReglement: ModeReglement }>(`${BASE}/modes-reglement/${uuid}/frais`, { params: { fraisPourcentage, fraisFixe } }),
 
         partenaires: () => client.get<{ partenaires: Partenaire[] }>(`${BASE}/partenaires`),
-        partenaireStats: () => client.get<Record<string, number>>(`${BASE}/partenaires/stats`),
+        partenaireStats: () => client.get<{ total?: number; actifs?: number; inactifs?: number; suspendus?: number; enAttente?: number }>(`${BASE}/partenaires/stats`),
+        /** Répartition par type de partenaire : un objet code de type vers nombre. */
+        partenaireStatsByType: () => client.get<Record<string, number>>(`${BASE}/partenaires/stats/types`),
         partenairesByStatut: (statut: string) => client.get<{ partenaires: Partenaire[] }>(`${BASE}/partenaires/statut/${statut}`),
         createPartenaire: (body: PartenaireRequest) => client.post<{ partenaire: Partenaire }>(`${BASE}/partenaires`, { body }),
         updatePartenaire: (uuid: string, body: PartenaireRequest) => client.put<{ partenaire: Partenaire }>(`${BASE}/partenaires/${uuid}`, { body }),
