@@ -86,22 +86,19 @@ curl -s -o /dev/null -w '%{http_code}\n' \
 Le dernier appel est le contrôle qui compte : il prouve que le conteneur résout
 `gateway` et que le relais traverse jusqu'au service métier.
 
-## Exposer le React sur un sous-domaine d'essai
+## Exposition publique sur TEST
 
-Le plus prudent est de le publier d'abord sur une adresse dédiée, sans toucher à
-`test.sira-guinee.com`. Après avoir créé l'entrée DNS et obtenu le certificat,
-ajouter un vhost calqué sur `nginx/sira-guinee-test.conf` dont le bloc racine
-pointe sur le port du React :
+**Fait le 2026-09-11 : `https://test.sira-guinee.com` sert le React.** Le vhost
+`sira-guinee-test` a été basculé du port 14202 vers 14203 ; la copie du dépôt
+dans `nginx/` reflète le serveur. Vérifié depuis Internet avec un navigateur :
+neuf écrans montent, la page d'accueil charge de vraies villes à travers toute
+la chaîne, et la politique de contenu en observation ne signale aucune
+violation sur les écrans publics.
 
-```nginx
-location / {
-    proxy_pass http://127.0.0.1:14203;   # web React, au lieu de 14202
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-}
-```
+Un sous-domaine dédié aurait été plus prudent, mais le certificat n'est pas un
+joker et le DNS n'a pas d'entrée joker : cela aurait demandé une entrée chez le
+registraire et une extension du certificat. La bascule directe a été retenue
+parce qu'elle est réversible en une ligne, et parce que TEST existe pour cela.
 
 ## Bascule et retour arrière
 
