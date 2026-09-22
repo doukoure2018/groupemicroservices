@@ -112,7 +112,9 @@ export async function mobileRefresh(config: OAuthConfig, refreshToken: string): 
     });
     if (!response.ok) {
         const text = await response.text();
-        throw new Error(`Échec du refresh (${response.status}): ${text.slice(0, 300)}`);
+        // Erreur HTTP typée : la session sait qu'un 400/401 est définitif (jeton révoqué)
+        // alors qu'une erreur réseau (fetch avorté par une navigation, hors-ligne) ne l'est pas.
+        throw new AuthHttpError(response.status, parseServerMessage(text), text);
     }
     const json = (await response.json()) as OAuthTokenResponse;
     return tokenSetFromResponse(json);

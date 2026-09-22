@@ -28,46 +28,46 @@ export class MemoryTokenStore implements TokenStore {
 }
 
 /**
- * Variante web transitoire : seul le refresh token est persisté (sessionStorage
- * par défaut), l'access token reste en mémoire. Compromis documenté : mieux que
- * l'ancien localStorage intégral, en attendant un éventuel cookie httpOnly côté BFF.
+ * Variante web : le TokenSet complet est persisté en sessionStorage (par onglet,
+ * effacé à la fermeture). Le refresh token — plus puissant que l'access token —
+ * y était déjà ; persister aussi l'access token évite un refresh (avec rotation)
+ * à CHAQUE chargement de page, source de déconnexions quand une navigation
+ * interrompait la requête. Un cookie httpOnly côté BFF reste la cible à terme.
  */
 export class WebSessionTokenStore implements TokenStore {
-    private accessPart: Omit<TokenSet, 'refreshToken'> | null = null;
+    private cache: TokenSet | null = null;
 
     constructor(
         private readonly storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>,
-        private readonly key = 'sira.refresh_token'
+        private readonly key = 'sira.session'
     ) {}
 
     async load(): Promise<TokenSet | null> {
-        let refreshToken: string | null = null;
+        if (this.cache) return this.cache;
         try {
-            refreshToken = this.storage.getItem(this.key);
+            const brut = this.storage.getItem(this.key);
+            if (!brut) return null;
+            const t = JSON.parse(brut) as Partial<TokenSet>;
+            if (typeof t.accessToken !== 'string' || typeof t.expiresAt !== 'number') return null;
+            this.cache = { accessToken: t.accessToken, tokenType: t.tokenType ?? 'Bearer', expiresAt: t.expiresAt, refreshToken: t.refreshToken };
+            return this.cache;
         } catch {
-            // stockage indisponible (navigation privée…) : session mémoire uniquement
+            // stockage indisponible (navigation privée…) ou contenu corrompu : session mémoire uniquement
+            return this.cache;
         }
-        if (this.accessPart) return { ...this.accessPart, refreshToken: refreshToken ?? undefined };
-        if (refreshToken) {
-            // Access token perdu (rechargement de page) : expiré d'office, le
-            // TokenProvider déclenchera un refresh immédiat.
-            return { accessToken: '', tokenType: 'Bearer', expiresAt: 0, refreshToken };
-        }
-        return null;
     }
 
     async save(tokens: TokenSet): Promise<void> {
-        const { refreshToken, ...rest } = tokens;
-        this.accessPart = rest;
+        this.cache = tokens;
         try {
-            if (refreshToken) this.storage.setItem(this.key, refreshToken);
+            this.storage.setItem(this.key, JSON.stringify(tokens));
         } catch {
             // best effort
         }
     }
 
     async clear(): Promise<void> {
-        this.accessPart = null;
+        this.cache = null;
         try {
             this.storage.removeItem(this.key);
         } catch {

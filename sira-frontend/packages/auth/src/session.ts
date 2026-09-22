@@ -1,5 +1,5 @@
 import { isExpired, type TokenSet } from '@sira/core';
-import { refreshTokens, type OAuthConfig } from './oauth.js';
+import { AuthHttpError, refreshTokens, type OAuthConfig } from './oauth.js';
 import type { TokenStore } from './token-store.js';
 
 /**
@@ -70,10 +70,19 @@ export class AuthSession {
             if (!fresh.refreshToken) fresh.refreshToken = tokens.refreshToken;
             await this.store.save(fresh);
             return true;
-        } catch {
-            await this.store.clear();
-            this.notify(false);
+        } catch (err) {
+            // Seul un refus explicite du serveur (jeton révoqué/expiré) invalide la session.
+            // Une requête avortée (navigation pendant le refresh) ou hors-ligne conserve les
+            // jetons : sans cela, cliquer un lien juste après un chargement déconnectait l'utilisateur.
+            if (estRefusDefinitif(err)) {
+                await this.store.clear();
+                this.notify(false);
+            }
             return false;
         }
     }
+}
+
+function estRefusDefinitif(err: unknown): boolean {
+    return err instanceof AuthHttpError && (err.status === 400 || err.status === 401 || err.status === 403);
 }

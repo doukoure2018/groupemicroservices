@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Navigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth-context';
-import { DashboardAdminPage } from './admin/DashboardAdminPage';
 
 /**
  * Aiguillage après connexion, porté de l'écran `dashboards/home` Angular.
@@ -31,7 +30,9 @@ export function DashboardHomePage() {
         if (onboarding.isError || statut !== 'VERIFIE') return <Navigate to="/agence" replace />;
     }
 
-    if (hasRole(user, 'SUPER_ADMIN') || hasRole(user, 'ADMIN')) return <DashboardAdminPage />;
+    // Le tableau de bord admin vit dans la coquille /admin (sidebar) : on y renvoie
+    // pour que l'administrateur garde le menu sous les yeux.
+    if (hasRole(user, 'SUPER_ADMIN') || hasRole(user, 'ADMIN')) return <Navigate to="/admin" replace />;
     if (hasRole(user, 'ADMIN_CONFORMITE')) return <Navigate to="/conformite" replace />;
     if (hasRole(user, 'ADMIN_BACKOFFICE')) return <Navigate to="/admin/leads" replace />;
     if (estAgence) return <Navigate to="/agence/demandes" replace />;

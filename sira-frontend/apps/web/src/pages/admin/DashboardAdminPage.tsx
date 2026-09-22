@@ -16,17 +16,50 @@ import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
 import { DataTable } from 'primereact/datatable';
 import { Tag } from 'primereact/tag';
+import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api';
+import { useAuth } from '../../auth-context';
 import { BarreEmpilee, BarresHorizontales, type PartGraphique } from './Graphiques';
-import { StatCarte, tagSeverity } from './shared';
+import { tagSeverity } from './shared';
 
 type VehiculeAlerte = Vehicule & { alerte: string };
 
 const LIBELLES_TYPE_PARTENAIRE = ['AGENCE', 'MICROFINANCE', 'COMMERCE', 'POINT_VENTE', 'TRANSPORTEUR', 'REVENDEUR', 'GUICHET', 'AUTRE'];
 
+/** Carte d'indicateur clé : pastille icône, grande valeur, libellé, ligne de contexte. */
+function Kpi({ icone, ton, valeur, libelle, contexte }: { icone: string; ton: 'vert' | 'or' | 'bleu' | 'gris'; valeur: number; libelle: string; contexte?: ReactNode }) {
+    return (
+        <article className={`kpi kpi-${ton}`}>
+            <span className="kpi-icone" aria-hidden="true">
+                <i className={`pi ${icone}`} />
+            </span>
+            <span className="kpi-valeur">{valeur}</span>
+            <span className="kpi-libelle">{libelle}</span>
+            {contexte && <span className="kpi-contexte">{contexte}</span>}
+        </article>
+    );
+}
+
+/** En-tête de bloc : titre + lien optionnel « voir tout ». */
+function EnteteBloc({ titre, lien, libelleLien }: { titre: string; lien?: string; libelleLien?: string }) {
+    return (
+        <div className="dash-section-tete">
+            <h2>{titre}</h2>
+            {lien && (
+                <Link to={lien} className="lien-discret">
+                    {libelleLien ?? 'Voir tout'} <i className="pi pi-arrow-right" aria-hidden="true" />
+                </Link>
+            )}
+        </div>
+    );
+}
+
+const DATE_LONGUE = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
 export function DashboardAdminPage() {
+    const { user } = useAuth();
     const tableauQuery = useQuery({
         queryKey: ['dashboard-admin'],
         queryFn: async () => {
@@ -103,104 +136,115 @@ export function DashboardAdminPage() {
         <section className="card card-large">
             <div className="admin-entete">
                 <div>
-                    <h1>Tableau de bord</h1>
-                    <p className="muted">Activité du jour et points d'attention</p>
+                    <h1>Bonjour{user?.firstName ? `, ${user.firstName}` : ''} 👋</h1>
+                    <p className="muted">Voici l'activité du {DATE_LONGUE.format(new Date())}.</p>
                 </div>
-                <Button icon="pi pi-refresh" text rounded tooltip="Actualiser" loading={tableauQuery.isFetching} onClick={() => void tableauQuery.refetch()} />
+                <Button icon="pi pi-refresh" label="Actualiser" outlined size="small" loading={tableauQuery.isFetching} onClick={() => void tableauQuery.refetch()} />
             </div>
 
-            <div className="stats-ligne">
-                <StatCarte libelle="Offres ouvertes" valeur={d.offres.ouvertes ?? 0} ton="succes" />
-                <StatCarte libelle="Véhicules actifs" valeur={d.vehicules.actifs ?? 0} ton="succes" />
-                <StatCarte libelle="Partenaires actifs" valeur={d.partenaires.actifs ?? 0} />
-                <StatCarte libelle="Trajets actifs" valeur={d.trajets.actifs ?? 0} />
+            <div className="kpi-grille">
+                <Kpi
+                    icone="pi-ticket"
+                    ton="vert"
+                    valeur={d.offres.ouvertes ?? 0}
+                    libelle="Offres ouvertes"
+                    contexte={
+                        <>
+                            {d.offres.total ?? 0} au total · <strong>{d.offres.aujourd_hui ?? 0}</strong> aujourd'hui
+                        </>
+                    }
+                />
+                <Kpi
+                    icone="pi-car"
+                    ton="bleu"
+                    valeur={d.vehicules.actifs ?? 0}
+                    libelle="Véhicules actifs"
+                    contexte={
+                        alertesVehicules.length > 0 ? (
+                            <span className="texte-danger">{alertesVehicules.length} alerte(s) document</span>
+                        ) : (
+                            <>{d.vehicules.enMaintenance ?? 0} en maintenance</>
+                        )
+                    }
+                />
+                <Kpi
+                    icone="pi-briefcase"
+                    ton="or"
+                    valeur={d.partenaires.actifs ?? 0}
+                    libelle="Partenaires actifs"
+                    contexte={
+                        (d.partenaires.enAttente ?? 0) > 0 ? (
+                            <span className="texte-danger">{d.partenaires.enAttente} en attente</span>
+                        ) : (
+                            <>Réseau de distribution</>
+                        )
+                    }
+                />
+                <Kpi icone="pi-directions" ton="gris" valeur={d.trajets.actifs ?? 0} libelle="Trajets actifs" contexte={<>{d.trajets.total ?? 0} trajets définis</>} />
             </div>
 
-            <p className="muted ligne-metriques">
-                <span>{d.offres.total ?? 0} offres au total</span>
-                <span>{d.offres.aujourd_hui ?? 0} aujourd'hui</span>
-                <span>{d.vehicules.enMaintenance ?? 0} véhicules en maintenance</span>
-                {alertesVehicules.length > 0 && <span className="texte-danger">{alertesVehicules.length} alerte(s) véhicule</span>}
-                {(d.partenaires.enAttente ?? 0) > 0 && <span className="texte-danger">{d.partenaires.enAttente} partenaire(s) en attente</span>}
-            </p>
-
-            <div className="duo-graphiques">
+            <div className="bloc-duo">
                 <div>
-                    <h2 className="section-titre">Offres par statut</h2>
+                    <EnteteBloc titre="Offres par statut" lien="/admin/offres" libelleLien="Gérer les offres" />
                     <BarreEmpilee parts={partsOffres} titre="Répartition des offres par statut" />
                 </div>
                 <div>
-                    <h2 className="section-titre">Partenaires par type</h2>
+                    <EnteteBloc titre="Partenaires par type" lien="/admin/partenaires" libelleLien="Gérer" />
                     <BarresHorizontales parts={partsPartenaires} titre="Nombre de partenaires par type" />
                 </div>
             </div>
 
-            <div className="admin-entete">
-                <h2 className="section-titre">Offres du jour</h2>
-                <Link to="/admin/offres" className="lien-discret">
-                    Voir tout
-                </Link>
-            </div>
+            <EnteteBloc titre="Offres du jour" lien="/admin/offres" />
             <DataTable value={d.offresJour} paginator={d.offresJour.length > 5} rows={5} size="small" stripedRows emptyMessage="Aucune offre aujourd'hui" scrollable>
-                <Column
-                    header="Trajet"
-                    body={(o: Offre) => (
-                        <div className="cellule-trajet">
-                            <strong>{o.villeDepartLibelle}</strong>
-                            <span className="muted">vers {o.villeArriveeLibelle}</span>
-                        </div>
-                    )}
-                />
-                <Column header="Heure" body={(o: Offre) => formatHeure(o.heureDepart)} />
-                <Column
-                    header="Places"
-                    body={(o: Offre) => {
-                        const total = o.nombrePlacesTotal ?? 0;
-                        const taux = total ? Math.round(((o.nombrePlacesReservees ?? 0) / total) * 100) : 0;
-                        return (
+                    <Column
+                        header="Trajet"
+                        body={(o: Offre) => (
                             <div className="cellule-trajet">
-                                <span>
-                                    {o.nombrePlacesDisponibles ?? 0} / {total}
-                                </span>
-                                <span className="muted">{taux}% rempli</span>
+                                <strong>{o.villeDepartLibelle}</strong>
+                                <span className="muted">vers {o.villeArriveeLibelle}</span>
                             </div>
-                        );
-                    }}
-                />
-                <Column header="Prix" body={(o: Offre) => formatMontant(o.montant, o.devise)} />
-                <Column header="Statut" body={(o: Offre) => <Tag value={getStatutOffreLabel(o.statut)} severity={tagSeverity(getStatutOffreSeverity(o.statut))} />} />
-            </DataTable>
+                        )}
+                    />
+                    <Column header="Heure" body={(o: Offre) => formatHeure(o.heureDepart)} />
+                    <Column
+                        header="Places"
+                        body={(o: Offre) => {
+                            const total = o.nombrePlacesTotal ?? 0;
+                            const taux = total ? Math.round(((o.nombrePlacesReservees ?? 0) / total) * 100) : 0;
+                            return (
+                                <div className="cellule-trajet">
+                                    <span>
+                                        {o.nombrePlacesDisponibles ?? 0} / {total}
+                                    </span>
+                                    <span className="muted">{taux}% rempli</span>
+                                </div>
+                            );
+                        }}
+                    />
+                    <Column header="Prix" body={(o: Offre) => formatMontant(o.montant, o.devise)} />
+                    <Column header="Statut" body={(o: Offre) => <Tag value={getStatutOffreLabel(o.statut)} severity={tagSeverity(getStatutOffreSeverity(o.statut))} />} />
+                </DataTable>
 
-            <div className="admin-entete">
-                <h2 className="section-titre">Alertes véhicules</h2>
-                <Link to="/admin/vehicules" className="lien-discret">
-                    Voir la flotte
-                </Link>
-            </div>
+            <EnteteBloc titre="Alertes véhicules" lien="/admin/vehicules" libelleLien="Voir la flotte" />
             <DataTable value={alertesVehicules} paginator={alertesVehicules.length > 5} rows={5} size="small" stripedRows emptyMessage="Aucune alerte" scrollable>
-                <Column
-                    header="Véhicule"
-                    body={(v: VehiculeAlerte) => (
-                        <div className="cellule-trajet">
-                            <strong>{v.immatriculation}</strong>
-                            <span className="muted">
-                                {v.marque} {v.modele}
-                            </span>
-                        </div>
-                    )}
-                />
-                <Column header="Alerte" body={(v: VehiculeAlerte) => <Tag value={v.alerte} severity="danger" />} />
-                <Column header="Statut" body={(v: VehiculeAlerte) => <Tag value={getStatutVehiculeLabel(v.statut)} severity={tagSeverity(getStatutVehiculeSeverity(v.statut))} />} />
-            </DataTable>
+                    <Column
+                        header="Véhicule"
+                        body={(v: VehiculeAlerte) => (
+                            <div className="cellule-trajet">
+                                <strong>{v.immatriculation}</strong>
+                                <span className="muted">
+                                    {v.marque} {v.modele}
+                                </span>
+                            </div>
+                        )}
+                    />
+                    <Column header="Alerte" body={(v: VehiculeAlerte) => <Tag value={v.alerte} severity="danger" />} />
+                    <Column header="Statut" body={(v: VehiculeAlerte) => <Tag value={getStatutVehiculeLabel(v.statut)} severity={tagSeverity(getStatutVehiculeSeverity(v.statut))} />} />
+                </DataTable>
 
             {d.partenairesAttente.length > 0 && (
                 <>
-                    <div className="admin-entete">
-                        <h2 className="section-titre">Partenaires en attente de validation</h2>
-                        <Link to="/admin/partenaires" className="lien-discret">
-                            Gérer
-                        </Link>
-                    </div>
+                    <EnteteBloc titre="Partenaires en attente de validation" lien="/admin/partenaires" libelleLien="Gérer" />
                     <DataTable value={d.partenairesAttente} paginator={d.partenairesAttente.length > 5} rows={5} size="small" stripedRows scrollable>
                         <Column header="Nom" body={(p: Partenaire) => <strong>{p.nom}</strong>} />
                         <Column header="Type" body={(p: Partenaire) => <Tag value={getTypePartenaireLabel(p.typePartenaire)} severity="info" />} />

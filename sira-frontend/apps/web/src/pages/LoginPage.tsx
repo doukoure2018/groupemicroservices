@@ -1,10 +1,10 @@
 import { AuthHttpError } from '@sira/auth';
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth-context';
 
 export function LoginPage() {
-    const { login } = useAuth();
+    const { login, loginWithOAuth } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const redirect = searchParams.get('redirect') ?? '/';
@@ -35,22 +35,40 @@ export function LoginPage() {
     }
 
     return (
-        <section className="card card-narrow">
+        <section className="auth-carte">
+            <img className="auth-logo" src="/brand/synergia-emblem-512x512.png" alt="SYNERGIA" width={64} height={64} />
             <h1>Connexion</h1>
+            <p className="auth-sous">Accédez à votre espace SYNERGIA.</p>
+
             <form className="stack-form" onSubmit={onSubmit}>
                 <label>
                     Email
-                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" placeholder="nom@email.com" />
                 </label>
                 <label>
                     Mot de passe
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" placeholder="Votre mot de passe" />
                 </label>
+                <div className="auth-oubli">
+                    <Link to="/auth/forgotpassword">Mot de passe oublié ?</Link>
+                </div>
                 {error && <p className="error">{error}</p>}
                 <button type="submit" disabled={pending}>
                     {pending ? 'Connexion…' : 'Se connecter'}
                 </button>
             </form>
+
+            <div className="auth-sep">
+                <span>ou</span>
+            </div>
+
+            <button type="button" className="auth-google" onClick={() => void loginWithOAuth()}>
+                <i className="pi pi-google" aria-hidden="true" /> Continuer avec Google
+            </button>
+
+            <p className="auth-pied">
+                Pas encore de compte ? <Link to="/auth/register">Créer un compte</Link>
+            </p>
         </section>
     );
 }

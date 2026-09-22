@@ -53,7 +53,6 @@ export function geoApi(client: SiraClient) {
         setRegionActif: (uuid: string, actif: boolean) => client.patch<{ region: Region }>(`${BASE}/regions/${uuid}/status`, { body: { actif } }),
         createRegion: (body: RegionCreateRequest) => client.post<{ region: Region }>(`${BASE}/regions`, { body }),
         updateRegion: (uuid: string, body: RegionUpdateRequest) => client.put<{ region: Region }>(`${BASE}/regions/${uuid}`, { body }),
-        deleteRegion: (uuid: string) => client.delete<Record<string, never>>(`${BASE}/regions/${uuid}`),
 
         villes: () => client.get<{ villes: Ville[] }>(`${BASE}/villes`),
         /** Public — utilisé par la home sans authentification. */
@@ -61,21 +60,18 @@ export function geoApi(client: SiraClient) {
         setVilleActif: (uuid: string, actif: boolean) => client.patch<{ ville: Ville }>(`${BASE}/villes/${uuid}/status`, { body: { actif } }),
         createVille: (body: VilleCreateRequest) => client.post<{ ville: Ville }>(`${BASE}/villes`, { body }),
         updateVille: (uuid: string, body: VilleUpdateRequest) => client.put<{ ville: Ville }>(`${BASE}/villes/${uuid}`, { body }),
-        deleteVille: (uuid: string) => client.delete<Record<string, never>>(`${BASE}/villes/${uuid}`),
 
         communes: () => client.get<{ communes: Commune[] }>(`${BASE}/communes`),
         communesActives: () => client.get<{ communes: Commune[] }>(`${BASE}/communes/active`),
         setCommuneActif: (uuid: string, actif: boolean) => client.patch<{ commune: Commune }>(`${BASE}/communes/${uuid}/status`, { body: { actif } }),
         createCommune: (body: CommuneCreateRequest) => client.post<{ commune: Commune }>(`${BASE}/communes`, { body }),
         updateCommune: (uuid: string, body: CommuneUpdateRequest) => client.put<{ commune: Commune }>(`${BASE}/communes/${uuid}`, { body }),
-        deleteCommune: (uuid: string) => client.delete<Record<string, never>>(`${BASE}/communes/${uuid}`),
 
         quartiers: () => client.get<{ quartiers: Quartier[] }>(`${BASE}/quartiers`),
         quartiersActifs: () => client.get<{ quartiers: Quartier[] }>(`${BASE}/quartiers/active`),
         setQuartierActif: (uuid: string, actif: boolean) => client.patch<{ quartier: Quartier }>(`${BASE}/quartiers/${uuid}/status`, { body: { actif } }),
         createQuartier: (body: QuartierCreateRequest) => client.post<{ quartier: Quartier }>(`${BASE}/quartiers`, { body }),
         updateQuartier: (uuid: string, body: QuartierUpdateRequest) => client.put<{ quartier: Quartier }>(`${BASE}/quartiers/${uuid}`, { body }),
-        deleteQuartier: (uuid: string) => client.delete<Record<string, never>>(`${BASE}/quartiers/${uuid}`),
 
         localisations: () => client.get<{ localisations: Localisation[] }>(`${BASE}/localisations`),
         createLocalisation: (body: LocalisationCreateRequest) => client.post<{ localisation: Localisation }>(`${BASE}/localisations`, { body }),
@@ -168,7 +164,8 @@ export function offreApi(client: SiraClient) {
         suspendre: (uuid: string) => transition(uuid, 'suspendre'),
         reprendre: (uuid: string) => transition(uuid, 'reprendre'),
         setPromotion: (uuid: string, montantPromotion: number) =>
-            client.patch<{ offre: Offre }>(`${BASE}/offres/${uuid}/promotion`, { body: { montantPromotion } }),
+            // Convention backend (vérifiée dans l'Angular) : PATCH à corps vide, montant en query param.
+            client.patch<{ offre: Offre }>(`${BASE}/offres/${uuid}/promotion`, { params: { montantPromotion } }),
         removePromotion: (uuid: string) => client.delete<{ offre: Offre }>(`${BASE}/offres/${uuid}/promotion`),
 
         avis: (uuid: string) => client.get<{ avis: unknown[] }>(`${BASE}/offres/${uuid}/avis`, { auth: false })
@@ -181,10 +178,11 @@ export function commandeApi(client: SiraClient) {
         create: (body: CommandeCreateRequest) => client.post<{ commande: CommandeClient }>(`${BASE}/commandes`, { body }),
         mesCommandes: () => client.get<{ commandes: CommandeClient[] }>(`${BASE}/commandes/mes-commandes`),
         byUuid: (uuid: string) => client.get<{ commande: CommandeClient }>(`${BASE}/commandes/${uuid}`),
-        annuler: (uuid: string) => client.post<{ commande: CommandeClient }>(`${BASE}/commandes/${uuid}/annuler`),
+        // Contrôleur Java : @PutMapping("/{uuid}/annuler").
+        annuler: (uuid: string) => client.put<{ commande: CommandeClient }>(`${BASE}/commandes/${uuid}/annuler`),
         offresAlternatives: (uuid: string) => client.get<{ offres: Offre[] }>(`${BASE}/commandes/${uuid}/offres-alternatives`),
         modifierDate: (uuid: string, body: ModifierDateRequest) =>
-            client.post<{ commande: CommandeClient }>(`${BASE}/commandes/${uuid}/modifier-date`, { body })
+            client.put<{ commande: CommandeClient }>(`${BASE}/commandes/${uuid}/modifier-date`, { body })
     };
 }
 

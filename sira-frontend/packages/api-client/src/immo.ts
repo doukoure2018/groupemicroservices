@@ -28,7 +28,6 @@ export function proprieteApi(client: SiraClient) {
         recherche: (params: RechercheProprietesParams) =>
             client.get<{ proprietes: Propriete[] } & PageMeta>(`${BASE}/proprietes/recherche`, { params: params as QueryParams, auth: false }),
         byUuid: (uuid: string) => client.get<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}`, { auth: false }),
-        detail: (uuid: string) => client.get<ProprieteDetail>(`${BASE}/proprietes/${uuid}/detail`, { auth: false }),
         typesBien: () => client.get<{ typesBien: TypeBien[] }>(`${BASE}/types-bien`, { auth: false }),
         commodites: () => client.get<{ commodites: Commodite[] }>(`${BASE}/commodites`, { auth: false }),
 
@@ -36,11 +35,11 @@ export function proprieteApi(client: SiraClient) {
         mesProprietes: () => client.get<{ proprietes: Propriete[] }>(`${BASE}/proprietes/mes-proprietes`),
         create: (body: Partial<Propriete>) => client.post<{ propriete: Propriete }>(`${BASE}/proprietes`, { body }),
         update: (uuid: string, body: Partial<Propriete>) => client.put<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}`, { body }),
-        publier: (uuid: string) => client.post<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/publier`),
-        retirer: (uuid: string) => client.post<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/retirer`),
+        publier: (uuid: string) => client.patch<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/publier`),
+        retirer: (uuid: string) => client.patch<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/retirer`),
         renouveler: (uuid: string) => client.post<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/renouveler`),
-        marquerVendu: (uuid: string) => client.post<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/marquer-vendu`),
-        marquerLoue: (uuid: string) => client.post<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/marquer-loue`),
+        marquerVendu: (uuid: string) => client.patch<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/marquer-vendu`),
+        marquerLoue: (uuid: string) => client.patch<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/marquer-loue`),
         uploadPhoto: (uuid: string, formData: FormData) => client.post<{ photo: unknown }>(`${BASE}/proprietes/${uuid}/photos`, { formData }),
 
         // ---- Modération (ADMIN / SUPER_ADMIN) ----
@@ -55,12 +54,12 @@ export function proprieteApi(client: SiraClient) {
 /** Favoris, contacts, visites, demandes de besoin, brouillons — parcours client mobile. */
 export function immoClientApi(client: SiraClient) {
     return {
-        favoris: () => client.get<{ proprietes: Propriete[] }>(`${BASE}/favoris`),
+        favoris: () => client.get<{ proprietes: Propriete[] }>(`${BASE}/favoris/mes-favoris`),
         addFavori: (proprieteUuid: string) => client.post<Record<string, never>>(`${BASE}/favoris/${proprieteUuid}`),
         removeFavori: (proprieteUuid: string) => client.delete<Record<string, never>>(`${BASE}/favoris/${proprieteUuid}`),
 
         contacter: (proprieteUuid: string, body: { message: string; typeDemande?: string }) =>
-            client.post<Record<string, never>>(`${BASE}/proprietes/${proprieteUuid}/contacts`, { body }),
+            client.post<Record<string, never>>(`${BASE}/proprietes/${proprieteUuid}/contact`, { body }),
         demanderVisite: (proprieteUuid: string, body: { dateVisite: string; heureVisite?: string; notesVisiteur?: string }) =>
             client.post<Record<string, never>>(`${BASE}/proprietes/${proprieteUuid}/visites`, { body }),
 

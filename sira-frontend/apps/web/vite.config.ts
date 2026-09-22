@@ -10,22 +10,67 @@ import { defineConfig } from 'vite';
 const GATEWAY = 'http://localhost:9000';
 const AUTH_SERVER = 'http://localhost:8090';
 
+/**
+ * Origine acceptée par la config CORS de tous les services locaux (billetterie,
+ * user, immo, auth). Le navigateur ajoute un en-tête Origin sur les requêtes
+ * d'écriture même en same-origin ; sans réécriture, le backend répond « Invalid
+ * CORS request » (403). On se présente donc comme l'app Angular whitelistée.
+ */
+const ORIGINE_LOCALE_AUTORISEE = 'http://localhost:4202';
+
+/**
+ * SIRA_API_DISTANTE=https://api-test.sira-guinee.com fait pointer le proxy vers
+ * un backend déployé (test ou prod) : utile pour vérifier le code local contre
+ * de vraies données sans lancer la pile Spring. Là-bas, l'auth server est servi
+ * derrière nginx sous /authorization, donc le préfixe est conservé.
+ */
+const distant = process.env['SIRA_API_DISTANTE'];
+
 export default defineConfig({
     plugins: [react()],
     server: {
         port: 5173,
-        proxy: {
-            '/billetterie': GATEWAY,
-            '/user': GATEWAY,
-            '/immo': GATEWAY,
-            '/notification': GATEWAY,
-            // Écart dev/prod connu : en prod l'auth server a le context-path
-            // /authorization, en dev non. Le gateway ne retire pas le préfixe,
-            // donc en dev on joint l'auth server en direct en le retirant ici.
-            '/authorization': {
-                target: AUTH_SERVER,
-                rewrite: (path) => path.replace(/^\/authorization/, '')
-            }
-        }
+        proxy: distant
+            ? Object.fromEntries(['/billetterie', '/user', '/immo', '/notification', '/authorization'].map((p) => [
+                      p,
+                      {
+                          target: distant,
+                          changeOrigin: true,
+                          secure: true,
+                          // L'auth server distant juge l'Origin : on se présente comme le site lui-même.
+                          configure: (proxy) =>
+                              proxy.on('proxyReq', (req) => {
+                                  req.setHeader('origin', distant);
+                                  req.setHeader('referer', `${distant}/`);
+                              })
+                      }
+                  ]))
+            : {
+                  ...Object.fromEntries(
+                      ['/billetterie', '/user', '/immo', '/notification'].map((p) => [
+                          p,
+                          {
+                              target: GATEWAY,
+                              configure: (proxy) =>
+                                  proxy.on('proxyReq', (req) => {
+                                      req.setHeader('origin', ORIGINE_LOCALE_AUTORISEE);
+                                      req.setHeader('referer', `${ORIGINE_LOCALE_AUTORISEE}/`);
+                                  })
+                          }
+                      ])
+                  ),
+                  // Écart dev/prod connu : en prod l'auth server a le context-path
+                  // /authorization, en dev non. Le gateway ne retire pas le préfixe,
+                  // donc en dev on joint l'auth server en direct en le retirant ici.
+                  '/authorization': {
+                      target: AUTH_SERVER,
+                      rewrite: (path) => path.replace(/^\/authorization/, ''),
+                      configure: (proxy) =>
+                          proxy.on('proxyReq', (req) => {
+                              req.setHeader('origin', ORIGINE_LOCALE_AUTORISEE);
+                              req.setHeader('referer', `${ORIGINE_LOCALE_AUTORISEE}/`);
+                          })
+                  }
+              }
     }
 });
