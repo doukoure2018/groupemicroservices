@@ -92,8 +92,9 @@ public final class ModeReglementQuery {
           AND mode_reglement_uuid != :excludeUuid
         """;
 
+    // Il n'existe pas de table `transactions` : le mode de règlement est porté par `commandes`.
     public static final String HAS_TRANSACTIONS = """
-        SELECT COUNT(*) FROM transactions t
+        SELECT COUNT(*) FROM commandes t
         WHERE t.mode_reglement_id = (
             SELECT mode_reglement_id FROM modes_reglement WHERE mode_reglement_uuid = :uuid
         )

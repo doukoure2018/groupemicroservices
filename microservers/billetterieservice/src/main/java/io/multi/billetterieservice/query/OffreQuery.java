@@ -260,14 +260,17 @@ public final class OffreQuery {
           AND offre_uuid != :excludeUuid
         """;
 
+    // Les réservations sont les lignes de `commandes` (il n'existe pas de table `reservations`) :
+    // l'ancienne requête échouait en « bad SQL grammar » et, sous PostgreSQL, abandonnait la
+    // transaction — toute annulation d'offre finissait en erreur générique.
     public static final String HAS_RESERVATIONS = """
-        SELECT COUNT(*) FROM reservations r
+        SELECT COUNT(*) FROM commandes r
         WHERE r.offre_id = (SELECT offre_id FROM offres WHERE offre_uuid = :uuid)
           AND r.statut NOT IN ('ANNULEE', 'REMBOURSEE')
         """;
 
     public static final String COUNT_RESERVATIONS_CONFIRMEES = """
-        SELECT COALESCE(SUM(r.nombre_places), 0) FROM reservations r
+        SELECT COALESCE(SUM(r.nombre_places), 0) FROM commandes r
         WHERE r.offre_id = (SELECT offre_id FROM offres WHERE offre_uuid = :uuid)
           AND r.statut IN ('CONFIRMEE', 'PAYEE')
         """;

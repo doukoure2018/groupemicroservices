@@ -1,5 +1,7 @@
 package io.multi.billetterieservice.repository.impl;
 
+import io.multi.billetterieservice.exception.ApiException;
+
 import io.multi.billetterieservice.domain.Offre;
 import io.multi.billetterieservice.query.OffreQuery;
 import io.multi.billetterieservice.repository.OffreRepository;
@@ -325,8 +327,10 @@ public class OffreRepositoryImpl implements OffreRepository {
                     .single();
             return count != null && count > 0;
         } catch (Exception e) {
-            log.warn("Impossible de vérifier les réservations pour l'offre {}: {}", uuid, e.getMessage());
-            return false;
+            // Ne pas masquer l'erreur : sous PostgreSQL la transaction est déjà abandonnée,
+            // continuer produirait un « current transaction is aborted » incompréhensible.
+            log.error("Impossible de vérifier les réservations pour l'offre {}: {}", uuid, e.getMessage());
+            throw new ApiException("Impossible de vérifier les réservations de l'offre");
         }
     }
 

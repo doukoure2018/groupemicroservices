@@ -1,5 +1,7 @@
 package io.multi.billetterieservice.repository.impl;
 
+import io.multi.billetterieservice.exception.ApiException;
+
 import io.multi.billetterieservice.domain.ModeReglement;
 import io.multi.billetterieservice.query.ModeReglementQuery;
 import io.multi.billetterieservice.repository.ModeReglementRepository;
@@ -163,8 +165,9 @@ public class ModeReglementRepositoryImpl implements ModeReglementRepository {
                     .single();
             return count != null && count > 0;
         } catch (Exception e) {
-            log.warn("Impossible de vérifier les transactions pour le mode {}: {}", uuid, e.getMessage());
-            return false;
+            // Ne pas masquer l'erreur : la transaction PostgreSQL est déjà abandonnée.
+            log.error("Impossible de vérifier les transactions pour le mode {}: {}", uuid, e.getMessage());
+            throw new ApiException("Impossible de vérifier les dépendances avant suppression");
         }
     }
 
