@@ -11,6 +11,25 @@ interface RegionAccueil {
     villes: Ville[];
 }
 
+/**
+ * Photos de régions servies depuis `public/regions/`. Carte explicite plutôt que
+ * chemin déduit du libellé : une image absente laisserait un fond blanc avec du
+ * texte blanc. Pour en ajouter une, déposer le fichier et compléter cette table.
+ */
+const PHOTOS_REGION: Record<string, string> = {
+    kankan: '/regions/kankan.jpg'
+};
+
+/** Libellé de région vers une clé de fichier : minuscules, sans accents ni espaces. */
+function cleRegion(libelle: string): string {
+    return libelle
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+}
+
 export function HomePage() {
     const [villeDepartUuid, setVilleDepartUuid] = useState('');
     const [villeArriveeUuid, setVilleArriveeUuid] = useState('');
@@ -175,14 +194,24 @@ export function HomePage() {
                     <h2>Top destinations</h2>
                     <p className="muted center-texte">Les régions de Guinée desservies par SYNERGIA</p>
                     <div className="destinations-grille">
-                        {regions.map((r, i) => (
-                            <button key={r.regionUuid} type="button" className={`destination-carte destination-${i % 5}`} onClick={() => choisirRegion(r)}>
+                        {regions.map((r, i) => {
+                            const photo = PHOTOS_REGION[cleRegion(r.libelle)];
+                            return (
+                            <button
+                                key={r.regionUuid}
+                                type="button"
+                                className={photo ? `destination-carte destination-photo` : `destination-carte destination-${i % 5}`}
+                                // Dégradé sombre par-dessus la photo : sans lui le libellé blanc devient illisible.
+                                style={photo ? { backgroundImage: `linear-gradient(180deg, rgba(10, 30, 20, 0.15) 0%, rgba(10, 30, 20, 0.78) 100%), url(${photo})` } : undefined}
+                                onClick={() => choisirRegion(r)}
+                            >
                                 <span className="destination-nom">{r.libelle}</span>
                                 <span className="destination-meta">
                                     {r.villes.length} ville{r.villes.length > 1 ? 's' : ''} desservie{r.villes.length > 1 ? 's' : ''}
                                 </span>
                             </button>
-                        ))}
+                            );
+                        })}
                     </div>
                 </section>
             )}

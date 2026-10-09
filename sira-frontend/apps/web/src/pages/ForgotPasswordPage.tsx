@@ -2,6 +2,7 @@ import { ApiError } from '@sira/api-client';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import { CarteAuth, estMessageAuthGenerique } from '../components/CarteAuth';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -29,17 +30,17 @@ export function ForgotPasswordPage() {
             setEmail('');
             setTouche(false);
         } catch (err) {
-            setErreur(err instanceof ApiError ? err.message : "L'envoi a échoué. Réessayez dans un instant.");
+            // Email inconnu : le backend lève une exception sur un endpoint public et
+            // répond 401 « You are not logged in » — on explique la situation réelle.
+            if (estMessageAuthGenerique(err)) setErreur("Aucun compte ne correspond à cette adresse email, ou l'envoi a échoué. Vérifiez l'adresse saisie.");
+            else setErreur(err instanceof ApiError ? err.message : "L'envoi a échoué. Réessayez dans un instant.");
         } finally {
             setPending(false);
         }
     }
 
     return (
-        <section className="card card-narrow">
-            <h1>Réinitialisation de mot de passe</h1>
-            <p className="muted">Saisissez votre adresse email pour recevoir un lien de réinitialisation.</p>
-
+        <CarteAuth titre="Réinitialisation de mot de passe" sousTitre="Saisissez votre adresse email pour recevoir un lien de réinitialisation.">
             <form className="stack-form" onSubmit={onSubmit} noValidate>
                 <label>
                     Email
@@ -55,9 +56,11 @@ export function ForgotPasswordPage() {
                 </button>
             </form>
 
-            <p className="muted center">
-                <Link to="/login">Retour à la connexion</Link>
+            <p className="auth-pied">
+                <Link to="/login">
+                    <i className="pi pi-arrow-left" aria-hidden="true" /> Retour à la connexion
+                </Link>
             </p>
-        </section>
+        </CarteAuth>
     );
 }

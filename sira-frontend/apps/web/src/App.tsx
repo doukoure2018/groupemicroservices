@@ -1,6 +1,8 @@
 import { BrowserRouter, Link, NavLink, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { AuthProvider, useAuth } from './auth-context';
+import { BarriereErreur } from './components/BarriereErreur';
+import { TitreDocument } from './components/TitreDocument';
 import { hasRole } from '@sira/core';
 import { AdminLayout, RequireRole, ROLES_ADMIN } from './pages/admin/AdminLayout';
 import { AgencesAdminPage } from './pages/admin/AgencesAdminPage';
@@ -42,7 +44,9 @@ export function App() {
     return (
         <BrowserRouter>
             <AuthProvider>
-                <Routes>
+                <TitreDocument />
+                <BarriereErreur>
+                    <Routes>
                     {/* Espace admin : coquille plein écran (sidebar + barre de contenu),
                         sans la barre verte publique — voir AdminLayout. */}
                     <Route
@@ -149,7 +153,8 @@ export function App() {
                         />
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Route>
-                </Routes>
+                    </Routes>
+                </BarriereErreur>
             </AuthProvider>
         </BrowserRouter>
     );
@@ -163,8 +168,30 @@ function ChromePublic() {
             <main>
                 <Outlet />
             </main>
-            <footer className="footer">Frontend React (phase 1) — même API, même gateway que l'app actuelle.</footer>
+            <SiteFooter />
         </div>
+    );
+}
+
+/** Pied de page public : marque, raccourcis, mention légale. */
+function SiteFooter() {
+    return (
+        <footer className="footer">
+            <div className="footer-contenu">
+                <div className="footer-marque">
+                    <img src="/brand/synergia-emblem-512x512.png" alt="" width={30} height={30} />
+                    <div>
+                        <strong>SYNERGIA</strong>
+                        <span>Immobilier et transport en Guinée</span>
+                    </div>
+                </div>
+                <nav className="footer-liens" aria-label="Liens utiles">
+                    <Link to="/">Rechercher un voyage</Link>
+                    <Link to="/mes-voyages">Mes voyages</Link>
+                </nav>
+            </div>
+            <p className="footer-bas">© {new Date().getFullYear()} SYNERGIA · IMMO · TRANS · GUINÉE — Tous droits réservés.</p>
+        </footer>
     );
 }
 

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth-context';
+import { CarteAuth } from '../components/CarteAuth';
 
 type TypeCompte = 'PARTICULIER' | 'AGENCE';
 
@@ -107,21 +108,18 @@ export function RegisterPage() {
     }
 
     return (
-        <section className="card card-narrow">
-            <h1>Créer un compte</h1>
-            <p className="muted">Rejoignez SYNERGIA pour trouver, louer ou vendre votre bien en Guinée.</p>
-
+        <CarteAuth titre="Créer un compte" sousTitre="Rejoignez SYNERGIA : voyages et immobilier en Guinée." large>
             <form className="stack-form" onSubmit={onSubmit} noValidate>
                 <fieldset className="choix-compte">
                     <legend>Je suis</legend>
                     <label className={form.accountType === 'PARTICULIER' ? 'carte-choix active' : 'carte-choix'}>
                         <input type="radio" name="accountType" checked={!estAgence} onChange={() => maj('accountType', 'PARTICULIER')} />
-                        <i className="pi pi-user" />
+                        <i className="pi pi-user" aria-hidden="true" />
                         Particulier
                     </label>
                     <label className={estAgence ? 'carte-choix active' : 'carte-choix'}>
                         <input type="radio" name="accountType" checked={estAgence} onChange={() => maj('accountType', 'AGENCE')} />
-                        <i className="pi pi-building" />
+                        <i className="pi pi-building" aria-hidden="true" />
                         Agence immobilière
                     </label>
                 </fieldset>
@@ -206,14 +204,17 @@ export function RegisterPage() {
                 </button>
             </form>
 
-            <div className="separateur">ou</div>
-            <button type="button" className="bouton-secondaire" onClick={() => void loginWithOAuth()}>
-                <i className="pi pi-google" /> Continuer avec Google
+            <div className="auth-sep">
+                <span>ou</span>
+            </div>
+
+            <button type="button" className="auth-google" onClick={() => void loginWithOAuth()}>
+                <i className="pi pi-google" aria-hidden="true" /> Continuer avec Google
             </button>
 
-            <p className="muted center">
+            <p className="auth-pied">
                 Vous avez déjà un compte ? <Link to="/login">Se connecter</Link>
             </p>
-        </section>
+        </CarteAuth>
     );
 }

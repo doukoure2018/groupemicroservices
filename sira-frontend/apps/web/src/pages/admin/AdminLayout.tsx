@@ -15,8 +15,13 @@ export function RequireRole({ roles, children }: { roles: RoleName[]; children: 
     const autorise = roles.some((r) => hasRole(user, r));
     if (!autorise) {
         return (
-            <section className="card">
-                <p className="error">Vous n'avez pas les droits nécessaires pour accéder à cette section.</p>
+            <section className="card card-large">
+                <div className="etat-vide">
+                    <i className="pi pi-lock grand-icone erreur-icone" aria-hidden="true" />
+                    <h1>Accès restreint</h1>
+                    <p className="error">Vous n'avez pas les droits nécessaires pour accéder à cette section.</p>
+                    <p className="muted">Si vous pensez qu'il s'agit d'une erreur, contactez un administrateur.</p>
+                </div>
             </section>
         );
     }

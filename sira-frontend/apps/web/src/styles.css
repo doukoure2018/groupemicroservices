@@ -174,6 +174,16 @@ body {
     .navbar-cta {
         padding: 8px 12px;
         font-size: 0.85rem;
+        white-space: nowrap;
+    }
+    .navbar-actions {
+        gap: 4px;
+    }
+}
+/* Très petits écrans : l'emblème seul suffit, le libellé de marque déborderait. */
+@media (max-width: 480px) {
+    .navbar-marque-texte {
+        display: none;
     }
 }
 
@@ -308,46 +318,61 @@ button:where(:not(.p-button):not(.p-link)):disabled {
 }
 
 .footer {
-    text-align: center;
-    padding: 14px;
-    font-size: 0.8rem;
+    border-top: 1px solid var(--ligne);
+    background: #fff;
+    padding: 22px 24px 16px;
+    font-size: 0.85rem;
     color: var(--gris);
 }
-
-/* --- Topbar auth --- */
-.topbar-right {
-    margin-left: auto;
+.footer-contenu {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+}
+.footer-marque {
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-size: 0.9rem;
+    gap: 10px;
 }
-
-.brand {
+.footer-marque > div {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+.footer-marque strong {
+    color: var(--vert-fonce);
+    letter-spacing: 0.05em;
+}
+.footer-liens {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+}
+.footer-liens a {
+    color: var(--vert);
     text-decoration: none;
-}
-
-.login-link {
-    color: #fff;
-    text-decoration: none;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    padding: 5px 14px;
-    border-radius: 99px;
-}
-
-.login-link:hover {
-    background: var(--vert-fonce);
-}
-
-.user-name {
-    color: var(--or);
     font-weight: 600;
+}
+.footer-liens a:hover {
+    text-decoration: underline;
+}
+.footer-bas {
+    max-width: 960px;
+    margin: 14px auto 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--ligne);
+    text-align: center;
+    font-size: 0.78rem;
 }
 
 .link-btn {
     background: none;
     border: none;
-    color: #fff;
+    color: var(--vert);
     text-decoration: underline;
     font-size: 0.85rem;
     padding: 0;
@@ -361,11 +386,6 @@ button:where(:not(.p-button):not(.p-link)):disabled {
 .link-btn.danger {
     color: #b3402e;
     margin-top: 6px;
-}
-
-/* --- Login --- */
-.card-narrow {
-    max-width: 420px;
 }
 
 .stack-form {
@@ -386,7 +406,7 @@ h2 {
     margin: 24px 0 10px;
 }
 
-.recap {
+.recap-voyage {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
@@ -395,11 +415,12 @@ h2 {
     background: var(--fond);
     border: 1px solid var(--ligne);
     border-left: 4px solid var(--or);
-    border-radius: 8px;
-    padding: 12px 16px;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 4px;
 }
 
-.recap > div {
+.recap-voyage > div {
     display: flex;
     flex-direction: column;
 }
@@ -1039,6 +1060,12 @@ html:has(.admin-app) {
     right: -13px;
 }
 
+/* Sur les écrans publics, `main` centre la carte : `max-width: none` la ferait
+   courir sur toute la largeur de l'écran. */
+.page > main > .card-large {
+    max-width: 960px;
+}
+
 /* Carte de contenu des écrans admin, alignée sur les blocs du tableau de bord. */
 .card-large {
     max-width: none;
@@ -1554,25 +1581,59 @@ html:has(.admin-app) {
 }
 
 .carte-choix {
+    position: relative;
     flex: 1;
     display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 8px;
-    padding: 12px;
-    border: 1px solid var(--ligne);
-    border-radius: 10px;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--ligne);
+    border-radius: 12px;
     cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--encre);
+    transition:
+        border-color 0.15s,
+        background 0.15s;
+}
+.carte-choix:hover {
+    border-color: #b9c9be;
+}
+.carte-choix .pi {
+    width: 30px;
+    height: 30px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--fond);
+    color: var(--gris);
     font-size: 0.95rem;
 }
 
 .carte-choix.active {
     border-color: var(--vert);
     background: rgba(27, 94, 59, 0.06);
-    font-weight: 600;
+    font-weight: 700;
+    color: var(--vert-fonce);
+}
+.carte-choix.active .pi {
+    background: var(--vert);
+    color: #fff;
 }
 
+/* Le bouton radio reste dans le DOM (clavier, formulaire) mais n'est pas peint. */
 .carte-choix input {
-    accent-color: var(--vert);
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+.carte-choix:has(input:focus-visible) {
+    outline: 2px solid var(--or);
+    outline-offset: 2px;
 }
 
 .duo-champs {
@@ -1588,41 +1649,6 @@ html:has(.admin-app) {
     padding: 10px 12px;
     margin: 0;
     font-size: 0.9rem;
-}
-
-.separateur {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--gris);
-    font-size: 0.85rem;
-    margin: 16px 0 12px;
-}
-
-.separateur::before,
-.separateur::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--ligne);
-}
-
-.bouton-secondaire {
-    width: 100%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 14px;
-    border: 1px solid var(--ligne);
-    border-radius: 8px;
-    background: #fff;
-    font: inherit;
-    cursor: pointer;
-}
-
-.bouton-secondaire:hover {
-    background: var(--fond);
 }
 
 .succes {
@@ -1813,8 +1839,17 @@ html:has(.admin-app) {
 }
 
 .lien-discret {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 0.9rem;
+    font-weight: 600;
     color: var(--vert);
+    text-decoration: none;
+    white-space: nowrap;
+}
+.lien-discret:hover {
+    text-decoration: underline;
 }
 
 .graphique {
@@ -1939,28 +1974,6 @@ html:has(.admin-app) {
 /* ============================================================
    Tableau de bord admin : en-tête de page, cartes KPI, blocs
    ============================================================ */
-.admin-page {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-}
-
-.admin-page-entete {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-.admin-page-entete h1 {
-    margin: 0;
-    font-size: 1.55rem;
-    color: var(--encre);
-}
-.admin-page-entete .muted {
-    margin: 4px 0 0;
-}
-
 .kpi-grille {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -2059,40 +2072,6 @@ html:has(.admin-app) {
 .kpi-gris .kpi-icone {
     background: rgba(85, 99, 90, 0.12);
     color: var(--gris);
-}
-
-.bloc-carte {
-    background: #fff;
-    border: 1px solid var(--ligne);
-    border-radius: 16px;
-    padding: 20px 22px;
-    box-shadow: 0 1px 2px rgba(20, 40, 30, 0.04);
-}
-
-.bloc-entete {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 14px;
-}
-.bloc-entete h2 {
-    margin: 0;
-    font-size: 1.05rem;
-    color: var(--encre);
-}
-.bloc-entete .lien-discret {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    text-decoration: none;
-    font-weight: 600;
-}
-.bloc-entete .lien-discret:hover {
-    text-decoration: underline;
-}
-.bloc-entete .lien-discret .pi {
-    font-size: 0.78rem;
 }
 
 .bloc-duo {
@@ -2557,8 +2536,41 @@ html:has(.admin-app) {
     padding: 34px 32px;
     width: 100%;
     max-width: 430px;
+    align-self: flex-start;
     box-shadow: 0 12px 34px rgba(20, 40, 30, 0.08);
     text-align: center;
+}
+/* Formulaires à deux colonnes (inscription). */
+.auth-carte-large {
+    max-width: 540px;
+}
+.auth-carte .grand-icone {
+    margin: 4px auto 14px;
+}
+/* Messages d'état hors formulaire (pages de vérification) : centrés, aérés. */
+.auth-carte > .succes,
+.auth-carte > .error {
+    margin: 0 0 4px;
+}
+.auth-carte > p:not(.auth-sous):not(.auth-pied):not(.succes):not(.error) {
+    color: var(--gris);
+    margin: 0 0 6px;
+}
+.auth-bouton-plein {
+    width: 100%;
+    margin-top: 14px;
+}
+.auth-carte .choix-compte legend {
+    text-align: left;
+}
+@media (max-width: 520px) {
+    .auth-carte {
+        padding: 26px 18px;
+        border-radius: 14px;
+    }
+    .auth-carte .duo-champs {
+        grid-template-columns: 1fr;
+    }
 }
 .auth-logo {
     display: block;
@@ -2740,4 +2752,154 @@ html:has(.admin-app) {
         align-items: flex-start;
         gap: 12px;
     }
+}
+
+/* ============================================================
+   Écrans client : état vide, voyages, réservation
+   ============================================================ */
+/* Bloc centré utilisé quand il n'y a rien à afficher ou qu'un écran tient en un message. */
+.etat-vide {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    padding: 28px 16px 32px;
+}
+.etat-vide h1 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--encre);
+}
+.etat-vide p {
+    margin: 0;
+    max-width: 520px;
+}
+.etat-vide .grand-icone {
+    margin: 0;
+}
+
+/* Lien qui se comporte visuellement comme le bouton principal. */
+.bouton-lien {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--vert);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.92rem;
+    padding: 10px 18px;
+    border-radius: 9px;
+}
+.bouton-lien:hover {
+    background: var(--vert-fonce);
+}
+
+.compteur-voyages {
+    margin: 0 0 12px;
+}
+
+.commande {
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(20, 40, 30, 0.05);
+    transition: box-shadow 0.15s;
+}
+.commande:hover {
+    box-shadow: 0 4px 14px rgba(20, 40, 30, 0.08);
+}
+.commande-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--encre);
+    font-weight: 600;
+}
+.commande-date .pi {
+    color: var(--gris);
+    font-size: 0.85rem;
+}
+.commande-actions .secondary,
+.commande-actions .danger-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+.confirm-annulation p .pi {
+    color: #b3402e;
+    margin-right: 4px;
+}
+
+.bouton-ajout-passager {
+    margin-top: 2px;
+}
+.bouton-confirmer {
+    width: 100%;
+    padding: 13px 18px;
+    font-size: 1rem;
+}
+.confirmation-ligne {
+    background: var(--fond);
+    border: 1px solid var(--ligne);
+    border-left: 4px solid var(--vert);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 0;
+}
+
+@media (max-width: 640px) {
+    .footer-contenu {
+        justify-content: center;
+        text-align: center;
+    }
+    .commande-entete {
+        align-items: flex-start;
+    }
+}
+
+/* ============================================================
+   Barrière d'erreur : écran de secours quand un rendu échoue
+   ============================================================ */
+.barriere-erreur {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 16px;
+    background: var(--fond);
+}
+.barriere-erreur .card-large {
+    max-width: 620px;
+}
+.barriere-erreur .commande-actions {
+    justify-content: center;
+    margin-top: 6px;
+}
+.barriere-details {
+    margin-top: 14px;
+    font-size: 0.82rem;
+    color: var(--gris);
+    text-align: left;
+    width: 100%;
+    max-width: 520px;
+}
+.barriere-details summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+.barriere-details pre {
+    margin: 8px 0 0;
+    padding: 10px 12px;
+    background: var(--fond);
+    border: 1px solid var(--ligne);
+    border-radius: 8px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Carte de destination illustrée par une photo (cf. PHOTOS_REGION). */
+.destination-photo {
+    background-size: cover;
+    background-position: center;
 }

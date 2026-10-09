@@ -1,7 +1,7 @@
-import { ApiError } from '@sira/api-client';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
+import { CarteAuth, messageServeur } from '../components/CarteAuth';
 
 export function VerifyAccountPage() {
     const [searchParams] = useSearchParams();
@@ -16,40 +16,43 @@ export function VerifyAccountPage() {
 
     if (!token) {
         return (
-            <section className="card card-narrow center">
-                <h1>Activation du compte</h1>
+            <CarteAuth titre="Activation du compte">
+                <i className="pi pi-link grand-icone erreur-icone" aria-hidden="true" />
                 <p className="error">Lien invalide. Le jeton d'activation est absent de l'adresse.</p>
-                <Link to="/login">Aller à la connexion</Link>
-            </section>
+                <p className="auth-pied">
+                    <Link to="/login">Aller à la connexion</Link>
+                </p>
+            </CarteAuth>
         );
     }
 
     return (
-        <section className="card card-narrow center">
-            <h1>Activation du compte</h1>
+        <CarteAuth titre="Activation du compte">
             {verification.isPending && (
                 <>
-                    <i className="pi pi-spin pi-spinner grand-icone" />
+                    <i className="pi pi-spin pi-spinner grand-icone" aria-hidden="true" />
                     <p>Vérification en cours…</p>
                     <p className="muted">Merci de patienter pendant la validation de votre lien.</p>
                 </>
             )}
             {verification.isSuccess && (
                 <>
-                    <i className="pi pi-check-circle grand-icone succes-icone" />
+                    <i className="pi pi-check-circle grand-icone succes-icone" aria-hidden="true" />
                     <p className="succes">{verification.data || 'Votre compte est activé.'}</p>
-                    <Link to="/login">Se connecter</Link>
+                    <p className="auth-pied">
+                        <Link to="/login">Se connecter</Link>
+                    </p>
                 </>
             )}
             {verification.isError && (
                 <>
-                    <i className="pi pi-times-circle grand-icone erreur-icone" />
-                    <p className="error">
-                        {verification.error instanceof ApiError ? verification.error.message : "L'activation a échoué. Le lien est peut-être expiré."}
+                    <i className="pi pi-times-circle grand-icone erreur-icone" aria-hidden="true" />
+                    <p className="error">{messageServeur(verification.error, "L'activation a échoué. Le lien est peut-être expiré.")}</p>
+                    <p className="auth-pied">
+                        <Link to="/auth/forgotpassword">Demander un nouveau lien</Link>
                     </p>
-                    <Link to="/auth/forgotpassword">Demander un nouveau lien</Link>
                 </>
             )}
-        </section>
+        </CarteAuth>
     );
 }

@@ -2,6 +2,7 @@ import { AuthHttpError } from '@sira/auth';
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth-context';
+import { CarteAuth } from '../components/CarteAuth';
 
 export function LoginPage() {
     const { login, loginWithOAuth } = useAuth();
@@ -35,11 +36,7 @@ export function LoginPage() {
     }
 
     return (
-        <section className="auth-carte">
-            <img className="auth-logo" src="/brand/synergia-emblem-512x512.png" alt="SYNERGIA" width={64} height={64} />
-            <h1>Connexion</h1>
-            <p className="auth-sous">Accédez à votre espace SYNERGIA.</p>
-
+        <CarteAuth titre="Connexion" sousTitre="Accédez à votre espace SYNERGIA.">
             <form className="stack-form" onSubmit={onSubmit}>
                 <label>
                     Email
@@ -69,6 +66,6 @@ export function LoginPage() {
             <p className="auth-pied">
                 Pas encore de compte ? <Link to="/auth/register">Créer un compte</Link>
             </p>
-        </section>
+        </CarteAuth>
     );
 }

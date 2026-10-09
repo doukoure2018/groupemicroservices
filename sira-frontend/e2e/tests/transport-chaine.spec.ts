@@ -411,7 +411,7 @@ test('offres : annulation finale de l’offre de test', async ({ page }) => {
     // Le backend refuse d'annuler une offre qui a encore des réservations actives :
     // on annule d'abord toutes les réservations E2E restantes depuis « Mes voyages ».
     await page.goto('/mes-voyages');
-    await expect(page.locator('li.commande, p.muted').first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('li.commande, .etat-vide').first()).toBeVisible({ timeout: 20_000 });
     for (let i = 0; i < 10; i++) {
         const carte = page.locator('li.commande').filter({ hasText: VILLE }).filter({ has: page.getByRole('button', { name: 'Annuler la réservation' }) }).first();
         if ((await carte.count()) === 0) break;

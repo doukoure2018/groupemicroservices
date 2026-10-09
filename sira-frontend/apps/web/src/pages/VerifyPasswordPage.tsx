@@ -3,6 +3,9 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
+import { CarteAuth, messageServeur } from '../components/CarteAuth';
+
+const TITRE = 'Nouveau mot de passe';
 
 /**
  * Deux étapes dans un seul écran : on valide d'abord le jeton reçu par email,
@@ -35,45 +38,46 @@ export function VerifyPasswordPage() {
 
     if (!token) {
         return (
-            <section className="card card-narrow center">
-                <h1>Nouveau mot de passe</h1>
+            <CarteAuth titre={TITRE}>
+                <i className="pi pi-link grand-icone erreur-icone" aria-hidden="true" />
                 <p className="error">Lien invalide. Le jeton de réinitialisation est absent de l'adresse.</p>
-                <Link to="/auth/forgotpassword">Demander un nouveau lien</Link>
-            </section>
+                <p className="auth-pied">
+                    <Link to="/auth/forgotpassword">Demander un nouveau lien</Link>
+                </p>
+            </CarteAuth>
         );
     }
 
     if (verification.isPending) {
         return (
-            <section className="card card-narrow center">
-                <h1>Nouveau mot de passe</h1>
-                <i className="pi pi-spin pi-spinner grand-icone" />
+            <CarteAuth titre={TITRE}>
+                <i className="pi pi-spin pi-spinner grand-icone" aria-hidden="true" />
                 <p>Vérification du lien…</p>
-            </section>
+            </CarteAuth>
         );
     }
 
     if (verification.isError) {
         return (
-            <section className="card card-narrow center">
-                <h1>Nouveau mot de passe</h1>
-                <i className="pi pi-times-circle grand-icone erreur-icone" />
-                <p className="error">
-                    {verification.error instanceof ApiError ? verification.error.message : 'Ce lien est invalide ou a expiré.'}
+            <CarteAuth titre={TITRE}>
+                <i className="pi pi-times-circle grand-icone erreur-icone" aria-hidden="true" />
+                <p className="error">{messageServeur(verification.error, 'Ce lien est invalide ou a expiré.')}</p>
+                <p className="auth-pied">
+                    <Link to="/auth/forgotpassword">Demander un nouveau lien</Link>
                 </p>
-                <Link to="/auth/forgotpassword">Demander un nouveau lien</Link>
-            </section>
+            </CarteAuth>
         );
     }
 
     if (reinitialiser.isSuccess) {
         return (
-            <section className="card card-narrow center">
-                <h1>Nouveau mot de passe</h1>
-                <i className="pi pi-check-circle grand-icone succes-icone" />
+            <CarteAuth titre={TITRE}>
+                <i className="pi pi-check-circle grand-icone succes-icone" aria-hidden="true" />
                 <p className="succes">{reinitialiser.data.message || 'Votre mot de passe a été modifié.'}</p>
-                <Link to="/login">Se connecter</Link>
-            </section>
+                <p className="auth-pied">
+                    <Link to="/login">Se connecter</Link>
+                </p>
+            </CarteAuth>
         );
     }
 
@@ -84,10 +88,14 @@ export function VerifyPasswordPage() {
     const formValide = password.length >= 6 && password === confirmation;
 
     return (
-        <section className="card card-narrow">
-            <h1>Nouveau mot de passe</h1>
-            <p className="muted">Compte : {verification.data?.email}</p>
-
+        <CarteAuth
+            titre={TITRE}
+            sousTitre={
+                <>
+                    Compte : <strong>{verification.data?.email}</strong>
+                </>
+            }
+        >
             <form
                 className="stack-form"
                 noValidate
@@ -105,20 +113,24 @@ export function VerifyPasswordPage() {
                 </label>
                 <label>
                     Confirmer le mot de passe
-                    <input type="password" value={confirmation} autoComplete="new-password" onChange={(e) => setConfirmation(e.target.value)} />
+                    <input type="password" value={confirmation} autoComplete="new-password" placeholder="Répétez le mot de passe" onChange={(e) => setConfirmation(e.target.value)} />
                     {discordant && <span className="texte-danger">Les deux mots de passe ne correspondent pas</span>}
                 </label>
 
                 {reinitialiser.isError && (
-                    <p className="error">
-                        {reinitialiser.error instanceof ApiError ? reinitialiser.error.message : 'La réinitialisation a échoué. Réessayez.'}
-                    </p>
+                    <p className="error">{reinitialiser.error instanceof ApiError ? reinitialiser.error.message : 'La réinitialisation a échoué. Réessayez.'}</p>
                 )}
 
                 <button type="submit" disabled={!formValide || reinitialiser.isPending}>
                     {reinitialiser.isPending ? 'Enregistrement…' : 'Changer le mot de passe'}
                 </button>
             </form>
-        </section>
+
+            <p className="auth-pied">
+                <Link to="/login">
+                    <i className="pi pi-arrow-left" aria-hidden="true" /> Retour à la connexion
+                </Link>
+            </p>
+        </CarteAuth>
     );
 }

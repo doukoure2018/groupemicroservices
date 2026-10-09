@@ -48,7 +48,7 @@ test('mot de passe oublié : validation de l’email puis réponse serveur affic
     const res = await reponse;
     expect(res.request().headers()['authorization']).toBeUndefined();
     // Compte inconnu : le serveur répond (succès neutre ou refus), la page affiche son message.
-    await expect(page.locator('p.error, p.succes, p.muted').filter({ hasText: /email|lien|compte|introuvable|envoy/i }).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('p.error, p.succes').filter({ hasText: /email|lien|compte|introuvable|envoy/i }).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('link', { name: 'Retour à la connexion' })).toBeVisible();
 });
 

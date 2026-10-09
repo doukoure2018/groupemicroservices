@@ -162,28 +162,32 @@ export function AgenceOnboardingPage() {
 
     if (statut === 'EN_VALIDATION' || statut === 'EN_ATTENTE') {
         return (
-            <section className="card card-narrow center">
+            <section className="card card-large">
                 <Toast ref={toast} />
-                <i className="pi pi-hourglass grand-icone alerte-icone" />
-                <h1>En cours de validation par la conformité</h1>
-                <p className="muted">
+                <div className="etat-vide">
+                    <i className="pi pi-hourglass grand-icone alerte-icone" aria-hidden="true" />
+                    <h1>En cours de validation par la conformité</h1>
+                    <p className="muted">
                     Votre dossier a bien été soumis. Notre équipe conformité vérifie vos informations et votre document RCCM/NIF, <strong>réponse sous 24 heures</strong>. Vous recevrez un email dès
                     la décision.
                 </p>
-                {agence?.dateSoumissionConformite && <Tag value={`Soumis le ${formatDateFr(agence.dateSoumissionConformite)}`} severity="warning" />}
+                    {agence?.dateSoumissionConformite && <Tag value={`Soumis le ${formatDateFr(agence.dateSoumissionConformite)}`} severity="warning" />}
+                </div>
             </section>
         );
     }
 
     if (statut === 'VERIFIE') {
         return (
-            <section className="card card-narrow center">
+            <section className="card card-large">
                 <Toast ref={toast} />
-                <i className="pi pi-verified grand-icone succes-icone" />
-                <h1>Agence vérifiée</h1>
-                <p className="muted">
-                    Votre agence <strong>{agence?.nom}</strong> est validée par la conformité. Votre espace de travail sera bientôt enrichi.
-                </p>
+                <div className="etat-vide">
+                    <i className="pi pi-verified grand-icone succes-icone" aria-hidden="true" />
+                    <h1>Agence vérifiée</h1>
+                    <p className="muted">
+                        Votre agence <strong>{agence?.nom}</strong> est validée par la conformité. Votre espace de travail sera bientôt enrichi.
+                    </p>
+                </div>
             </section>
         );
     }
@@ -192,7 +196,10 @@ export function AgenceOnboardingPage() {
         <section className="card card-large">
             <Toast ref={toast} />
             <div className="admin-entete">
-                <h1>Profil de l'agence</h1>
+                <div>
+                    <h1>Profil de l'agence</h1>
+                    <p className="muted">Complétez puis soumettez votre dossier à la conformité.</p>
+                </div>
             </div>
 
             {statut === 'REJETE' ? (

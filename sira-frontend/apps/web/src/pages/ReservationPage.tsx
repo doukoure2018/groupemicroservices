@@ -56,9 +56,14 @@ export function ReservationPage() {
     if (offreQuery.isLoading) return <p className="muted center">Chargement du voyage…</p>;
     if (offreQuery.isError || !offre) {
         return (
-            <section className="card">
-                <p className="error">Ce voyage est introuvable ou n'est plus disponible.</p>
-                <Link to="/">← Retour à la recherche</Link>
+            <section className="card card-large">
+                <div className="etat-vide">
+                    <i className="pi pi-compass grand-icone erreur-icone" aria-hidden="true" />
+                    <p className="error">Ce voyage est introuvable ou n'est plus disponible.</p>
+                    <Link className="bouton-lien" to="/">
+                        <i className="pi pi-arrow-left" aria-hidden="true" /> Retour à la recherche
+                    </Link>
+                </div>
             </section>
         );
     }
@@ -72,10 +77,18 @@ export function ReservationPage() {
     const formulaireValide = modeReglementCode !== '' && passagers.every((p) => p.nom.trim() && p.prenom.trim() && p.telephone.trim());
 
     return (
-        <section className="card">
-            <h1>Finaliser la réservation</h1>
+        <section className="card card-large">
+            <div className="admin-entete">
+                <div>
+                    <h1>Finaliser la réservation</h1>
+                    <p className="muted">Renseignez les passagers et le mode de règlement pour recevoir vos billets QR.</p>
+                </div>
+                <Link className="lien-discret" to="/">
+                    <i className="pi pi-arrow-left" aria-hidden="true" /> Retour à la recherche
+                </Link>
+            </div>
 
-            <div className="recap">
+            <div className="recap-voyage">
                 <div>
                     <strong>
                         {offre.villeDepartLibelle} → {offre.villeArriveeLibelle}
@@ -93,7 +106,7 @@ export function ReservationPage() {
                 </div>
             </div>
 
-            <h2>Passagers ({passagers.length})</h2>
+            <h2 className="section-titre">Passagers ({passagers.length})</h2>
             {passagers.map((p, i) => (
                 <fieldset key={i} className="passager">
                     <legend>Passager {i + 1}</legend>
@@ -123,12 +136,12 @@ export function ReservationPage() {
                 </fieldset>
             ))}
             {passagers.length < maxPassagers && (
-                <button type="button" className="secondary" onClick={() => setPassagers((prev) => [...prev, passagerVide()])}>
+                <button type="button" className="secondary bouton-ajout-passager" onClick={() => setPassagers((prev) => [...prev, passagerVide()])}>
                     + Ajouter un passager
                 </button>
             )}
 
-            <h2>Mode de règlement</h2>
+            <h2 className="section-titre">Mode de règlement</h2>
             {modesQuery.isError && <p className="error">Impossible de charger les modes de règlement.</p>}
             <div className="modes">
                 {(modesQuery.data ?? [])
@@ -155,7 +168,7 @@ export function ReservationPage() {
             </div>
 
             {reserver.isError && <p className="error">La réservation a échoué. Vérifiez les places disponibles et réessayez.</p>}
-            <button disabled={!formulaireValide || reserver.isPending} onClick={() => reserver.mutate()}>
+            <button className="bouton-confirmer" disabled={!formulaireValide || reserver.isPending} onClick={() => reserver.mutate()}>
                 {reserver.isPending ? 'Réservation en cours…' : 'Confirmer la réservation'}
             </button>
         </section>
@@ -164,14 +177,21 @@ export function ReservationPage() {
 
 function Confirmation({ commande }: { commande: CommandeClient }) {
     return (
-        <section className="card">
-            <h1>Réservation confirmée ✓</h1>
-            <p>
-                Commande <strong>{commande.numeroCommande}</strong> — {formatMontant(commande.montantTotal, commande.devise)} —{' '}
-                {commande.nombrePlaces} {(commande.nombrePlaces ?? 1) > 1 ? 'places' : 'place'}
-            </p>
-            <p className="muted">Présentez ces billets (QR code) à l'embarquement.</p>
+        <section className="card card-large">
+            <div className="admin-entete">
+                <div>
+                    <h1>Réservation confirmée ✓</h1>
+                    <p className="muted">Présentez ces billets (QR code) à l'embarquement.</p>
+                </div>
+            </div>
 
+            {/* Le premier <strong> dans un <p> est le numéro de commande : le test du parcours voyageur le relit ici. */}
+            <p className="confirmation-ligne">
+                Commande <strong>{commande.numeroCommande}</strong> — {formatMontant(commande.montantTotal, commande.devise)} — {commande.nombrePlaces}{' '}
+                {(commande.nombrePlaces ?? 1) > 1 ? 'places' : 'place'}
+            </p>
+
+            <h2 className="section-titre">Vos billets</h2>
             <ul className="billets">
                 {(commande.billets ?? []).map((billet) => (
                     <li key={billet.billetUuid} className="billet">
@@ -186,8 +206,12 @@ function Confirmation({ commande }: { commande: CommandeClient }) {
             </ul>
 
             <div className="commande-actions">
-                <Link to="/mes-voyages">Voir mes voyages</Link>
-                <Link to="/">← Réserver un autre voyage</Link>
+                <Link className="bouton-lien" to="/mes-voyages">
+                    <i className="pi pi-ticket" aria-hidden="true" /> Voir mes voyages
+                </Link>
+                <Link className="lien-discret" to="/">
+                    <i className="pi pi-arrow-left" aria-hidden="true" /> Réserver un autre voyage
+                </Link>
             </div>
         </section>
     );

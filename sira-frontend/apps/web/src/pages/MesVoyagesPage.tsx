@@ -8,6 +8,7 @@ import {
     isCommandeAnnulable,
     type CommandeClient
 } from '@sira/core';
+import { Button } from 'primereact/button';
 import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -20,17 +21,41 @@ export function MesVoyagesPage() {
     });
 
     const commandes = commandesQuery.data ?? [];
+    const actives = commandes.filter((c) => getStatutCommandeSeverity(c.statut) !== 'danger').length;
 
     return (
-        <section className="card">
-            <h1>Mes voyages</h1>
+        <section className="card card-large">
+            <div className="admin-entete">
+                <div>
+                    <h1>Mes voyages</h1>
+                    <p className="muted">Vos réservations, vos billets QR et leur statut.</p>
+                </div>
+                <Button
+                    icon="pi pi-refresh"
+                    label="Actualiser"
+                    outlined
+                    size="small"
+                    loading={commandesQuery.isFetching}
+                    onClick={() => void commandesQuery.refetch()}
+                />
+            </div>
 
             {commandesQuery.isLoading && <p className="muted">Chargement de vos réservations…</p>}
             {commandesQuery.isError && <p className="error">Impossible de charger vos réservations. Réessayez dans un instant.</p>}
 
             {commandesQuery.isSuccess && commandes.length === 0 && (
-                <p className="muted">
-                    Vous n'avez encore aucune réservation. <Link to="/">Rechercher un voyage</Link>
+                <div className="etat-vide">
+                    <i className="pi pi-ticket grand-icone" aria-hidden="true" />
+                    <p>Vous n'avez encore aucune réservation.</p>
+                    <Link className="bouton-lien" to="/">
+                        <i className="pi pi-search" aria-hidden="true" /> Rechercher un voyage
+                    </Link>
+                </div>
+            )}
+
+            {commandes.length > 0 && (
+                <p className="muted compteur-voyages">
+                    {commandes.length} réservation{commandes.length > 1 ? 's' : ''} · {actives} active{actives > 1 ? 's' : ''}
                 </p>
             )}
 
@@ -41,6 +66,13 @@ export function MesVoyagesPage() {
             </ul>
         </section>
     );
+}
+
+/** Toutes les commandes ne portent pas les libellés de villes : on retombe sur les gares. */
+function titreTrajet(commande: CommandeClient): string {
+    const villes = [commande.villeDepartLibelle, commande.villeArriveeLibelle].filter(Boolean);
+    if (villes.length === 2) return `${villes[0]} → ${villes[1]}`;
+    return `${commande.siteDepart ?? '—'} → ${commande.siteArrivee ?? '—'}`;
 }
 
 function CommandeCard({ commande }: { commande: CommandeClient }) {
@@ -63,14 +95,16 @@ function CommandeCard({ commande }: { commande: CommandeClient }) {
             <div className="commande-entete">
                 <div className="commande-trajet">
                     <strong>
-                        {commande.villeDepartLibelle} → {commande.villeArriveeLibelle}
+                        {titreTrajet(commande)}
                     </strong>
-                    <span className="muted">
-                        {commande.siteDepart} → {commande.siteArrivee}
-                    </span>
+                    {commande.villeDepartLibelle && commande.villeArriveeLibelle && (
+                        <span className="muted">
+                            {commande.siteDepart} → {commande.siteArrivee}
+                        </span>
+                    )}
                 </div>
                 <div className="commande-date">
-                    {formatDateFr(commande.dateDepart)} à {formatHeure(commande.heureDepart)}
+                    <i className="pi pi-calendar" aria-hidden="true" /> {formatDateFr(commande.dateDepart)} à {formatHeure(commande.heureDepart)}
                 </div>
                 <span className={`badge badge-${getStatutCommandeSeverity(commande.statut)}`}>{getStatutCommandeLabel(commande.statut)}</span>
             </div>
@@ -86,6 +120,7 @@ function CommandeCard({ commande }: { commande: CommandeClient }) {
             <div className="commande-actions">
                 {billets.length > 0 && (
                     <button type="button" className="secondary" onClick={() => setBilletsOuverts((o) => !o)}>
+                        <i className={billetsOuverts ? 'pi pi-eye-slash' : 'pi pi-qrcode'} aria-hidden="true" />{' '}
                         {billetsOuverts ? 'Masquer les billets' : `Voir les billets (${billets.length})`}
                     </button>
                 )}
@@ -98,10 +133,12 @@ function CommandeCard({ commande }: { commande: CommandeClient }) {
 
             {confirmerAnnulation && (
                 <div className="confirm-annulation">
-                    <p>Annuler définitivement cette réservation ?</p>
+                    <p>
+                        <i className="pi pi-exclamation-triangle" aria-hidden="true" /> Annuler définitivement cette réservation ?
+                    </p>
                     <div className="commande-actions">
                         <button type="button" className="danger-btn" disabled={annuler.isPending} onClick={() => annuler.mutate()}>
-                            {annuler.isPending ? 'Annulation…' : "Oui, annuler"}
+                            {annuler.isPending ? 'Annulation…' : 'Oui, annuler'}
                         </button>
                         <button type="button" className="secondary" onClick={() => setConfirmerAnnulation(false)}>
                             Non, conserver

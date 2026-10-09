@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
+import { CarteAuth } from '../components/CarteAuth';
 
 type EtatPont = 'chargement' | 'mobile-ok' | 'desktop-ok' | 'erreur';
 
@@ -59,29 +60,28 @@ export function VerifyMobilePage() {
         return () => window.clearTimeout(t);
     }, [etat, lienProfond]);
 
+    const titre = etat === 'chargement' ? 'Vérification en cours…' : etat === 'erreur' ? 'Vérification impossible' : 'Compte vérifié';
+
     return (
-        <section className="card card-narrow center">
+        <CarteAuth titre={titre}>
             {etat === 'chargement' && (
                 <>
-                    <i className="pi pi-spin pi-spinner grand-icone" />
-                    <h1>Vérification en cours…</h1>
+                    <i className="pi pi-spin pi-spinner grand-icone" aria-hidden="true" />
                     <p className="muted">Activation de votre compte SYNERGIA.</p>
                 </>
             )}
             {etat === 'mobile-ok' && (
                 <>
-                    <i className="pi pi-check-circle grand-icone succes-icone" />
-                    <h1>Compte vérifié</h1>
+                    <i className="pi pi-check-circle grand-icone succes-icone" aria-hidden="true" />
                     <p className="muted">Ouverture de l'application SYNERGIA…</p>
-                    <button type="button" onClick={() => (window.location.href = lienProfond)}>
+                    <button type="button" className="auth-bouton-plein" onClick={() => (window.location.href = lienProfond)}>
                         Ouvrir l'app
                     </button>
                 </>
             )}
             {etat === 'desktop-ok' && (
                 <>
-                    <i className="pi pi-check-circle grand-icone succes-icone" />
-                    <h1>Compte vérifié</h1>
+                    <i className="pi pi-check-circle grand-icone succes-icone" aria-hidden="true" />
                     <p className="muted">
                         Ouvrez l'application <strong>SYNERGIA</strong> sur votre téléphone pour vous connecter et accéder à votre profil.
                     </p>
@@ -89,11 +89,10 @@ export function VerifyMobilePage() {
             )}
             {etat === 'erreur' && (
                 <>
-                    <i className="pi pi-exclamation-triangle grand-icone erreur-icone" />
-                    <h1>Vérification impossible</h1>
+                    <i className="pi pi-exclamation-triangle grand-icone erreur-icone" aria-hidden="true" />
                     <p className="error">{message}</p>
                 </>
             )}
-        </section>
+        </CarteAuth>
     );
 }
