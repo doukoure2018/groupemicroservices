@@ -541,10 +541,19 @@ services:
       JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
-      MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-siraadmin}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      # Stockage photos. Par défaut le MinIO de cette pile ; renseigner
+      # MINIO_ENDPOINT / MINIO_ACCESS_KEY / MINIO_SECRET_KEY / MINIO_REGION dans
+      # le .env pour viser OVHcloud Object Storage (docs/bascule-object-storage-ovh.md).
+      # Une fois basculé, retirer les services minio/minio-init et le depends_on.
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-${MINIO_ROOT_USER:-siraadmin}}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-${MINIO_ROOT_PASSWORD}}
       MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-https://api.sira-guinee.com}
+      MINIO_REGION: ${MINIO_REGION:-us-east-1}
+      MINIO_PATH_STYLE: ${MINIO_PATH_STYLE:-true}
+      MINIO_PUBLIC_READ: ${MINIO_PUBLIC_READ:-false}
+      MINIO_BUCKET_PHOTOS: ${MINIO_BUCKET_PHOTOS:-immo-photos}
+      MINIO_BUCKET_THUMBNAILS: ${MINIO_BUCKET_THUMBNAILS:-immo-photos-thumbnails}
       TZ: ${TZ:-Africa/Conakry}
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
     volumes:

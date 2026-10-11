@@ -111,6 +111,11 @@ minio:
   endpoint: http://localhost:9100
   access-key: minioadmin
   secret-key: minioadmin
+  # Réglages MinIO ; les valeurs OVH sont dans application-prod.yml et
+  # docs/bascule-object-storage-ovh.md.
+  region: us-east-1
+  path-style: true
+  public-read: false
   bucket-photos: immo-photos
   bucket-thumbnails: immo-photos-thumbnails
   thumbnail:

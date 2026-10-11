@@ -55,6 +55,14 @@ public class PhotoStorageServiceImpl implements PhotoStorageService {
     @Value("${minio.public-base-url}")
     private String publicBaseUrl;
 
+    /**
+     * Applique une politique de lecture anonyme sur les buckets. En local, c'est
+     * le conteneur minio-init qui le fait (mc anonymous set download) ; sur OVH il
+     * n'y a pas d'équivalent, le service le fait lui-même au démarrage.
+     */
+    @Value("${minio.public-read:false}")
+    private boolean publicRead;
+
     @PostConstruct
     public void init() {
         try {
@@ -182,6 +190,27 @@ public class PhotoStorageServiceImpl implements PhotoStorageService {
                     log.warn("Vérification bucket {} échouée (code={}): {}", bucket, e.statusCode(), e.getMessage());
                 }
             }
+            if (publicRead) {
+                appliquerLecturePublique(bucket);
+            }
+        }
+    }
+
+    /**
+     * Politique « GetObject pour tous » : les URL stockées en base (colonne url)
+     * sont servies directement par le fournisseur, sans passer par ce service.
+     * Idempotent et non bloquant : un refus laisse le service démarrer, les
+     * photos restent accessibles via /immo/photos/{uuid} qui lit avec les clés.
+     */
+    private void appliquerLecturePublique(String bucket) {
+        String politique = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"LecturePublique\","
+                + "\"Effect\":\"Allow\",\"Principal\":{\"AWS\":[\"*\"]},\"Action\":[\"s3:GetObject\"],"
+                + "\"Resource\":[\"arn:aws:s3:::" + bucket + "/*\"]}]}";
+        try {
+            s3Client.putBucketPolicy(PutBucketPolicyRequest.builder().bucket(bucket).policy(politique).build());
+            log.info("Lecture publique activée sur le bucket {}", bucket);
+        } catch (S3Exception e) {
+            log.warn("Politique de lecture publique refusée sur {} (code={}): {}", bucket, e.statusCode(), e.getMessage());
         }
     }
 
