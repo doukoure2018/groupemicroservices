@@ -18,7 +18,7 @@ eureka:
 
 ui:
   app:
-    url: ${UI_APP_URL:https://sira-guinee.com}
+    url: ${UI_APP_URL:https://synergia-guinee.com}
 
 jwks:
   uri: http://authorizationserver:8090/authorization/oauth2/jwks

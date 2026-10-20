@@ -548,7 +548,7 @@ services:
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-${MINIO_ROOT_USER:-siraadmin}}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-${MINIO_ROOT_PASSWORD}}
-      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-https://api.sira-guinee.com}
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-https://api.synergia-guinee.com}
       MINIO_REGION: ${MINIO_REGION:-us-east-1}
       MINIO_PATH_STYLE: ${MINIO_PATH_STYLE:-true}
       MINIO_PUBLIC_READ: ${MINIO_PUBLIC_READ:-false}

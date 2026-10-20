@@ -60,9 +60,9 @@ jobs:
           docker build \
             -t doukoure93/billetterie-frontend:test-${{ steps.build-number.outputs.BUILD_NUMBER }} \
             -t doukoure93/billetterie-frontend:test-latest \
-            --build-arg API_BASE_URL=https://api-test.sira-guinee.com \
-            --build-arg AUTH_SERVER_URL=https://api-test.sira-guinee.com/authorization \
-            --build-arg FRONTEND_URL=https://test.sira-guinee.com \
+            --build-arg API_BASE_URL=https://api-test.synergia-guinee.com \
+            --build-arg AUTH_SERVER_URL=https://api-test.synergia-guinee.com/authorization \
+            --build-arg FRONTEND_URL=https://test.synergia-guinee.com \
             --file Dockerfile \
             .
           docker push doukoure93/billetterie-frontend:test-${{ steps.build-number.outputs.BUILD_NUMBER }}
@@ -74,9 +74,9 @@ jobs:
           docker build \
             -t doukoure93/billetterie-frontend:prod-${{ steps.build-number.outputs.BUILD_NUMBER }} \
             -t doukoure93/billetterie-frontend:prod-latest \
-            --build-arg API_BASE_URL=https://api.sira-guinee.com \
-            --build-arg AUTH_SERVER_URL=https://api.sira-guinee.com/authorization \
-            --build-arg FRONTEND_URL=https://sira-guinee.com \
+            --build-arg API_BASE_URL=https://api.synergia-guinee.com \
+            --build-arg AUTH_SERVER_URL=https://api.synergia-guinee.com/authorization \
+            --build-arg FRONTEND_URL=https://synergia-guinee.com \
             --file Dockerfile \
             .
           docker push doukoure93/billetterie-frontend:prod-${{ steps.build-number.outputs.BUILD_NUMBER }}
@@ -126,14 +126,14 @@ jobs:
               exit 1
             fi
 
-            echo "Frontend TEST deployed — https://test.sira-guinee.com"
+            echo "Frontend TEST deployed — https://test.synergia-guinee.com"
 
       - name: Notify Slack — frontend TEST success
         if: success()
         continue-on-error: true
         run: |
           curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\":white_check_mark: *SIRA Guinée TEST* frontend deployed\\n:test_tube: https://test.sira-guinee.com\"}" \
+            --data "{\"text\":\":white_check_mark: *SIRA Guinée TEST* frontend deployed\\n:test_tube: https://test.synergia-guinee.com\"}" \
             "${{ secrets.SLACK_WEBHOOK_URL }}" || true
 
       - name: Notify Slack — frontend TEST failure
@@ -175,14 +175,14 @@ jobs:
               exit 1
             fi
 
-            echo "Frontend PROD deployed — https://sira-guinee.com"
+            echo "Frontend PROD deployed — https://synergia-guinee.com"
 
       - name: Notify Slack — frontend PROD success
         if: success()
         continue-on-error: true
         run: |
           curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\":fire: *SIRA Guinée PROD* frontend deployed\\n:globe_with_meridians: https://sira-guinee.com\"}" \
+            --data "{\"text\":\":fire: *SIRA Guinée PROD* frontend deployed\\n:globe_with_meridians: https://synergia-guinee.com\"}" \
             "${{ secrets.SLACK_WEBHOOK_URL }}" || true
 
       - name: Notify Slack — frontend PROD failure

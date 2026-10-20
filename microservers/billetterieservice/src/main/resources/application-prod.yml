@@ -68,7 +68,7 @@ eureka:
 
 ui:
   app:
-    url: ${UI_APP_URL:https://sira-guinee.com}
+    url: ${UI_APP_URL:https://synergia-guinee.com}
 
 key:
   private: private.key

@@ -88,7 +88,7 @@ Le dernier appel est le contrôle qui compte : il prouve que le conteneur résou
 
 ## Exposition publique sur TEST
 
-**Fait le 2026-09-11 : `https://test.sira-guinee.com` sert le React.** Le vhost
+**Fait le 2026-09-11 : `https://test.synergia-guinee.com` sert le React.** Le vhost
 `sira-guinee-test` a été basculé du port 14202 vers 14203 ; la copie du dépôt
 dans `nginx/` reflète le serveur. Vérifié depuis Internet avec un navigateur :
 neuf écrans montent, la page d'accueil charge de vraies villes à travers toute

@@ -108,6 +108,13 @@ public class ResourceServerConfig {
                 "http://localhost:3000",
                 "http://localhost:4200",
                 "http://localhost:4202",
+                "https://synergia-guinee.com",
+                "https://www.synergia-guinee.com",
+                "https://test.synergia-guinee.com",
+                "https://api.synergia-guinee.com",
+                "https://api-test.synergia-guinee.com",
+                // Transition de domaine (rebrand SYNERGIA) : à retirer une fois
+                // sira-guinee.com expiré (31 mai 2027).
                 "https://sira-guinee.com",
                 "https://www.sira-guinee.com",
                 "https://test.sira-guinee.com",

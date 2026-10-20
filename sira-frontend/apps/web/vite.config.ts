@@ -19,7 +19,7 @@ const AUTH_SERVER = 'http://localhost:8090';
 const ORIGINE_LOCALE_AUTORISEE = 'http://localhost:4202';
 
 /**
- * SIRA_API_DISTANTE=https://api-test.sira-guinee.com fait pointer le proxy vers
+ * SIRA_API_DISTANTE=https://api-test.synergia-guinee.com fait pointer le proxy vers
  * un backend déployé (test ou prod) : utile pour vérifier le code local contre
  * de vraies données sans lancer la pile Spring. Là-bas, l'auth server est servi
  * derrière nginx sous /authorization, donc le préfixe est conservé.

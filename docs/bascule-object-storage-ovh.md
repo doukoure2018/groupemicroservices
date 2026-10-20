@@ -70,12 +70,12 @@ rclone sync minio:immo-photos-thumbnails ovh:sira-immo-photos-thumbnails --progr
 ```
 
 ```sql
--- Ancienne forme : https://api.sira-guinee.com/immo-photos/<clé>
+-- Ancienne forme : https://api.synergia-guinee.com/immo-photos/<clé>
 -- Nouvelle forme : https://s3.eu-west-par.io.cloud.ovh.net/sira-immo-photos/<clé>
 UPDATE photos
-   SET url = replace(url, 'https://api.sira-guinee.com/immo-photos/',
+   SET url = replace(url, 'https://api.synergia-guinee.com/immo-photos/',
                           'https://s3.eu-west-par.io.cloud.ovh.net/sira-immo-photos/'),
-       url_thumbnail = replace(url_thumbnail, 'https://api.sira-guinee.com/immo-photos-thumbnails/',
+       url_thumbnail = replace(url_thumbnail, 'https://api.synergia-guinee.com/immo-photos-thumbnails/',
                           'https://s3.eu-west-par.io.cloud.ovh.net/sira-immo-photos-thumbnails/');
 ```
 

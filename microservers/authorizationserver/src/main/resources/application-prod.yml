@@ -99,10 +99,10 @@ key:
 
 ui:
   app:
-    url: ${UI_APP_URL:https://sira-guinee.com}
+    url: ${UI_APP_URL:https://synergia-guinee.com}
 
 oauth:
-  issuer: ${OAUTH_ISSUER:https://api.sira-guinee.com}
+  issuer: ${OAUTH_ISSUER:https://api.synergia-guinee.com}
 
 google:
   client:

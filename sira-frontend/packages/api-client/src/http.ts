@@ -12,7 +12,7 @@ export interface TokenProvider {
 }
 
 export interface SiraClientConfig {
-    /** URL du gateway, ex. https://api.sira-guinee.com ou http://localhost:9000 */
+    /** URL du gateway, ex. https://api.synergia-guinee.com ou http://localhost:9000 */
     baseUrl: string;
     tokenProvider?: TokenProvider;
     /** Appelé quand un 401 persiste après refresh : l'app déconnecte l'utilisateur. */

@@ -1,7 +1,7 @@
 # Déploiement SIRA Guinée — VPS OVH (`51.255.203.214`)
 
 > Checklist exécutable étape par étape pour passer en production.
-> Pré-requis acquis : VPS provisionné, DNS propagé (`sira-guinee.com`, `www`, `api`), repo cloné dans `~/sira-guinee/prod`, `.env.prod` préparé localement.
+> Pré-requis acquis : VPS provisionné, DNS propagé (`synergia-guinee.com`, `www`, `api`), repo cloné dans `~/sira-guinee/prod`, `.env.prod` préparé localement.
 
 **Légende** :
 - 🖥️ = commande sur le **VPS OVH** (via SSH user `ubuntu`)
@@ -103,9 +103,9 @@ sudo mkdir -p /var/www/certbot
 sudo chown www-data:www-data /var/www/certbot
 
 # Vérifier que le DNS pointe bien vers ce serveur
-dig +short sira-guinee.com         # → 51.255.203.214
-dig +short www.sira-guinee.com     # → 51.255.203.214
-dig +short api.sira-guinee.com     # → 51.255.203.214
+dig +short synergia-guinee.com         # → 51.255.203.214
+dig +short www.synergia-guinee.com     # → 51.255.203.214
+dig +short api.synergia-guinee.com     # → 51.255.203.214
 ```
 
 ⚠️ Si les `dig` retournent autre chose, **ne pas continuer** : certbot va échouer.
@@ -230,17 +230,17 @@ sudo systemctl reload nginx
 ```bash
 sudo certbot certonly --webroot \
   -w /var/www/certbot \
-  -d sira-guinee.com \
-  -d www.sira-guinee.com \
-  -d api.sira-guinee.com \
-  -d test.sira-guinee.com \
-  -d api-test.sira-guinee.com \
-  --email contact@sira-guinee.com \
+  -d synergia-guinee.com \
+  -d www.synergia-guinee.com \
+  -d api.synergia-guinee.com \
+  -d test.synergia-guinee.com \
+  -d api-test.synergia-guinee.com \
+  --email contact@synergia-guinee.com \
   --agree-tos \
   --no-eff-email
 ```
 
-⚠️ Doit afficher `Successfully received certificate. Certificate is saved at: /etc/letsencrypt/live/sira-guinee.com/fullchain.pem`. Si erreur DNS / challenge : retry après vérification `dig` du 1.4.
+⚠️ Doit afficher `Successfully received certificate. Certificate is saved at: /etc/letsencrypt/live/synergia-guinee.com/fullchain.pem`. Si erreur DNS / challenge : retry après vérification `dig` du 1.4.
 
 ### 4.3 Basculer sur la config HTTPS finale
 
@@ -276,14 +276,14 @@ sudo certbot renew --dry-run  # ne doit pas afficher d'erreur
 💻 :
 
 ```bash
-curl -sI https://sira-guinee.com      # 200 ou 301
-curl -sI https://api.sira-guinee.com  # 200 ou 404 sur /
-curl -s  https://api.sira-guinee.com/actuator/health  # {"status":"UP"}
+curl -sI https://synergia-guinee.com      # 200 ou 301
+curl -sI https://api.synergia-guinee.com  # 200 ou 404 sur /
+curl -s  https://api.synergia-guinee.com/actuator/health  # {"status":"UP"}
 ```
 
 ### 5.2 Frontend dans le navigateur
 
-💻 ouvrir `https://sira-guinee.com` :
+💻 ouvrir `https://synergia-guinee.com` :
 - ✅ HTTPS, cadenas vert
 - ✅ Logo "SIRA Guinée" visible (orange sur "Guinée")
 - ✅ Login page accessible
@@ -291,7 +291,7 @@ curl -s  https://api.sira-guinee.com/actuator/health  # {"status":"UP"}
 ### 5.3 Login bout-en-bout
 
 💻 dans le navigateur :
-1. Aller sur `https://sira-guinee.com`
+1. Aller sur `https://synergia-guinee.com`
 2. Login avec un compte SUPER_ADMIN (ex: `eureka-manager@guidipress-io.com` si tu l'as migré, sinon créer un nouveau via DB)
 3. Naviguer vers **Modération immobilière** (sidebar SIRA Guinée)
 4. La liste doit s'afficher (vide si aucune annonce EN_ATTENTE)
@@ -300,7 +300,7 @@ curl -s  https://api.sira-guinee.com/actuator/health  # {"status":"UP"}
 
 💻 :
 ```bash
-curl -X POST https://api.sira-guinee.com/api/auth/register \
+curl -X POST https://api.synergia-guinee.com/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"test-prod@example.com","password":"TestProd2026!","firstName":"Test","lastName":"Prod"}'
 ```
@@ -314,7 +314,7 @@ Vérifier qu'un email arrive dans la boîte test-prod (Gmail SMTP fonctionne).
 📋 **Reporté** jusqu'à validation Phase 5.
 
 Une fois les smoke tests verts :
-1. Update `mobile_app/lib/config/app_config.dart` → `apiBaseUrl = 'https://api.sira-guinee.com'`
+1. Update `mobile_app/lib/config/app_config.dart` → `apiBaseUrl = 'https://api.synergia-guinee.com'`
 2. `flutter build apk --release`
 3. Installer sur un vrai phone (idéalement avec carte SIM Guinée pour tester latency réelle)
 4. Tester : login, recherche annonces, fiche détail, publication d'une annonce avec photos

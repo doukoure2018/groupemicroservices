@@ -33,13 +33,13 @@ npx playwright install chromium --with-deps    # une seule fois
 E2E_BASE_URL=http://localhost:4202 npm run test:e2e
 
 # Suite complète (44 tests, écrans connectés inclus) contre l'environnement de test :
-E2E_BASE_URL=https://test.sira-guinee.com E2E_EMAIL=<compte SUPER_ADMIN> E2E_PASSWORD=<mot de passe> \
+E2E_BASE_URL=https://test.synergia-guinee.com E2E_EMAIL=<compte SUPER_ADMIN> E2E_PASSWORD=<mot de passe> \
   npx playwright test --config e2e/playwright.config.ts --workers 1
 
 # Code local contre le backend de test (sans pile Spring) : proxy Vite vers l'API distante,
 # puis E2E_BASE_URL=http://localhost:5173. Reconstruire dist/ des packages après toute
 # modification de packages/* (npx tsc -b packages/core packages/api-client packages/auth).
-SIRA_API_DISTANTE=https://test.sira-guinee.com npx vite --config apps/web/vite.config.ts apps/web --port 5173
+SIRA_API_DISTANTE=https://test.synergia-guinee.com npx vite --config apps/web/vite.config.ts apps/web --port 5173
 ```
 
 ## Décisions de la phase 0

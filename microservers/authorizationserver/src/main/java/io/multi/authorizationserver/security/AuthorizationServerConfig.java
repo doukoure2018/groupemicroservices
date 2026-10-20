@@ -529,11 +529,19 @@ public class AuthorizationServerConfig {
                 "http://localhost:4202",
                 "http://localhost:4200",
                 // SIRA Guinée prod
+                "https://synergia-guinee.com",
+                "https://www.synergia-guinee.com",
+                // SIRA Guinée test (env CI/CD)
+                "https://test.synergia-guinee.com",
+                // API SIRA Guinée (pour appels API directs depuis api.synergia-guinee.com vers auth)
+                "https://api.synergia-guinee.com",
+                "https://api-test.synergia-guinee.com",
+                // Transition de domaine (rebrand SYNERGIA) : l'ancien domaine reste
+                // accepté tant qu'il redirige vers le nouveau. À retirer une fois
+                // sira-guinee.com expiré (31 mai 2027).
                 "https://sira-guinee.com",
                 "https://www.sira-guinee.com",
-                // SIRA Guinée test (env CI/CD)
                 "https://test.sira-guinee.com",
-                // API SIRA Guinée (pour appels API directs depuis api.sira-guinee.com vers auth)
                 "https://api.sira-guinee.com",
                 "https://api-test.sira-guinee.com",
                 // Mobile origins (YIGUI / SIRA Guinée app)

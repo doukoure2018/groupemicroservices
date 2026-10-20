@@ -2,7 +2,7 @@ import { tokenSetFromResponse, type OAuthTokenResponse, type TokenSet } from '@s
 import { computeCodeChallenge, generateCodeVerifier, generateState } from './pkce.js';
 
 export interface OAuthConfig {
-    /** Base de l'authorization server, ex. https://api.sira-guinee.com/authorization ou http://localhost:8090 */
+    /** Base de l'authorization server, ex. https://api.synergia-guinee.com/authorization ou http://localhost:8090 */
     authBaseUrl: string;
     clientId: string;
     redirectUri: string;
