@@ -48,25 +48,40 @@ blocs de redirection sont à supprimer à l'expiration de l'ancien domaine, le
   `admin@`) : ce sont des identifiants de connexion, et la suite de tests
   s'appuie sur l'un d'eux. À traiter séparément si souhaité.
 
-## Adresse IP du serveur : à déterminer
+## Le serveur
+
+| Élément | Valeur |
+|---|---|
+| Nom | `vps-9c0c080e.vps.ovh.net` |
+| IPv4 | **146.59.15.185** |
+| IPv6 | `2001:41d0:601:1100::8077` |
+| Modèle | VPS-4 2027 — 8 vCore, 24 Go, 200 Go NVMe |
+| Localisation | Europe — Royaume-Uni, Erith |
+| Système | Ubuntu 26.04, utilisateur `ubuntu` |
+| Mis en service | 22 octobre 2026 |
 
 **L'ancien serveur SIRA n'existe plus.** L'alias SSH `sira` pointait sur
-`51.255.203.214`, une machine OVH qui ne figure plus dans les abonnements
-actifs et ne répond à rien : l'abonnement a expiré et OVH a repris la machine.
-C'est la cause du site injoignable constaté en octobre 2026.
+`51.255.203.214`, machine disparue des abonnements OVH : l'abonnement a expiré
+et OVH l'a reprise. Ne pas confondre non plus avec `51.91.254.218`, qui héberge
+le projet Crédit Rural de Guinée.
 
-Les enregistrements A de `synergia-guinee.com` devront viser **le nouveau
-serveur, pas encore commandé** (attente de stock VPS européen chez OVH au
-20 octobre 2026). Ne pas réutiliser une adresse trouvée dans d'anciennes
-configurations : `51.91.254.218` héberge le projet Crédit Rural de Guinée et
-n'a rien à voir avec SYNERGIA.
-
-Une fois le serveur en service, relever son adresse réelle et la vérifier
-avant de créer la moindre entrée :
+Vérifier l'adresse avant de créer la moindre entrée :
 
 ```bash
-dig +short <nom-du-vps>.vps.ovh.net
+dig +short vps-9c0c080e.vps.ovh.net
 ```
+
+## ⚠️ Le domaine est livré lié à un hébergement mutualisé
+
+`synergia-guinee.com` a été commandé avec l'offre gratuite `hosting-free-100m`.
+OVH configure donc la zone pour pointer vers le cluster mutualisé, et non vers
+le VPS : au 22 octobre 2026, `www.synergia-guinee.com` résout déjà vers
+`51.91.236.255` (`cluster129.hosting.ovh.net`).
+
+**Il faut reprendre la main sur la zone** une fois sa création terminée, sous
+24 à 48 heures. L'hébergement mutualisé étant gratuit, il suffit de l'ignorer ;
+inutile de le résilier. Les enregistrements MX peuvent rester, l'envoi des
+emails passant par SMTP Gmail et non par ce domaine.
 
 ## ⚠️ Risque ouvert : la zone de sira-guinee.com pointe dans le vide
 
@@ -95,19 +110,29 @@ conserve l'ancienne configuration sans prévenir.
    serveur joignable sur le port 80.
 2. **Acheter le domaine** chez OVH, même compte que l'actuel. Indépendant du
    serveur, donc faisable immédiatement.
-3. **Zone DNS** : créer cinq entrées A vers l'adresse du nouveau serveur, pour l'apex, `www`,
-   `api`, `test` et `api-test`. Attendre la propagation
-   (`dig +short synergia-guinee.com`).
+3. **Zone DNS** : faire pointer vers `146.59.15.185` les cinq noms de
+   `synergia-guinee.com` (apex, `www`, `api`, `test`, `api-test`), en
+   remplaçant ceux que l'hébergement mutualisé a installés. Faire pointer
+   **aussi** les cinq noms de `sira-guinee.com` vers la même adresse : les
+   blocs de redirection en ont besoin pour obtenir leur certificat. Attendre
+   la propagation (`dig +short synergia-guinee.com`).
 4. **Certificat**, sur le serveur. Les configurations d'amorçage servent le
    défi HTTP :
    ```bash
    sudo certbot certonly --webroot -w /var/www/certbot \
      -d synergia-guinee.com -d www.synergia-guinee.com \
      -d api.synergia-guinee.com -d test.synergia-guinee.com \
-     -d api-test.synergia-guinee.com
+     -d api-test.synergia-guinee.com \
+     -d sira-guinee.com -d www.sira-guinee.com \
+     -d api.sira-guinee.com -d test.sira-guinee.com \
+     -d api-test.sira-guinee.com
    ```
-   Vérifier que `/etc/letsencrypt/live/synergia-guinee.com/` existe.
-   L'ancien certificat reste en place, les redirections s'en servent.
+   Les dix noms tiennent dans **un seul certificat**, dont la lignée prend le
+   nom du premier : `/etc/letsencrypt/live/synergia-guinee.com/`. Les vhosts,
+   blocs de redirection compris, s'y réfèrent tous. L'ancien certificat du
+   serveur disparu n'est pas récupérable, d'où l'inclusion des anciens noms
+   ici. Si l'un d'eux ne résout pas encore, certbot échoue sur l'ensemble :
+   vérifier les dix avec `dig` avant de lancer la commande.
 5. **Secrets GitHub** de l'environnement concerné : mettre à jour les valeurs
    qui portent le domaine, en particulier celles destinées à `MINIO_PUBLIC_URL`
    si la bascule Object Storage est faite.
