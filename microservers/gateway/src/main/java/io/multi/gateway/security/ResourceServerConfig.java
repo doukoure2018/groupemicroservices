@@ -112,14 +112,7 @@ public class ResourceServerConfig {
                 "https://www.synergia-guinee.com",
                 "https://test.synergia-guinee.com",
                 "https://api.synergia-guinee.com",
-                "https://api-test.synergia-guinee.com",
-                // Transition de domaine (rebrand SYNERGIA) : à retirer une fois
-                // sira-guinee.com expiré (31 mai 2027).
-                "https://sira-guinee.com",
-                "https://www.sira-guinee.com",
-                "https://test.sira-guinee.com",
-                "https://api.sira-guinee.com",
-                "https://api-test.sira-guinee.com"
+                "https://api-test.synergia-guinee.com"
         ));
         corsConfiguration.setAllowedHeaders(Arrays.asList(ORIGIN, ACCESS_CONTROL_ALLOW_ORIGIN, CONTENT_TYPE, ACCEPT, AUTHORIZATION, X_REQUESTED_WITH, ACCESS_CONTROL_REQUEST_METHOD, ACCESS_CONTROL_REQUEST_HEADERS, ACCESS_CONTROL_ALLOW_CREDENTIALS));
         corsConfiguration.setExposedHeaders(Arrays.asList(ORIGIN, ACCESS_CONTROL_ALLOW_ORIGIN, CONTENT_TYPE, ACCEPT, AUTHORIZATION, X_REQUESTED_WITH, ACCESS_CONTROL_REQUEST_METHOD, ACCESS_CONTROL_REQUEST_HEADERS, ACCESS_CONTROL_ALLOW_CREDENTIALS));

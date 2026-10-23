@@ -5,21 +5,23 @@ ne subsiste que dans les noms techniques. Le domaine est aligné sur la marque.
 
 ## Principe
 
-Les deux domaines fonctionnent en parallèle. `synergia-guinee.com` sert
-l'application ; `sira-guinee.com` redirige en 301, ce qui préserve les liens
-déjà partagés (emails de vérification, QR codes de billets, annonces). Les
-blocs de redirection sont à supprimer à l'expiration de l'ancien domaine, le
-31 mai 2027.
+`synergia-guinee.com` sert l'application. **L'ancien domaine `sira-guinee.com`
+est abandonné** (décision du 23 octobre 2026) : son serveur avait déjà disparu,
+le site était donc hors service depuis des semaines et aucun lien partagé ne
+fonctionnait plus. Aucune redirection n'est conservée.
 
 ## Noms d'hôtes
 
-| Ancien | Nouveau | Rôle |
+| Nom | Rôle | État |
 |---|---|---|
-| sira-guinee.com | synergia-guinee.com | site public, production |
-| www.sira-guinee.com | www.synergia-guinee.com | alias |
-| api.sira-guinee.com | api.synergia-guinee.com | passerelle, production |
-| test.sira-guinee.com | test.synergia-guinee.com | site public, test |
-| api-test.sira-guinee.com | api-test.synergia-guinee.com | passerelle, test |
+| synergia-guinee.com | site public, production | ✅ DNS + certificat |
+| www.synergia-guinee.com | alias | ✅ DNS + certificat |
+| api.synergia-guinee.com | passerelle, production | ✅ DNS + certificat |
+| test.synergia-guinee.com | site public, test | ✅ DNS + certificat |
+| api-test.synergia-guinee.com | passerelle, test | ✅ DNS + certificat |
+
+Chaque nom résout en IPv4 (`146.59.15.185`) et en IPv6
+(`2001:41d0:601:1100::8077`).
 
 ## Ce qui est déjà fait dans le dépôt
 
@@ -83,22 +85,16 @@ le VPS : au 22 octobre 2026, `www.synergia-guinee.com` résout déjà vers
 inutile de le résilier. Les enregistrements MX peuvent rester, l'envoi des
 emails passant par SMTP Gmail et non par ce domaine.
 
-## ⚠️ Risque ouvert : la zone de sira-guinee.com pointe dans le vide
+## Clôture de l'ancien domaine
 
-Les cinq enregistrements A de `sira-guinee.com` désignent encore
-`51.255.203.214`, une adresse qu'OVH a reprise et qui sera réattribuée à un
-autre client. Tant qu'ils subsistent :
+`sira-guinee.com` n'est plus utilisé. Deux actions restent à faire dans
+l'espace client, sans urgence technique mais pour éviter de payer et de
+laisser traîner une zone trompeuse :
 
-- quiconque obtient cette adresse reçoit le trafic destiné à vos noms et peut
-  y servir le contenu de son choix sous votre domaine ;
-- il peut aussi obtenir un certificat TLS valide pour `sira-guinee.com` par
-  validation HTTP, puisque le domaine résout vers sa machine.
-
-**À faire sans attendre le nouveau serveur** : supprimer ces enregistrements A,
-ou les faire pointer vers une adresse que vous contrôlez. Cela n'aggrave rien,
-le site est déjà inaccessible.
-
-Zone à corriger : <https://www.ovh.com/manager/#/web/domain/sira-guinee.com/zone>
+- **supprimer ses enregistrements A**, qui désignent encore `51.255.203.214`,
+  adresse reprise par OVH et qui sera réattribuée à un autre client ;
+- **désactiver son renouvellement automatique** (échéance 31 mai 2027,
+  13,49 €/an).
 
 ## Ordre des opérations
 
@@ -110,29 +106,27 @@ conserve l'ancienne configuration sans prévenir.
    serveur joignable sur le port 80.
 2. **Acheter le domaine** chez OVH, même compte que l'actuel. Indépendant du
    serveur, donc faisable immédiatement.
-3. **Zone DNS** : faire pointer vers `146.59.15.185` les cinq noms de
-   `synergia-guinee.com` (apex, `www`, `api`, `test`, `api-test`), en
-   remplaçant ceux que l'hébergement mutualisé a installés. Faire pointer
-   **aussi** les cinq noms de `sira-guinee.com` vers la même adresse : les
-   blocs de redirection en ont besoin pour obtenir leur certificat. Attendre
-   la propagation (`dig +short synergia-guinee.com`).
-4. **Certificat**, sur le serveur. Les configurations d'amorçage servent le
-   défi HTTP :
+3. **Zone DNS** — *fait le 23 octobre 2026*. Les cinq noms pointent vers
+   `146.59.15.185` en A et `2001:41d0:601:1100::8077` en AAAA. ⚠️ Le domaine
+   ayant été commandé avec l'offre `hosting-free-100m`, OVH avait d'abord posé
+   des A **et des AAAA** vers le cluster mutualisé. Corriger les A seuls ne
+   suffit pas : Let's Encrypt privilégie IPv6 et aurait validé contre le
+   mauvais serveur.
+4. **Certificat** — *émis le 23 octobre 2026*, expire le 21 janvier 2027,
+   renouvellement automatique vérifié par simulation.
+
    ```bash
    sudo certbot certonly --webroot -w /var/www/certbot \
      -d synergia-guinee.com -d www.synergia-guinee.com \
      -d api.synergia-guinee.com -d test.synergia-guinee.com \
      -d api-test.synergia-guinee.com \
-     -d sira-guinee.com -d www.sira-guinee.com \
-     -d api.sira-guinee.com -d test.sira-guinee.com \
-     -d api-test.sira-guinee.com
+     --non-interactive --agree-tos --register-unsafely-without-email
    ```
-   Les dix noms tiennent dans **un seul certificat**, dont la lignée prend le
-   nom du premier : `/etc/letsencrypt/live/synergia-guinee.com/`. Les vhosts,
-   blocs de redirection compris, s'y réfèrent tous. L'ancien certificat du
-   serveur disparu n'est pas récupérable, d'où l'inclusion des anciens noms
-   ici. Si l'un d'eux ne résout pas encore, certbot échoue sur l'ensemble :
-   vérifier les dix avec `dig` avant de lancer la commande.
+
+   Lignée : `/etc/letsencrypt/live/synergia-guinee.com/`. Enregistré sans
+   adresse de contact : le renouvellement est automatique, mais aucun rappel
+   d'expiration n'est envoyé. Pour en ajouter une :
+   `sudo certbot update_account --email <adresse>`.
 5. **Secrets GitHub** de l'environnement concerné : mettre à jour les valeurs
    qui portent le domaine, en particulier celles destinées à `MINIO_PUBLIC_URL`
    si la bascule Object Storage est faite.

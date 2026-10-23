@@ -536,14 +536,6 @@ public class AuthorizationServerConfig {
                 // API SIRA Guinée (pour appels API directs depuis api.synergia-guinee.com vers auth)
                 "https://api.synergia-guinee.com",
                 "https://api-test.synergia-guinee.com",
-                // Transition de domaine (rebrand SYNERGIA) : l'ancien domaine reste
-                // accepté tant qu'il redirige vers le nouveau. À retirer une fois
-                // sira-guinee.com expiré (31 mai 2027).
-                "https://sira-guinee.com",
-                "https://www.sira-guinee.com",
-                "https://test.sira-guinee.com",
-                "https://api.sira-guinee.com",
-                "https://api-test.sira-guinee.com",
                 // Mobile origins (YIGUI / SIRA Guinée app)
                 "http://localhost",
                 "capacitor://localhost",
