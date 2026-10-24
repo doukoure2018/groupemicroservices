@@ -89,7 +89,7 @@ eureka:
 mail:
   from:
     email: ${GMAIL_USERNAME:support@digi-creditrural-io.com}
-    name: ${MAIL_FROM_NAME:Digicrg}
+    name: ${MAIL_FROM_NAME:SYNERGIA}
 
 ui:
   app:

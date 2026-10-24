@@ -104,7 +104,7 @@ sms:
       per:
         hour: 3
   sender:
-    name: ${SENDER_NAME:SIRA Guinée}
+    name: ${SENDER_NAME:SYNERGIA}
   primary:
     provider: orange
   fallback:

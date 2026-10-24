@@ -90,7 +90,7 @@ eureka:
 mail:
   from:
     email: ${GMAIL_USERNAME}
-    name: ${MAIL_FROM_NAME:SIRA Guinée}
+    name: ${MAIL_FROM_NAME:SYNERGIA}
 
 ui:
   app:
