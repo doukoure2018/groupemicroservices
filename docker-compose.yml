@@ -115,62 +115,6 @@ services:
       - tools
 
   # ==============================================
-  # OBJECT STORAGE (MinIO)
-  # ==============================================
-  minio:
-    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-siraadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-changez-moi}
-    ports:
-      - "127.0.0.1:${MINIO_HOST_PORT:-9100}:9000"     # API S3
-      - "127.0.0.1:${MINIO_CONSOLE_HOST_PORT:-9101}:9001"  # Console web
-    volumes:
-      - minio_data:/data
-    networks:
-      - sira-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 20s
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 400M
-          cpus: '0.5'
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "5"
-
-  minio-init:
-    image: minio/mc:RELEASE.2024-11-21T17-21-54Z
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc alias set local http://minio:9000 \"$$MINIO_ROOT_USER\" \"$$MINIO_ROOT_PASSWORD\";
-      /usr/bin/mc mb --ignore-existing local/immo-photos;
-      /usr/bin/mc mb --ignore-existing local/immo-photos-thumbnails;
-      /usr/bin/mc anonymous set download local/immo-photos;
-      /usr/bin/mc anonymous set download local/immo-photos-thumbnails;
-      echo 'MinIO buckets ready';
-      exit 0;
-      "
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-siraadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-changez-moi}
-    networks:
-      - sira-network
-    restart: "no"
-
-  # ==============================================
   # MESSAGING (Kafka + Zookeeper)
   # ==============================================
   zookeeper:
@@ -541,11 +485,11 @@ services:
       JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
-      # Stockage photos. Par défaut le MinIO de cette pile ; renseigner
-      # MINIO_ENDPOINT / MINIO_ACCESS_KEY / MINIO_SECRET_KEY / MINIO_REGION dans
-      # le .env pour viser OVHcloud Object Storage (docs/bascule-object-storage-ovh.md).
-      # Une fois basculé, retirer les services minio/minio-init et le depends_on.
-      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      # Stockage photos : OBLIGATOIREMENT externe depuis le retrait des images
+      # MinIO des registres publics (Docker Hub, quay.io, bitnami) en 2026.
+      # Renseigner MINIO_ENDPOINT / _ACCESS_KEY / _SECRET_KEY / _REGION pour
+      # viser OVHcloud Object Storage — cf docs/bascule-object-storage-ovh.md.
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-${MINIO_ROOT_USER:-siraadmin}}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-${MINIO_ROOT_PASSWORD}}
       MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-https://api.synergia-guinee.com}
@@ -569,8 +513,6 @@ services:
         condition: service_healthy
       authorizationserver:
         condition: service_started
-      minio:
-        condition: service_healthy
     restart: unless-stopped
     deploy:
       resources:
@@ -667,8 +609,6 @@ services:
 volumes:
   postgres_data:
   pgadmin_data:
-  minio_data:
-
 # ==============================================
 # NETWORK (préfixé par docker compose -p sira-{env})
 # ==============================================

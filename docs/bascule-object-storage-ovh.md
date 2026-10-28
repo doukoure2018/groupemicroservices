@@ -5,7 +5,20 @@ d'Amazon. En local et sur les piles actuelles, la cible est le MinIO embarqué
 dans `docker-compose.yml`. Ce document décrit le passage à OVHcloud Object
 Storage, compatible S3, sans changer le code métier.
 
-## Pourquoi
+## Pourquoi — ce n'est plus un choix
+
+**Les images MinIO ont disparu des registres publics en 2026.** Vérifié le
+28 octobre 2026 depuis le serveur : `minio/minio`, `minio/mc`, leurs
+équivalents `quay.io` et `bitnami/minio` sont tous refusés, en version
+épinglée comme en `latest`. Le MinIO embarqué ne peut donc plus démarrer, et
+le déploiement échoue au `docker compose pull`. Les services `minio` et
+`minio-init` ont été retirés du fichier de composition.
+
+Un stockage externe est désormais **obligatoire** pour que les photos
+fonctionnent. Sans `MINIO_ENDPOINT`, le service immobilier démarre quand même
+mais journalise une erreur explicite et toute photo échoue.
+
+Les bénéfices restent les mêmes :
 
 - Les photos ne remplissent plus le disque du VPS et survivent à sa perte.
 - Classe Standard trois zones : environ 0,014 € par Go et par mois, trafic

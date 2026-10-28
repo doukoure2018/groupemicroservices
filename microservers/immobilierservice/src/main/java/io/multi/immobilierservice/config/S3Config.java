@@ -46,8 +46,13 @@ public class S3Config {
     @Bean
     public S3Client s3Client() {
         log.info("Initialisation S3Client : endpoint={} region={} pathStyle={}", endpoint, region, pathStyle);
-        return S3Client.builder()
-                .endpointOverride(URI.create(endpoint))
+        if (endpoint == null || endpoint.isBlank()) {
+            // Depuis le retrait de MinIO des registres publics, le stockage est
+            // forcément externe : sans point d'accès, les photos sont inopérantes.
+            log.error("minio.endpoint non configuré — le stockage des photos ne fonctionnera pas. "
+                    + "Renseigner MINIO_ENDPOINT (cf docs/bascule-object-storage-ovh.md).");
+        }
+        var constructeur = S3Client.builder()
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(accessKey, secretKey)
                 ))
@@ -76,7 +81,10 @@ public class S3Config {
                 .overrideConfiguration(ClientOverrideConfiguration.builder()
                         .apiCallTimeout(Duration.ofSeconds(15))
                         .apiCallAttemptTimeout(Duration.ofSeconds(8))
-                        .build())
-                .build();
+                        .build());
+        if (endpoint != null && !endpoint.isBlank()) {
+            constructeur.endpointOverride(URI.create(endpoint));
+        }
+        return constructeur.build();
     }
 }
