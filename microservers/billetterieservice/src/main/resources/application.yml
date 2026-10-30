@@ -134,6 +134,11 @@ sms:
 # (cf. table modes_reglement) : ajouter Soutra Money ou Kulu demain revient à
 # écrire une implémentation de PrestatairePaiement et à lister ses codes ici.
 paiement:
+  # Page du site où le client revient après avoir payé.
+  url-retour: ${PAIEMENT_URL_RETOUR:http://localhost:5173/paiement/retour}
+  # Adresse appelée par le prestataire, de serveur à serveur. Elle doit être
+  # joignable depuis Internet : en développement, passer par un tunnel.
+  url-notification: ${PAIEMENT_URL_NOTIFICATION:http://localhost:9000/billetterie/paiements/notification}
   cinetpay:
     api-key: ${CINETPAY_API_KEY:}
     site-id: ${CINETPAY_SITE_ID:}

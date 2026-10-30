@@ -35,6 +35,12 @@ public class Commande {
     private OffsetDateTime dateConfirmation;
     private OffsetDateTime datePaiement;
     private String referencePaiement;
+
+    /**
+     * Adresse vers laquelle envoyer le client pour qu'il paie. Renseignée
+     * uniquement à la création d'une commande réglée en ligne, jamais persistée.
+     */
+    private String urlPaiement;
     private String notes;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;

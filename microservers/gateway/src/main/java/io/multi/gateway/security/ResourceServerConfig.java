@@ -68,6 +68,9 @@ public class ResourceServerConfig {
                         // DOIT rester strictement aligné avec immobilierservice ResourceServerConfig.
                         // Toute divergence = 401 sur du public (bug SEO/découverte) OU fuite (public où ça ne devrait pas l'être).
                         .requestMatchers("/immo/health").permitAll()
+                        // Retour du prestataire de paiement : machine tierce, sans jeton.
+                        // DOIT rester aligné avec billetterieservice ResourceServerConfig.
+                        .requestMatchers(HttpMethod.POST, "/billetterie/paiements/notification").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/immo/agences",
                                 "/immo/agences/*",

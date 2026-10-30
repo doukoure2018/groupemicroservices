@@ -10,6 +10,14 @@ public interface CommandeService {
 
     Commande creerCommande(CommandeRequest request, Long userId);
 
+    /**
+     * Traite le résultat d'un paiement en ligne pour une référence donnée.
+     * Interroge le prestataire — seule source de vérité — puis confirme ou
+     * annule la commande. Idempotent : un prestataire peut notifier plusieurs
+     * fois le même encaissement.
+     */
+    Commande confirmerPaiement(String referencePaiement);
+
     Commande getByUuid(String commandeUuid);
 
     List<Commande> getCommandesByUserId(Long userId);

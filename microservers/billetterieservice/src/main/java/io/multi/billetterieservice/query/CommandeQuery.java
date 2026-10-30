@@ -21,18 +21,70 @@ public final class CommandeQuery {
         RETURNING commande_id, commande_uuid, numero_commande, created_at
         """;
 
+    /**
+     * Le statut est explicite depuis l'introduction du paiement en ligne : un
+     * billet naît EN_ATTENTE tant que les fonds ne sont pas encaissés, et
+     * l'embarquement n'accepte que VALIDE.
+     */
     public static final String INSERT_BILLET = """
-        INSERT INTO billets (commande_id, nom_passager, telephone_passager, piece_identite)
-        VALUES (:commandeId, :nomPassager, :telephonePassager, :pieceIdentite)
+        INSERT INTO billets (commande_id, nom_passager, telephone_passager, piece_identite, statut)
+        VALUES (:commandeId, :nomPassager, :telephonePassager, :pieceIdentite, :statut)
         RETURNING billet_id, billet_uuid, code_billet, statut, created_at
         """;
 
+    /**
+     * La date de confirmation n'est plus posée systématiquement : un paiement
+     * en attente n'en a pas, elle sera renseignée à l'encaissement.
+     */
     public static final String INSERT_PAIEMENT = """
         INSERT INTO paiements (commande_id, mode_reglement_id, montant, devise,
                                reference_externe, statut, date_confirmation)
         VALUES (:commandeId, :modeReglementId, :montant, :devise,
-                :referenceExterne, :statut, CURRENT_TIMESTAMP)
+                :referenceExterne, :statut, :dateConfirmation)
         RETURNING paiement_id, paiement_uuid, created_at
+        """;
+
+    // ---- paiement en ligne : confirmation et échec ----
+
+    /** Contexte minimal pour traiter un retour de prestataire. */
+    public static final String FIND_CONTEXTE_PAIEMENT = """
+        SELECT c.commande_id, c.commande_uuid, c.user_id, c.statut, mr.code AS mode_code
+        FROM commandes c
+        JOIN modes_reglement mr ON mr.mode_reglement_id = c.mode_reglement_id
+        WHERE c.reference_paiement = :reference
+        """;
+
+    /**
+     * Confirme la commande. La clause sur le statut rend l'opération idempotente :
+     * un prestataire peut notifier plusieurs fois le même encaissement.
+     */
+    public static final String CONFIRMER_COMMANDE = """
+        UPDATE commandes
+           SET statut = 'CONFIRMEE',
+               date_confirmation = CURRENT_TIMESTAMP,
+               date_paiement = CURRENT_TIMESTAMP,
+               updated_at = CURRENT_TIMESTAMP
+         WHERE commande_id = :commandeId AND statut = 'EN_ATTENTE'
+        """;
+
+    /** Rend les billets utilisables. L'embarquement n'accepte que VALIDE. */
+    public static final String VALIDER_BILLETS_BY_COMMANDE = """
+        UPDATE billets SET statut = 'VALIDE', updated_at = CURRENT_TIMESTAMP
+        WHERE commande_id = :commandeId AND statut = 'EN_ATTENTE'
+        """;
+
+    /** Paiement refusé ou expiré : la commande libère ses places via le déclencheur. */
+    public static final String ECHOUER_COMMANDE = """
+        UPDATE commandes SET statut = 'ANNULEE', updated_at = CURRENT_TIMESTAMP
+        WHERE commande_id = :commandeId AND statut = 'EN_ATTENTE'
+        """;
+
+    public static final String MAJ_STATUT_PAIEMENT = """
+        UPDATE paiements
+           SET statut = :statut,
+               date_confirmation = :dateConfirmation,
+               updated_at = CURRENT_TIMESTAMP
+         WHERE commande_id = :commandeId
         """;
 
     public static final String FIND_COMMANDE_BY_UUID = """

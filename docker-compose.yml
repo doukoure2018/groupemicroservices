@@ -375,6 +375,7 @@ services:
       CINETPAY_SITE_ID: ${CINETPAY_SITE_ID:-}
       CINETPAY_BASE_URL: ${CINETPAY_BASE_URL:-https://api-checkout.cinetpay.com/v2}
       UI_APP_URL: ${UI_APP_URL}
+      OAUTH_ISSUER: ${OAUTH_ISSUER}
       # Demande d'avis post-voyage : délai (h) après arrivée. 24h prod, 0 en TEST.
       BILLETTERIE_AVIS_DELAI_HEURES: ${BILLETTERIE_AVIS_DELAI_HEURES:-24}
       # Firebase Cloud Messaging — clé compte de service base64 (secret .env, vide = push off).

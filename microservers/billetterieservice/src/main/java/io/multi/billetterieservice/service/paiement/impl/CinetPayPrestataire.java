@@ -70,7 +70,16 @@ public class CinetPayPrestataire implements PrestatairePaiement {
 
     @Override
     public boolean supporte(String codeModeReglement) {
-        return codeModeReglement != null && modesSupportes.contains(codeModeReglement);
+        // Tant que les clés ne sont pas posées, ce prestataire ne revendique
+        // aucun mode : les règlements restent traités hors ligne, exactement
+        // comme avant l'introduction du paiement. Un environnement non
+        // configuré continue donc de fonctionner au lieu de refuser les
+        // commandes.
+        return estConfigure() && codeModeReglement != null && modesSupportes.contains(codeModeReglement);
+    }
+
+    private boolean estConfigure() {
+        return !apiKey.isBlank() && !siteId.isBlank();
     }
 
     @Override
@@ -149,7 +158,7 @@ public class CinetPayPrestataire implements PrestatairePaiement {
     }
 
     private void exigerConfiguration() {
-        if (apiKey.isBlank() || siteId.isBlank()) {
+        if (!estConfigure()) {
             throw new ApiException("Le paiement en ligne n'est pas configuré sur cet environnement.");
         }
     }

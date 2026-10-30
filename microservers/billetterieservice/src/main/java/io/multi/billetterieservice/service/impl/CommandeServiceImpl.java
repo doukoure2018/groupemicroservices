@@ -13,6 +13,9 @@ import io.multi.billetterieservice.exception.ApiException;
 import io.multi.billetterieservice.query.CommandeQuery;
 import io.multi.billetterieservice.service.CommandeService;
 import io.multi.billetterieservice.service.OffreService;
+import io.multi.billetterieservice.service.paiement.DemandePaiement;
+import io.multi.billetterieservice.service.paiement.EtatPaiement;
+import io.multi.billetterieservice.service.paiement.PrestatairePaiement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -45,6 +48,24 @@ public class CommandeServiceImpl implements CommandeService {
     private final OffreService offreService;
     private final UserClient userClient;
     private final KafkaTemplate<String, Notification> kafkaTemplate;
+
+    /**
+     * Prestataires de paiement déclarés. Le mode de règlement choisi désigne
+     * celui qui traite la transaction ; aucun n'implique un règlement hors
+     * ligne (espèces, virement), confirmé immédiatement comme auparavant.
+     */
+    private final List<PrestatairePaiement> prestataires;
+
+    /** Adresses de retour, injectées car propres à l'environnement. */
+    @org.springframework.beans.factory.annotation.Value("${paiement.url-retour:}")
+    private String urlRetourPaiement;
+
+    @org.springframework.beans.factory.annotation.Value("${paiement.url-notification:}")
+    private String urlNotificationPaiement;
+
+    private java.util.Optional<PrestatairePaiement> prestatairePour(String codeModeReglement) {
+        return prestataires.stream().filter(p -> p.supporte(codeModeReglement)).findFirst();
+    }
 
     @Override
     public Commande creerCommande(CommandeRequest request, Long userId) {
@@ -89,6 +110,22 @@ public class CommandeServiceImpl implements CommandeService {
         BigDecimal montantPaye = montantTotal.add(montantFraisPaiement);
         String referencePaiement = "PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
+        // 3 bis. Mode en ligne ou hors ligne ?
+        // Un prestataire déclaré pour ce mode signifie que le client doit payer
+        // avant d'obtenir ses billets. Sans prestataire (espèces, virement), le
+        // règlement se fait hors de la plateforme et la commande est confirmée
+        // immédiatement, comme avant l'introduction du paiement en ligne.
+        var prestataire = prestatairePour(request.getModeReglementCode());
+        boolean enLigne = prestataire.isPresent();
+        if (enLigne) {
+            // Le montant encaissé doit être exactement celui enregistré, d'où la
+            // normalisation AVANT l'insertion et non au moment de l'appel.
+            montantPaye = prestataire.get().normaliserMontant(montantPaye);
+        }
+        String statutCommande = enLigne ? "EN_ATTENTE" : "CONFIRMEE";
+        String statutBillet = enLigne ? "EN_ATTENTE" : "VALIDE";
+        String statutPaiement = enLigne ? "EN_ATTENTE" : "REUSSI";
+
         // 4. Insérer la commande
         var commandeResult = jdbcClient.sql(CommandeQuery.INSERT_COMMANDE)
                 .param("offreId", offre.getOffreId())
@@ -100,7 +137,7 @@ public class CommandeServiceImpl implements CommandeService {
                 .param("montantFrais", montantFraisService)
                 .param("montantPaye", montantPaye)
                 .param("devise", "GNF")
-                .param("statut", "CONFIRMEE")
+                .param("statut", statutCommande)
                 .param("referencePaiement", referencePaiement)
                 .query((rs, rowNum) -> new Object[]{
                         rs.getLong("commande_id"),
@@ -126,6 +163,7 @@ public class CommandeServiceImpl implements CommandeService {
                     .param("nomPassager", nomComplet)
                     .param("telephonePassager", passager.getTelephone())
                     .param("pieceIdentite", passager.getPieceIdentite())
+                    .param("statut", statutBillet)
                     .query((rs, rowNum) -> Billet.builder()
                             .billetId(rs.getLong("billet_id"))
                             .billetUuid(rs.getString("billet_uuid"))
@@ -150,69 +188,37 @@ public class CommandeServiceImpl implements CommandeService {
                 .param("montant", montantPaye)
                 .param("devise", "GNF")
                 .param("referenceExterne", referencePaiement)
-                .param("statut", "REUSSI")
+                .param("statut", statutPaiement)
+                .param("dateConfirmation", enLigne ? null : OffsetDateTime.now())
                 .query((rs, rowNum) -> rs.getLong("paiement_id"))
                 .single();
 
-        log.info("Paiement enregistré: {} GNF via {}", montantPaye, request.getModeReglementCode());
+        log.info("Paiement {} enregistré: {} GNF via {}", statutPaiement, montantPaye, request.getModeReglementCode());
 
-        // 7. Envoyer notification Kafka (non-bloquant)
-        try {
-            String billetCodes = billets.stream()
-                    .map(Billet::getCodeBillet)
-                    .reduce((a, b) -> a + ", " + b)
-                    .orElse("");
-            String passagerNoms = billets.stream()
-                    .map(Billet::getNomPassager)
-                    .reduce((a, b) -> a + ", " + b)
-                    .orElse("");
-
-            String passagerPhone = billets.stream()
-                    .map(Billet::getTelephonePassager)
-                    .filter(t -> t != null && !t.isBlank())
-                    .findFirst()
-                    .orElse("");
-
-            // Récupérer l'email de l'utilisateur qui réserve
-            String userEmail = "";
-            try {
-                User user = userClient.getUserById(userId);
-                if (user != null && user.getEmail() != null) {
-                    userEmail = user.getEmail();
-                }
-            } catch (Exception e) {
-                log.warn("Impossible de récupérer l'email utilisateur {}: {}", userId, e.getMessage());
-            }
-
-            var event = new Event(EventType.COMMANDE_CONFIRMEE, Map.ofEntries(
-                    Map.entry("numeroCommande", numeroCommande),
-                    Map.entry("email", offre.getUserEmail() != null ? offre.getUserEmail() : ""),
-                    Map.entry("userEmail", userEmail),
-                    Map.entry("name", passagerNoms),
-                    Map.entry("phone", passagerPhone),
-                    Map.entry("trajet", offre.getVilleDepartLibelle() + " \u2192 " + offre.getVilleArriveeLibelle()),
-                    Map.entry("dateDepart", offre.getDateDepart().toString()),
-                    Map.entry("heureDepart", offre.getHeureDepart().toString()),
-                    Map.entry("nombrePlaces", String.valueOf(nombrePassagers)),
-                    Map.entry("montantPaye", montantPaye.toPlainString()),
-                    Map.entry("billetCodes", billetCodes),
-                    Map.entry("referencePaiement", referencePaiement)
-            ));
-            var message = MessageBuilder.withPayload(new Notification(event))
-                    .setHeader(TOPIC, NOTIFICATION_TOPIC)
-                    .build();
-
-            final String cmdNum = numeroCommande;
-            CompletableFuture.runAsync(() -> {
-                try {
-                    kafkaTemplate.send(message);
-                    log.info("Notification Kafka envoyée pour commande: {}", cmdNum);
-                } catch (Exception ex) {
-                    log.error("Kafka indisponible, notification non envoyée pour: {}", cmdNum, ex);
-                }
-            });
-        } catch (Exception e) {
-            log.error("Erreur préparation notification Kafka: {}", e.getMessage());
+        // 7. Prévenir le client, ou lancer le paiement
+        String urlPaiement = null;
+        if (enLigne) {
+            // L'appel au prestataire est DANS la transaction : s'il échoue, la
+            // commande et ses billets disparaissent et les places sont rendues.
+            // Mieux vaut aucune commande qu'une commande orpheline impayable.
+            urlPaiement = prestataire.get().initier(DemandePaiement.builder()
+                    .reference(referencePaiement)
+                    .montant(montantPaye)
+                    .devise("GNF")
+                    .description("Reservation " + numeroCommande + " - "
+                            + offre.getVilleDepartLibelle() + " vers " + offre.getVilleArriveeLibelle())
+                    .clientNom(request.getPassagers().get(0).getNom())
+                    .clientPrenom(request.getPassagers().get(0).getPrenom())
+                    .clientEmail(emailUtilisateur(userId))
+                    .clientTelephone(request.getPassagers().get(0).getTelephone())
+                    .urlRetour(urlRetourPaiement)
+                    .urlNotification(urlNotificationPaiement)
+                    .build()).urlPaiement();
+            log.info("Commande {} en attente de paiement {}", numeroCommande, request.getModeReglementCode());
+        } else {
+            // Hors ligne : la commande est déjà confirmée, on peut notifier.
+            notifierCommandeConfirmee(numeroCommande, offre, userId, billets,
+                    nombrePassagers, montantPaye, referencePaiement);
         }
 
         // 8. Construire et retourner la commande complète
@@ -229,8 +235,9 @@ public class CommandeServiceImpl implements CommandeService {
                 .montantFrais(montantFraisService)
                 .montantPaye(montantPaye)
                 .devise("GNF")
-                .statut("CONFIRMEE")
+                .statut(statutCommande)
                 .referencePaiement(referencePaiement)
+                .urlPaiement(urlPaiement)
                 .createdAt(createdAt)
                 .offreUuid(offre.getOffreUuid())
                 .dateDepart(offre.getDateDepart())
@@ -569,4 +576,141 @@ public class CommandeServiceImpl implements CommandeService {
         // Montant d'origine conservé (MVP paiement simulé — dette réconciliation prix).
         return getByUuid(commandeUuid);
     }
+
+    // =========================================================================
+    // Paiement en ligne
+    // =========================================================================
+
+    @Override
+    @Transactional
+    public Commande confirmerPaiement(String referencePaiement) {
+        var contexte = jdbcClient.sql(CommandeQuery.FIND_CONTEXTE_PAIEMENT)
+                .param("reference", referencePaiement)
+                .query((rs, rowNum) -> new Object[]{
+                        rs.getLong("commande_id"),
+                        rs.getString("commande_uuid"),
+                        rs.getLong("user_id"),
+                        rs.getString("statut"),
+                        rs.getString("mode_code")
+                })
+                .optional()
+                .orElseThrow(() -> new ApiException("Référence de paiement inconnue: " + referencePaiement));
+
+        Long commandeId = (Long) contexte[0];
+        String commandeUuid = (String) contexte[1];
+        Long userId = (Long) contexte[2];
+        String statutCourant = (String) contexte[3];
+        String modeCode = (String) contexte[4];
+
+        // Idempotence : un prestataire renotifie volontiers le même encaissement,
+        // et le client peut recharger la page de retour autant qu'il veut.
+        if (!"EN_ATTENTE".equals(statutCourant)) {
+            log.info("Commande {} déjà au statut {}, retour de paiement ignoré", commandeUuid, statutCourant);
+            return getByUuid(commandeUuid);
+        }
+
+        var prestataire = prestatairePour(modeCode)
+                .orElseThrow(() -> new ApiException("Aucun prestataire ne traite le mode " + modeCode));
+
+        // On ne croit jamais la notification sur parole : elle n'est qu'une
+        // requête HTTP, que n'importe qui peut fabriquer.
+        EtatPaiement etat = prestataire.verifier(referencePaiement);
+
+        switch (etat) {
+            case REUSSI -> {
+                jdbcClient.sql(CommandeQuery.CONFIRMER_COMMANDE).param("commandeId", commandeId).update();
+                jdbcClient.sql(CommandeQuery.VALIDER_BILLETS_BY_COMMANDE).param("commandeId", commandeId).update();
+                jdbcClient.sql(CommandeQuery.MAJ_STATUT_PAIEMENT)
+                        .param("statut", "REUSSI")
+                        .param("dateConfirmation", OffsetDateTime.now())
+                        .param("commandeId", commandeId)
+                        .update();
+                log.info("Paiement {} encaissé, commande {} confirmée", referencePaiement, commandeUuid);
+
+                Commande confirmee = getByUuid(commandeUuid);
+                try {
+                    Offre offre = offreService.getByUuid(confirmee.getOffreUuid());
+                    notifierCommandeConfirmee(confirmee.getNumeroCommande(), offre, userId,
+                            confirmee.getBillets(), confirmee.getNombrePlaces(),
+                            confirmee.getMontantPaye(), referencePaiement);
+                } catch (Exception e) {
+                    // La commande est payée et confirmée : un échec de notification
+                    // ne doit surtout pas faire échouer la transaction.
+                    log.error("Notification de confirmation impossible pour {}: {}", commandeUuid, e.getMessage());
+                }
+                return confirmee;
+            }
+            case ECHOUE -> {
+                jdbcClient.sql(CommandeQuery.ECHOUER_COMMANDE).param("commandeId", commandeId).update();
+                jdbcClient.sql(CommandeQuery.ANNULER_BILLETS_BY_COMMANDE).param("commandeId", commandeId).update();
+                jdbcClient.sql(CommandeQuery.MAJ_STATUT_PAIEMENT)
+                        .param("statut", "ECHOUE")
+                        .param("dateConfirmation", null)
+                        .param("commandeId", commandeId)
+                        .update();
+                log.info("Paiement {} refusé, commande {} annulée et places rendues", referencePaiement, commandeUuid);
+            }
+            case EN_ATTENTE -> log.info("Paiement {} toujours en attente chez le prestataire", referencePaiement);
+        }
+        return getByUuid(commandeUuid);
+    }
+
+    /** Email de l'utilisateur, vide si le service utilisateur est injoignable. */
+    private String emailUtilisateur(Long userId) {
+        try {
+            User user = userClient.getUserById(userId);
+            return user != null && user.getEmail() != null ? user.getEmail() : "";
+        } catch (Exception e) {
+            log.warn("Impossible de récupérer l'email utilisateur {}: {}", userId, e.getMessage());
+            return "";
+        }
+    }
+
+    /**
+     * Notifie la confirmation d'une commande. Appelée une seule fois par
+     * commande : à la création pour un règlement hors ligne, à l'encaissement
+     * pour un paiement en ligne. Jamais bloquante.
+     */
+    private void notifierCommandeConfirmee(String numeroCommande, Offre offre, Long userId,
+                                           List<Billet> billets, int nombrePassagers,
+                                           BigDecimal montantPaye, String referencePaiement) {
+        try {
+            String billetCodes = billets.stream().map(Billet::getCodeBillet)
+                    .reduce((a, b) -> a + ", " + b).orElse("");
+            String passagerNoms = billets.stream().map(Billet::getNomPassager)
+                    .reduce((a, b) -> a + ", " + b).orElse("");
+            String passagerPhone = billets.stream().map(Billet::getTelephonePassager)
+                    .filter(t -> t != null && !t.isBlank()).findFirst().orElse("");
+
+            var event = new Event(EventType.COMMANDE_CONFIRMEE, Map.ofEntries(
+                    Map.entry("numeroCommande", numeroCommande),
+                    Map.entry("email", offre.getUserEmail() != null ? offre.getUserEmail() : ""),
+                    Map.entry("userEmail", emailUtilisateur(userId)),
+                    Map.entry("name", passagerNoms),
+                    Map.entry("phone", passagerPhone),
+                    Map.entry("trajet", offre.getVilleDepartLibelle() + " \u2192 " + offre.getVilleArriveeLibelle()),
+                    Map.entry("dateDepart", offre.getDateDepart().toString()),
+                    Map.entry("heureDepart", offre.getHeureDepart().toString()),
+                    Map.entry("nombrePlaces", String.valueOf(nombrePassagers)),
+                    Map.entry("montantPaye", montantPaye.toPlainString()),
+                    Map.entry("billetCodes", billetCodes),
+                    Map.entry("referencePaiement", referencePaiement)
+            ));
+            var message = MessageBuilder.withPayload(new Notification(event))
+                    .setHeader(TOPIC, NOTIFICATION_TOPIC)
+                    .build();
+
+            CompletableFuture.runAsync(() -> {
+                try {
+                    kafkaTemplate.send(message);
+                    log.info("Notification Kafka envoyée pour commande: {}", numeroCommande);
+                } catch (Exception ex) {
+                    log.error("Kafka indisponible, notification non envoyée pour: {}", numeroCommande, ex);
+                }
+            });
+        } catch (Exception e) {
+            log.error("Erreur préparation notification Kafka: {}", e.getMessage());
+        }
+    }
+
 }

@@ -40,6 +40,10 @@ public class ResourceServerConfig {
                 .authorizeHttpRequests( authorize -> authorize
                         .requestMatchers("/actuator/health","/actuator/info", "/billetterie/image/**","/billetterie/docs/**").permitAll()
                         .requestMatchers("/billetterie/files/**").permitAll()
+                        // Retour du prestataire de paiement : l'appelant est une
+                        // machine tierce, sans jeton. La sécurité tient à la
+                        // vérification faite auprès du prestataire, pas à cet appel.
+                        .requestMatchers(POST, "/billetterie/paiements/notification").permitAll()
                         // Recherche publique (home web, avant login) — DOIT rester aligné
                         // avec gateway ResourceServerConfig (cf dette T5). Pas de joker
                         // /billetterie/offres/* (protégerait mal mes-offres, stats…).
