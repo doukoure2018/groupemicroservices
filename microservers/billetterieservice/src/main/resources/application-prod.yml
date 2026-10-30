@@ -80,3 +80,15 @@ jwks:
 logging:
   level:
     root: INFO
+
+# Paiement en ligne. Le prestataire est choisi par le code du mode de règlement
+# (cf. table modes_reglement) : ajouter Soutra Money ou Kulu demain revient à
+# écrire une implémentation de PrestatairePaiement et à lister ses codes ici.
+paiement:
+  cinetpay:
+    api-key: ${CINETPAY_API_KEY:}
+    site-id: ${CINETPAY_SITE_ID:}
+    # Bac à sable et production partagent cette adresse, les clés distinguent
+    # les deux environnements.
+    base-url: ${CINETPAY_BASE_URL:https://api-checkout.cinetpay.com/v2}
+    modes: ${CINETPAY_MODES:OM,MOMO,CB}

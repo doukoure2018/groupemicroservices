@@ -369,6 +369,11 @@ services:
       USERSERVICE_URL: http://userservice:8091
       JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
+      # Paiement en ligne (cf. docs/paiement-cinetpay.md). Vides = paiement
+      # en ligne indisponible, les modes hors ligne continuent de fonctionner.
+      CINETPAY_API_KEY: ${CINETPAY_API_KEY:-}
+      CINETPAY_SITE_ID: ${CINETPAY_SITE_ID:-}
+      CINETPAY_BASE_URL: ${CINETPAY_BASE_URL:-https://api-checkout.cinetpay.com/v2}
       UI_APP_URL: ${UI_APP_URL}
       # Demande d'avis post-voyage : délai (h) après arrivée. 24h prod, 0 en TEST.
       BILLETTERIE_AVIS_DELAI_HEURES: ${BILLETTERIE_AVIS_DELAI_HEURES:-24}
