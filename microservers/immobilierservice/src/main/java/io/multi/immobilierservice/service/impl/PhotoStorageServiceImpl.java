@@ -190,37 +190,9 @@ public class PhotoStorageServiceImpl implements PhotoStorageService {
                     log.warn("Vérification bucket {} échouée (code={}): {}", bucket, e.statusCode(), e.getMessage());
                 }
             }
-            if (publicRead) {
-                appliquerLecturePublique(bucket);
-            }
         }
     }
 
-    /**
-     * Politique « GetObject pour tous » : les URL stockées en base (colonne url)
-     * sont servies directement par le fournisseur, sans passer par ce service.
-     * Idempotent et non bloquant : un refus laisse le service démarrer, les
-     * photos restent accessibles via /immo/photos/{uuid} qui lit avec les clés.
-     */
-    private void appliquerLecturePublique(String bucket) {
-        String politique = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"LecturePublique\","
-                + "\"Effect\":\"Allow\",\"Principal\":{\"AWS\":[\"*\"]},\"Action\":[\"s3:GetObject\"],"
-                + "\"Resource\":[\"arn:aws:s3:::" + bucket + "/*\"]}]}";
-        try {
-            s3Client.putBucketPolicy(PutBucketPolicyRequest.builder().bucket(bucket).policy(politique).build());
-            log.info("Lecture publique activée sur le bucket {}", bucket);
-        } catch (S3Exception e) {
-            if (e.statusCode() == 501) {
-                // OVHcloud Object Storage n'implémente pas PutBucketPolicy : la
-                // visibilité se règle depuis la console du conteneur. Sans cela,
-                // les URL stockées en base renvoient 403 aux visiteurs anonymes.
-                log.info("Politique de lecture publique non applicable sur {} : le fournisseur n'implémente pas "
-                        + "PutBucketPolicy. Rendre le conteneur public depuis sa console.", bucket);
-            } else {
-                log.warn("Politique de lecture publique refusée sur {} (code={}): {}", bucket, e.statusCode(), e.getMessage());
-            }
-        }
-    }
 
     // ---- private helpers ----
 
@@ -288,6 +260,7 @@ public class PhotoStorageServiceImpl implements PhotoStorageService {
                         .bucket(bucket)
                         .key(key)
                         .contentType(contentType)
+                        .acl(publicRead ? ObjectCannedACL.PUBLIC_READ : null)
                         .contentLength((long) data.length)
                         .build(),
                 RequestBody.fromBytes(data)
@@ -305,6 +278,7 @@ public class PhotoStorageServiceImpl implements PhotoStorageService {
                         .bucket(bucket)
                         .key(key)
                         .contentType(contentType)
+                        .acl(publicRead ? ObjectCannedACL.PUBLIC_READ : null)
                         .contentLength(source.length())
                         .build(),
                 RequestBody.fromFile(source)
@@ -343,8 +317,20 @@ public class PhotoStorageServiceImpl implements PhotoStorageService {
         return datePrefix + "/" + UUID.randomUUID() + "." + extension;
     }
 
+    /**
+     * Adresse publique d'un objet. Deux formes selon le fournisseur :
+     * <ul>
+     *   <li>style chemin, {@code base/bucket/clé}, par défaut ;</li>
+     *   <li>style sous-domaine si {@code minio.public-base-url} contient le
+     *       gabarit {@code {bucket}} — forme exigée par OVHcloud, qui refuse
+     *       l'accès anonyme en style chemin avec « Not S3 request ».</li>
+     * </ul>
+     */
     private String buildPublicUrl(String bucket, String key) {
         String base = publicBaseUrl.endsWith("/") ? publicBaseUrl.substring(0, publicBaseUrl.length() - 1) : publicBaseUrl;
+        if (base.contains("{bucket}")) {
+            return base.replace("{bucket}", bucket) + "/" + key;
+        }
         return base + "/" + bucket + "/" + key;
     }
 }

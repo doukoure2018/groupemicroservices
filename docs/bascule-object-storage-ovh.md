@@ -60,7 +60,7 @@ région incorrecte (`SignatureDoesNotMatch`).
 | `MINIO_SECRET_KEY` | secret key |
 | `MINIO_REGION` | `eu-west-par` |
 | `MINIO_PUBLIC_READ` | `true` |
-| `MINIO_PUBLIC_URL` | `https://s3.eu-west-par.io.cloud.ovh.net` |
+| `MINIO_PUBLIC_URL` | `https://{bucket}.s3.eu-west-par.io.cloud.ovh.net` |
 | `MINIO_BUCKET_PHOTOS` | `sira-immo-photos` |
 | `MINIO_BUCKET_THUMBNAILS` | `sira-immo-photos-thumbnails` |
 
@@ -70,9 +70,24 @@ région incorrecte (`SignatureDoesNotMatch`).
   `MINIO_PUBLIC_URL` garde sa valeur historique par environnement.
 - Pile lancée à la main : les mettre dans le `.env` à côté du compose.
 
-`MINIO_PUBLIC_URL` sert à construire la colonne `url` des photos :
-`<MINIO_PUBLIC_URL>/<bucket>/<clé>`. Avec l'accès par chemin, c'est l'hôte du
-point d'accès lui-même.
+`MINIO_PUBLIC_URL` sert à construire la colonne `url` des photos. Deux formes
+sont acceptées :
+
+- sans gabarit : `<MINIO_PUBLIC_URL>/<bucket>/<clé>` ;
+- avec le gabarit `{bucket}` : `https://<bucket>.s3.<région>.io.cloud.ovh.net/<clé>`.
+
+**Chez OVH, le gabarit est obligatoire.** Vérifié le 30 octobre 2026 : un objet
+public lu en style chemin renvoie `400 InvalidRequest — Not S3 request`, et le
+même objet lu en style sous-domaine renvoie 200. Le style chemin reste employé
+pour les appels authentifiés du SDK, seule l'adresse publique change.
+
+## Lecture publique : ACL par objet, pas politique de conteneur
+
+**OVHcloud n'implémente pas `PutBucketPolicy`** et répond `501 Not implemented`.
+Aucun rôle ni réglage de console n'y change quoi que ce soit. La voie supportée
+est l'ACL `public-read` posée **sur chaque objet** à l'envoi, ce que fait le
+service quand `MINIO_PUBLIC_READ=true`. Vérifié : l'ACL résultante accorde bien
+`READ` au groupe `AllUsers`.
 
 ## Migration des photos existantes
 
