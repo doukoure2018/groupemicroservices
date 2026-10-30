@@ -210,7 +210,15 @@ public class PhotoStorageServiceImpl implements PhotoStorageService {
             s3Client.putBucketPolicy(PutBucketPolicyRequest.builder().bucket(bucket).policy(politique).build());
             log.info("Lecture publique activée sur le bucket {}", bucket);
         } catch (S3Exception e) {
-            log.warn("Politique de lecture publique refusée sur {} (code={}): {}", bucket, e.statusCode(), e.getMessage());
+            if (e.statusCode() == 501) {
+                // OVHcloud Object Storage n'implémente pas PutBucketPolicy : la
+                // visibilité se règle depuis la console du conteneur. Sans cela,
+                // les URL stockées en base renvoient 403 aux visiteurs anonymes.
+                log.info("Politique de lecture publique non applicable sur {} : le fournisseur n'implémente pas "
+                        + "PutBucketPolicy. Rendre le conteneur public depuis sa console.", bucket);
+            } else {
+                log.warn("Politique de lecture publique refusée sur {} (code={}): {}", bucket, e.statusCode(), e.getMessage());
+            }
         }
     }
 
