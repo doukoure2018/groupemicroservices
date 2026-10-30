@@ -41,7 +41,8 @@ eureka:
       enabled: true
   instance:
     hostname: localhost
-    prefer-ip-address: true
+    # Dev local : ne pas s'inscrire avec l'IP (elle change avec le Wi-Fi)
+    prefer-ip-address: false
 
 
 logging:

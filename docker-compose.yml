@@ -115,62 +115,6 @@ services:
       - tools
 
   # ==============================================
-  # OBJECT STORAGE (MinIO)
-  # ==============================================
-  minio:
-    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-siraadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-changez-moi}
-    ports:
-      - "127.0.0.1:${MINIO_HOST_PORT:-9100}:9000"     # API S3
-      - "127.0.0.1:${MINIO_CONSOLE_HOST_PORT:-9101}:9001"  # Console web
-    volumes:
-      - minio_data:/data
-    networks:
-      - sira-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 20s
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 400M
-          cpus: '0.5'
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "5"
-
-  minio-init:
-    image: minio/mc:RELEASE.2024-11-21T17-21-54Z
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc alias set local http://minio:9000 \"$$MINIO_ROOT_USER\" \"$$MINIO_ROOT_PASSWORD\";
-      /usr/bin/mc mb --ignore-existing local/immo-photos;
-      /usr/bin/mc mb --ignore-existing local/immo-photos-thumbnails;
-      /usr/bin/mc anonymous set download local/immo-photos;
-      /usr/bin/mc anonymous set download local/immo-photos-thumbnails;
-      echo 'MinIO buckets ready';
-      exit 0;
-      "
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-siraadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-changez-moi}
-    networks:
-      - sira-network
-    restart: "no"
-
-  # ==============================================
   # MESSAGING (Kafka + Zookeeper)
   # ==============================================
   zookeeper:
@@ -541,10 +485,19 @@ services:
       JWKS_URI: http://authorizationserver:8090/authorization/oauth2/jwks
       KAFKA_BOOTSTRAP_SERVERS: kafka:29093
       UI_APP_URL: ${UI_APP_URL}
-      MINIO_ENDPOINT: http://minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-siraadmin}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-https://api.sira-guinee.com}
+      # Stockage photos : OBLIGATOIREMENT externe depuis le retrait des images
+      # MinIO des registres publics (Docker Hub, quay.io, bitnami) en 2026.
+      # Renseigner MINIO_ENDPOINT / _ACCESS_KEY / _SECRET_KEY / _REGION pour
+      # viser OVHcloud Object Storage — cf docs/bascule-object-storage-ovh.md.
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-${MINIO_ROOT_USER:-siraadmin}}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-${MINIO_ROOT_PASSWORD}}
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-https://api.synergia-guinee.com}
+      MINIO_REGION: ${MINIO_REGION:-us-east-1}
+      MINIO_PATH_STYLE: ${MINIO_PATH_STYLE:-true}
+      MINIO_PUBLIC_READ: ${MINIO_PUBLIC_READ:-false}
+      MINIO_BUCKET_PHOTOS: ${MINIO_BUCKET_PHOTOS:-immo-photos}
+      MINIO_BUCKET_THUMBNAILS: ${MINIO_BUCKET_THUMBNAILS:-immo-photos-thumbnails}
       TZ: ${TZ:-Africa/Conakry}
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
     volumes:
@@ -560,8 +513,6 @@ services:
         condition: service_healthy
       authorizationserver:
         condition: service_started
-      minio:
-        condition: service_healthy
     restart: unless-stopped
     deploy:
       resources:
@@ -615,14 +566,49 @@ services:
       retries: 3
       start_period: 30s
 
+  # ==============================================
+  # WEB REACT (migration en cours)
+  # ==============================================
+  # Tourne EN PARALLÈLE du service `frontend` Angular, sur un port distinct :
+  # les deux restent servables tant que la bascule n'est pas décidée, et le
+  # retour arrière consiste à repointer le vhost nginx de l'hôte.
+  #
+  # Une seule image pour tous les environnements : le client API utilise des
+  # chemins relatifs et nginx les relaie au gateway du réseau interne. Aucun
+  # build-arg d'URL, contrairement à l'image Angular.
+  web:
+    image: doukoure93/sira-web:${WEB_IMAGE_TAG:-prod-latest}
+    ports:
+      - "127.0.0.1:${WEB_HOST_PORT:-4203}:80"
+    networks:
+      - sira-network
+    depends_on:
+      - gateway
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    healthcheck:
+      # busybox wget résout localhost en ::1 et ne bascule pas en IPv4 : viser 127.0.0.1.
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
 # ==============================================
 # VOLUMES (préfixés par docker compose -p sira-{env})
 # ==============================================
 volumes:
   postgres_data:
   pgadmin_data:
-  minio_data:
-
 # ==============================================
 # NETWORK (préfixé par docker compose -p sira-{env})
 # ==============================================

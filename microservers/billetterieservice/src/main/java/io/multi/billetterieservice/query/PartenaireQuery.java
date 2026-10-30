@@ -141,11 +141,12 @@ public final class PartenaireQuery {
           AND partenaire_uuid != :excludeUuid
         """;
 
+    // Le schéma ne relie aucune table aux partenaires (offres n'a pas de colonne partenaire_id) :
+    // l'ancienne requête échouait en « bad SQL grammar » et abandonnait la transaction de suppression.
+    // On conserve la garde (toujours 0) pour le jour où une relation sera ajoutée.
     public static final String HAS_OFFRES = """
-        SELECT COUNT(*) FROM offres o
-        WHERE o.partenaire_id = (
-            SELECT partenaire_id FROM partenaires WHERE partenaire_uuid = :uuid
-        )
+        SELECT COUNT(*) FROM partenaires p
+        WHERE p.partenaire_uuid = :uuid AND 1 = 0
         """;
 
     // ========== REQUÊTES D'ÉCRITURE ==========

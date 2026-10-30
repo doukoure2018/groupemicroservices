@@ -190,11 +190,20 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_OAUTH_AUDIENCE: ${{ secrets.GOOGLE_OAUTH_AUDIENCE }}
           FCM_SERVICE_ACCOUNT_B64: ${{ secrets.FCM_SERVICE_ACCOUNT_B64 }}
+          # Stockage photos externe (OVH Object Storage). Vides = MinIO embarqué.
+          MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+          MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+          MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+          MINIO_PUBLIC_URL: ${{ secrets.MINIO_PUBLIC_URL }}
+          MINIO_REGION: ${{ secrets.MINIO_REGION }}
+          MINIO_PUBLIC_READ: ${{ secrets.MINIO_PUBLIC_READ }}
+          MINIO_BUCKET_PHOTOS: ${{ secrets.MINIO_BUCKET_PHOTOS }}
+          MINIO_BUCKET_THUMBNAILS: ${{ secrets.MINIO_BUCKET_THUMBNAILS }}
         with:
           host: ${{ secrets.OVH_HOST }}
           username: ${{ secrets.OVH_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
-          envs: POSTGRES_PASSWORD,EUREKA_PASSWORD,MINIO_ROOT_USER,MINIO_ROOT_PASSWORD,PGADMIN_PASSWORD,GMAIL_USERNAME,GMAIL_APP_PASSWORD,ORANGE_API_CREDENTIALS,ORANGE_SENDER_ADDRESS,SENDER_NAME,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_OAUTH_AUDIENCE,FCM_SERVICE_ACCOUNT_B64
+          envs: POSTGRES_PASSWORD,EUREKA_PASSWORD,MINIO_ROOT_USER,MINIO_ROOT_PASSWORD,PGADMIN_PASSWORD,GMAIL_USERNAME,GMAIL_APP_PASSWORD,ORANGE_API_CREDENTIALS,ORANGE_SENDER_ADDRESS,SENDER_NAME,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_OAUTH_AUDIENCE,FCM_SERVICE_ACCOUNT_B64,MINIO_ENDPOINT,MINIO_ACCESS_KEY,MINIO_SECRET_KEY,MINIO_PUBLIC_URL,MINIO_REGION,MINIO_PUBLIC_READ,MINIO_BUCKET_PHOTOS,MINIO_BUCKET_THUMBNAILS
           script: |
             set -e
 
@@ -214,7 +223,7 @@ jobs:
             # Génère .env TEST depuis les secrets de l'environment 'test'
             # SPRING_PROFILES_ACTIVE=prod intentionnel pour la stack TEST :
             # aucun service Spring n'a de fichier `application-test.yml`. Les
-            # différences test/prod (URLs sira-guinee.com vs test.sira-guinee.com,
+            # différences test/prod (URLs synergia-guinee.com vs test.synergia-guinee.com,
             # ports, mots de passe) viennent uniquement de ce `.env` qui override
             # les `${VAR:default}` du application-prod.yml.
             cat > .env << ENVEOF
@@ -241,15 +250,16 @@ jobs:
             NOTIF_HOST_PORT=18093
             IMMO_HOST_PORT=18098
             FRONTEND_HOST_PORT=14202
+            WEB_HOST_PORT=14203
 
-            PGADMIN_EMAIL=admin-test@sira-guinee.com
+            PGADMIN_EMAIL=admin-test@synergia-guinee.com
             PGADMIN_PASSWORD=${PGADMIN_PASSWORD}
 
             EUREKA_USER=manager
             EUREKA_PASSWORD=${EUREKA_PASSWORD}
 
-            UI_APP_URL=https://test.sira-guinee.com
-            OAUTH_ISSUER=https://api-test.sira-guinee.com
+            UI_APP_URL=https://test.synergia-guinee.com
+            OAUTH_ISSUER=https://api-test.synergia-guinee.com
             SESSION_COOKIE_SECURE=true
 
             GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
@@ -258,7 +268,7 @@ jobs:
 
             GMAIL_USERNAME=${GMAIL_USERNAME}
             GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
-            MAIL_FROM_NAME=SIRA Guinée TEST
+            MAIL_FROM_NAME=SYNERGIA TEST
             IMMO_EMAIL_SEND_ENABLED=true
 
             ORANGE_API_CREDENTIALS=${ORANGE_API_CREDENTIALS}
@@ -267,11 +277,21 @@ jobs:
 
             MINIO_ROOT_USER=${MINIO_ROOT_USER}
             MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-            MINIO_PUBLIC_URL=https://api-test.sira-guinee.com
+            MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL:-https://api-test.synergia-guinee.com}
 
             FRONTEND_IMAGE_TAG=test-latest
 
             FCM_SERVICE_ACCOUNT_B64=${FCM_SERVICE_ACCOUNT_B64}
+
+            # Stockage photos : vide = MinIO de la pile, renseigné = OVH Object Storage
+            # (docs/bascule-object-storage-ovh.md)
+            MINIO_ENDPOINT=${MINIO_ENDPOINT}
+            MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+            MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+            MINIO_REGION=${MINIO_REGION}
+            MINIO_PUBLIC_READ=${MINIO_PUBLIC_READ}
+            MINIO_BUCKET_PHOTOS=${MINIO_BUCKET_PHOTOS}
+            MINIO_BUCKET_THUMBNAILS=${MINIO_BUCKET_THUMBNAILS}
             BILLETTERIE_AVIS_DELAI_HEURES=0
             ENVEOF
 
@@ -323,7 +343,7 @@ jobs:
             # (docker compose ps standard ne contient pas "running" mais "Up X
             # seconds" → l'ancien grep -q running produisait des faux négatifs).
             RUNNING_SERVICES=$(sudo docker compose -p sira-test --env-file .env ps --status running --services)
-            for svc in postgresdb minio gateway authorizationserver userservice immobilierservice frontend; do
+            for svc in postgresdb gateway authorizationserver userservice immobilierservice frontend; do
               if ! echo "$RUNNING_SERVICES" | grep -qx "$svc"; then
                 echo "Service $svc not running"
                 sudo docker compose -p sira-test --env-file .env logs --tail=30 "$svc"
@@ -346,14 +366,14 @@ jobs:
               echo "⚠️ conf nginx non trouvée — conf existante conservée, pas de reload"
             fi
 
-            echo "Deployment TEST OK — https://test.sira-guinee.com"
+            echo "Deployment TEST OK — https://test.synergia-guinee.com"
 
       - name: Notify Slack — deploy TEST success
         if: success()
         continue-on-error: true
         run: |
           curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\":white_check_mark: *SIRA Guinée TEST* deployed\\n:test_tube: https://test.sira-guinee.com\\n:label: ${{ needs.build-and-push.outputs.build_number }}\"}" \
+            --data "{\"text\":\":white_check_mark: *SIRA Guinée TEST* deployed\\n:test_tube: https://test.synergia-guinee.com\\n:label: ${{ needs.build-and-push.outputs.build_number }}\"}" \
             "${{ secrets.SLACK_WEBHOOK_URL }}" || true
 
       - name: Notify Slack — deploy TEST failure
@@ -403,11 +423,20 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_OAUTH_AUDIENCE: ${{ secrets.GOOGLE_OAUTH_AUDIENCE }}
           FCM_SERVICE_ACCOUNT_B64: ${{ secrets.FCM_SERVICE_ACCOUNT_B64 }}
+          # Stockage photos externe (OVH Object Storage). Vides = MinIO embarqué.
+          MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+          MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+          MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+          MINIO_PUBLIC_URL: ${{ secrets.MINIO_PUBLIC_URL }}
+          MINIO_REGION: ${{ secrets.MINIO_REGION }}
+          MINIO_PUBLIC_READ: ${{ secrets.MINIO_PUBLIC_READ }}
+          MINIO_BUCKET_PHOTOS: ${{ secrets.MINIO_BUCKET_PHOTOS }}
+          MINIO_BUCKET_THUMBNAILS: ${{ secrets.MINIO_BUCKET_THUMBNAILS }}
         with:
           host: ${{ secrets.OVH_HOST }}
           username: ${{ secrets.OVH_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
-          envs: POSTGRES_PASSWORD,EUREKA_PASSWORD,MINIO_ROOT_USER,MINIO_ROOT_PASSWORD,PGADMIN_PASSWORD,GMAIL_USERNAME,GMAIL_APP_PASSWORD,ORANGE_API_CREDENTIALS,ORANGE_SENDER_ADDRESS,SENDER_NAME,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_OAUTH_AUDIENCE,FCM_SERVICE_ACCOUNT_B64
+          envs: POSTGRES_PASSWORD,EUREKA_PASSWORD,MINIO_ROOT_USER,MINIO_ROOT_PASSWORD,PGADMIN_PASSWORD,GMAIL_USERNAME,GMAIL_APP_PASSWORD,ORANGE_API_CREDENTIALS,ORANGE_SENDER_ADDRESS,SENDER_NAME,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_OAUTH_AUDIENCE,FCM_SERVICE_ACCOUNT_B64,MINIO_ENDPOINT,MINIO_ACCESS_KEY,MINIO_SECRET_KEY,MINIO_PUBLIC_URL,MINIO_REGION,MINIO_PUBLIC_READ,MINIO_BUCKET_PHOTOS,MINIO_BUCKET_THUMBNAILS
           script: |
             set -e
 
@@ -463,15 +492,16 @@ jobs:
             NOTIF_HOST_PORT=8093
             IMMO_HOST_PORT=8098
             FRONTEND_HOST_PORT=4202
+            WEB_HOST_PORT=4203
 
-            PGADMIN_EMAIL=admin@sira-guinee.com
+            PGADMIN_EMAIL=admin@synergia-guinee.com
             PGADMIN_PASSWORD=${PGADMIN_PASSWORD}
 
             EUREKA_USER=manager
             EUREKA_PASSWORD=${EUREKA_PASSWORD}
 
-            UI_APP_URL=https://sira-guinee.com
-            OAUTH_ISSUER=https://api.sira-guinee.com
+            UI_APP_URL=https://synergia-guinee.com
+            OAUTH_ISSUER=https://api.synergia-guinee.com
             SESSION_COOKIE_SECURE=true
 
             GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
@@ -480,7 +510,7 @@ jobs:
 
             GMAIL_USERNAME=${GMAIL_USERNAME}
             GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
-            MAIL_FROM_NAME=SIRA Guinée
+            MAIL_FROM_NAME=SYNERGIA
             IMMO_EMAIL_SEND_ENABLED=true
 
             ORANGE_API_CREDENTIALS=${ORANGE_API_CREDENTIALS}
@@ -489,11 +519,21 @@ jobs:
 
             MINIO_ROOT_USER=${MINIO_ROOT_USER}
             MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-            MINIO_PUBLIC_URL=https://api.sira-guinee.com
+            MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL:-https://api.synergia-guinee.com}
 
             FRONTEND_IMAGE_TAG=prod-latest
 
             FCM_SERVICE_ACCOUNT_B64=${FCM_SERVICE_ACCOUNT_B64}
+
+            # Stockage photos : vide = MinIO de la pile, renseigné = OVH Object Storage
+            # (docs/bascule-object-storage-ovh.md)
+            MINIO_ENDPOINT=${MINIO_ENDPOINT}
+            MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+            MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+            MINIO_REGION=${MINIO_REGION}
+            MINIO_PUBLIC_READ=${MINIO_PUBLIC_READ}
+            MINIO_BUCKET_PHOTOS=${MINIO_BUCKET_PHOTOS}
+            MINIO_BUCKET_THUMBNAILS=${MINIO_BUCKET_THUMBNAILS}
             ENVEOF
 
             sed -i 's/^[[:space:]]*//' .env
@@ -528,7 +568,7 @@ jobs:
             sleep 60
 
             RUNNING_SERVICES_PROD=$(sudo docker compose -p sira-prod --env-file .env ps --status running --services)
-            for svc in postgresdb minio gateway authorizationserver userservice immobilierservice frontend; do
+            for svc in postgresdb gateway authorizationserver userservice immobilierservice frontend; do
               if ! echo "$RUNNING_SERVICES_PROD" | grep -qx "$svc"; then
                 echo "Service $svc not running"
                 sudo docker compose -p sira-prod --env-file .env logs --tail=30 "$svc"
@@ -549,14 +589,14 @@ jobs:
               echo "⚠️ conf nginx non trouvée — conf existante conservée, pas de reload"
             fi
 
-            echo "Deployment PROD OK — https://sira-guinee.com"
+            echo "Deployment PROD OK — https://synergia-guinee.com"
 
       - name: Notify Slack — deploy PROD success
         if: success()
         continue-on-error: true
         run: |
           curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\":fire: *SIRA Guinée PROD* deployed\\n:globe_with_meridians: https://sira-guinee.com\\n:label: ${{ needs.build-and-push.outputs.build_number }}\"}" \
+            --data "{\"text\":\":fire: *SIRA Guinée PROD* deployed\\n:globe_with_meridians: https://synergia-guinee.com\\n:label: ${{ needs.build-and-push.outputs.build_number }}\"}" \
             "${{ secrets.SLACK_WEBHOOK_URL }}" || true
 
       - name: Notify Slack — deploy PROD failure

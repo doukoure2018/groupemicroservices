@@ -529,13 +529,13 @@ public class AuthorizationServerConfig {
                 "http://localhost:4202",
                 "http://localhost:4200",
                 // SIRA Guinée prod
-                "https://sira-guinee.com",
-                "https://www.sira-guinee.com",
+                "https://synergia-guinee.com",
+                "https://www.synergia-guinee.com",
                 // SIRA Guinée test (env CI/CD)
-                "https://test.sira-guinee.com",
-                // API SIRA Guinée (pour appels API directs depuis api.sira-guinee.com vers auth)
-                "https://api.sira-guinee.com",
-                "https://api-test.sira-guinee.com",
+                "https://test.synergia-guinee.com",
+                // API SIRA Guinée (pour appels API directs depuis api.synergia-guinee.com vers auth)
+                "https://api.synergia-guinee.com",
+                "https://api-test.synergia-guinee.com",
                 // Mobile origins (YIGUI / SIRA Guinée app)
                 "http://localhost",
                 "capacitor://localhost",

@@ -70,7 +70,7 @@ eureka:
 
 ui:
   app:
-    url: ${UI_APP_URL:https://sira-guinee.com}
+    url: ${UI_APP_URL:https://synergia-guinee.com}
 
 key:
   private: private.key
@@ -104,7 +104,7 @@ sms:
       per:
         hour: 3
   sender:
-    name: ${SENDER_NAME:SIRA Guinée}
+    name: ${SENDER_NAME:SYNERGIA}
   primary:
     provider: orange
   fallback:

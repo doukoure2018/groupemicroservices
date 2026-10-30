@@ -35,7 +35,7 @@ github.com/doukoure2018/groupemicroservices/settings/
 | `OVH_HOST` | `51.255.203.214` | IP fixe du VPS OVH |
 | `OVH_USER` | `ubuntu` | User par défaut OVH Cloud (image Ubuntu). Sudo configuré sans mot de passe via NOPASSWD pour `docker`, `nginx`, `systemctl reload nginx`. |
 | `PROD_SSH_KEY` | (clé privée SSH) | `cat ~/.ssh/id_ed25519` (ou clé dédiée CI/CD). Sa clé publique doit être dans `/home/ubuntu/.ssh/authorized_keys` sur OVH (user `ubuntu`). |
-| `GMAIL_USERNAME` | (cf `.env.prod` local Mac, ligne `GMAIL_USERNAME=`) | Compte Gmail MVP partagé test & prod. Sera remplacé par `contact@sira-guinee.com` quand boite SIRA créée. |
+| `GMAIL_USERNAME` | (cf `.env.prod` local Mac, ligne `GMAIL_USERNAME=`) | Compte Gmail MVP partagé test & prod. Sera remplacé par `contact@synergia-guinee.com` quand boite SIRA créée. |
 | `GMAIL_APP_PASSWORD` | (cf `.env.prod` local Mac, archivé password manager) | App password Gmail (myaccount.google.com/apppasswords). Partagé test & prod. |
 | `ORANGE_API_CREDENTIALS` | (cf `.env.prod` local Mac, format `Basic <base64>`) | developer.orange.com. Partagé test & prod tant que pas de compte Orange dédié SIRA. |
 | `ORANGE_SENDER_ADDRESS` | (cf `.env.prod` local, format `tel:+224XXXXXXXXX`) | Numéro Orange Guinée E.164. Partagé. |

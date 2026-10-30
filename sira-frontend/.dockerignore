@@ -1,0 +1,9 @@
+node_modules
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+e2e/playwright-report
+e2e/test-results
+test-results
+.git
+.DS_Store

@@ -15,8 +15,12 @@ import java.net.URI;
 import java.time.Duration;
 
 /**
- * Configuration du client S3 (compatible MinIO).
- * Utilise l'AWS SDK v2 pour rester portable vers un vrai S3 / Google Cloud Storage / etc.
+ * Configuration du client S3 : MinIO en local, OVHcloud Object Storage (ou tout
+ * S3) en hébergé. Même SDK, seuls le point d'accès, la région et les clés changent.
+ *
+ * <p>La région n'est pas décorative : la signature AWS v4 l'inclut. MinIO accepte
+ * n'importe quelle valeur, OVH exige la région réelle du bucket (gra, sbg,
+ * eu-west-par…) sinon SignatureDoesNotMatch.
  */
 @Configuration
 @Slf4j
@@ -31,17 +35,30 @@ public class S3Config {
     @Value("${minio.secret-key}")
     private String secretKey;
 
+    /** Région de signature v4 : arbitraire pour MinIO, obligatoire et exacte pour OVH. */
+    @Value("${minio.region:us-east-1}")
+    private String region;
+
+    /** Accès par chemin (https://hôte/bucket/clé) : requis par MinIO, accepté par OVH. */
+    @Value("${minio.path-style:true}")
+    private boolean pathStyle;
+
     @Bean
     public S3Client s3Client() {
-        log.info("Initialisation S3Client : endpoint={}", endpoint);
-        return S3Client.builder()
-                .endpointOverride(URI.create(endpoint))
+        log.info("Initialisation S3Client : endpoint={} region={} pathStyle={}", endpoint, region, pathStyle);
+        if (endpoint == null || endpoint.isBlank()) {
+            // Depuis le retrait de MinIO des registres publics, le stockage est
+            // forcément externe : sans point d'accès, les photos sont inopérantes.
+            log.error("minio.endpoint non configuré — le stockage des photos ne fonctionnera pas. "
+                    + "Renseigner MINIO_ENDPOINT (cf docs/bascule-object-storage-ovh.md).");
+        }
+        var constructeur = S3Client.builder()
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(accessKey, secretKey)
                 ))
-                .region(Region.US_EAST_1) // arbitraire pour MinIO (requis par le SDK)
+                .region(Region.of(region))
                 .serviceConfiguration(S3Configuration.builder()
-                        .pathStyleAccessEnabled(true) // OBLIGATOIRE pour MinIO
+                        .pathStyleAccessEnabled(pathStyle)
                         .build())
                 // Borne le temps d'appel S3 : sans ça, si MinIO est down/lent,
                 // le SDK retry-backoff peut bloquer le thread HTTP immo ~1-5 min
@@ -64,7 +81,10 @@ public class S3Config {
                 .overrideConfiguration(ClientOverrideConfiguration.builder()
                         .apiCallTimeout(Duration.ofSeconds(15))
                         .apiCallAttemptTimeout(Duration.ofSeconds(8))
-                        .build())
-                .build();
+                        .build());
+        if (endpoint != null && !endpoint.isBlank()) {
+            constructeur.endpointOverride(URI.create(endpoint));
+        }
+        return constructeur.build();
     }
 }

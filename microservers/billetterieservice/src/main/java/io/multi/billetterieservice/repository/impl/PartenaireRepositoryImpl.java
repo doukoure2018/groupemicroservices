@@ -1,5 +1,7 @@
 package io.multi.billetterieservice.repository.impl;
 
+import io.multi.billetterieservice.exception.ApiException;
+
 import io.multi.billetterieservice.domain.Partenaire;
 import io.multi.billetterieservice.query.PartenaireQuery;
 import io.multi.billetterieservice.repository.PartenaireRepository;
@@ -232,8 +234,9 @@ public class PartenaireRepositoryImpl implements PartenaireRepository {
                     .single();
             return count != null && count > 0;
         } catch (Exception e) {
-            log.warn("Impossible de vérifier les offres pour le partenaire {}: {}", uuid, e.getMessage());
-            return false;
+            // Ne pas masquer l'erreur : la transaction PostgreSQL est déjà abandonnée.
+            log.error("Impossible de vérifier les offres pour le partenaire {}: {}", uuid, e.getMessage());
+            throw new ApiException("Impossible de vérifier les dépendances avant suppression");
         }
     }
 

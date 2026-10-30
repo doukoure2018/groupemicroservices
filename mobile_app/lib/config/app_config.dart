@@ -3,15 +3,15 @@
 ///
 /// 3 environnements supportés :
 ///   - `dev`  : développement local (Mac IP LAN, HTTP, OAuth localhost)
-///   - `test` : env TEST SIRA Guinée CI/CD (test.sira-guinee.com, HTTPS)
-///   - `prod` : env PRODUCTION SIRA Guinée (sira-guinee.com, HTTPS) — DÉFAUT
+///   - `test` : env TEST SIRA Guinée CI/CD (test.synergia-guinee.com, HTTPS)
+///   - `prod` : env PRODUCTION SIRA Guinée (synergia-guinee.com, HTTPS) — DÉFAUT
 ///
 /// Exemples d'usage :
 ///
 ///   # APK release prod (défaut, pas besoin de --dart-define)
 ///   flutter build apk --release
 ///
-///   # APK release TEST (smoke tests sur test.sira-guinee.com avant publier)
+///   # APK release TEST (smoke tests sur test.synergia-guinee.com avant publier)
 ///   flutter build apk --release --dart-define=ENV=test
 ///
 ///   # Run sur émulateur/phone pointant vers Mac LAN (dev local)
@@ -36,13 +36,13 @@ class AppConfig {
   static const String _devApiBase = 'http://172.20.10.6:9000';
   static const String _devAuthBase = 'http://172.20.10.6:8090';
 
-  static const String _testApiBase = 'https://api-test.sira-guinee.com';
+  static const String _testApiBase = 'https://api-test.synergia-guinee.com';
   // En test/prod, le authorizationserver est routé via la gateway :
-  //   - api-test.sira-guinee.com/authorization/** → authorizationserver
-  static const String _testAuthBase = 'https://api-test.sira-guinee.com/authorization';
+  //   - api-test.synergia-guinee.com/authorization/** → authorizationserver
+  static const String _testAuthBase = 'https://api-test.synergia-guinee.com/authorization';
 
-  static const String _prodApiBase = 'https://api.sira-guinee.com';
-  static const String _prodAuthBase = 'https://api.sira-guinee.com/authorization';
+  static const String _prodApiBase = 'https://api.synergia-guinee.com';
+  static const String _prodAuthBase = 'https://api.synergia-guinee.com/authorization';
 
   // ===========================================================================
   // Endpoints actifs (ternaires const, résolus à compile-time)

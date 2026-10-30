@@ -90,15 +90,15 @@ eureka:
 mail:
   from:
     email: ${GMAIL_USERNAME}
-    name: ${MAIL_FROM_NAME:SIRA Guinée}
+    name: ${MAIL_FROM_NAME:SYNERGIA}
 
 ui:
   app:
-    url: ${UI_APP_URL:https://sira-guinee.com}
+    url: ${UI_APP_URL:https://synergia-guinee.com}
 
 verify:
   email:
-    host: ${UI_APP_URL:https://sira-guinee.com}
+    host: ${UI_APP_URL:https://synergia-guinee.com}
 
 key:
   private: private.key
