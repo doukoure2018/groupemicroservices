@@ -81,7 +81,13 @@ export function userApi(client: SiraClient) {
             client.post<Record<string, never>>('/authorization/api/auth/register', { body, auth: false }),
         verifyAccount: (token: string) => client.get<{ user: User }>(`${BASE}/verify/account`, { params: { token }, auth: false }),
         verifyPassword: (token: string) => client.get<{ user: User }>(`${BASE}/verify/password`, { params: { token }, auth: false }),
-        resetPassword: (email: string) => client.post<Record<string, never>>(`${BASE}/resetpassword`, { body: { email }, auth: false }),
+        /**
+         * Contrôleur Java : @RequestParam("email"), donc en paramètre de requête
+         * et non dans le corps. Envoyé dans le corps, le serveur répondait
+         * « paramètre email requis », masqué en 401 par sa page d'erreur protégée :
+         * la fonction n'avait jamais marché depuis le web.
+         */
+        resetPassword: (email: string) => client.post<Record<string, never>>(`${BASE}/resetpassword`, { params: { email }, auth: false }),
         resetPasswordConfirm: (body: { userUuid: string; token: string; password: string; confirmPassword: string }) =>
             client.post<Record<string, never>>(`${BASE}/resetpassword/reset`, { body, auth: false }),
         /**

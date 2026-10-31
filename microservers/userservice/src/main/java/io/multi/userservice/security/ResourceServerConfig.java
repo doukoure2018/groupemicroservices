@@ -55,6 +55,10 @@ public class ResourceServerConfig {
                         //
                         // À RETIRER QUAND : Feign interceptor M2M en place (tâche backlog).
                         // NE PAS "corriger" naïvement en supprimant /user/getUser/** = casse Feign immo.
+                        // Comme sur la passerelle : sans cela, toute erreur interne est
+                        // renvoyée vers /error, lui-même protégé, et ressort en 401
+                        // « You are not logged in » qui masque la cause réelle.
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/actuator/health","/actuator/info","/user/register/**", "/user/verify/account/**","/user/verify/password/**", "/user/resetpassword/**", "/user/image/**","/user/getUser/**","/user/by-role/**","/user/client/**","/user/offLine/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
