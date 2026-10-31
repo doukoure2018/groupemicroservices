@@ -23,8 +23,6 @@
 **/node_modules/
 **/dist/
 
-# Angular cache
-**/.angular/
 
 # Flutter/Dart
 mobile_app/.dart_tool/

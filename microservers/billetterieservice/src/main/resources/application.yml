@@ -74,7 +74,7 @@ eureka:
 
 ui:
   app:
-    url: http://localhost:4202
+    url: http://localhost:5173
 
 key:
   private: private.key

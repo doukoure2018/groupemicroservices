@@ -3,12 +3,10 @@ name: CD - Build & Deploy Web React SIRA Guinée
 # =============================================================================
 # Une seule image pour TEST et PROD. Le client API utilise des chemins relatifs
 # et nginx les relaie au gateway du réseau Docker interne : aucune URL n'est
-# figée à la compilation, contrairement à l'image Angular qui exige deux builds
-# (dette frontend-fileutils-hardcoded-urls).
+# figée à la compilation.
 #
-# Le service déployé est `web`, distinct du service `frontend` Angular. Les deux
-# tournent côte à côte tant que la bascule n'est pas décidée ; basculer ou
-# revenir en arrière se fait en repointant le vhost nginx de l'hôte.
+# Le service déployé est `web`, seul frontend depuis le retrait de l'Angular
+# le 2026-10-31.
 # =============================================================================
 
 permissions:

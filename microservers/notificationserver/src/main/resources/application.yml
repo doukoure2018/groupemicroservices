@@ -93,11 +93,11 @@ mail:
 
 ui:
   app:
-    url: http://localhost:4202
+    url: http://localhost:5173
 
 verify:
   email:
-    host: http://localhost:4202
+    host: http://localhost:5173
 
 key:
   private: private.key

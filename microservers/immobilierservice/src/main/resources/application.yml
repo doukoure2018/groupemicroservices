@@ -76,7 +76,7 @@ eureka:
 
 ui:
   app:
-    url: http://localhost:4202
+    url: http://localhost:5173
 
 jwks:
   uri: http://localhost:8090/oauth2/jwks

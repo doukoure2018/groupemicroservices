@@ -1,5 +1,0 @@
-export enum Key {
-    TOKEN = '[KEY] TOKEN',
-    REFRESH_TOKEN = '[KEY] REFRESH_TOKEN',
-    REDIRECT_URL = '[KEY] REDIRECT_URL'
-}

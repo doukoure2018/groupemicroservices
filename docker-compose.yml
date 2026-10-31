@@ -543,50 +543,12 @@ services:
       start_period: 60s
 
   # ==============================================
-  # FRONTEND
+  # WEB REACT
   # ==============================================
-  # Image variable selon environnement :
-  #   test  → doukoure93/billetterie-frontend:test-latest
-  #   prod  → doukoure93/billetterie-frontend:prod-latest
-  # Tag injecté par le workflow CI/CD via env var FRONTEND_IMAGE_TAG.
-  frontend:
-    image: doukoure93/billetterie-frontend:${FRONTEND_IMAGE_TAG:-prod-latest}
-    ports:
-      - "127.0.0.1:${FRONTEND_HOST_PORT:-4202}:80"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks:
-      - sira-network
-    depends_on:
-      - gateway
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-          cpus: '0.25'
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "5"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:80 || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-
-  # ==============================================
-  # WEB REACT (migration en cours)
-  # ==============================================
-  # Tourne EN PARALLÈLE du service `frontend` Angular, sur un port distinct :
-  # les deux restent servables tant que la bascule n'est pas décidée, et le
-  # retour arrière consiste à repointer le vhost nginx de l'hôte.
-  #
-  # Une seule image pour tous les environnements : le client API utilise des
-  # chemins relatifs et nginx les relaie au gateway du réseau interne. Aucun
-  # build-arg d'URL, contrairement à l'image Angular.
+  # Seul frontend depuis le retrait de l'Angular (2026-10-31). Une seule image
+  # pour tous les environnements : le client API utilise des chemins relatifs
+  # et nginx les relaie au gateway du réseau interne, aucune URL n'est figée à
+  # la compilation.
   web:
     image: doukoure93/sira-web:${WEB_IMAGE_TAG:-prod-latest}
     ports:

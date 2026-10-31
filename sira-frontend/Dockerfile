@@ -1,11 +1,9 @@
 # =============================================================================
 # Image de l'application web React (monorepo npm workspaces).
 #
-# Différence majeure avec l'image Angular : aucune URL n'est figée à la
-# compilation. Le client API utilise `window.location.origin` et des chemins
-# relatifs, et nginx relaie ces chemins vers le gateway du même réseau Docker.
-# Une seule image sert donc TEST et PROD, là où l'Angular en exige deux
-# (dette frontend-fileutils-hardcoded-urls).
+# Aucune URL n'est figée à la compilation. Le client API utilise
+# `window.location.origin` et des chemins relatifs, et nginx relaie ces chemins
+# vers le gateway du même réseau Docker. Une seule image sert donc TEST et PROD.
 # =============================================================================
 
 FROM node:22-alpine AS build

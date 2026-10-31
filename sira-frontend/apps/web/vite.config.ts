@@ -12,9 +12,15 @@ const AUTH_SERVER = 'http://localhost:8090';
 
 /**
  * Origine acceptée par la config CORS de tous les services locaux (billetterie,
- * user, immo, auth). Le navigateur ajoute un en-tête Origin sur les requêtes
- * d'écriture même en same-origin ; sans réécriture, le backend répond « Invalid
- * CORS request » (403). On se présente donc comme l'app Angular whitelistée.
+ * user, immo, auth, gateway). Le navigateur ajoute un en-tête Origin sur les
+ * requêtes d'écriture même en same-origin ; sans réécriture, le backend répond
+ * « Invalid CORS request » (403).
+ *
+ * La valeur est encore l'ancien port de l'Angular, retiré le 2026-10-31 : les
+ * six listes CORS backend et les redirect_uris du client OAuth2 (migration
+ * V38) ne connaissent que celle-là. Y inscrire http://localhost:5173 puis
+ * supprimer cette réécriture est une tâche à part, car elle touche la
+ * configuration de sécurité de six services et demande une migration.
  */
 const ORIGINE_LOCALE_AUTORISEE = 'http://localhost:4202';
 

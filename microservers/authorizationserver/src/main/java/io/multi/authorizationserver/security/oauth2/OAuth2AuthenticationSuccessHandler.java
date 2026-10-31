@@ -37,7 +37,7 @@ public class OAuth2AuthenticationSuccessHandler extends SavedRequestAwareAuthent
 
     private final UserRepository userRepository;
 
-    @Value("${UI_APP_URL:http://localhost:4202}")
+    @Value("${UI_APP_URL:http://localhost:5173}")
     private String uiAppUrl;
 
     @Override

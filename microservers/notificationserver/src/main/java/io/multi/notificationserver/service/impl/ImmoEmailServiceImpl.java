@@ -38,7 +38,7 @@ public class ImmoEmailServiceImpl implements ImmoEmailService {
     private boolean sendEnabled;
 
     /** URL absolue du frontend (utilisée par les templates pour générer les liens CTA). */
-    @Value("${immo.email.ui-url:http://localhost:4202}")
+    @Value("${immo.email.ui-url:http://localhost:5173}")
     private String uiUrl;
 
     @Override

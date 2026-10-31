@@ -257,7 +257,6 @@ jobs:
             BILLET_HOST_PORT=18092
             NOTIF_HOST_PORT=18093
             IMMO_HOST_PORT=18098
-            FRONTEND_HOST_PORT=14202
             WEB_HOST_PORT=14203
 
             PGADMIN_EMAIL=admin-test@synergia-guinee.com
@@ -294,7 +293,6 @@ jobs:
             CINETPAY_API_KEY=${CINETPAY_API_KEY}
             CINETPAY_SITE_ID=${CINETPAY_SITE_ID}
 
-            FRONTEND_IMAGE_TAG=test-latest
 
             FCM_SERVICE_ACCOUNT_B64=${FCM_SERVICE_ACCOUNT_B64}
 
@@ -351,14 +349,16 @@ jobs:
             sleep 10
 
             # Démarre tout
-            sudo docker compose -p sira-test --env-file .env up -d
+            # --remove-orphans retire les conteneurs des services disparus du compose,
+            # en premier lieu l'ancien frontend Angular.
+            sudo docker compose -p sira-test --env-file .env up -d --remove-orphans
             sleep 60
 
             # Healthcheck services critiques via --status running --services
             # (docker compose ps standard ne contient pas "running" mais "Up X
             # seconds" → l'ancien grep -q running produisait des faux négatifs).
             RUNNING_SERVICES=$(sudo docker compose -p sira-test --env-file .env ps --status running --services)
-            for svc in postgresdb gateway authorizationserver userservice immobilierservice frontend; do
+            for svc in postgresdb gateway authorizationserver userservice immobilierservice web; do
               if ! echo "$RUNNING_SERVICES" | grep -qx "$svc"; then
                 echo "Service $svc not running"
                 sudo docker compose -p sira-test --env-file .env logs --tail=30 "$svc"
@@ -514,7 +514,6 @@ jobs:
             BILLET_HOST_PORT=8092
             NOTIF_HOST_PORT=8093
             IMMO_HOST_PORT=8098
-            FRONTEND_HOST_PORT=4202
             WEB_HOST_PORT=4203
 
             PGADMIN_EMAIL=admin@synergia-guinee.com
@@ -551,7 +550,6 @@ jobs:
             CINETPAY_API_KEY=${CINETPAY_API_KEY}
             CINETPAY_SITE_ID=${CINETPAY_SITE_ID}
 
-            FRONTEND_IMAGE_TAG=prod-latest
 
             FCM_SERVICE_ACCOUNT_B64=${FCM_SERVICE_ACCOUNT_B64}
 
@@ -594,11 +592,11 @@ jobs:
             sudo docker compose -p sira-prod --env-file .env up -d zookeeper kafka
             sleep 10
 
-            sudo docker compose -p sira-prod --env-file .env up -d
+            sudo docker compose -p sira-prod --env-file .env up -d --remove-orphans
             sleep 60
 
             RUNNING_SERVICES_PROD=$(sudo docker compose -p sira-prod --env-file .env ps --status running --services)
-            for svc in postgresdb gateway authorizationserver userservice immobilierservice frontend; do
+            for svc in postgresdb gateway authorizationserver userservice immobilierservice web; do
               if ! echo "$RUNNING_SERVICES_PROD" | grep -qx "$svc"; then
                 echo "Service $svc not running"
                 sudo docker compose -p sira-prod --env-file .env logs --tail=30 "$svc"
