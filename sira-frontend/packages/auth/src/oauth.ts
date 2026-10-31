@@ -135,3 +135,25 @@ export async function passwordLogin(config: OAuthConfig, email: string, password
     const json = (await response.json()) as OAuthTokenResponse;
     return tokenSetFromResponse(json);
 }
+
+/**
+ * Connexion par un jeton d'identité Google obtenu nativement sur le
+ * téléphone. Le serveur vérifie le jeton auprès de Google, dont l'audience
+ * doit être l'identifiant client web du projet, puis retrouve ou crée le
+ * compte et répond par nos jetons. Un compte créé ainsi n'a ni téléphone ni
+ * adresse : l'application le complète ensuite.
+ */
+export async function googleLogin(config: OAuthConfig, idToken: string): Promise<TokenSet> {
+    const fetchImpl = config.fetchImpl ?? fetch;
+    const response = await fetchImpl(`${config.authBaseUrl.replace(/\/$/, '')}/api/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ idToken })
+    });
+    const text = await response.text();
+    if (!response.ok) {
+        throw new AuthHttpError(response.status, parseServerMessage(text), text);
+    }
+    const json = JSON.parse(text) as OAuthTokenResponse;
+    return tokenSetFromResponse(json);
+}

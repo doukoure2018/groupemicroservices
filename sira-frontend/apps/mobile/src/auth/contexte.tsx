@@ -2,11 +2,13 @@ import { passwordLogin } from '@sira/auth';
 import type { User } from '@sira/core';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { api, oauthConfig, session } from '../api';
+import { deconnecterGoogle, seConnecterAvecGoogle } from './google';
 
 interface EtatAuth {
     /** undefined tant que la session n'a pas été relue au démarrage. */
     user: User | null | undefined;
     login(email: string, motDePasse: string): Promise<void>;
+    loginGoogle(): Promise<void>;
     logout(): Promise<void>;
     rafraichirProfil(): Promise<void>;
 }
@@ -50,12 +52,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         [rafraichirProfil]
     );
 
+    const loginGoogle = useCallback(async () => {
+        const tokens = await seConnecterAvecGoogle();
+        await session.setTokens(tokens);
+        await rafraichirProfil();
+    }, [rafraichirProfil]);
+
     const logout = useCallback(async () => {
+        await deconnecterGoogle();
         await session.logout();
         setUser(null);
     }, []);
 
-    const valeur = useMemo(() => ({ user, login, logout, rafraichirProfil }), [user, login, logout, rafraichirProfil]);
+    const valeur = useMemo(() => ({ user, login, loginGoogle, logout, rafraichirProfil }), [user, login, loginGoogle, logout, rafraichirProfil]);
     return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;
 }
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/contexte';
+import { ConnexionGoogleAnnulee } from '../auth/google';
 import { config } from '../config';
 import { Bandeau, Bouton, Champ, styles as base } from '../ui/base';
 import { couleurs, espaces } from '../ui/theme';
@@ -11,7 +12,8 @@ import { couleurs, espaces } from '../ui/theme';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function Connexion() {
-    const { login } = useAuth();
+    const { login, loginGoogle } = useAuth();
+    const [googleEnCours, setGoogleEnCours] = useState(false);
     const insets = useSafeAreaInsets();
     const [email, setEmail] = useState('');
     const [motDePasse, setMotDePasse] = useState('');
@@ -81,6 +83,25 @@ export default function Connexion() {
                     <Bouton libelle="Se connecter" onPress={() => void soumettre()} desactive={!valide} enCours={enCours} style={{ marginTop: espaces.lg }} />
 
                     <Bouton libelle="Mot de passe oublié ?" variante="discret" onPress={() => router.push('/mot-de-passe-oublie')} style={{ marginTop: espaces.sm }} />
+
+                    <Bouton
+                        libelle="Continuer avec Google"
+                        variante="secondaire"
+                        enCours={googleEnCours}
+                        onPress={() => {
+                            setErreur(null);
+                            setGoogleEnCours(true);
+                            loginGoogle()
+                                .then(() => router.replace('/(tabs)'))
+                                .catch((e: unknown) => {
+                                    // Annuler n'est pas une erreur. Le reste, si : Google
+                                    // indisponible, jeton refusé par le serveur, réseau.
+                                    if (e instanceof ConnexionGoogleAnnulee) return;
+                                    setErreur(e instanceof AuthHttpError && e.serverMessage ? e.serverMessage : 'Connexion Google impossible pour le moment. Réessayez ou utilisez votre email.');
+                                })
+                                .finally(() => setGoogleEnCours(false));
+                        }}
+                    />
 
                     <View style={styles.separateur} />
                     <Text style={styles.pied}>Pas encore de compte ?</Text>

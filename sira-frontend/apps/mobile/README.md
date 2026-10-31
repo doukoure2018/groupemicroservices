@@ -46,7 +46,8 @@ EXPO_PUBLIC_ENV=test npx expo export --platform android --output-dir .expo-expor
 
 ## Parcours couverts
 
-Connexion par email et mot de passe, inscription d'un particulier (les agences
+Connexion par email et mot de passe ou par Google (avec complétion du profil,
+adresse exigée, au premier passage), inscription d'un particulier (les agences
 s'inscrivent sur le site), activation du compte par lien profond `sira://verify`
 (la page du site active puis renvoie vers l'application, connectée d'emblée),
 mot de passe oublié (le lien du courriel mène à la page du site), recherche de voyage (villes actives, sept prochains jours),
@@ -65,8 +66,9 @@ vert ou rouge avec le message du serveur.
 
 ## Reste à porter depuis le Flutter
 
-Complétion de profil après connexion Google, notifications poussées sur iOS
-(voir ci-dessous), connexion Google.
+Notifications poussées et connexion Google sur iOS : les deux demandent un
+fichier `GoogleService-Info.plist` et une décision sur la chaîne de push
+(voir ci-dessous). Le périmètre fonctionnel du Flutter est couvert.
 
 ## Lien profond d'activation
 
@@ -99,3 +101,17 @@ serveur.
 Expo Go ne reçoit plus de notifications poussées sur Android depuis le SDK 53 :
 pour les tester il faut une construction de développement ou l'APK du profil
 `test`. Les notifications in-app, elles, fonctionnent dans Expo Go.
+
+## Connexion Google
+
+Module natif `@react-native-google-signin/google-signin`, configuré avec
+l'identifiant client web du projet Google : c'est l'audience que le serveur
+vérifie sur le jeton d'identité (`POST /authorization/api/auth/google`), qui
+retrouve ou crée le compte. Android est prêt grâce au `google-services.json`
+repris du Flutter. iOS attend un `GoogleService-Info.plist` et l'option
+`iosUrlScheme` du plugin.
+
+Comme les notifications poussées, ce module ne fonctionne pas dans Expo Go :
+il faut une construction de développement (`npx expo run:android`) ou l'APK du
+profil `test`. Dans Expo Go, le bouton Google échoue proprement et la
+connexion par email reste disponible.

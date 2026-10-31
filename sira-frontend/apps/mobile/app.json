@@ -41,7 +41,8 @@
         {
           "cameraPermission": "SYNERGIA utilise l'appareil photo pour lire le code QR des billets à l'embarquement."
         }
-      ]
+      ],
+      "@react-native-google-signin/google-signin"
     ],
     "scheme": [
       "sira",

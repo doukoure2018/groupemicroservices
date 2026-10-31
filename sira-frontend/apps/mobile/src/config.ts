@@ -18,6 +18,14 @@ interface ConfigEnvironnement {
     siteWeb: string;
 }
 
+/**
+ * Identifiant client web du projet Google, le même que l'audience que le
+ * serveur exige sur le jeton d'identité. Public par nature, il est aussi dans
+ * google-services.json ; il ne change pas entre test et production, les deux
+ * environnements partageant le projet Google.
+ */
+export const GOOGLE_WEB_CLIENT_ID = '421665850163-70gvngsk2g8frt4g6vlhrs2tl40aemoe.apps.googleusercontent.com';
+
 const ENVIRONNEMENTS: Record<Environnement, ConfigEnvironnement> = {
     test: {
         nom: 'test',

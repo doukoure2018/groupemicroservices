@@ -35,6 +35,9 @@ export default function Onglets() {
     if (user === undefined) return <Chargement />;
     // Toute la zone connectée passe par ici : pas de session, pas d'onglets.
     if (user === null) return <Redirect href="/connexion" />;
+    // Un compte né d'une connexion Google n'a pas d'adresse : on la demande
+    // une fois, comme l'inscription par email l'exige dès le départ.
+    if (!user.address) return <Redirect href="/completer-profil" />;
 
     // Le contrôle des billets n'est montré qu'aux rôles qui ont le droit de
     // valider ; le serveur applique la même règle, l'onglet n'est qu'un confort.

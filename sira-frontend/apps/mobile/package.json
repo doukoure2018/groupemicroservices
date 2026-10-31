@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@react-native-google-signin/google-signin": "^17.0.0",
     "@sira/api-client": "*",
     "@sira/auth": "*",
     "@sira/core": "*",
