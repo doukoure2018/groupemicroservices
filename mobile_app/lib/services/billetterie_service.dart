@@ -68,6 +68,20 @@ class BilletterieService {
     return avisList;
   }
 
+  /// GET /billetterie/paiements/{reference}/etat - Sort d'un paiement en ligne.
+  ///
+  /// Chaque appel fait vérifier le paiement auprès du prestataire côté serveur :
+  /// c'est ce qui confirme une commande même si la notification serveur à
+  /// serveur s'est perdue. Renvoie la commande à jour, dont le statut passe de
+  /// EN_ATTENTE à CONFIRMEE (payé) ou ANNULEE (refusé, expiré).
+  Future<Map<String, dynamic>> getEtatPaiement(String referencePaiement) async {
+    final response = await _api.get(
+      '$_basePath/paiements/${Uri.encodeComponent(referencePaiement)}/etat',
+    );
+    final data = response.data['data'] as Map<String, dynamic>;
+    return data['commande'] as Map<String, dynamic>;
+  }
+
   /// GET /billetterie/commandes/{uuid} - Récupérer une commande avec billets
   Future<Map<String, dynamic>> getCommandeByUuid(String commandeUuid) async {
     final response = await _api.get('$_basePath/commandes/$commandeUuid');

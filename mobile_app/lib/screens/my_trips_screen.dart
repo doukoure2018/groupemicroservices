@@ -63,6 +63,44 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
     }
   }
 
+  /// Rouvre la page du prestataire, dans le navigateur externe pour que les
+  /// applications Orange Money et MTN puissent s'enchaîner.
+  Future<void> _reprendrePaiement(Commande commande) async {
+    final uri = Uri.tryParse(commande.urlPaiement ?? '');
+    if (uri == null) return;
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Impossible d'ouvrir la page de paiement.")),
+      );
+    }
+  }
+
+  /// Fait vérifier le paiement auprès du prestataire côté serveur, puis
+  /// recharge la liste : une commande payée sort de l'attente, une commande
+  /// refusée passe en annulée.
+  Future<void> _verifierPaiement(Commande commande) async {
+    final reference = commande.referencePaiement;
+    if (reference == null || reference.isEmpty) return;
+    try {
+      final maj = await _billetterieService.getEtatPaiement(reference);
+      if (!mounted) return;
+      final statut = maj['statut']?.toString();
+      final message = switch (statut) {
+        'CONFIRMEE' || 'PAYEE' => 'Paiement reçu : vos billets sont disponibles.',
+        'ANNULEE' => "Le paiement n'a pas abouti, la réservation a été annulée.",
+        _ => 'Paiement toujours en attente chez votre opérateur.',
+      };
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      await _loadCommandes();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vérification impossible pour le moment. Réessayez.')),
+      );
+    }
+  }
+
   Future<void> _annulerCommande(Commande commande) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -609,6 +647,82 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (commande.attendPaiement) {
+      // Paiement en ligne non terminé : les billets ne sont pas des titres de
+      // transport valides, on ne les montre pas. Le client peut reprendre le
+      // règlement là où il s'est arrêté, tant que le lien du prestataire vit.
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: ColorManager.warningLight,
+              borderRadius: BorderRadius.circular(AppRadius.r12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.schedule, size: 18, color: ColorManager.warning),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Paiement non terminé. Les billets seront émis après règlement, '
+                    'et les places remises en vente si le paiement n\'aboutit pas.',
+                    style: getRegularStyle(
+                      color: ColorManager.textPrimary,
+                      fontSize: FontSize.s12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSize.s8),
+          if (commande.peutReprendrePaiement)
+            ElevatedButton.icon(
+              onPressed: () => _reprendrePaiement(commande),
+              icon: const Icon(Icons.credit_card, size: 18),
+              label: Text(
+                'Reprendre le paiement',
+                style: getMediumStyle(
+                  color: ColorManager.white,
+                  fontSize: FontSize.s14,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorManager.primary,
+                foregroundColor: ColorManager.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.r12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                elevation: 0,
+              ),
+            ),
+          const SizedBox(height: AppSize.s8),
+          OutlinedButton.icon(
+            onPressed: () => _verifierPaiement(commande),
+            icon: const Icon(Icons.refresh, size: 18),
+            label: Text(
+              'Vérifier le paiement',
+              style: getMediumStyle(
+                color: ColorManager.textSecondary,
+                fontSize: FontSize.s14,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: ColorManager.textSecondary,
+              side: const BorderSide(color: ColorManager.grey1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.r12),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
         ],

@@ -9,6 +9,9 @@ class Commande {
   final String devise;
   final String statut;
   final String? referencePaiement;
+
+  /// Lien du prestataire, présent tant qu'un paiement en ligne reste à faire.
+  final String? urlPaiement;
   final String? offreUuid;
   final DateTime dateDepart;
   final String heureDepart;
@@ -31,6 +34,7 @@ class Commande {
     required this.devise,
     required this.statut,
     this.referencePaiement,
+    this.urlPaiement,
     this.offreUuid,
     required this.dateDepart,
     required this.heureDepart,
@@ -44,6 +48,13 @@ class Commande {
     this.billets = const [],
     this.createdAt,
   });
+
+  /// Paiement en ligne non terminé : billets pas encore utilisables.
+  bool get attendPaiement => statut == 'EN_ATTENTE';
+
+  /// Reprise possible tant que la commande attend et que le lien est connu.
+  bool get peutReprendrePaiement =>
+      attendPaiement && urlPaiement != null && urlPaiement!.isNotEmpty;
 
   bool get isCancelled => statut == 'ANNULEE' || statut == 'REMBOURSEE';
 
@@ -121,6 +132,7 @@ class Commande {
       devise: json['devise'] ?? 'GNF',
       statut: json['statut'] ?? 'EN_ATTENTE',
       referencePaiement: json['referencePaiement'],
+      urlPaiement: json['urlPaiement'],
       offreUuid: json['offreUuid'],
       dateDepart: _parseDate(json['dateDepart']),
       heureDepart: _parseTime(json['heureDepart']),
