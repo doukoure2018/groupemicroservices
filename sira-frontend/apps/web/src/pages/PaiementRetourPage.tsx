@@ -3,6 +3,7 @@ import { formatMontant, type CommandeClient } from '@sira/core';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
+import { useAuth } from '../auth-context';
 import { ConfirmationCommande } from '../components/ConfirmationCommande';
 
 /**
@@ -21,6 +22,7 @@ const TENTATIVES_MAX = 30;
 
 export function PaiementRetourPage() {
     const [params] = useSearchParams();
+    const { user } = useAuth();
 
     // Lue une seule fois : la référence ne change pas en cours de route, et la
     // relire déclencherait une nouvelle requête à chaque rendu.
@@ -42,7 +44,9 @@ export function PaiementRetourPage() {
     const etatQuery = useQuery({
         queryKey: ['paiement-etat', reference],
         queryFn: async () => (await api.paiements.etat(reference)).data.commande,
-        enabled: !!reference,
+        // Sans session web, interroger l'état donnerait un 401 : la page bascule
+        // alors sur le renvoi vers l'application, qui suit le paiement elle-même.
+        enabled: !!reference && !!user,
         // Tant que la commande attend, on redemande : le serveur interroge le
         // prestataire à chaque appel, c'est ce qui finit par trancher.
         refetchInterval: (query) => {
@@ -75,6 +79,34 @@ export function PaiementRetourPage() {
             /* navigation privée : sans conséquence, la référence est dans l'adresse */
         }
     }, [commande]);
+
+    if (user === undefined) {
+        return <Message icone="pi-spin pi-spinner" titre="Un instant…" texte="Nous retrouvons votre session." />;
+    }
+
+    // Aucune session web : le paiement a presque sûrement été lancé depuis
+    // l'application mobile, dont le navigateur revient ici après le prestataire.
+    // L'application suit le paiement d'elle-même ; il suffit d'y retourner.
+    if (user === null) {
+        const lienApp = reference ? `sira://paiement/${encodeURIComponent(reference)}` : 'sira://';
+        return (
+            <Message
+                icone="pi-mobile"
+                titre="Retournez dans l'application"
+                texte="Votre paiement est pris en compte. L'application SYNERGIA vérifie son état et affichera vos billets dès que l'opérateur l'aura confirmé. Vous pouvez fermer cette page."
+                action={
+                    <>
+                        <a className="bouton-lien" href={lienApp}>
+                            <i className="pi pi-mobile" aria-hidden="true" /> Ouvrir l'application
+                        </a>
+                        <Link className="lien-discret" to={`/login?redirect=${encodeURIComponent('/paiement/retour' + (reference ? `?reference=${encodeURIComponent(reference)}` : ''))}`}>
+                            J'ai payé depuis le site : me connecter
+                        </Link>
+                    </>
+                }
+            />
+        );
+    }
 
     if (!reference) {
         return (

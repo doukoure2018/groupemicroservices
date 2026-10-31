@@ -145,14 +145,10 @@ export function App() {
                                 </RequireAuth>
                             }
                         />
-                        <Route
-                            path="/paiement/retour"
-                            element={
-                                <RequireAuth>
-                                    <PaiementRetourPage />
-                                </RequireAuth>
-                            }
-                        />
+                        {/* Pas de RequireAuth : un paiement lancé depuis l'application mobile
+                            revient ici dans le navigateur du téléphone, sans session web. La page
+                            distingue elle-même ce cas et renvoie vers l'application. */}
+                        <Route path="/paiement/retour" element={<PaiementRetourPage />} />
                         <Route
                             path="/mes-voyages"
                             element={
