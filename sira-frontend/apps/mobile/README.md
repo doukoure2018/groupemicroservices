@@ -54,11 +54,13 @@ résultats, détail, réservation (passagers, mode de règlement), paiement en
 ligne (page du prestataire dans le navigateur du système, puis interrogation
 de l'état jusqu'à décision), billets avec code QR, mes voyages avec reprise
 d'un paiement interrompu, changement de date vers un autre départ du même
-trajet (montant réglé conservé, règle du serveur) et annulation, profil.
+trajet (montant réglé conservé, règle du serveur), annulation et notation d'un
+voyage effectué (note de 1 à 5, commentaire facultatif, un seul avis par
+commande), profil.
 
 ## Reste à porter depuis le Flutter
 
-Complétion de profil après connexion Google, notation du voyage, notifications, scanner du
+Complétion de profil après connexion Google, notifications, scanner du
 contrôleur, connexion Google.
 
 ## Lien profond d'activation

@@ -110,3 +110,30 @@ export function peutReprendrePaiement(commande: CommandeClient): boolean {
 export function attendPaiement(commande: CommandeClient): boolean {
     return commande.statut === 'EN_ATTENTE';
 }
+
+/** Avis laissé par le voyageur sur une commande, note de 1 à 5. */
+export interface AvisRequest {
+    commandeUuid: string;
+    note: number;
+    commentaire?: string;
+}
+
+export interface AvisClient {
+    avisUuid?: string;
+    commandeUuid?: string;
+    note?: number;
+    commentaire?: string;
+    createdAt?: string;
+}
+
+/**
+ * Un voyage se note une fois parti : le serveur accepte les commandes
+ * confirmées, payées ou utilisées, et refuse un second avis. L'application
+ * n'a pas le moyen de savoir d'avance si un avis existe déjà, elle s'en remet
+ * au refus du serveur.
+ */
+export function peutNoterVoyage(commande: CommandeClient, aujourdhuiIso: string = new Date().toISOString().slice(0, 10)): boolean {
+    if (!['CONFIRMEE', 'PAYEE', 'UTILISEE', 'TERMINEE'].includes(commande.statut ?? '')) return false;
+    if (!commande.dateDepart) return false;
+    return String(commande.dateDepart).slice(0, 10) < aujourdhuiIso;
+}

@@ -1,4 +1,6 @@
 import type {
+    AvisClient,
+    AvisRequest,
     ActifStats,
     Arrivee,
     ArriveeRequest,
@@ -195,6 +197,17 @@ export function commandeApi(client: SiraClient) {
 export function paiementApi(client: SiraClient) {
     return {
         etat: (reference: string) => client.get<{ commande: CommandeClient }>(`${BASE}/paiements/${encodeURIComponent(reference)}/etat`)
+    };
+}
+
+/**
+ * Avis des voyageurs. La création est réservée au propriétaire de la commande
+ * et refusée au second avis ; la lecture par offre est publique et reste
+ * exposée sous `offres.avis` pour les écrans qui l'utilisent déjà.
+ */
+export function avisApi(client: SiraClient) {
+    return {
+        creer: (body: AvisRequest) => client.post<{ avis: AvisClient }>(`${BASE}/avis`, { body })
     };
 }
 

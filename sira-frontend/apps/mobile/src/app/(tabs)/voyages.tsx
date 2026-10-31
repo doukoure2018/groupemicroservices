@@ -6,6 +6,7 @@ import {
     getStatutCommandeLabel,
     getStatutCommandeSeverity,
     isCommandeAnnulable,
+    peutNoterVoyage,
     peutReprendrePaiement,
     type CommandeClient
 } from '@sira/core';
@@ -56,6 +57,7 @@ function CarteCommande({ commande }: { commande: CommandeClient }) {
     const queryClient = useQueryClient();
     const [confirmer, setConfirmer] = useState(false);
     const severite = getStatutCommandeSeverity(commande.statut);
+    const avisDonne = queryClient.getQueryData<boolean>(['avis-donne', commande.commandeUuid]) === true;
 
     const annuler = useMutation({
         mutationFn: async () => api.commandes.annuler(commande.commandeUuid!),
@@ -102,6 +104,10 @@ function CarteCommande({ commande }: { commande: CommandeClient }) {
                         onPress={() => router.push({ pathname: '/commande/[uuid]', params: { uuid: commande.commandeUuid! } })}
                     />
                 )}
+                {peutNoterVoyage(commande) && !avisDonne && (
+                    <Bouton libelle="Noter ce voyage" variante="secondaire" onPress={() => router.push({ pathname: '/noter/[uuid]', params: { uuid: commande.commandeUuid! } })} />
+                )}
+                {avisDonne && <Text style={[base.attenue, { textAlign: 'center' }]}>Merci, votre avis a été enregistré.</Text>}
                 {peutChangerDeDate(commande) && (
                     <Bouton
                         libelle="Changer de date"
