@@ -64,6 +64,8 @@ export default function Connexion() {
                         autoCapitalize="none"
                         autoComplete="email"
                         keyboardType="email-address"
+                        autoCorrect={false}
+                        spellCheck={false}
                         textContentType="emailAddress"
                         placeholder="nom@email.com"
                     />
