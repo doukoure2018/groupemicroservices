@@ -10,3 +10,4 @@ export * from './reglement.js';
 export * from './partenaire.js';
 export * from './immo.js';
 export * from './format.js';
+export * from './notification.js';

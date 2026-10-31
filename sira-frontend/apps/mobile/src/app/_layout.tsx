@@ -49,6 +49,7 @@ export default function Racine() {
                         <Stack.Screen name="commande/[uuid]" options={{ title: 'Vos billets' }} />
                         <Stack.Screen name="modifier-date/[uuid]" options={{ title: 'Changer de date' }} />
                         <Stack.Screen name="noter/[uuid]" options={{ title: 'Noter le voyage' }} />
+                        <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
                     </Stack>
                 </AuthProvider>
             </QueryClientProvider>

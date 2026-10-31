@@ -1,4 +1,5 @@
 import type {
+    AppNotification,
     AvisClient,
     AvisRequest,
     ActifStats,
@@ -274,7 +275,16 @@ export function commercialApi(client: SiraClient) {
 /** Notifications in-app + enregistrement des tokens FCM (mobile). */
 export function notificationApi(client: SiraClient) {
     return {
-        list: () => client.get<{ notifications: unknown[] }>(`${BASE}/notifications`),
+        list: () => client.get<{ notifications: AppNotification[] }>(`${BASE}/notifications`),
+        unreadCount: () => client.get<{ unreadCount: number }>(`${BASE}/notifications/unread-count`),
+        // Contrôleur Java : @PutMapping("/{id}/read") et @PutMapping("/read-all").
+        markRead: (id: number) => client.put<Record<string, never>>(`${BASE}/notifications/${id}/read`),
+        markAllRead: () => client.put<Record<string, never>>(`${BASE}/notifications/read-all`),
+        /**
+         * Jeton natif de l'appareil, FCM sur Android. Le serveur envoie par FCM :
+         * un jeton APNs brut d'iOS ne lui servirait à rien, l'application ne
+         * l'enregistre donc pas tant que la chaîne iOS n'est pas décidée.
+         */
         registerDeviceToken: (token: string, platform: 'IOS' | 'ANDROID') =>
             client.post<Record<string, never>>(`${BASE}/device-tokens`, { body: { token, platform } })
     };

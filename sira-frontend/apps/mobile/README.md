@@ -56,12 +56,14 @@ de l'état jusqu'à décision), billets avec code QR, mes voyages avec reprise
 d'un paiement interrompu, changement de date vers un autre départ du même
 trajet (montant réglé conservé, règle du serveur), annulation et notation d'un
 voyage effectué (note de 1 à 5, commentaire facultatif, un seul avis par
-commande), profil.
+commande), notifications in-app (cloche avec compteur de non-lues, liste,
+marquage lu, tap vers la commande ou la notation) et notifications poussées
+sur Android (jeton FCM natif enregistré auprès du serveur), profil.
 
 ## Reste à porter depuis le Flutter
 
-Complétion de profil après connexion Google, notifications, scanner du
-contrôleur, connexion Google.
+Complétion de profil après connexion Google, notifications poussées sur iOS
+(voir ci-dessous), scanner du contrôleur, connexion Google.
 
 ## Lien profond d'activation
 
@@ -79,3 +81,18 @@ Pour l'essayer sans courriel, depuis un terminal avec un appareil connecté :
 ```bash
 npx uri-scheme open "sira://verify?token=<jeton>" --android
 ```
+
+## Notifications poussées
+
+Le serveur envoie par FCM. Sur Android, le jeton natif rendu par
+`expo-notifications` est un jeton FCM : il est enregistré tel quel auprès du
+serveur à la connexion, avec le fichier `google-services.json` repris du
+Flutter (même paquet Android, même projet Firebase). Sur iOS, le jeton natif
+est un jeton APNs que le serveur ne sait pas utiliser sans le SDK Firebase :
+rien n'est enregistré tant que la chaîne iOS n'est pas décidée, soit le SDK
+Firebase dans l'application, soit un envoi par le service de push d'Expo côté
+serveur.
+
+Expo Go ne reçoit plus de notifications poussées sur Android depuis le SDK 53 :
+pour les tester il faut une construction de développement ou l'APK du profil
+`test`. Les notifications in-app, elles, fonctionnent dans Expo Go.
