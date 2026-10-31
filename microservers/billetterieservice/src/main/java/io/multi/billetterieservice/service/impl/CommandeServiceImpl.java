@@ -108,7 +108,12 @@ public class CommandeServiceImpl implements CommandeService {
                 .add(fraisFixe);
         BigDecimal montantTotal = montantPlaces.add(montantFraisService);
         BigDecimal montantPaye = montantTotal.add(montantFraisPaiement);
-        String referencePaiement = "PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        // UUID complet, et non tronqué à 8 caractères : 32 bits suffisaient pour
+        // qu'une collision devienne probable vers quelques dizaines de milliers
+        // de commandes, alors que la confirmation lit cette référence en
+        // attendant une ligne unique. L'index uq_commandes_reference_paiement
+        // ferme la porte, encore faut-il ne jamais avoir à la pousser.
+        String referencePaiement = "PAY-" + UUID.randomUUID().toString().replace("-", "").toUpperCase();
 
         // 3 bis. Mode en ligne ou hors ligne ?
         // Un prestataire déclaré pour ce mode signifie que le client doit payer
