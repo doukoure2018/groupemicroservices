@@ -105,10 +105,13 @@ export class SiraClient {
         }
 
         const fetchImpl = this.config.fetchImpl ?? fetch;
-        const timeout = AbortSignal.timeout(this.config.timeoutMs ?? 30_000);
-        const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
+        const { signal, liberer } = signalAvecDelai(options.signal, this.config.timeoutMs ?? 30_000);
 
-        return fetchImpl(url, { method, headers, body, signal });
+        try {
+            return await fetchImpl(url, { method, headers, body, signal });
+        } finally {
+            liberer();
+        }
     }
 
     private buildUrl(path: string, params?: QueryParams): string {
@@ -162,4 +165,32 @@ export class SiraClient {
     delete<T>(path: string, options?: RequestOptions): Promise<ApiResponse<T>> {
         return this.request<T>('DELETE', path, options);
     }
+}
+
+/**
+ * Combine le signal d'annulation de l'appelant avec un délai d'expiration.
+ *
+ * `AbortSignal.timeout` et `AbortSignal.any` existent dans les navigateurs et
+ * Node, pas dans React Native, dont l'implémentation d'AbortController est
+ * minimale. Le même client servant le web et le mobile, on recompose le
+ * comportement à la main avec un minuteur et une écoute du signal amont, et on
+ * libère les deux une fois la réponse obtenue pour ne rien laisser traîner.
+ */
+function signalAvecDelai(amont: AbortSignal | undefined, delaiMs: number): { signal: AbortSignal; liberer: () => void } {
+    const controleur = new AbortController();
+    const minuteur = setTimeout(() => controleur.abort(new Error(`Délai de ${delaiMs} ms dépassé`)), delaiMs);
+
+    const relayer = () => controleur.abort(amont?.reason);
+    if (amont) {
+        if (amont.aborted) relayer();
+        else amont.addEventListener('abort', relayer, { once: true });
+    }
+
+    return {
+        signal: controleur.signal,
+        liberer: () => {
+            clearTimeout(minuteur);
+            amont?.removeEventListener('abort', relayer);
+        }
+    };
 }

@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Microservices application with a Spring Boot backend and a React web frontend for transport ticketing (billetterie) and real estate (immobilier) in Guinea. A Flutter mobile app exists and is slated for a rebuild in React Native (Expo).
+Microservices application with a Spring Boot backend and a React web frontend for transport ticketing (billetterie) and real estate (immobilier) in Guinea. The mobile app is being rebuilt in React Native (Expo) in `sira-frontend/apps/mobile`; the legacy Flutter app in `mobile_app/` stays until parity.
 
 ## Tech Stack
 
 - **Backend**: Java 21, Spring Boot 3.4.1, Spring Cloud 2024.0.0
 - **Web frontend**: React 19 + TypeScript + Vite, PrimeReact 10 (keep ^10, v11 is incompatible), TanStack Query, react-router-dom 7, npm workspaces monorepo in `sira-frontend/`
-- **Mobile**: Flutter app in `mobile_app/` (to be rebuilt with Expo in `sira-frontend/apps/mobile`)
+- **Mobile**: Expo SDK 58 + Expo Router in `sira-frontend/apps/mobile` (`EXPO_PUBLIC_ENV=test|prod`, defaults to test; run `npx expo start` there, verify with `npx tsc --noEmit`, `npx expo-doctor`, `npx expo export`). Legacy Flutter app in `mobile_app/` until parity. React must stay a single version across the monorepo (currently 19.3.0): a duplicate React breaks the mobile bundle.
 - **Database**: PostgreSQL 16 (port 5433)
 - **Messaging**: Apache Kafka
 - **Auth**: OAuth2 Authorization Server with JWT

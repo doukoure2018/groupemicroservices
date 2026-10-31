@@ -1,6 +1,6 @@
 # sira-frontend — Monorepo React / React Native
 
-Frontends SYNERGIA : web React (en service, l'Angular a été retiré le 2026-10-31 une fois la parité atteinte) et, à venir, mobile React Native/Expo en remplacement du Flutter.
+Frontends SYNERGIA : web React (en service, l'Angular a été retiré le 2026-10-31 une fois la parité atteinte) et mobile React Native/Expo (`apps/mobile`, démarré le 2026-10-31, remplace progressivement le Flutter de `mobile_app/`). Voir `apps/mobile/README.md`.
 Le backend (gateway `:9000`) ne change pas — tout ce monorepo consomme le même contrat API.
 
 ## Structure

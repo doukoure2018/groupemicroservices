@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "SYNERGIA",
+    "slug": "synergia",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sira.guinee.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1b5e3b",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.billetterie.gn"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-secure-store",
+      "expo-web-browser"
+    ],
+    "scheme": [
+      "sira",
+      "synergia"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
