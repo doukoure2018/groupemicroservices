@@ -378,7 +378,7 @@ services:
       CHAPCHAP_ENCRYPTION_PASSWORD: ${CHAPCHAP_ENCRYPTION_PASSWORD:-}
       CHAPCHAP_BASE_URL: ${CHAPCHAP_BASE_URL:-https://chapchappay.com/api}
       CHAPCHAP_MODES: ${CHAPCHAP_MODES:-}
-      CHAPCHAP_MODE_FRAIS: ${CHAPCHAP_MODE_FRAIS:-deduct}
+      CHAPCHAP_FEE_HANDLING: ${CHAPCHAP_FEE_HANDLING:-deduct}
       UI_APP_URL: ${UI_APP_URL}
       OAUTH_ISSUER: ${OAUTH_ISSUER}
       # Demande d'avis post-voyage : délai (h) après arrivée. 24h prod, 0 en TEST.

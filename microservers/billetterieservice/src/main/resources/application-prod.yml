@@ -114,14 +114,15 @@ paiement:
     # Codes de modes de règlement confiés à ce prestataire. Il couvre, en plus
     # d'Orange Money et MTN, des moyens proprement guinéens que CinetPay ignore.
     modes: ${CHAPCHAP_MODES:}
-    # Les frais sont retenus sur le montant encaissé : le marchand GUIDIPRESS
+    # Champ fee_handling de l'API. Les frais sont retenus sur le montant
+    # encaissé : le marchand GUIDIPRESS
     # n'est pas autorisé au mode « add », qui les ajouterait à la charge du
     # client. Encaisser 100 000 rapporte donc moins de 100 000.
-    mode-frais: ${CHAPCHAP_MODE_FRAIS:deduct}
+    fee-handling: ${CHAPCHAP_FEE_HANDLING:deduct}
     # Bornes imposées par le prestataire pour ce marchand. Une commande hors
     # de ces bornes sera refusée par lui, autant le savoir avant d'appeler.
-    montant-min: ${CHAPCHAP_MONTANT_MIN:1000}
-    montant-max: ${CHAPCHAP_MONTANT_MAX:5000000}
+    min-amount: ${CHAPCHAP_MIN_AMOUNT:1000}
+    max-amount: ${CHAPCHAP_MAX_AMOUNT:5000000}
   cinetpay:
     api-key: ${CINETPAY_API_KEY:}
     site-id: ${CINETPAY_SITE_ID:}
