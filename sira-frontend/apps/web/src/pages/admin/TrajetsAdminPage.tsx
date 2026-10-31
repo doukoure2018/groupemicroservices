@@ -10,6 +10,7 @@ import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { useMemo, useRef, useState } from 'react';
 import { api } from '../../api';
+import { confirmerSuppression } from './shared';
 
 interface TrajetForm {
     departUuid: string;
@@ -94,6 +95,17 @@ export function TrajetsAdminPage() {
             rafraichir();
         },
         onError: (err) => notifErreur(err, 'Impossible de changer le statut du trajet.')
+    });
+
+    // Un trajet encore porté par des offres sera refusé par le serveur, qui
+    // garde le dernier mot : le message d'erreur remonte tel quel.
+    const supprimer = useMutation({
+        mutationFn: async (trajet: Trajet) => api.transport.deleteTrajet(trajet.trajetUuid!),
+        onSuccess: () => {
+            toast.current?.show({ severity: 'success', summary: 'Trajet supprimé' });
+            rafraichir();
+        },
+        onError: (err) => notifErreur(err, 'Impossible de supprimer ce trajet. Vérifiez qu\'aucune offre ne l\'utilise.')
     });
 
     function ouvrirCreation() {
@@ -193,6 +205,15 @@ export function TrajetsAdminPage() {
                                 tooltip={t.actif ? 'Désactiver' : 'Activer'}
                                 disabled={toggleActif.isPending}
                                 onClick={() => toggleActif.mutate(t)}
+                            />
+                            <Button
+                                icon="pi pi-trash"
+                                rounded
+                                text
+                                severity="danger"
+                                tooltip="Supprimer"
+                                disabled={supprimer.isPending}
+                                onClick={() => confirmerSuppression(t.libelleTrajet || 'ce trajet', () => supprimer.mutate(t))}
                             />
                         </div>
                     )}

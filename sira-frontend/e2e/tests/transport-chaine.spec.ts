@@ -259,6 +259,28 @@ test('véhicules : création et transitions de statut (maintenance → remise en
     await attendreToastSucces(page);
     ligne = await trouverLigne(page, IMMAT);
     await expect(ligne.locator('.p-tag')).toHaveText('Actif');
+
+    // Cycle complet sur un véhicule temporaire : création puis suppression. Le
+    // véhicule E2E principal porte l'offre des tests suivants et reste en place.
+    const IMMAT_TEMP = 'E2E-TEMP';
+    while ((await trouverLigne(page, IMMAT_TEMP).catch(() => null)) !== null) {
+        await boutonIcone(await trouverLigne(page, IMMAT_TEMP), 'pi-trash').click();
+        await accepterConfirmation(page, 'Supprimer');
+        await attendreToastSucces(page);
+    }
+    await page.getByRole('button', { name: 'Nouveau véhicule' }).click();
+    const creation = dialogVisible(page, 'Nouveau véhicule');
+    await champSousLabel(creation, /^Immatriculation/).fill(IMMAT_TEMP);
+    await choisirDropdown(page, dropdownSousLabel(creation, /^Type de véhicule/), TYPE_VEHICULE);
+    await champSousLabel(creation, /^Nombre de places/).fill('4');
+    await champSousLabel(creation, /^Nom du chauffeur/).fill('Chauffeur temporaire');
+    await champSousLabel(creation, /^Contact du chauffeur/).fill('+224600000004');
+    await creation.getByRole('button', { name: 'Enregistrer' }).click();
+    await attendreToastSucces(page);
+    await boutonIcone(await trouverLigne(page, IMMAT_TEMP), 'pi-trash').click();
+    await accepterConfirmation(page, 'Supprimer');
+    await attendreToastSucces(page, /supprimé/);
+    expect(await trouverLigne(page, IMMAT_TEMP).catch(() => null)).toBeNull();
 });
 
 async function ligneOffreE2E(page: Page) {
@@ -432,4 +454,15 @@ test('offres : annulation finale de l’offre de test', async ({ page }) => {
     // Après annulation, plus aucune offre VIVANTE à cette date, et une ligne annulée est visible.
     await expect(page.locator('.p-datatable-tbody > tr').filter({ hasText: cible }).filter({ hasNotText: 'Annulée' })).toHaveCount(0);
     await expect(page.locator('.p-datatable-tbody > tr').filter({ hasText: cible }).filter({ hasText: 'Annulée' }).first()).toBeVisible();
+
+    // Le trajet E2E porte désormais une offre, même annulée : sa suppression
+    // doit être refusée par le serveur et l'écran doit le dire sans casser.
+    // Un trajet ne peut pas être dupliqué sur la même paire départ-arrivée,
+    // ce qui interdit de tester la suppression sur un trajet jetable ici.
+    await page.goto('/admin/trajets');
+    const trajet = await trouverLigne(page, TRAJET);
+    await boutonIcone(trajet, 'pi-trash').click();
+    await accepterConfirmation(page, 'Supprimer');
+    expect(await attendreToast(page)).toBe('erreur');
+    await expect(await trouverLigne(page, TRAJET)).toBeVisible();
 });

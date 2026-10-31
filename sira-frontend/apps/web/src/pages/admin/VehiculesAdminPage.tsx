@@ -17,6 +17,7 @@ import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { useMemo, useRef, useState } from 'react';
 import { api } from '../../api';
+import { confirmerSuppression } from './shared';
 import { useAuth } from '../../auth-context';
 
 type StatutAction = 'activer' | 'desactiver' | 'maintenance' | 'suspendre';
@@ -132,6 +133,17 @@ export function VehiculesAdminPage() {
             rafraichir();
         },
         onError: (err) => notifErreur(err, 'Changement de statut refusé.')
+    });
+
+    // Un véhicule affecté à des offres sera refusé par le serveur, qui garde
+    // le dernier mot : le message d'erreur remonte tel quel.
+    const supprimer = useMutation({
+        mutationFn: async (vehicule: Vehicule) => api.vehicules.delete(vehicule.vehiculeUuid!),
+        onSuccess: () => {
+            toast.current?.show({ severity: 'success', summary: 'Véhicule supprimé' });
+            rafraichir();
+        },
+        onError: (err) => notifErreur(err, 'Impossible de supprimer ce véhicule. Vérifiez qu\'aucune offre ne l\'utilise.')
     });
 
     function ouvrirCreation() {
@@ -250,6 +262,15 @@ export function VehiculesAdminPage() {
                                     onClick={() => changerStatut.mutate({ vehicule: v, action: a.action })}
                                 />
                             ))}
+                            <Button
+                                icon="pi pi-trash"
+                                rounded
+                                text
+                                severity="danger"
+                                tooltip="Supprimer"
+                                disabled={supprimer.isPending}
+                                onClick={() => confirmerSuppression(v.immatriculation ?? 'ce véhicule', () => supprimer.mutate(v))}
+                            />
                         </div>
                     )}
                 />
