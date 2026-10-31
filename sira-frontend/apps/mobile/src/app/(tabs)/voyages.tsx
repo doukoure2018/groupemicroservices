@@ -44,6 +44,14 @@ export default function MesVoyages() {
     );
 }
 
+/** Le serveur n'accepte que les commandes confirmées ou payées dont le départ est à venir. */
+function peutChangerDeDate(commande: CommandeClient): boolean {
+    if (commande.statut !== 'CONFIRMEE' && commande.statut !== 'PAYEE') return false;
+    if (!commande.dateDepart) return false;
+    const aujourdhui = new Date().toISOString().slice(0, 10);
+    return String(commande.dateDepart).slice(0, 10) >= aujourdhui;
+}
+
 function CarteCommande({ commande }: { commande: CommandeClient }) {
     const queryClient = useQueryClient();
     const [confirmer, setConfirmer] = useState(false);
@@ -92,6 +100,13 @@ function CarteCommande({ commande }: { commande: CommandeClient }) {
                         libelle={`Voir les billets (${commande.billets!.length})`}
                         variante="secondaire"
                         onPress={() => router.push({ pathname: '/commande/[uuid]', params: { uuid: commande.commandeUuid! } })}
+                    />
+                )}
+                {peutChangerDeDate(commande) && (
+                    <Bouton
+                        libelle="Changer de date"
+                        variante="secondaire"
+                        onPress={() => router.push({ pathname: '/modifier-date/[uuid]', params: { uuid: commande.commandeUuid! } })}
                     />
                 )}
                 {isCommandeAnnulable(commande.statut) && !confirmer && <Bouton libelle="Annuler la réservation" variante="discret" onPress={() => setConfirmer(true)} />}

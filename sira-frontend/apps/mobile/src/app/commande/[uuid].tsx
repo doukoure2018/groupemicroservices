@@ -56,7 +56,10 @@ export default function Commande() {
                 </>
             )}
 
-            <Bouton libelle="Mes voyages" variante="secondaire" onPress={() => router.replace('/(tabs)/voyages')} />
+            {(c.statut === 'CONFIRMEE' || c.statut === 'PAYEE') && (
+                <Bouton libelle="Changer de date" variante="secondaire" onPress={() => router.push({ pathname: '/modifier-date/[uuid]', params: { uuid } })} />
+            )}
+            <Bouton libelle="Mes voyages" variante="discret" onPress={() => router.replace('/(tabs)/voyages')} />
         </ScrollView>
     );
 }

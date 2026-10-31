@@ -53,11 +53,12 @@ mot de passe oublié (le lien du courriel mène à la page du site), recherche d
 résultats, détail, réservation (passagers, mode de règlement), paiement en
 ligne (page du prestataire dans le navigateur du système, puis interrogation
 de l'état jusqu'à décision), billets avec code QR, mes voyages avec reprise
-d'un paiement interrompu et annulation, profil.
+d'un paiement interrompu, changement de date vers un autre départ du même
+trajet (montant réglé conservé, règle du serveur) et annulation, profil.
 
 ## Reste à porter depuis le Flutter
 
-Complétion de profil après connexion Google, modification de date, notation du voyage, notifications, scanner du
+Complétion de profil après connexion Google, notation du voyage, notifications, scanner du
 contrôleur, connexion Google.
 
 ## Lien profond d'activation

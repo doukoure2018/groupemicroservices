@@ -47,6 +47,7 @@ export default function Racine() {
                         <Stack.Screen name="reserver/[uuid]" options={{ title: 'Réserver' }} />
                         <Stack.Screen name="paiement/[reference]" options={{ title: 'Paiement', headerBackVisible: false }} />
                         <Stack.Screen name="commande/[uuid]" options={{ title: 'Vos billets' }} />
+                        <Stack.Screen name="modifier-date/[uuid]" options={{ title: 'Changer de date' }} />
                     </Stack>
                 </AuthProvider>
             </QueryClientProvider>
