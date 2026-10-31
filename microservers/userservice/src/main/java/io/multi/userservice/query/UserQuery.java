@@ -182,9 +182,18 @@ public class UserQuery {
              SELECT * FROM toggle_account_enabled (:userUuid)
            """;
 
+    /**
+     * Pose ou remplace le mot de passe. Un compte né d'une connexion Google n'a
+     * aucune ligne d'identifiants : une simple mise à jour ne touchait alors
+     * aucune ligne, sans rien signaler, et l'utilisateur croyait son mot de
+     * passe changé alors que la connexion le refusait. L'insertion avec repli
+     * sur la mise à jour couvre les deux cas ; user_id est unique.
+     */
     public static final String UPDATE_USER_PASSWORD_QUERY=
             """
-             UPDATE credentials SET password= :password WHERE user_id = (SELECT user_id FROM users WHERE user_uuid= :userUuid)
+             INSERT INTO credentials (credential_uuid, user_id, password)
+             SELECT uuid_generate_v4()::text, user_id, :password FROM users WHERE user_uuid = :userUuid
+             ON CONFLICT (user_id) DO UPDATE SET password = EXCLUDED.password, updated_at = CURRENT_TIMESTAMP
            """;
     public static final String SELECT_PASSWORD_USER_QUERY=
             """
