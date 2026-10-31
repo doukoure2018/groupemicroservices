@@ -206,7 +206,7 @@ public class CommandeServiceImpl implements CommandeService {
             // L'appel au prestataire est DANS la transaction : s'il échoue, la
             // commande et ses billets disparaissent et les places sont rendues.
             // Mieux vaut aucune commande qu'une commande orpheline impayable.
-            urlPaiement = prestataire.get().initier(DemandePaiement.builder()
+            var resultat = prestataire.get().initier(DemandePaiement.builder()
                     .reference(referencePaiement)
                     .montant(montantPaye)
                     .devise("GNF")
@@ -218,7 +218,18 @@ public class CommandeServiceImpl implements CommandeService {
                     .clientTelephone(request.getPassagers().get(0).getTelephone())
                     .urlRetour(urlRetourPaiement)
                     .urlNotification(urlNotificationPaiement)
-                    .build()).urlPaiement();
+                    .build());
+            urlPaiement = resultat.urlPaiement();
+
+            // Certains prestataires n'acceptent d'être interrogés que sur leur
+            // propre identifiant. Sans lui, ni la page de retour ni la purge ne
+            // pourraient trancher le sort de cette commande.
+            if (resultat.referencePrestataire() != null && !resultat.referencePrestataire().isBlank()) {
+                jdbcClient.sql(CommandeQuery.MAJ_REFERENCE_PRESTATAIRE)
+                        .param("referencePrestataire", resultat.referencePrestataire())
+                        .param("commandeId", commandeId)
+                        .update();
+            }
             // Conservé pour que « Mes voyages » puisse proposer de reprendre un
             // règlement interrompu, plutôt que de tout faire ressaisir.
             jdbcClient.sql(CommandeQuery.MAJ_URL_PAIEMENT)
@@ -604,7 +615,8 @@ public class CommandeServiceImpl implements CommandeService {
                         rs.getString("commande_uuid"),
                         rs.getLong("user_id"),
                         rs.getString("statut"),
-                        rs.getString("mode_code")
+                        rs.getString("mode_code"),
+                        rs.getString("reference_prestataire")
                 })
                 .optional()
                 .orElseThrow(() -> new ApiException("Référence de paiement inconnue: " + referencePaiement));
@@ -614,6 +626,7 @@ public class CommandeServiceImpl implements CommandeService {
         Long userId = (Long) contexte[2];
         String statutCourant = (String) contexte[3];
         String modeCode = (String) contexte[4];
+        String referencePrestataire = (String) contexte[5];
 
         // Idempotence : un prestataire renotifie volontiers le même encaissement,
         // et le client peut recharger la page de retour autant qu'il veut.
@@ -627,7 +640,7 @@ public class CommandeServiceImpl implements CommandeService {
 
         // On ne croit jamais la notification sur parole : elle n'est qu'une
         // requête HTTP, que n'importe qui peut fabriquer.
-        EtatPaiement etat = prestataire.verifier(referencePaiement);
+        EtatPaiement etat = prestataire.verifier(referencePaiement, referencePrestataire);
 
         switch (etat) {
             case REUSSI -> {

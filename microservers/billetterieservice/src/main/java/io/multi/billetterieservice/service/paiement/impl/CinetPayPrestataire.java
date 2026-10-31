@@ -119,7 +119,9 @@ public class CinetPayPrestataire implements PrestatairePaiement {
     }
 
     @Override
-    public EtatPaiement verifier(String reference) {
+    public EtatPaiement verifier(String reference, String referencePrestataire) {
+        // CinetPay interroge avec notre propre référence : l'identifiant qu'il
+        // rend à l'initiation n'est qu'un jeton d'affichage, inutile ici.
         exigerConfiguration();
         Map<String, Object> corps = new LinkedHashMap<>();
         corps.put("apikey", apiKey);

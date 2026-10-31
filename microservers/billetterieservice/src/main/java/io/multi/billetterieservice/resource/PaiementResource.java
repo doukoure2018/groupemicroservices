@@ -81,10 +81,15 @@ public class PaiementResource {
                 "État du paiement récupéré", OK));
     }
 
-    /** Les prestataires n'ont pas tous le même nom de champ pour la référence. */
+    /**
+     * Les prestataires n'ont pas tous le même nom de champ pour la référence, ni
+     * la même référence : Chap Chap Pay ne renvoie que son identifiant
+     * d'opération, jamais le nôtre. La recherche de commande accepte les deux.
+     */
     private static String extraireReference(Map<String, Object> corps) {
         if (corps == null) return null;
-        for (String cle : new String[]{"cpm_trans_id", "transaction_id", "reference", "merchant_transaction_id"}) {
+        for (String cle : new String[]{"cpm_trans_id", "transaction_id", "operation_id",
+                                       "reference", "merchant_transaction_id", "order_id"}) {
             Object valeur = corps.get(cle);
             if (valeur != null && !String.valueOf(valeur).isBlank()) return String.valueOf(valeur);
         }

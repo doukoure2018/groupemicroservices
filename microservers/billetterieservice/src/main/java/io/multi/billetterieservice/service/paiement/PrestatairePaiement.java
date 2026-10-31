@@ -33,6 +33,14 @@ public interface PrestatairePaiement {
      * Interroge le prestataire sur l'état réel d'une transaction. C'est la seule
      * source de vérité : une notification entrante est une requête HTTP comme une
      * autre, qu'un tiers peut fabriquer, et ne doit jamais être crue sur parole.
+     *
+     * <p>Deux références parce que les prestataires ne s'accordent pas :
+     * CinetPay interroge avec la nôtre, qu'il a reçue à l'initiation, tandis que
+     * Chap Chap Pay n'accepte que l'identifiant d'opération qu'il a lui-même
+     * attribué. Chaque implémentation prend celle qui la concerne.
+     *
+     * @param reference            notre référence de paiement
+     * @param referencePrestataire identifiant rendu par le prestataire, nul s'il n'en rend pas
      */
-    EtatPaiement verifier(String reference);
+    EtatPaiement verifier(String reference, String referencePrestataire);
 }

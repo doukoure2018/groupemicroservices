@@ -46,12 +46,19 @@ public final class CommandeQuery {
 
     // ---- paiement en ligne : confirmation et échec ----
 
-    /** Contexte minimal pour traiter un retour de prestataire. */
+    /**
+     * Contexte minimal pour traiter un retour de prestataire. La référence
+     * cherchée peut être la nôtre ou celle du prestataire : la notification de
+     * Chap Chap Pay ne porte que son identifiant d'opération, jamais le nôtre.
+     */
     public static final String FIND_CONTEXTE_PAIEMENT = """
-        SELECT c.commande_id, c.commande_uuid, c.user_id, c.statut, mr.code AS mode_code
+        SELECT c.commande_id, c.commande_uuid, c.user_id, c.statut, mr.code AS mode_code,
+               p.reference_prestataire
         FROM commandes c
         JOIN modes_reglement mr ON mr.mode_reglement_id = c.mode_reglement_id
+        LEFT JOIN paiements p ON p.commande_id = c.commande_id
         WHERE c.reference_paiement = :reference
+           OR p.reference_prestataire = :reference
         """;
 
     /**
@@ -106,6 +113,16 @@ public final class CommandeQuery {
      * règlement interrompu. Écrit après l'appel au prestataire, seul moment où
      * le lien est connu.
      */
+    /**
+     * Enregistre l'identifiant rendu par le prestataire. Sans lui, une commande
+     * partie en paiement chez Chap Chap Pay ne serait plus jamais vérifiable.
+     */
+    public static final String MAJ_REFERENCE_PRESTATAIRE = """
+        UPDATE paiements SET reference_prestataire = :referencePrestataire,
+                             updated_at = CURRENT_TIMESTAMP
+        WHERE commande_id = :commandeId
+        """;
+
     public static final String MAJ_URL_PAIEMENT = """
         UPDATE commandes SET url_paiement = :urlPaiement WHERE commande_id = :commandeId
         """;
