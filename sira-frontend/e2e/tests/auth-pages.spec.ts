@@ -8,29 +8,45 @@ import { journaliserEchecs } from './helpers';
  */
 journaliserEchecs(test);
 
-test('inscription : choix du type de compte, validation, aucune soumission tant que le formulaire est incomplet', async ({ page }) => {
+test('inscription : les deux types de compte, validation, aucune soumission tant que le formulaire est incomplet', async ({ page }) => {
     await page.goto('/auth/register');
     await expect(page.getByRole('heading', { name: 'Créer un compte' })).toBeVisible();
     const soumettre = page.getByRole('button', { name: "S'inscrire" });
     await expect(soumettre).toBeDisabled();
 
+    // Particulier : adresse demandée, pas de nom d'utilisateur. Les deux
+    // inscriptions ne passent pas par le même service et n'exigent pas les
+    // mêmes champs — voir RegisterPage.
+    await expect(page.getByLabel('Adresse')).toBeVisible();
+    await expect(page.getByLabel("Nom d'utilisateur")).toHaveCount(0);
+
     await page.getByLabel(/^Prénom/).fill('Zz');
     await page.getByLabel(/^Nom$|^Nom du représentant/).fill('E2E');
     await page.getByLabel('Email').fill('pas-un-email');
-    await page.getByLabel("Nom d'utilisateur").fill('abc');
-    await page.getByLabel('Mot de passe').fill('123');
+    await page.getByLabel('Adresse').fill('Kaloum, Conakry');
+    await page.getByLabel('Mot de passe').fill('court');
     await expect(soumettre).toBeDisabled();
 
-    // Le mode agence renomme les champs du représentant
+    // Le serveur refuse en dessous de huit caractères : le formulaire doit le
+    // dire avant l'envoi plutôt que de laisser l'inscription échouer.
+    await page.getByLabel('Email').fill('zz.e2e@example.com');
+    await expect(soumettre).toBeDisabled();
+    await page.getByLabel('Mot de passe').fill('motdepasse8');
+    await expect(soumettre).toBeEnabled();
+
+    // Agence : le nom d'utilisateur réapparaît, l'adresse disparaît, et les
+    // champs du représentant sont renommés.
     await page.locator('label.carte-choix').filter({ hasText: /agence/i }).click();
     await expect(page.getByText('Prénom du représentant')).toBeVisible();
+    await expect(page.getByLabel("Nom d'utilisateur")).toBeVisible();
+    await expect(page.getByLabel('Adresse')).toHaveCount(0);
+    await expect(soumettre).toBeDisabled();
+    await page.getByLabel("Nom d'utilisateur").fill('zze2euser');
+    await expect(soumettre).toBeEnabled();
+
     await page.locator('label.carte-choix').filter({ hasText: /particulier/i }).click();
     await expect(page.getByText('Prénom du représentant')).toHaveCount(0);
 
-    await page.getByLabel('Email').fill('zz.e2e@example.com');
-    await page.getByLabel("Nom d'utilisateur").fill('zze2euser');
-    await page.getByLabel('Mot de passe').fill('motdepasse6');
-    await expect(soumettre).toBeEnabled();
     await expect(page.getByRole('button', { name: /Continuer avec Google/ })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Se connecter' }).last()).toBeVisible();
 });

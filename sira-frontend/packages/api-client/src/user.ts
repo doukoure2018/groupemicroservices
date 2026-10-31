@@ -14,6 +14,20 @@ export interface RegisterRequest {
     accountType?: 'PARTICULIER' | 'AGENCE';
 }
 
+/**
+ * Inscription d'un particulier. Le serveur d'autorisation n'accepte pas de type
+ * de compte et impose une adresse, d'où un corps distinct de RegisterRequest.
+ */
+export interface RegisterParticulierRequest {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    /** Exigée par le serveur, limitée à 100 caractères en base. */
+    address: string;
+    phone?: string;
+}
+
 export interface AdminCreateUserRequest {
     firstName: string;
     lastName: string;
@@ -42,7 +56,29 @@ export interface AdminUpdateUserRequest {
 export function userApi(client: SiraClient) {
     return {
         // ---- Public (sans Authorization) ----
+        /**
+         * Inscription d'une agence immobilière. Ce chemin attribue ADMIN_IMMO et
+         * mène à l'écran d'onboarding ; il reste donc le seul valable pour une
+         * agence. Le même point d'entrée pour un particulier est cassé — voir
+         * registerParticulier.
+         */
         register: (body: RegisterRequest) => client.post<{ user: User }>(`${BASE}/register`, { body, auth: false }),
+        /**
+         * Inscription d'un particulier, par le serveur d'autorisation.
+         *
+         * `/user/register` ne peut pas créer de particulier : il passe onze
+         * paramètres nommés à la procédure create_user, qui n'en déclare que
+         * neuf, et la résolution de surcharge en Java y perd au passage le nom
+         * d'utilisateur. Ce chemin-ci crée le compte, les identifiants, le rôle
+         * USER et le jeton d'activation, puis émet le même événement Kafka :
+         * l'email de vérification et le lien /auth/verify/account sont
+         * identiques, et l'activation débloque le compte.
+         *
+         * Il ignore en revanche le type de compte et le nom d'utilisateur, qu'il
+         * remplace par l'email. Ne jamais y router une agence.
+         */
+        registerParticulier: (body: RegisterParticulierRequest) =>
+            client.post<Record<string, never>>('/authorization/api/auth/register', { body, auth: false }),
         verifyAccount: (token: string) => client.get<{ user: User }>(`${BASE}/verify/account`, { params: { token }, auth: false }),
         verifyPassword: (token: string) => client.get<{ user: User }>(`${BASE}/verify/password`, { params: { token }, auth: false }),
         resetPassword: (email: string) => client.post<Record<string, never>>(`${BASE}/resetpassword`, { body: { email }, auth: false }),
