@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/contexte';
-import { ConnexionGoogleAnnulee } from '../auth/google';
+import { ConnexionGoogleAnnulee, ConnexionGoogleIndisponible } from '../auth/google';
 import { config } from '../config';
 import { Bandeau, Bouton, Champ, styles as base } from '../ui/base';
 import { couleurs, espaces } from '../ui/theme';
@@ -97,6 +97,7 @@ export default function Connexion() {
                                     // Annuler n'est pas une erreur. Le reste, si : Google
                                     // indisponible, jeton refusé par le serveur, réseau.
                                     if (e instanceof ConnexionGoogleAnnulee) return;
+                                    if (e instanceof ConnexionGoogleIndisponible) return setErreur(e.message);
                                     setErreur(e instanceof AuthHttpError && e.serverMessage ? e.serverMessage : 'Connexion Google impossible pour le moment. Réessayez ou utilisez votre email.');
                                 })
                                 .finally(() => setGoogleEnCours(false));
