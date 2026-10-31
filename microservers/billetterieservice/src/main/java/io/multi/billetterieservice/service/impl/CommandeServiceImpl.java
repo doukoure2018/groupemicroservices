@@ -655,6 +655,34 @@ public class CommandeServiceImpl implements CommandeService {
         return getByUuid(commandeUuid);
     }
 
+    @Override
+    public void expirerCommande(String commandeUuid) {
+        var contexte = jdbcClient.sql(CommandeQuery.FIND_CONTEXTE_EXPIRATION)
+                .param("commandeUuid", commandeUuid)
+                .query((rs, rowNum) -> new Object[]{rs.getLong("commande_id"), rs.getString("statut")})
+                .optional()
+                .orElseThrow(() -> new ApiException("Commande inconnue: " + commandeUuid));
+
+        Long commandeId = (Long) contexte[0];
+        String statutCourant = (String) contexte[1];
+
+        // Une commande tranchée entre-temps — le client vient de payer, ou un
+        // agent l'a annulée — ne doit pas être retouchée.
+        if (!"EN_ATTENTE".equals(statutCourant)) {
+            log.debug("Commande {} au statut {}, expiration sans objet", commandeUuid, statutCourant);
+            return;
+        }
+
+        jdbcClient.sql(CommandeQuery.ECHOUER_COMMANDE).param("commandeId", commandeId).update();
+        jdbcClient.sql(CommandeQuery.ANNULER_BILLETS_BY_COMMANDE).param("commandeId", commandeId).update();
+        jdbcClient.sql(CommandeQuery.MAJ_STATUT_PAIEMENT)
+                .param("statut", "ECHOUE")
+                .param("dateConfirmation", null)
+                .param("commandeId", commandeId)
+                .update();
+        log.info("Commande {} expirée faute de paiement, places rendues", commandeUuid);
+    }
+
     /** Email de l'utilisateur, vide si le service utilisateur est injoignable. */
     private String emailUtilisateur(Long userId) {
         try {

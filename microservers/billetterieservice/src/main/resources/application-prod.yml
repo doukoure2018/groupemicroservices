@@ -90,6 +90,16 @@ paiement:
   # Adresse appelée par le prestataire, de serveur à serveur. Elle doit être
   # joignable depuis Internet : en développement, passer par un tunnel.
   url-notification: ${PAIEMENT_URL_NOTIFICATION:${OAUTH_ISSUER}/billetterie/paiements/notification}
+  # Au bout de ce délai sans paiement, la commande est abandonnée et ses places
+  # rendues à la vente. Doit rester supérieur au temps qu'un client met à payer
+  # chez le prestataire, sinon on annule sous ses doigts.
+  delai-expiration-minutes: ${PAIEMENT_DELAI_EXPIRATION_MINUTES:30}
+  # Garde-fou : passé ce délai la commande est abandonnée même si le prestataire
+  # ne répond pas, pour qu'une panne chez lui ne gèle pas un départ entier.
+  delai-abandon-minutes: ${PAIEMENT_DELAI_ABANDON_MINUTES:1440}
+  # Cadence de la purge, et retard au démarrage pour laisser le service s'ouvrir.
+  purge-intervalle-ms: ${PAIEMENT_PURGE_INTERVALLE_MS:300000}
+  purge-delai-initial-ms: ${PAIEMENT_PURGE_DELAI_INITIAL_MS:60000}
   cinetpay:
     api-key: ${CINETPAY_API_KEY:}
     site-id: ${CINETPAY_SITE_ID:}

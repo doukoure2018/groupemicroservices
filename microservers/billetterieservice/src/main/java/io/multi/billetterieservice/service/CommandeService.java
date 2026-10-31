@@ -18,6 +18,13 @@ public interface CommandeService {
      */
     Commande confirmerPaiement(String referencePaiement);
 
+    /**
+     * Abandonne une commande restée en attente de paiement : billets annulés,
+     * paiement marqué échoué, places rendues par le déclencheur. Sans jamais
+     * toucher à une commande déjà tranchée.
+     */
+    void expirerCommande(String referencePaiement);
+
     Commande getByUuid(String commandeUuid);
 
     List<Commande> getCommandesByUserId(Long userId);

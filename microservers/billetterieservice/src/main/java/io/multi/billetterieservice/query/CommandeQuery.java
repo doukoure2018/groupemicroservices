@@ -79,6 +79,28 @@ public final class CommandeQuery {
         WHERE commande_id = :commandeId AND statut = 'EN_ATTENTE'
         """;
 
+    /** Statut courant d'une commande, pour trancher son expiration. */
+    public static final String FIND_CONTEXTE_EXPIRATION = """
+        SELECT commande_id, statut FROM commandes WHERE commande_uuid = :commandeUuid
+        """;
+
+    /**
+     * Commandes restées en attente au-delà du délai. Le drapeau abandon_force
+     * marque celles qui traînent depuis si longtemps qu'on les abandonne même
+     * si le prestataire reste muet. Le plafond évite qu'un arriéré accumulé
+     * pendant une panne ne sature la tâche : le reliquat passera au tour suivant.
+     */
+    public static final String FIND_COMMANDES_EN_ATTENTE_EXPIREES = """
+        SELECT c.commande_uuid, c.reference_paiement, mr.code AS mode_code,
+               (c.created_at < CURRENT_TIMESTAMP - make_interval(mins => :minutesAbandon)) AS abandon_force
+        FROM commandes c
+        LEFT JOIN modes_reglement mr ON mr.mode_reglement_id = c.mode_reglement_id
+        WHERE c.statut = 'EN_ATTENTE'
+          AND c.created_at < CURRENT_TIMESTAMP - make_interval(mins => :minutes)
+        ORDER BY c.created_at
+        LIMIT 100
+        """;
+
     public static final String MAJ_STATUT_PAIEMENT = """
         UPDATE paiements
            SET statut = :statut,
