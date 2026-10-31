@@ -58,12 +58,15 @@ trajet (montant réglé conservé, règle du serveur), annulation et notation d'
 voyage effectué (note de 1 à 5, commentaire facultatif, un seul avis par
 commande), notifications in-app (cloche avec compteur de non-lues, liste,
 marquage lu, tap vers la commande ou la notation) et notifications poussées
-sur Android (jeton FCM natif enregistré auprès du serveur), profil.
+sur Android (jeton FCM natif enregistré auprès du serveur), profil, et pour
+les contrôleurs un onglet de contrôle des billets : lecture du QR par
+l'appareil photo ou saisie du code, un seul scan traité à la fois, verdict
+vert ou rouge avec le message du serveur.
 
 ## Reste à porter depuis le Flutter
 
 Complétion de profil après connexion Google, notifications poussées sur iOS
-(voir ci-dessous), scanner du contrôleur, connexion Google.
+(voir ci-dessous), connexion Google.
 
 ## Lien profond d'activation
 

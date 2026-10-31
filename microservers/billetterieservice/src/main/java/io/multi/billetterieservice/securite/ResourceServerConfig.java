@@ -44,6 +44,12 @@ public class ResourceServerConfig {
                         // machine tierce, sans jeton. La sécurité tient à la
                         // vérification faite auprès du prestataire, pas à cet appel.
                         .requestMatchers(POST, "/billetterie/paiements/notification").permitAll()
+                        // Valider un billet à l'embarquement est un geste de contrôleur : sans
+                        // cette règle, n'importe quel voyageur connecté pouvait marquer un
+                        // billet comme utilisé. La revendication « authorities » du jeton
+                        // porte le nom du rôle puis ses autorisations, d'où les deux formes.
+                        .requestMatchers(POST, "/billetterie/billets/validate")
+                            .hasAnyAuthority("billet:validate", "CONTROLEUR", "SUPER_ADMIN", "ADMIN")
                         // Recherche publique (home web, avant login) — DOIT rester aligné
                         // avec gateway ResourceServerConfig (cf dette T5). Pas de joker
                         // /billetterie/offres/* (protégerait mal mes-offres, stats…).

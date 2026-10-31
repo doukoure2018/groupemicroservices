@@ -35,6 +35,12 @@
           "icon": "./assets/android-icon-monochrome.png",
           "color": "#1b5e3b"
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "SYNERGIA utilise l'appareil photo pour lire le code QR des billets à l'embarquement."
+        }
       ]
     ],
     "scheme": [

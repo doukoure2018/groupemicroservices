@@ -52,6 +52,14 @@ export interface BilletClient {
     qrCodeData?: string;
 }
 
+/** Billet tel que le serveur le renvoie après validation à l'embarquement. */
+export interface BilletValide extends BilletClient {
+    billetId?: number;
+    commandeId?: number;
+    dateValidation?: string;
+    createdAt?: string;
+}
+
 export interface CommandeClient {
     commandeUuid?: string;
     numeroCommande?: string;

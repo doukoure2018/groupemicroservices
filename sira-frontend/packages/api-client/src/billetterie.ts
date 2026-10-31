@@ -1,6 +1,7 @@
 import type {
     AppNotification,
     AvisClient,
+    BilletValide,
     AvisRequest,
     ActifStats,
     Arrivee,
@@ -215,7 +216,13 @@ export function avisApi(client: SiraClient) {
 /** Validation de billet par le contrôleur (scan QR). */
 export function billetApi(client: SiraClient) {
     return {
-        validate: (qrCodeData: string) => client.post<{ billet: unknown }>(`${BASE}/billets/validate`, { body: { qrCodeData } })
+        /**
+         * Le serveur lit la clé `codeBillet` et cherche le billet par son code,
+         * qui est aussi le contenu du QR : on lui passe ce que le scanner a lu.
+         * L'ancienne clé `qrCodeData` n'était lue par personne et toute
+         * validation échouait en « billet non trouvé ».
+         */
+        validate: (codeBillet: string) => client.post<{ billet: BilletValide }>(`${BASE}/billets/validate`, { body: { codeBillet } })
     };
 }
 

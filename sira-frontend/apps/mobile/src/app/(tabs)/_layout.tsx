@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Redirect, Tabs, router } from 'expo-router';
 import { useEffect } from 'react';
 import { Pressable, Text, type ColorValue } from 'react-native';
+import { hasRole } from '@sira/core';
 import { api } from '../../api';
 import { ecouterTapsNotifications, enregistrerAppareil } from '../../notifications/push';
 import { useAuth } from '../../auth/contexte';
@@ -35,6 +36,10 @@ export default function Onglets() {
     // Toute la zone connectée passe par ici : pas de session, pas d'onglets.
     if (user === null) return <Redirect href="/connexion" />;
 
+    // Le contrôle des billets n'est montré qu'aux rôles qui ont le droit de
+    // valider ; le serveur applique la même règle, l'onglet n'est qu'un confort.
+    const controleur = hasRole(user, 'CONTROLEUR') || hasRole(user, 'SUPER_ADMIN') || hasRole(user, 'ADMIN');
+
     const cloche = (
         <Pressable
             accessibilityRole="button"
@@ -66,6 +71,10 @@ export default function Onglets() {
         >
             <Tabs.Screen name="index" options={{ title: 'Accueil', tabBarIcon: ({ color }) => <Icone symbole="⌂" color={color} /> }} />
             <Tabs.Screen name="voyages" options={{ title: 'Mes voyages', tabBarIcon: ({ color }) => <Icone symbole="▣" color={color} /> }} />
+            <Tabs.Screen
+                name="scanner"
+                options={{ title: 'Contrôle', href: controleur ? undefined : null, tabBarIcon: ({ color }) => <Icone symbole="⌗" color={color} /> }}
+            />
             <Tabs.Screen name="profil" options={{ title: 'Profil', tabBarIcon: ({ color }) => <Icone symbole="◉" color={color} /> }} />
         </Tabs>
     );
