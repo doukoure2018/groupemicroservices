@@ -76,7 +76,9 @@ test('tous les écrans connectés montent sans erreur', async ({ page }) => {
 test('la déconnexion ramène à l’état anonyme', async ({ page }) => {
     await connecter(page, '/mes-voyages');
     await page.getByRole('button', { name: 'Se déconnecter' }).click();
-    await expect(page.getByRole('link', { name: 'Se connecter' })).toBeVisible();
+    // Le pied de page propose aussi « Se connecter » : on vise la barre du haut,
+    // seule à refléter l'état de session.
+    await expect(page.getByRole('banner').getByRole('link', { name: 'Se connecter' })).toBeVisible();
     await page.goto('/mes-voyages');
     await page.waitForURL(/\/login\?redirect=/);
 });

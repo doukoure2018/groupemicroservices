@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { AuthProvider, useAuth } from './auth-context';
 import { BarriereErreur } from './components/BarriereErreur';
 import { TitreDocument } from './components/TitreDocument';
+import './components/pied-de-page.css';
 import { hasRole } from '@sira/core';
 import { AdminLayout, RequireRole, ROLES_ADMIN } from './pages/admin/AdminLayout';
 import { AgencesAdminPage } from './pages/admin/AgencesAdminPage';
@@ -182,24 +183,95 @@ function ChromePublic() {
     );
 }
 
-/** Pied de page public : marque, raccourcis, mention légale. */
+interface ColonnePied {
+    titre: string;
+    liens: { libelle: string; vers: string }[];
+}
+
+/**
+ * Colonnes du pied de page, reprises de l'Angular en ne gardant que des liens qui
+ * mènent quelque part : les ancres de l'accueil, les pages du compte, le contact.
+ * Les entrées sans page (carrières, presse, CGU...) attendront d'exister.
+ */
+const COLONNES_PIED: ColonnePied[] = [
+    {
+        titre: 'Destinations',
+        liens: ['Conakry', 'Kankan', 'Labé', 'Nzérékoré', 'Mamou', 'Boké'].map((v) => ({ libelle: v, vers: '/#guide' }))
+    },
+    {
+        titre: 'Entreprise',
+        liens: [
+            { libelle: 'À propos', vers: '/#about' },
+            { libelle: 'Nos services', vers: '/#services' },
+            { libelle: 'Comment ça marche', vers: '/#how-it-works' },
+            { libelle: 'L’application mobile', vers: '/#application' }
+        ]
+    },
+    {
+        titre: 'Support',
+        liens: [
+            { libelle: 'Guide du voyageur', vers: '/#guide' },
+            { libelle: 'Conseils pratiques', vers: '/#conseils' },
+            { libelle: 'Contact', vers: 'mailto:contact@synergia-guinee.com' },
+            { libelle: 'Réclamations', vers: 'mailto:contact@synergia-guinee.com?subject=R%C3%A9clamation' }
+        ]
+    },
+    {
+        titre: 'Mon compte',
+        liens: [
+            { libelle: 'Rechercher un voyage', vers: '/' },
+            { libelle: 'Mes voyages', vers: '/mes-voyages' },
+            { libelle: 'Se connecter', vers: '/login' },
+            { libelle: 'Créer un compte', vers: '/auth/register' }
+        ]
+    }
+];
+
+/** Pied de page public : marque et contact, colonnes de liens, mention légale. */
 function SiteFooter() {
     return (
-        <footer className="footer">
-            <div className="footer-contenu">
-                <div className="footer-marque">
-                    <img src="/brand/synergia-emblem-512x512.png" alt="" width={30} height={30} />
-                    <div>
-                        <strong>SYNERGIA</strong>
-                        <span>Immobilier et transport en Guinée</span>
-                    </div>
+        <footer className="footer pied-de-page" id="contact">
+            <div className="pied-contenu">
+                <div className="pied-marque">
+                    <Link to="/" className="pied-marque-logo" aria-label="Accueil SYNERGIA">
+                        <img src="/brand/synergia-emblem-512x512.png" alt="" width={42} height={42} />
+                        <span>
+                            <strong>SYNERGIA</strong>
+                            <small>Immobilier et transport en Guinée</small>
+                        </span>
+                    </Link>
+                    <p>La plateforme de référence pour la réservation de billets de transport terrestre en Guinée.</p>
+                    <ul className="pied-contact" aria-label="Nous contacter">
+                        <li>
+                            <a href="tel:+224620000000">
+                                <i className="pi pi-phone" aria-hidden="true" /> +224 620 00 00 00
+                            </a>
+                        </li>
+                        <li>
+                            <a href="mailto:contact@synergia-guinee.com">
+                                <i className="pi pi-envelope" aria-hidden="true" /> contact@synergia-guinee.com
+                            </a>
+                        </li>
+                    </ul>
                 </div>
-                <nav className="footer-liens" aria-label="Liens utiles">
-                    <Link to="/">Rechercher un voyage</Link>
-                    <Link to="/mes-voyages">Mes voyages</Link>
-                </nav>
+
+                <div className="pied-colonnes">
+                    {COLONNES_PIED.map((col) => (
+                        <nav key={col.titre} className="pied-colonne" aria-label={col.titre}>
+                            <h3>{col.titre}</h3>
+                            <ul>
+                                {col.liens.map((l) => (
+                                    <li key={l.libelle}>{l.vers.startsWith('mailto:') ? <a href={l.vers}>{l.libelle}</a> : <Link to={l.vers}>{l.libelle}</Link>}</li>
+                                ))}
+                            </ul>
+                        </nav>
+                    ))}
+                </div>
             </div>
-            <p className="footer-bas">© {new Date().getFullYear()} SYNERGIA · IMMO · TRANS · GUINÉE — Tous droits réservés.</p>
+            <div className="pied-bas">
+                <p>© {new Date().getFullYear()} SYNERGIA · IMMO · TRANS · GUINÉE. Tous droits réservés.</p>
+                <p>Fait avec passion en Guinée</p>
+            </div>
         </footer>
     );
 }

@@ -1,9 +1,18 @@
 import { ApiError } from '@sira/api-client';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { formatDateFr, formatHeure, formatMontant, getMontantEffectif, getPourcentageReduction, hasPromotion, type Offre, type Ville } from '@sira/core';
-import { useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api';
+import './accueil/accueil.css';
+import { APropos } from './accueil/APropos';
+import { AppelFinal } from './accueil/AppelFinal';
+import { Application } from './accueil/Application';
+import { CarteGuinee } from './accueil/CarteGuinee';
+import { CommentCaMarche } from './accueil/CommentCaMarche';
+import { GrandsAxes } from './accueil/GrandsAxes';
+import { GuideVoyage } from './accueil/GuideVoyage';
+import { Services } from './accueil/Services';
 
 interface RegionAccueil {
     regionUuid: string;
@@ -97,10 +106,46 @@ export function HomePage() {
         setVilleArriveeUuid(villeDepartUuid);
     }
 
-    function choisirRegion(r: RegionAccueil) {
-        if (r.villes[0]) setVilleDepartUuid(r.villes[0].villeUuid);
+    function allerAuFormulaire() {
         heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+
+    function choisirRegion(r: RegionAccueil) {
+        if (r.villes[0]) setVilleDepartUuid(r.villes[0].villeUuid);
+        allerAuFormulaire();
+    }
+
+    /**
+     * Clic sur une ville de la carte : on complète ce qui manque au formulaire,
+     * le départ d'abord puis l'arrivée, et on y ramène le visiteur dès que le
+     * trajet est complet. Si les deux villes sont déjà choisies, le clic repart
+     * d'un nouveau départ. Choisir deux fois la même ville ne fait rien.
+     */
+    function choisirVilleCarte(ville: Ville) {
+        if (!villeDepartUuid) {
+            setVilleDepartUuid(ville.villeUuid);
+            if (ville.villeUuid === villeArriveeUuid) setVilleArriveeUuid('');
+            else if (villeArriveeUuid) allerAuFormulaire();
+            return;
+        }
+        if (!villeArriveeUuid) {
+            if (ville.villeUuid === villeDepartUuid) return;
+            setVilleArriveeUuid(ville.villeUuid);
+            allerAuFormulaire();
+            return;
+        }
+        setVilleDepartUuid(ville.villeUuid);
+        setVilleArriveeUuid('');
+    }
+
+    // Les liens du pied de page visent des ancres de cette page (/#guide, /#about...).
+    // react-router ne fait pas défiler jusqu'au fragment : on s'en charge une fois
+    // les sections rendues, elles sont statiques donc présentes dès le premier rendu.
+    const location = useLocation();
+    useEffect(() => {
+        if (!location.hash) return;
+        document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, [location.hash, location.key]);
 
     return (
         <div className="accueil">
@@ -216,24 +261,15 @@ export function HomePage() {
                 </section>
             )}
 
-            <section className="accueil-atouts">
-                <Atout icone="pi-search" titre="Recherchez" texte="Trouvez les départs entre deux villes, à la date de votre choix." />
-                <Atout icone="pi-ticket" titre="Réservez" texte="Choisissez vos places et votre mode de paiement en quelques clics." />
-                <Atout icone="pi-qrcode" titre="Voyagez" texte="Présentez votre billet QR à l'embarquement, sans papier." />
-            </section>
+            {/* Contenu éditorial statique : aucun appel réseau, la carte se nourrit des villes déjà chargées. */}
+            <GuideVoyage carte={<CarteGuinee villes={villes} chargement={villesQuery.isLoading} villeDepartUuid={villeDepartUuid} villeArriveeUuid={villeArriveeUuid} onChoisirVille={choisirVilleCarte} />} />
+            <GrandsAxes />
+            <Services />
+            <CommentCaMarche />
+            <APropos />
+            <Application />
+            <AppelFinal onReserver={allerAuFormulaire} />
         </div>
-    );
-}
-
-function Atout({ icone, titre, texte }: { icone: string; titre: string; texte: string }) {
-    return (
-        <article className="atout">
-            <span className="atout-icone" aria-hidden="true">
-                <i className={`pi ${icone}`} />
-            </span>
-            <strong>{titre}</strong>
-            <span className="muted">{texte}</span>
-        </article>
     );
 }
 
