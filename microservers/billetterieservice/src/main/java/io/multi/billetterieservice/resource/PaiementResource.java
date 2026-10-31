@@ -3,10 +3,13 @@ package io.multi.billetterieservice.resource;
 import io.multi.billetterieservice.domain.Commande;
 import io.multi.billetterieservice.domain.Response;
 import io.multi.billetterieservice.service.CommandeService;
+import io.multi.billetterieservice.utils.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -30,6 +33,7 @@ import static org.springframework.http.HttpStatus.OK;
 public class PaiementResource {
 
     private final CommandeService commandeService;
+    private final JwtUtils jwtUtils;
 
     /**
      * Notification du prestataire. Public par nécessité : l'appelant est une
@@ -69,8 +73,10 @@ public class PaiementResource {
      */
     @GetMapping("/{reference}/etat")
     public ResponseEntity<Response> etat(@PathVariable("reference") String reference,
+                                         @AuthenticationPrincipal Jwt jwt,
                                          HttpServletRequest request) {
-        Commande commande = commandeService.confirmerPaiement(reference);
+        Long userId = jwtUtils.extractUserId(jwt);
+        Commande commande = commandeService.etatPaiement(reference, userId);
         return ResponseEntity.ok(getResponse(request, Map.of("commande", commande),
                 "État du paiement récupéré", OK));
     }

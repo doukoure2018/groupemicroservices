@@ -7,6 +7,7 @@ import { expect, test } from '@playwright/test';
 const ROUTES_PROTEGEES = [
     '/tableau-de-bord',
     '/mes-voyages',
+    '/paiement/retour',
     '/reserver/00000000-0000-0000-0000-000000000000',
     '/agence',
     '/agence/demandes',

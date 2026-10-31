@@ -34,6 +34,7 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { MesVoyagesPage } from './pages/MesVoyagesPage';
+import { PaiementRetourPage } from './pages/PaiementRetourPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ReservationPage } from './pages/ReservationPage';
 import { VerifyAccountPage } from './pages/VerifyAccountPage';
@@ -140,6 +141,14 @@ export function App() {
                                     <RequireRole roles={['ADMIN_CONFORMITE', 'SUPER_ADMIN']}>
                                         <ConformitePage />
                                     </RequireRole>
+                                </RequireAuth>
+                            }
+                        />
+                        <Route
+                            path="/paiement/retour"
+                            element={
+                                <RequireAuth>
+                                    <PaiementRetourPage />
                                 </RequireAuth>
                             }
                         />

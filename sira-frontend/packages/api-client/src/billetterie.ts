@@ -186,6 +186,18 @@ export function commandeApi(client: SiraClient) {
     };
 }
 
+/**
+ * Paiements en ligne. La consultation de l'état déclenche côté serveur une
+ * vérification auprès du prestataire : c'est ce qui permet de confirmer une
+ * commande même quand la notification du prestataire ne nous est jamais
+ * parvenue.
+ */
+export function paiementApi(client: SiraClient) {
+    return {
+        etat: (reference: string) => client.get<{ commande: CommandeClient }>(`${BASE}/paiements/${encodeURIComponent(reference)}/etat`)
+    };
+}
+
 /** Validation de billet par le contrôleur (scan QR). */
 export function billetApi(client: SiraClient) {
     return {

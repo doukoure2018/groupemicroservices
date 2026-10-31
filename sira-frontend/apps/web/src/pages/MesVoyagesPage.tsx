@@ -6,6 +6,7 @@ import {
     getStatutCommandeLabel,
     getStatutCommandeSeverity,
     isCommandeAnnulable,
+    peutReprendrePaiement,
     type CommandeClient
 } from '@sira/core';
 import { Button } from 'primereact/button';
@@ -117,8 +118,25 @@ function CommandeCard({ commande }: { commande: CommandeClient }) {
                 </span>
             </div>
 
+            {commande.statut === 'EN_ATTENTE' && (
+                <p className="bandeau-alerte">
+                    <i className="pi pi-clock" aria-hidden="true" /> Paiement non terminé. Vos billets ne seront émis qu'après règlement, et les places seront
+                    remises en vente si le paiement n'aboutit pas.
+                </p>
+            )}
+
             <div className="commande-actions">
-                {billets.length > 0 && (
+                {peutReprendrePaiement(commande) && (
+                    <a className="bouton-lien" href={commande.urlPaiement}>
+                        <i className="pi pi-credit-card" aria-hidden="true" /> Reprendre le paiement
+                    </a>
+                )}
+                {commande.statut === 'EN_ATTENTE' && commande.referencePaiement && (
+                    <Link className="bouton-lien-secondaire" to={`/paiement/retour?reference=${encodeURIComponent(commande.referencePaiement)}`}>
+                        <i className="pi pi-refresh" aria-hidden="true" /> Vérifier le paiement
+                    </Link>
+                )}
+                {billets.length > 0 && commande.statut !== 'EN_ATTENTE' && (
                     <button type="button" className="secondary" onClick={() => setBilletsOuverts((o) => !o)}>
                         <i className={billetsOuverts ? 'pi pi-eye-slash' : 'pi pi-qrcode'} aria-hidden="true" />{' '}
                         {billetsOuverts ? 'Masquer les billets' : `Voir les billets (${billets.length})`}

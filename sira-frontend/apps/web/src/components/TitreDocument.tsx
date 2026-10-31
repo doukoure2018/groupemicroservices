@@ -13,6 +13,7 @@ const TITRES: Array<[string, string]> = [
     ['/auth/verify/password', 'Nouveau mot de passe'],
     ['/auth/verify/mobile', 'Vérification du compte'],
     ['/reserver/:offreUuid', 'Finaliser la réservation'],
+    ['/paiement/retour', 'Paiement'],
     ['/mes-voyages', 'Mes voyages'],
     ['/tableau-de-bord', 'Mon espace'],
     ['/agence/demandes', 'Demandes clients'],

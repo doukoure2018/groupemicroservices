@@ -374,7 +374,11 @@ test('parcours voyageur : recherche publique, réservation, billets, annulation'
     await champSousLabel(passager, /^Prénom/).fill('E2E');
     await champSousLabel(passager, /^Téléphone/).fill('+224600000003');
     await expect(confirmer).toBeDisabled();
-    await page.locator('.modes input[type=radio]').first().check();
+    // Mode choisi explicitement : « Espèces » se règle hors de la plateforme, donc
+    // la commande est confirmée sur-le-champ et les billets sont émis. Un mode en
+    // ligne redirigerait vers le prestataire, parcours que ce test ne peut pas suivre.
+    await page.locator('.modes label').filter({ hasText: 'Espèces' }).locator('input[type=radio]').check();
+    await expect(page.locator('.bandeau-info')).toContainText(/Règlement sur place/);
     await expect(page.locator('.total-bar')).toContainText(/50[\s  ]?000/);
     await expect(confirmer).toBeEnabled();
     await confirmer.click();

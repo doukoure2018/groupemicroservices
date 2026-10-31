@@ -101,6 +101,15 @@ public final class CommandeQuery {
         LIMIT 100
         """;
 
+    /**
+     * Conserve le lien de paiement pour que le client puisse reprendre un
+     * règlement interrompu. Écrit après l'appel au prestataire, seul moment où
+     * le lien est connu.
+     */
+    public static final String MAJ_URL_PAIEMENT = """
+        UPDATE commandes SET url_paiement = :urlPaiement WHERE commande_id = :commandeId
+        """;
+
     public static final String MAJ_STATUT_PAIEMENT = """
         UPDATE paiements
            SET statut = :statut,
@@ -114,7 +123,7 @@ public final class CommandeQuery {
                c.mode_reglement_id, c.nombre_places, c.montant_unitaire, c.montant_total,
                c.montant_frais, c.montant_remise, c.montant_paye, c.devise, c.statut,
                c.date_reservation, c.date_confirmation, c.date_paiement,
-               c.reference_paiement, c.notes, c.created_at, c.updated_at,
+               c.reference_paiement, c.url_paiement, c.notes, c.created_at, c.updated_at,
                o.offre_uuid, o.date_depart, o.heure_depart,
                o.niveau_remplissage, o.point_rencontre AS point_rendez_vous,
                vd.libelle AS ville_depart_libelle,
@@ -149,7 +158,7 @@ public final class CommandeQuery {
                c.mode_reglement_id, c.nombre_places, c.montant_unitaire, c.montant_total,
                c.montant_frais, c.montant_remise, c.montant_paye, c.devise, c.statut,
                c.date_reservation, c.date_confirmation, c.date_paiement,
-               c.reference_paiement, c.notes, c.created_at, c.updated_at,
+               c.reference_paiement, c.url_paiement, c.notes, c.created_at, c.updated_at,
                o.offre_uuid, o.date_depart, o.heure_depart,
                o.niveau_remplissage, o.point_rencontre AS point_rendez_vous,
                vd.libelle AS ville_depart_libelle,

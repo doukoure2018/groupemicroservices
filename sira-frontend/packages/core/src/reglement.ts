@@ -8,6 +8,11 @@ export interface ModeReglement {
     fraisPourcentage?: number;
     fraisFixe?: number;
     actif?: boolean;
+    /**
+     * Calculé par le serveur : vrai si un prestataire traite ce mode, donc si
+     * le client sera redirigé pour payer avant d'obtenir ses billets.
+     */
+    enLigne?: boolean;
     createdAt?: string;
     updatedAt?: string;
 }

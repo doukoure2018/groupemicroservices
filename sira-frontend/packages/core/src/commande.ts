@@ -61,6 +61,8 @@ export interface CommandeClient {
     montantPaye?: number;
     devise?: string;
     referencePaiement?: string;
+    /** Lien du prestataire, présent uniquement tant qu'un paiement en ligne reste à faire. */
+    urlPaiement?: string;
     createdAt?: string;
 
     // Offre / trajet joints
@@ -93,4 +95,18 @@ export interface CommandeCreateRequest {
 
 export interface ModifierDateRequest {
     nouvelleOffreUuid: string;
+}
+
+/**
+ * Un règlement en ligne interrompu peut être reprise tant que la commande
+ * attend son paiement et que le lien du prestataire est connu. Les modes hors
+ * ligne (espèces, virement) n'ont pas de lien et ne passent jamais ici.
+ */
+export function peutReprendrePaiement(commande: CommandeClient): boolean {
+    return commande.statut === 'EN_ATTENTE' && !!commande.urlPaiement;
+}
+
+/** Une commande en attente de paiement n'a pas encore de billets utilisables. */
+export function attendPaiement(commande: CommandeClient): boolean {
+    return commande.statut === 'EN_ATTENTE';
 }

@@ -8,10 +8,11 @@ import {
     type CommandeClient,
     type PassagerRequest
 } from '@sira/core';
-import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api';
+import { ConfirmationCommande } from '../components/ConfirmationCommande';
+import { CLE_REFERENCE_PAIEMENT } from './PaiementRetourPage';
 
 const MAX_PLACES = 8;
 
@@ -34,6 +35,7 @@ export function ReservationPage() {
     const [passagers, setPassagers] = useState<PassagerRequest[]>([passagerVide()]);
     const [modeReglementCode, setModeReglementCode] = useState('');
     const [commande, setCommande] = useState<CommandeClient | null>(null);
+    const [redirection, setRedirection] = useState(false);
 
     const offre = offreQuery.data;
     const prixUnitaire = offre ? getMontantEffectif(offre) : 0;
@@ -50,7 +52,24 @@ export function ReservationPage() {
                     montantTotal: total
                 })
             ).data.commande,
-        onSuccess: (cmd) => setCommande(cmd)
+        onSuccess: (cmd) => {
+            // Paiement en ligne : la commande attend les fonds, les billets ne
+            // sont pas encore utilisables, et c'est le prestataire qui prend la
+            // main. Hors ligne, rien ne change : la commande est déjà confirmée.
+            if (cmd.urlPaiement) {
+                try {
+                    // Filet pour le retour : certains prestataires ne renvoient
+                    // pas la référence dans l'adresse.
+                    sessionStorage.setItem(CLE_REFERENCE_PAIEMENT, cmd.referencePaiement ?? '');
+                } catch {
+                    /* navigation privée : la référence viendra de l'adresse de retour */
+                }
+                setRedirection(true);
+                window.location.assign(cmd.urlPaiement);
+                return;
+            }
+            setCommande(cmd);
+        }
     });
 
     if (offreQuery.isLoading) return <p className="muted center">Chargement du voyage…</p>;
@@ -68,12 +87,26 @@ export function ReservationPage() {
         );
     }
 
-    if (commande) return <Confirmation commande={commande} />;
+    if (redirection) {
+        return (
+            <section className="card card-large">
+                <div className="etat-vide">
+                    <i className="pi pi-spin pi-spinner grand-icone" aria-hidden="true" />
+                    <h1>Redirection vers le paiement…</h1>
+                    <p className="muted">Vous allez régler votre réservation chez votre opérateur. Ne fermez pas cette fenêtre.</p>
+                </div>
+            </section>
+        );
+    }
+
+    if (commande) return <ConfirmationCommande commande={commande} />;
 
     function setPassager(index: number, champ: keyof PassagerRequest, valeur: string) {
         setPassagers((prev) => prev.map((p, i) => (i === index ? { ...p, [champ]: valeur } : p)));
     }
 
+    const modeChoisi = (modesQuery.data ?? []).find((m) => m.code === modeReglementCode);
+    const paiementEnLigne = modeChoisi?.enLigne === true;
     const formulaireValide = modeReglementCode !== '' && passagers.every((p) => p.nom.trim() && p.prenom.trim() && p.telephone.trim());
 
     return (
@@ -160,6 +193,13 @@ export function ReservationPage() {
                     ))}
             </div>
 
+            {paiementEnLigne && (
+                <p className="bandeau-info">
+                    Vous serez redirigé vers <strong>{modeChoisi?.libelle}</strong> pour régler. Vos billets sont émis dès que le paiement est confirmé.
+                </p>
+            )}
+            {modeChoisi && !paiementEnLigne && <p className="bandeau-info">Règlement sur place, au départ. Vos billets sont émis immédiatement.</p>}
+
             <div className="total-bar">
                 <span>
                     Total ({passagers.length} {passagers.length > 1 ? 'places' : 'place'})
@@ -167,52 +207,22 @@ export function ReservationPage() {
                 <strong>{formatMontant(total, offre.devise)}</strong>
             </div>
 
-            {reserver.isError && <p className="error">La réservation a échoué. Vérifiez les places disponibles et réessayez.</p>}
+            {reserver.isError && (
+                <p className="error">
+                    {paiementEnLigne
+                        ? "Le paiement n'a pas pu être ouvert. Aucune place n'a été retenue, réessayez dans un instant."
+                        : 'La réservation a échoué. Vérifiez les places disponibles et réessayez.'}
+                </p>
+            )}
             <button className="bouton-confirmer" disabled={!formulaireValide || reserver.isPending} onClick={() => reserver.mutate()}>
-                {reserver.isPending ? 'Réservation en cours…' : 'Confirmer la réservation'}
+                {reserver.isPending
+                    ? paiementEnLigne
+                        ? 'Ouverture du paiement…'
+                        : 'Réservation en cours…'
+                    : paiementEnLigne
+                      ? 'Payer et confirmer'
+                      : 'Confirmer la réservation'}
             </button>
-        </section>
-    );
-}
-
-function Confirmation({ commande }: { commande: CommandeClient }) {
-    return (
-        <section className="card card-large">
-            <div className="admin-entete">
-                <div>
-                    <h1>Réservation confirmée ✓</h1>
-                    <p className="muted">Présentez ces billets (QR code) à l'embarquement.</p>
-                </div>
-            </div>
-
-            {/* Le premier <strong> dans un <p> est le numéro de commande : le test du parcours voyageur le relit ici. */}
-            <p className="confirmation-ligne">
-                Commande <strong>{commande.numeroCommande}</strong> — {formatMontant(commande.montantTotal, commande.devise)} — {commande.nombrePlaces}{' '}
-                {(commande.nombrePlaces ?? 1) > 1 ? 'places' : 'place'}
-            </p>
-
-            <h2 className="section-titre">Vos billets</h2>
-            <ul className="billets">
-                {(commande.billets ?? []).map((billet) => (
-                    <li key={billet.billetUuid} className="billet">
-                        <QRCodeSVG value={billet.qrCodeData ?? billet.codeBillet ?? ''} size={128} />
-                        <div>
-                            <strong>{billet.nomPassager}</strong>
-                            <span className="muted">Billet {billet.codeBillet}</span>
-                            {billet.numeroSiege && <span className="muted">Siège {billet.numeroSiege}</span>}
-                        </div>
-                    </li>
-                ))}
-            </ul>
-
-            <div className="commande-actions">
-                <Link className="bouton-lien" to="/mes-voyages">
-                    <i className="pi pi-ticket" aria-hidden="true" /> Voir mes voyages
-                </Link>
-                <Link className="lien-discret" to="/">
-                    <i className="pi pi-arrow-left" aria-hidden="true" /> Réserver un autre voyage
-                </Link>
-            </div>
         </section>
     );
 }

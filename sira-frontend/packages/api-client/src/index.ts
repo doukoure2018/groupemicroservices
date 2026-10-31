@@ -5,7 +5,7 @@ export * from './user.js';
 export * from './immo.js';
 
 import { SiraClient, type SiraClientConfig } from './http.js';
-import { billetApi, commandeApi, commercialApi, geoApi, notificationApi, offreApi, transportApi, vehiculeApi } from './billetterie.js';
+import { billetApi, commandeApi, commercialApi, geoApi, notificationApi, offreApi, paiementApi, transportApi, vehiculeApi } from './billetterie.js';
 import { userApi } from './user.js';
 import { agenceApi, immoClientApi, leadApi, proprieteApi } from './immo.js';
 
@@ -18,6 +18,7 @@ export function createSiraApi(config: SiraClientConfig) {
         transport: transportApi(client),
         offres: offreApi(client),
         commandes: commandeApi(client),
+        paiements: paiementApi(client),
         billets: billetApi(client),
         vehicules: vehiculeApi(client),
         commercial: commercialApi(client),

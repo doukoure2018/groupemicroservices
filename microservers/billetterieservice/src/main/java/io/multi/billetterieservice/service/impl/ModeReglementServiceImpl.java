@@ -5,6 +5,7 @@ import io.multi.billetterieservice.dto.ModeReglementRequest;
 import io.multi.billetterieservice.exception.ApiException;
 import io.multi.billetterieservice.repository.ModeReglementRepository;
 import io.multi.billetterieservice.service.ModeReglementService;
+import io.multi.billetterieservice.service.paiement.PrestatairePaiement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,20 +26,34 @@ public class ModeReglementServiceImpl implements ModeReglementService {
 
     private final ModeReglementRepository modeReglementRepository;
 
+    /** Pour dire au client, avant qu'il choisisse, s'il sera redirigé pour payer. */
+    private final List<PrestatairePaiement> prestataires;
+
+    /**
+     * Renseigne enLigne sur chaque mode. Un mode sans prestataire se règle hors
+     * de la plateforme (espèces, virement) et la commande est confirmée
+     * immédiatement ; avec prestataire, le client paie d'abord.
+     */
+    private List<ModeReglement> marquerEnLigne(List<ModeReglement> modes) {
+        modes.forEach(mode -> mode.setEnLigne(
+                mode.getCode() != null && prestataires.stream().anyMatch(p -> p.supporte(mode.getCode()))));
+        return modes;
+    }
+
     // ========== LECTURE ==========
 
     @Override
     @Transactional(readOnly = true)
     public List<ModeReglement> getAll() {
         log.info("Récupération de tous les modes de règlement");
-        return modeReglementRepository.findAll();
+        return marquerEnLigne(modeReglementRepository.findAll());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ModeReglement> getAllActifs() {
         log.info("Récupération de tous les modes de règlement actifs");
-        return modeReglementRepository.findAllActifs();
+        return marquerEnLigne(modeReglementRepository.findAllActifs());
     }
 
     @Override

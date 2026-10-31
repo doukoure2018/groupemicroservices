@@ -19,6 +19,14 @@ public interface CommandeService {
     Commande confirmerPaiement(String referencePaiement);
 
     /**
+     * Même vérification que {@link #confirmerPaiement(String)}, mais réservée au
+     * propriétaire de la commande. La notification du prestataire arrive sans
+     * jeton et ne peut pas être filtrée ainsi ; la consultation par un client,
+     * elle, ne doit jamais laisser lire la commande d'un autre.
+     */
+    Commande etatPaiement(String referencePaiement, Long userId);
+
+    /**
      * Abandonne une commande restée en attente de paiement : billets annulés,
      * paiement marqué échoué, places rendues par le déclencheur. Sans jamais
      * toucher à une commande déjà tranchée.

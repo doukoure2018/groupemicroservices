@@ -219,6 +219,12 @@ public class CommandeServiceImpl implements CommandeService {
                     .urlRetour(urlRetourPaiement)
                     .urlNotification(urlNotificationPaiement)
                     .build()).urlPaiement();
+            // Conservé pour que « Mes voyages » puisse proposer de reprendre un
+            // règlement interrompu, plutôt que de tout faire ressaisir.
+            jdbcClient.sql(CommandeQuery.MAJ_URL_PAIEMENT)
+                    .param("urlPaiement", urlPaiement)
+                    .param("commandeId", commandeId)
+                    .update();
             log.info("Commande {} en attente de paiement {}", numeroCommande, request.getModeReglementCode());
         } else {
             // Hors ligne : la commande est déjà confirmée, on peut notifier.
@@ -280,6 +286,7 @@ public class CommandeServiceImpl implements CommandeService {
                         .dateConfirmation(rs.getObject("date_confirmation", OffsetDateTime.class))
                         .datePaiement(rs.getObject("date_paiement", OffsetDateTime.class))
                         .referencePaiement(rs.getString("reference_paiement"))
+                        .urlPaiement(rs.getString("url_paiement"))
                         .notes(rs.getString("notes"))
                         .createdAt(rs.getObject("created_at", OffsetDateTime.class))
                         .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
@@ -350,6 +357,7 @@ public class CommandeServiceImpl implements CommandeService {
                         .dateConfirmation(rs.getObject("date_confirmation", OffsetDateTime.class))
                         .datePaiement(rs.getObject("date_paiement", OffsetDateTime.class))
                         .referencePaiement(rs.getString("reference_paiement"))
+                        .urlPaiement(rs.getString("url_paiement"))
                         .notes(rs.getString("notes"))
                         .createdAt(rs.getObject("created_at", OffsetDateTime.class))
                         .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
@@ -658,6 +666,23 @@ public class CommandeServiceImpl implements CommandeService {
             case EN_ATTENTE -> log.info("Paiement {} toujours en attente chez le prestataire", referencePaiement);
         }
         return getByUuid(commandeUuid);
+    }
+
+    @Override
+    public Commande etatPaiement(String referencePaiement, Long userId) {
+        Long proprietaire = jdbcClient.sql(CommandeQuery.FIND_CONTEXTE_PAIEMENT)
+                .param("reference", referencePaiement)
+                .query((rs, rowNum) -> rs.getLong("user_id"))
+                .optional()
+                .orElseThrow(() -> new ApiException("Référence de paiement inconnue"));
+
+        // Message volontairement identique à celui d'une référence inconnue :
+        // il ne doit pas révéler qu'une référence existe chez quelqu'un d'autre.
+        if (!proprietaire.equals(userId)) {
+            log.warn("Consultation refusée : la référence {} n'appartient pas à l'utilisateur {}", referencePaiement, userId);
+            throw new ApiException("Référence de paiement inconnue");
+        }
+        return confirmerPaiement(referencePaiement);
     }
 
     @Override
