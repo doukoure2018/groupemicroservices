@@ -80,9 +80,11 @@ export default function Connexion() {
 
                     <Bouton libelle="Se connecter" onPress={() => void soumettre()} desactive={!valide} enCours={enCours} style={{ marginTop: espaces.lg }} />
 
-                    <Text style={styles.pied}>
-                        Pas encore de compte ? L'inscription se fait sur {config.siteWeb.replace('https://', '')}, puis vous vous connectez ici.
-                    </Text>
+                    <Bouton libelle="Mot de passe oublié ?" variante="discret" onPress={() => router.push('/mot-de-passe-oublie')} style={{ marginTop: espaces.sm }} />
+
+                    <View style={styles.separateur} />
+                    <Text style={styles.pied}>Pas encore de compte ?</Text>
+                    <Bouton libelle="Créer un compte" variante="secondaire" onPress={() => router.push('/inscription')} />
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
@@ -96,5 +98,6 @@ const styles = StyleSheet.create({
     devise: { color: '#cfe3d6', letterSpacing: 3, fontSize: 12, marginTop: espaces.xs },
     badgeTest: { marginTop: espaces.md, color: couleurs.vertFonce, backgroundColor: couleurs.or, paddingHorizontal: espaces.md, paddingVertical: 4, borderRadius: 999, fontWeight: '700', fontSize: 12 },
     carte: { backgroundColor: couleurs.blanc, borderRadius: 20, padding: espaces.xl },
-    pied: { color: couleurs.gris, marginTop: espaces.xl, lineHeight: 20, textAlign: 'center' }
+    separateur: { height: 1, backgroundColor: couleurs.ligne, marginVertical: espaces.xl },
+    pied: { color: couleurs.gris, marginBottom: espaces.md, textAlign: 'center' }
 });
