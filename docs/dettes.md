@@ -9,6 +9,7 @@
 ## 🔴 Sécurité
 
 ### S1. PKCE annulé côté web
+**RÉGLÉE le 2026-10-31 par le retrait de l'Angular.** Le web React génère un vrai PKCE S256 par connexion (`@sira/auth`), et le code qui portait le défaut n'existe plus.
 Le `code_challenge` est en dur dans `frontend/ultima-ng-19.0.0/src/app/utils/fileutils.ts`
 et le `code_verifier` en dur dans `src/app/pages/home/home.component.ts` (~L229).
 Le verifier fixe est livré dans le bundle JS : la protection PKCE du flux
@@ -24,7 +25,7 @@ Toutes ces valeurs sont dans l'historique git : les roter après externalisation
   `51.91.254.218`).
 - Basic Auth Eureka `manager:manager2711` dans les `defaultZone` de tous les services.
 - MinIO `minioadmin:minioadmin` dans `immobilierservice/src/main/resources/application.yml`.
-- Clé API Google en clair dans `src/app/service/google.place.service.ts` (bundle Angular).
+- ~~Clé API Google en clair dans le bundle Angular~~ (retiré avec l'Angular le 2026-10-31 ; à révoquer côté Google si elle ne l'a pas été).
 
 Contre-exemples déjà propres (à imiter) : Google OAuth, FCM (`FCM_SERVICE_ACCOUNT_B64`),
 Gmail SMTP, BDD prod — tous via `${VAR}`.
@@ -69,7 +70,20 @@ Révélé le 2026-07-09 par un redéploiement CD TEST.
 
 ## 🟠 Technique
 
+### T14. Origine de développement encore celle de l'Angular (ajoutée le 2026-10-31)
+Le proxy Vite du web React usurpe l'en-tête `Origin` en `http://localhost:4202`
+parce que c'est la seule origine de dev que connaissent les six listes CORS
+backend (gateway, authorizationserver, userservice, notificationserver,
+immobilierservice, billetterieservice) et les `redirect_uris` du client OAuth2
+(migration V38). Les gabarits Thymeleaf de userservice (`login/logout/mfa.html`)
+portent aussi des liens durs vers `localhost:4202` et des routes Angular.
+**Cible** : inscrire `http://localhost:5173` dans les six listes, migration V43
+pour les `redirect_uris`, supprimer la réécriture dans `vite.config.ts`, et faire
+pointer les gabarits sur `UI_APP_URL` avec les routes React (`/auth/register`,
+`/auth/forgotpassword`). À faire en une fois, avec la suite e2e en garde-fou.
+
 ### T1. Refresh silencieux Angular (ajoutée le 2026-07-05)
+**RÉGLÉE le 2026-10-31 par le retrait de l'Angular.** `AuthSession` dans `@sira/auth` rafraîchit en silence, avec mutex et rejeu sur 401. Le TTL de 8 h de la migration V30 peut donc être raccourci.
 Le `TokenInterceptor` purge les tokens et déconnecte au premier 401 : la session web
 dure exactement la durée de l'access token (8 h depuis la migration V30 ; 5 min avant).
 **Cible** : sur 401 (ou juste avant expiration), appeler le `tokenEndpoint` avec
@@ -85,7 +99,7 @@ Le module a un `pom.xml` mais n'est pas déclaré dans `<modules>` de
 
 ### T3. Couverture de tests quasi nulle
 1 seul test backend (`authorizationserver/.../MobileTokenServiceGoogleIdTokenTest`),
-0 test Angular (aucun `.spec.ts`), 1 test Flutter cassé (template compteur par défaut).
+47 tests Playwright sur le web React ; 1 test Flutter cassé (template compteur par défaut), sans objet dès la reconstruction Expo.
 **Cible prioritaire** : chemins critiques — création de commande + billets, validation
 QR (dont le 409 « déjà utilisé »), modération immo, refresh token, login OAuth2 web.
 
@@ -99,6 +113,7 @@ maintenue à la main aux deux endroits (documenté dans
 `gateway/.../security/ResourceServerConfig.java`). Toute divergence = 401 ou fuite.
 
 ### T6. URLs frontend figées à la compilation (`frontend-fileutils-hardcoded-urls`)
+**RÉGLÉE le 2026-10-31 par le retrait de l'Angular.** Le web React utilise des chemins relatifs : une seule image sert test et production.
 Pas de `src/environments/` : `server`, `authorizationServer`, `tokenEndpoint`,
 `redirectUri` sont en dur dans `fileutils.ts` → 2 images Docker par environnement
 (build-args), rien de configurable au runtime. Inclut l'écart de context-path
@@ -113,6 +128,7 @@ autres services sur `9093` (port exposé par le compose). En dev Maven local, le
 notifications de userservice ne partent pas.
 
 ### T8. Code mort côté Angular (template Ultima)
+**RÉGLÉE le 2026-10-31 par le retrait de l'Angular.** Le thème Ultima et ses démonstrations sont partis avec le dossier `frontend/`.
 - Pages/apps de démo routées : `uikit/*`, `blocks/*`, `ecommerce/*`, `landing/*`,
   `usermanagement/*`, `apps/*` (mail, chat, kanban, blog, tasklist, files) ;
   > 11 000 lignes de mocks dans `pages/service/*`.
@@ -163,8 +179,6 @@ de colonnes). La Phase 0 (corrections sans risque) est faite — voir « Réglé
 - **T12c — Phase 3 : factoriser le boilerplate CRUD.** **Frontend RÉGLÉ le
   2026-07-11** (voir « Réglées » : ReferentielCrudComponent générique, 4 écrans géo
   migrés, -2 823 lignes). Restent au fil de l'eau :
-  - `handleError` encore copié dans ~14 services Angular (mutualiser un
-    `buildHandleError(entite)` partagé) ;
   - migrer la famille B (sites-gares, points-depart, points-arrivee,
     types-vehicules, modes-reglement…) vers le composant générique — nécessite
     d'ajouter le support delete/toggle-actif et des types de champs

@@ -37,7 +37,7 @@ sudo firewall-cmd --list-all
 ### 1.2 Nginx — reverse proxy public
 
 Conf attendue (cf. `nginx/guidipress-io.conf` versionné) :
-- `guidipress-io.com` (443 SSL) → `proxy_pass http://127.0.0.1:4202` (frontend)
+- `synergia-guinee.com` (443 SSL) → `proxy_pass http://127.0.0.1:4203` (web React) ; test → 14203
 - `api.guidipress-io.com` (443 SSL) → `proxy_pass http://127.0.0.1:9000` (gateway)
 
 ```bash
@@ -61,7 +61,7 @@ curl -I https://api.guidipress-io.com      # 401 attendu sans JWT, mais le servi
 
 ```bash
 # Sur le serveur, après `docker compose up -d` :
-for port in 5435 7001 9100 9101 2183 9093 8761 8090 8091 8092 8093 8098 4202 9000; do
+for port in 5435 7001 9100 9101 2183 9093 8761 8090 8091 8092 8093 8098 4203 14203 9000; do
   echo -n "Port $port depuis l'IP serveur (non-loopback) : "
   timeout 3 curl -s -o /dev/null -w "%{http_code}\n" "http://<IP_serveur>:$port" || echo "refused/timeout (OK)"
 done
@@ -81,12 +81,12 @@ Attendu : **toutes les requêtes** → `Connection refused` / timeout (binding l
 - [ ] Billetterie 8092 — refused
 - [ ] Notif 8093 — refused
 - [ ] Immo 8098 — refused
-- [ ] Frontend 4202 — refused (nginx fait le proxy)
+- [ ] Web React 4203 et 14203 — refused (nginx fait le proxy)
 - [ ] Gateway 9000 — refused (nginx fait le proxy)
 
 **Test de non-régression — l'accès légitime via nginx tient toujours :**
 - [ ] `curl https://api.guidipress-io.com/immo/commodites` → 200 (route publique gateway)
-- [ ] `curl https://guidipress-io.com/` → 200 (frontend Angular)
+- [ ] `curl https://synergia-guinee.com/` → 200 (web React)
 
 ---
 

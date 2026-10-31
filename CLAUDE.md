@@ -4,12 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Multi-tenant microservices application with Spring Boot backend and Angular frontend for a ticketing/billetterie system.
+Microservices application with a Spring Boot backend and a React web frontend for transport ticketing (billetterie) and real estate (immobilier) in Guinea. A Flutter mobile app exists and is slated for a rebuild in React Native (Expo).
 
 ## Tech Stack
 
 - **Backend**: Java 21, Spring Boot 3.4.1, Spring Cloud 2024.0.0
-- **Frontend**: Angular 19, PrimeNG 19, TailwindCSS
+- **Web frontend**: React 19 + TypeScript + Vite, PrimeReact 10 (keep ^10, v11 is incompatible), TanStack Query, react-router-dom 7, npm workspaces monorepo in `sira-frontend/`
+- **Mobile**: Flutter app in `mobile_app/` (to be rebuilt with Expo in `sira-frontend/apps/mobile`)
 - **Database**: PostgreSQL 16 (port 5433)
 - **Messaging**: Apache Kafka
 - **Auth**: OAuth2 Authorization Server with JWT
@@ -37,14 +38,15 @@ mvn -pl userservice test
 mvn package jib:build
 ```
 
-### Frontend (from `/frontend/ultima-ng-19.0.0`)
+### Web frontend (from `/sira-frontend`)
 ```bash
-npm install          # Install dependencies
-npm start            # Dev server on port 4202
-npm run build        # Production build
-npm test             # Run Karma tests
-npm run format       # Prettier formatting
+npm install                                   # Install all workspaces
+npx tsc -b packages/core packages/api-client packages/auth   # Rebuild shared packages (@sira/* resolve via dist/)
+npm run dev --workspace @sira/web             # Vite dev server on port 5173 (proxies API to gateway :9000)
+npm run build --workspace @sira/web           # Production build
+cd e2e && E2E_BASE_URL=http://localhost:5173 E2E_EMAIL=... E2E_PASSWORD=... npx playwright test   # 47 e2e tests (run from e2e/)
 ```
+Shared code lives in `packages/` (`@sira/core` models and formatting, `@sira/api-client` typed API, `@sira/auth` PKCE and sessions) and must never be duplicated between web and mobile.
 
 ### Database Migrations
 ```bash
@@ -98,19 +100,20 @@ Each service follows: `io.multi.<servicename>` with subdirectories:
 - `resource/` - REST controllers
 - `security/` or `securite/` - Security config
 
-### Frontend Structure (`/frontend/ultima-ng-19.0.0/src/app`)
-- `pages/` - Page components (auth, dashboard, crud, etc.)
-- `apps/` - Feature modules (blog, chat, files, kanban, mail, tasklist)
-- `layout/` - Layout components
-- `service/` - Angular services
-- `interceptors/` - HTTP interceptors (TokenInterceptor, CacheInterceptor)
+### Web Frontend Structure (`/sira-frontend/apps/web/src`)
+- `pages/` - Public and client pages (home, auth, reservation, payment return, my trips, agency, compliance)
+- `pages/admin/` - Back-office screens behind `AdminLayout` + `RequireRole`; `ReferentielCrud.tsx` is the generic CRUD, `shared.tsx` holds notifications and confirmations
+- `pages/accueil/` - Static editorial sections of the home page (map, travel guide, services...)
+- `components/` - Shared UI (auth card, error boundary, document title, order confirmation)
+- `api.ts` / `auth-context.tsx` - API client instance and session; styles in `styles.css` plus per-area CSS files
 
 ## Key Configuration Files
 
 - `.env` / `.env.prod` - Environment variables (DB credentials, OAuth settings)
 - `docker-compose.yml` - Container orchestration
 - `microservers/pom.xml` - Parent Maven POM with shared dependencies
-- `frontend/ultima-ng-19.0.0/angular.json` - Angular build config
+- `sira-frontend/apps/web/vite.config.ts` - Vite dev proxy (same-origin API calls relayed to the gateway, `/authorization` prefix stripped in dev only)
+- `nginx/` - Host vhosts uploaded by `backend-cd.yml` (prod web on 127.0.0.1:4203, test web on 14203)
 
 ## Inter-Service Communication
 

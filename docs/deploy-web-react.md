@@ -3,10 +3,10 @@
 > Rédigé le 2026-09-10. Complète `deploy-ovh-sira.md`, qui reste la référence
 > pour le provisionnement du VPS et la pile backend.
 
-## Ce qui change par rapport à l'image Angular
+## Une seule image pour tous les environnements
 
-L'image Angular fige ses URLs à la compilation, ce qui impose deux constructions
-et deux images par livraison. Le client React utilise `window.location.origin` et
+L'ancienne image Angular figeait ses URLs à la compilation, ce qui imposait deux
+constructions et deux images par livraison. Le client React utilise `window.location.origin` et
 des chemins relatifs ; le nginx du conteneur relaie ces chemins vers le gateway
 par le DNS interne du réseau Docker.
 
@@ -28,12 +28,14 @@ réécriture : `/authorization`, `/user`, `/billetterie`, `/notification`, `/imm
 | `docker-compose.yml`, service `web` | conteneur, port local, contrôle de santé |
 | `.github/workflows/frontend-react-cd.yml` | vérification du typage, construction, publication, déploiement |
 
-## Cohabitation avec l'Angular
+## Retrait de l'Angular (2026-10-31)
 
-Le service `web` tourne **à côté** du service `frontend`, sur un port distinct.
-Les deux applications restent servables tant que la bascule n'est pas décidée.
-Basculer ou revenir en arrière ne touche ni les images ni le compose : c'est un
-changement de port dans le vhost nginx de l'hôte.
+Le service `web` est désormais le seul frontend. Le service `frontend` Angular
+a quitté le compose, son workflow a été supprimé, et le déploiement backend
+retire les conteneurs orphelins : l'ancien conteneur s'éteint de lui-même sur
+chaque pile au déploiement suivant. La boucle de contrôle de santé du
+déploiement surveille `web`. Le retour arrière vers l'Angular n'existe plus ;
+le code reste dans l'historique git.
 
 ## État au 2026-09-10
 
@@ -108,9 +110,8 @@ La bascule consiste à changer une seule ligne du vhost concerné, puis :
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-Le retour arrière est la même opération dans l'autre sens. Le conteneur Angular
-n'a pas été arrêté, donc le retour est immédiat et ne demande aucune
-reconstruction.
+Historique : jusqu'au retrait de l'Angular, le retour arrière était la même
+opération dans l'autre sens. Ce n'est plus possible depuis le 2026-10-31.
 
 ## Politique de contenu
 

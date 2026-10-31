@@ -41,7 +41,7 @@ github.com/doukoure2018/groupemicroservices/settings/
 | `ORANGE_SENDER_ADDRESS` | (cf `.env.prod` local, format `tel:+224XXXXXXXXX`) | Numéro Orange Guinée E.164. Partagé. |
 | `GOOGLE_CLIENT_ID` | (placeholder ou désactivé) | **MVP SKIP** : décision user 2026-06-01, login Google reporté post-MVP. Mettre une valeur bidon (ex: `__GOOGLE_DISABLED__`) ou créer un secret vide. |
 | `GOOGLE_CLIENT_SECRET` | (placeholder) | Idem. |
-| `SLACK_WEBHOOK_URL` | (URL `hooks.slack.com/services/...`) | Notifications build/deploy (start, images pushed, success, failure) sur les 2 workflows backend-cd + frontend-cd. Régénérer dans l'app Slack si compromis. |
+| `SLACK_WEBHOOK_URL` | (URL `hooks.slack.com/services/...`) | Notifications build/deploy (start, images pushed, success, failure) sur les workflows backend-cd et frontend-react-cd. Régénérer dans l'app Slack si compromis. |
 | ~~`POSTGRES_PASSWORD`~~ (legacy) | (à supprimer) | Maintenant dans chaque Environment (POSTGRES_PASSWORD test ≠ prod). Supprimer cet ancien secret repo-level. |
 
 > ⚠️ Si tu n'as pas accès aux valeurs anciennes (DOCKERHUB_ACCESS_TOKEN, PROD_SSH_KEY) : régénérer côté source (Docker Hub UI, `ssh-keygen` + push public key sur OVH).

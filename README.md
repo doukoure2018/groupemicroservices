@@ -1,6 +1,6 @@
 # GroupeMicroservices — Plateforme de Billetterie de Transport Routier
 
-Plateforme microservices Spring Boot / Angular pour la **réservation de places dans les véhicules de transport interurbain** (Guinée). Système complet : gestion des trajets, véhicules, offres datées, réservations multi-passagers, billets QR, paiements, notifications email/SMS.
+Plateforme microservices Spring Boot / React pour la **réservation de places dans les véhicules de transport interurbain** (Guinée). Système complet : gestion des trajets, véhicules, offres datées, réservations multi-passagers, billets QR, paiements, notifications email/SMS.
 
 ---
 
@@ -43,7 +43,7 @@ Le projet est une **plateforme de billetterie de transport routier en Guinée** 
 | Couche | Technologie |
 |---|---|
 | **Backend** | Java 21, Spring Boot 3.4.1, Spring Cloud 2024.0.0 |
-| **Frontend Web** | Angular 19, PrimeNG 19, TailwindCSS |
+| **Frontend Web** | React 19, TypeScript, Vite, PrimeReact 10 (monorepo `sira-frontend/`) |
 | **Mobile** | Flutter (Dart) — deep-link `com.billetterie.gn://` |
 | **Base de données** | PostgreSQL 16 + PostGIS (interne 5433, host 5435 par défaut, configurable via `POSTGRES_HOST_PORT`) |
 | **Messaging** | Apache Kafka |
@@ -61,7 +61,7 @@ Le projet est une **plateforme de billetterie de transport routier en Guinée** 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  FRONTENDS                                                  │
-│  • Angular 19 (web - port 4202)                             │
+│  • React 19 (web - dev 5173, conteneur 4203)                │
 │  • Mobile App (Flutter - com.billetterie.gn:// deep-link)   │
 └─────────────────────┬───────────────────────────────────────┘
                       │ HTTPS + JWT
@@ -120,7 +120,7 @@ Le projet est une **plateforme de billetterie de transport routier en Guinée** 
 
 **Sécurité** :
 - OAuth2 Resource Server, valide JWT via JWKS (`http://localhost:8090/oauth2/jwks`)
-- **CORS** : autorise `localhost:4202` (web), domaines `guidipress-io.com`, schéma de deep-link mobile `com.billetterie.gn://`
+- **CORS** : autorise `localhost:4202` (origine historique, encore usurpée par le proxy Vite du web React), domaines `synergia-guinee.com`, schéma de deep-link mobile `com.billetterie.gn://`
 - **Endpoints publics** : `/user/register`, `/user/verify/**`, `/user/resetpassword/**`, `/user/image/**`
 
 ### 1.3 `authorizationserver` (port 8090) — OAuth2 Authorization Server
@@ -440,14 +440,14 @@ mvn test
 mvn package jib:build
 ```
 
-### Frontend (depuis `/frontend/ultima-ng-19.0.0`)
+### Frontend web (depuis `/sira-frontend`)
 
 ```bash
-npm install          # Install dépendances
-npm start            # Serveur dev sur port 4202
-npm run build        # Build production
-npm test             # Tests Karma
-npm run format       # Prettier
+npm install                                                  # Toutes les workspaces
+npx tsc -b packages/core packages/api-client packages/auth   # Paquets partagés (@sira/*)
+npm run dev --workspace @sira/web                            # Serveur dev Vite sur 5173
+npm run build --workspace @sira/web                          # Build production
+cd e2e && E2E_BASE_URL=http://localhost:5173 npx playwright test   # 47 tests de bout en bout
 ```
 
 ### Migrations BD
@@ -484,7 +484,7 @@ docker compose up -d
 6. `billetterieservice` (port 8097)
 7. `notificationserver` (port 8096)
 8. `gateway` (port 9000)
-9. Frontend Angular (port 4202)
+9. Web React (`npm run dev --workspace @sira/web`, port 5173)
 
 ---
 
@@ -514,7 +514,7 @@ groupemicroservices/
 │   ├── database-migrations/           # Flyway (V1-V12)
 │   ├── migrate-local.sh
 │   └── migrate-prod.sh
-├── frontend/ultima-ng-19.0.0/         # Angular 19 + PrimeNG
+├── sira-frontend/                     # Web React + paquets partagés + e2e
 ├── mobile_app/                        # App Flutter (Dart)
 ├── nginx/                             # Reverse proxy prod
 ├── docker-compose.yml

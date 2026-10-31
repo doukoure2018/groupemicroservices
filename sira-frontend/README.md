@@ -1,6 +1,6 @@
 # sira-frontend — Monorepo React / React Native
 
-Migration du frontend SIRA Guinée / SYNERGIA : Angular → React (web), Flutter → React Native/Expo (mobile).
+Frontends SYNERGIA : web React (en service, l'Angular a été retiré le 2026-10-31 une fois la parité atteinte) et, à venir, mobile React Native/Expo en remplacement du Flutter.
 Le backend (gateway `:9000`) ne change pas — tout ce monorepo consomme le même contrat API.
 
 ## Structure
@@ -8,13 +8,13 @@ Le backend (gateway `:9000`) ne change pas — tout ce monorepo consomme le mêm
 ```
 sira-frontend/
 ├── packages/
-│   ├── core/         @sira/core       — modèles métier TypeScript (portés depuis src/app/interface Angular),
+│   ├── core/         @sira/core       — modèles métier TypeScript (hérités des interfaces de l'ancien Angular),
 │   │                                    helpers de formatage GNF/durées/LocalTime, machine à états offres, rôles
 │   ├── api-client/   @sira/api-client — client HTTP typé de TOUS les endpoints (billetterie, user, immo),
 │   │                                    refresh automatique + rejeu sur 401, endpoints publics sans Bearer
 │   └── auth/         @sira/auth       — PKCE réel (corrige dette S1), refresh silencieux (corrige dette T1),
 │                                        stores de jetons (mémoire web / SecureStore mobile), login REST mobile
-├── e2e/              @sira/e2e        — tests Playwright de PARITÉ : exécutés d'abord contre l'Angular actuel,
+├── e2e/              @sira/e2e        — tests Playwright de bout en bout du web React (nés comme suite de parité),
 │                                        ils deviennent le contrat que le React devra respecter (même E2E_BASE_URL à changer)
 └── apps/             (phase 1+)
     ├── web/          React 19 + Vite + TanStack Query + PrimeReact   (à créer en phase 1)
@@ -28,9 +28,9 @@ npm install                # depuis sira-frontend/
 npm run build              # compile les 3 paquets
 npm run typecheck          # vérification TypeScript stricte
 
-# Tests de parité (l'app Angular doit tourner : npm start dans frontend/ultima-ng-19.0.0)
+# Tests de bout en bout (depuis e2e/ ; compte SUPER_ADMIN propriétaire des véhicules de test)
 npx playwright install chromium --with-deps    # une seule fois
-E2E_BASE_URL=http://localhost:4202 npm run test:e2e
+E2E_BASE_URL=http://localhost:5173 E2E_EMAIL=<compte> E2E_PASSWORD=<mot de passe> npm run test:e2e
 
 # Suite complète (44 tests, écrans connectés inclus) contre l'environnement de test :
 E2E_BASE_URL=https://test.synergia-guinee.com E2E_EMAIL=<compte SUPER_ADMIN> E2E_PASSWORD=<mot de passe> \
