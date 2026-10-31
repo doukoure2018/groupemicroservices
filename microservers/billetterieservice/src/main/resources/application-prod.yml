@@ -100,6 +100,19 @@ paiement:
   # Cadence de la purge, et retard au démarrage pour laisser le service s'ouvrir.
   purge-intervalle-ms: ${PAIEMENT_PURGE_INTERVALLE_MS:300000}
   purge-delai-initial-ms: ${PAIEMENT_PURGE_DELAI_INITIAL_MS:60000}
+  chapchap:
+    # Clés hexadécimales de 64 caractères, générées dans le tableau de bord
+    # Chap Chap Pay, section « Clés API ». C'est la clé elle-même qui décide du
+    # mode : une clé de test n'engage aucun fonds, l'adresse de base ne change
+    # pas. Vides par défaut, comme CinetPay : un environnement non configuré
+    # garde les règlements hors ligne au lieu de refuser toute commande.
+    api-key: ${CHAPCHAP_API_KEY:}
+    # Sert à signer le corps des requêtes en HMAC-SHA256, pas à s'authentifier.
+    encrypt-key: ${CHAPCHAP_ENCRYPT_KEY:}
+    base-url: ${CHAPCHAP_BASE_URL:https://chapchappay.com/api}
+    # Codes de modes de règlement confiés à ce prestataire. Il couvre, en plus
+    # d'Orange Money et MTN, des moyens proprement guinéens que CinetPay ignore.
+    modes: ${CHAPCHAP_MODES:}
   cinetpay:
     api-key: ${CINETPAY_API_KEY:}
     site-id: ${CINETPAY_SITE_ID:}
