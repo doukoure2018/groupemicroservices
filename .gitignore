@@ -70,3 +70,6 @@ nul
 # Template files (v0.dev design references)
 template/
 docker-compose.override.yml
+
+# Relevés de secrets déposés à la main : ne doivent jamais partir sur GitHub.
+docs/chapchappay*

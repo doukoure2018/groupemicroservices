@@ -108,11 +108,20 @@ paiement:
     # garde les règlements hors ligne au lieu de refuser toute commande.
     api-key: ${CHAPCHAP_API_KEY:}
     # Sert à signer le corps des requêtes en HMAC-SHA256, pas à s'authentifier.
-    encrypt-key: ${CHAPCHAP_ENCRYPT_KEY:}
+    # Nom repris du projet distcanal, pour garder une seule convention.
+    encryption-password: ${CHAPCHAP_ENCRYPTION_PASSWORD:}
     base-url: ${CHAPCHAP_BASE_URL:https://chapchappay.com/api}
     # Codes de modes de règlement confiés à ce prestataire. Il couvre, en plus
     # d'Orange Money et MTN, des moyens proprement guinéens que CinetPay ignore.
     modes: ${CHAPCHAP_MODES:}
+    # Les frais sont retenus sur le montant encaissé : le marchand GUIDIPRESS
+    # n'est pas autorisé au mode « add », qui les ajouterait à la charge du
+    # client. Encaisser 100 000 rapporte donc moins de 100 000.
+    mode-frais: ${CHAPCHAP_MODE_FRAIS:deduct}
+    # Bornes imposées par le prestataire pour ce marchand. Une commande hors
+    # de ces bornes sera refusée par lui, autant le savoir avant d'appeler.
+    montant-min: ${CHAPCHAP_MONTANT_MIN:1000}
+    montant-max: ${CHAPCHAP_MONTANT_MAX:5000000}
   cinetpay:
     api-key: ${CINETPAY_API_KEY:}
     site-id: ${CINETPAY_SITE_ID:}
