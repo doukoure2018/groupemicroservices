@@ -9,12 +9,13 @@ une par variante installée :
 
 | Variante | D'où vient l'empreinte |
 |---|---|
-| Build de développement local | `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android` |
+| Build de développement local (`npx expo run:android`) | signé par `android/app/debug.keystore`, généré par `expo prebuild` — **pas** `~/.android/debug.keystore`. Lire l'empreinte réelle : `adb shell pm get-app-links com.billetterie.gn` (ligne *Signatures*) |
 | APK et production (EAS) | `eas credentials` → Android → *Keystore* → `SHA-256 Fingerprint` |
 
-L'empreinte présente est celle du trousseau de débogage de la machine de
-développement. **Ajoutez celle d'EAS avant de diffuser l'APK**, sinon le lien
-ne s'ouvrira pas dans l'application installée.
+Les empreintes présentes sont celles des trousseaux de débogage (celui
+qu'`expo prebuild` dépose dans `android/app/`, puis celui de la machine).
+**Ajoutez celle d'EAS avant de diffuser l'APK**, sinon le lien ne s'ouvrira
+pas dans l'application installée.
 
 Vérification, une fois déployé :
 

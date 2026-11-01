@@ -97,6 +97,16 @@ function AttentePaiement() {
         if (commande && commande.statut !== 'EN_ATTENTE') void queryClient.invalidateQueries({ queryKey: ['mes-commandes'] });
     }, [commande, queryClient]);
 
+    // Paiement encaissé : droit aux billets, sans bouton à toucher. L'écran
+    // « Paiement reçu » ci-dessous ne sert plus que de filet si la navigation
+    // n'a pas eu lieu.
+    useEffect(() => {
+        if (!commande?.commandeUuid) return;
+        if (commande.statut === 'CONFIRMEE' || commande.statut === 'PAYEE') {
+            router.replace({ pathname: '/commande/[uuid]', params: { uuid: commande.commandeUuid } });
+        }
+    }, [commande]);
+
     if (etatQuery.isPending) return <Chargement texte="Vérification du paiement…" />;
 
     if (etatQuery.isError) {
