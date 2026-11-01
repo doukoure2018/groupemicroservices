@@ -24,6 +24,18 @@ public class Commande {
     private Long userId;
     private Long modeReglementId;
     private Integer nombrePlaces;
+    // Composition du devis (V43) ; nombrePlaces reste adultes + enfants.
+    private Integer nombreAdultes;
+    private Integer nombreEnfants;
+    private Integer nombreBagages;
+    private BigDecimal montantBagages;
+    private String contactEmail;
+    private String contactTelephone;
+    /**
+     * Instant où une commande en attente de paiement sera abandonnée par la
+     * purge. Calculé à la lecture, jamais stocké ; vide dès que la commande est tranchée.
+     */
+    private OffsetDateTime expireLe;
     private BigDecimal montantUnitaire;
     private BigDecimal montantTotal;
     private BigDecimal montantFrais;

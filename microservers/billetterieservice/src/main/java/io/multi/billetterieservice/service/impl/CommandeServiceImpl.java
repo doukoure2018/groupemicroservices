@@ -5,7 +5,10 @@ import io.multi.billetterieservice.domain.Commande;
 import io.multi.billetterieservice.domain.Offre;
 import io.multi.clients.UserClient;
 import io.multi.clients.domain.User;
+import io.multi.billetterieservice.domain.Devis;
 import io.multi.billetterieservice.dto.CommandeRequest;
+import io.multi.billetterieservice.dto.DevisRequest;
+import io.multi.billetterieservice.service.tarification.Tarificateur;
 import io.multi.billetterieservice.event.Event;
 import io.multi.billetterieservice.event.EventType;
 import io.multi.billetterieservice.event.Notification;
@@ -25,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -55,6 +57,11 @@ public class CommandeServiceImpl implements CommandeService {
      * ligne (espèces, virement), confirmé immédiatement comme auparavant.
      */
     private final List<PrestatairePaiement> prestataires;
+    private final Tarificateur tarificateur;
+
+    /** Même délai que la purge : c'est lui que le client voit s'écouler. */
+    @org.springframework.beans.factory.annotation.Value("${paiement.delai-expiration-minutes:30}")
+    private int delaiExpirationMinutes;
 
     /** Adresses de retour, injectées car propres à l'environnement. */
     @org.springframework.beans.factory.annotation.Value("${paiement.url-retour:}")
@@ -67,6 +74,56 @@ public class CommandeServiceImpl implements CommandeService {
         return prestataires.stream().filter(p -> p.supporte(codeModeReglement)).findFirst();
     }
 
+    /** Frais d'un mode de règlement : [id, pourcentage, fixe] ; absent si le code est inconnu ou inactif. */
+    private java.util.Optional<Object[]> fraisDuMode(String code) {
+        if (code == null || code.isBlank()) return java.util.Optional.empty();
+        return jdbcClient.sql(CommandeQuery.FIND_MODE_REGLEMENT_BY_CODE)
+                .param("code", code)
+                .query((rs, rowNum) -> new Object[]{
+                        rs.getLong("mode_reglement_id"),
+                        rs.getBigDecimal("frais_pourcentage"),
+                        rs.getBigDecimal("frais_fixe")
+                })
+                .optional();
+    }
+
+    /**
+     * Le devis et la commande passent par ici : mêmes entrées, même résultat.
+     * Un prestataire en ligne peut imposer un arrondi ; il s'applique au total
+     * à payer pour que le montant affiché soit exactement celui encaissé.
+     */
+    private Devis calculerDevis(Offre offre, int adultes, int enfants, int bagages, String modeCode) {
+        var frais = fraisDuMode(modeCode);
+        Devis devis = tarificateur.devis(offre, adultes, enfants, bagages,
+                frais.map(f -> (BigDecimal) f[1]).orElse(null),
+                frais.map(f -> (BigDecimal) f[2]).orElse(null));
+        prestatairePour(modeCode).ifPresent(p -> devis.setMontantAPayer(p.normaliserMontant(devis.getMontantAPayer())));
+        return devis;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Devis devis(DevisRequest request) {
+        Offre offre = offreService.getByUuid(request.getOffreUuid());
+        return calculerDevis(offre, request.getNombreAdultes(), request.getNombreEnfants(),
+                request.getNombreBagages(), request.getModeReglementCode());
+    }
+
+    private static String typePassager(CommandeRequest.PassagerDto p) {
+        return p.getTypePassager() == null || p.getTypePassager().isBlank()
+                ? Tarificateur.ADULTE : p.getTypePassager().trim().toUpperCase();
+    }
+
+    private static boolean vide(String s) {
+        return s == null || s.isBlank();
+    }
+
+    /** Une commande en attente expire à date de réservation + délai ; une commande tranchée n'expire plus. */
+    private OffsetDateTime expirationDe(String statut, OffsetDateTime dateReservation) {
+        if (!"EN_ATTENTE".equals(statut) || dateReservation == null) return null;
+        return dateReservation.plusMinutes(delaiExpirationMinutes);
+    }
+
     @Override
     public Commande creerCommande(CommandeRequest request, Long userId) {
         log.info("Création de commande - offreUuid: {}, userId: {}, passagers: {}",
@@ -77,6 +134,48 @@ public class CommandeServiceImpl implements CommandeService {
         if (!"OUVERT".equals(offre.getStatut())) {
             throw new ApiException("L'offre n'est pas disponible (statut: " + offre.getStatut() + ")");
         }
+
+        // 1 bis. Les passagers : qui est adulte, qui est enfant, et la règle d'âge
+        // vérifiée ici, le jour du voyage, pas sur la foi du client.
+        int nombreAdultes = 0;
+        int nombreEnfants = 0;
+        int ageAdulte = tarificateur.getAgeAdulteMinimum();
+        for (CommandeRequest.PassagerDto p : request.getPassagers()) {
+            String type = typePassager(p);
+            String nomComplet = p.getPrenom() + " " + p.getNom();
+            switch (type) {
+                case Tarificateur.ADULTE -> {
+                    if (p.getDateNaissance() != null && tarificateur.estEnfant(p.getDateNaissance(), offre.getDateDepart())) {
+                        throw new ApiException(nomComplet + " aura moins de " + ageAdulte
+                                + " ans le jour du voyage : inscrivez ce passager comme enfant");
+                    }
+                    nombreAdultes++;
+                }
+                case Tarificateur.ENFANT -> {
+                    if (p.getDateNaissance() == null) {
+                        throw new ApiException("La date de naissance de " + nomComplet + " est obligatoire pour le tarif enfant");
+                    }
+                    if (!tarificateur.estEnfant(p.getDateNaissance(), offre.getDateDepart())) {
+                        throw new ApiException(nomComplet + " aura " + ageAdulte
+                                + " ans ou plus le jour du voyage : inscrivez ce passager comme adulte");
+                    }
+                    nombreEnfants++;
+                }
+                default -> throw new ApiException("Type de passager inconnu : " + p.getTypePassager());
+            }
+        }
+        if (nombreAdultes < 1) {
+            throw new ApiException("Au moins un adulte doit voyager");
+        }
+        CommandeRequest.PassagerDto premierAdulte = request.getPassagers().stream()
+                .filter(p -> Tarificateur.ADULTE.equals(typePassager(p))).findFirst().orElseThrow();
+        String contactTelephone = !vide(request.getContactTelephone()) ? request.getContactTelephone().trim()
+                : premierAdulte.getTelephone();
+        if (vide(contactTelephone)) {
+            throw new ApiException("Un numéro de téléphone de contact est obligatoire");
+        }
+        String contactEmail = !vide(request.getContactEmail()) ? request.getContactEmail().trim() : emailUtilisateur(userId);
+        int nombreBagages = request.getNombreBagages() != null ? request.getNombreBagages() : 0;
 
         int nombrePassagers = request.getPassagers().size();
         if (offre.getNombrePlacesDisponibles() < nombrePassagers) {
@@ -99,15 +198,15 @@ public class CommandeServiceImpl implements CommandeService {
         BigDecimal fraisPourcentage = (BigDecimal) modeReglement[1];
         BigDecimal fraisFixe = (BigDecimal) modeReglement[2];
 
-        // 3. Calculer les montants
-        BigDecimal montantUnitaire = offre.getMontantEffectif();
-        BigDecimal montantPlaces = montantUnitaire.multiply(BigDecimal.valueOf(nombrePassagers));
-        BigDecimal montantFraisService = new BigDecimal("5000");
-        BigDecimal montantFraisPaiement = montantPlaces.multiply(fraisPourcentage)
-                .divide(new BigDecimal("100"), 0, RoundingMode.HALF_UP)
-                .add(fraisFixe);
-        BigDecimal montantTotal = montantPlaces.add(montantFraisService);
-        BigDecimal montantPaye = montantTotal.add(montantFraisPaiement);
+        // 3. Les montants sortent du même calcul que le devis montré au client.
+        // Si le total diffère de ce qu'il a vu (tarif changé entre-temps, client
+        // qui n'a pas rafraîchi), on refuse : personne ne paie un montant qu'on
+        // ne lui a pas montré.
+        Devis devis = tarificateur.devis(offre, nombreAdultes, nombreEnfants, nombreBagages, fraisPourcentage, fraisFixe);
+        BigDecimal montantUnitaire = devis.getMontantAdulte();
+        BigDecimal montantFraisService = devis.getMontantFraisService();
+        BigDecimal montantTotal = devis.getMontantTotal();
+        BigDecimal montantPaye = devis.getMontantAPayer();
         // UUID complet, et non tronqué à 8 caractères : 32 bits suffisaient pour
         // qu'une collision devienne probable vers quelques dizaines de milliers
         // de commandes, alors que la confirmation lit cette référence en
@@ -127,6 +226,13 @@ public class CommandeServiceImpl implements CommandeService {
             // normalisation AVANT l'insertion et non au moment de l'appel.
             montantPaye = prestataire.get().normaliserMontant(montantPaye);
         }
+        if (request.getMontantTotal() != null && request.getMontantTotal().compareTo(montantPaye) != 0) {
+            log.warn("Commande refusée : total vu par le client {} ≠ total calculé {} (offre {})",
+                    request.getMontantTotal(), montantPaye, offre.getOffreUuid());
+            throw new ApiException("Le prix a changé depuis l'affichage : " + montantPaye.toPlainString()
+                    + " " + (offre.getDevise() != null ? offre.getDevise() : "GNF")
+                    + " à régler. Vérifiez le récapitulatif puis confirmez à nouveau.");
+        }
         String statutCommande = enLigne ? "EN_ATTENTE" : "CONFIRMEE";
         String statutBillet = enLigne ? "EN_ATTENTE" : "VALIDE";
         String statutPaiement = enLigne ? "EN_ATTENTE" : "REUSSI";
@@ -137,6 +243,12 @@ public class CommandeServiceImpl implements CommandeService {
                 .param("userId", userId)
                 .param("modeReglementId", modeReglementId)
                 .param("nombrePlaces", nombrePassagers)
+                .param("nombreAdultes", nombreAdultes)
+                .param("nombreEnfants", nombreEnfants)
+                .param("nombreBagages", nombreBagages)
+                .param("montantBagages", devis.getMontantBagages())
+                .param("contactEmail", contactEmail)
+                .param("contactTelephone", contactTelephone)
                 .param("montantUnitaire", montantUnitaire)
                 .param("montantTotal", montantTotal)
                 .param("montantFrais", montantFraisService)
@@ -163,12 +275,17 @@ public class CommandeServiceImpl implements CommandeService {
         List<Billet> billets = new ArrayList<>();
         for (CommandeRequest.PassagerDto passager : request.getPassagers()) {
             String nomComplet = passager.getPrenom() + " " + passager.getNom();
+            String type = typePassager(passager);
+            BigDecimal montantBillet = Tarificateur.ENFANT.equals(type) ? devis.getMontantEnfant() : devis.getMontantAdulte();
             var billetResult = jdbcClient.sql(CommandeQuery.INSERT_BILLET)
                     .param("commandeId", commandeId)
                     .param("nomPassager", nomComplet)
-                    .param("telephonePassager", passager.getTelephone())
+                    .param("telephonePassager", vide(passager.getTelephone()) ? null : passager.getTelephone())
                     .param("pieceIdentite", passager.getPieceIdentite())
                     .param("statut", statutBillet)
+                    .param("typePassager", type)
+                    .param("dateNaissance", passager.getDateNaissance())
+                    .param("montant", montantBillet)
                     .query((rs, rowNum) -> Billet.builder()
                             .billetId(rs.getLong("billet_id"))
                             .billetUuid(rs.getString("billet_uuid"))
@@ -179,6 +296,9 @@ public class CommandeServiceImpl implements CommandeService {
                             .nomPassager(nomComplet)
                             .telephonePassager(passager.getTelephone())
                             .pieceIdentite(passager.getPieceIdentite())
+                            .typePassager(type)
+                            .dateNaissance(passager.getDateNaissance())
+                            .montant(montantBillet)
                             .build())
                     .single();
 
@@ -212,10 +332,10 @@ public class CommandeServiceImpl implements CommandeService {
                     .devise("GNF")
                     .description("Reservation " + numeroCommande + " - "
                             + offre.getVilleDepartLibelle() + " vers " + offre.getVilleArriveeLibelle())
-                    .clientNom(request.getPassagers().get(0).getNom())
-                    .clientPrenom(request.getPassagers().get(0).getPrenom())
-                    .clientEmail(emailUtilisateur(userId))
-                    .clientTelephone(request.getPassagers().get(0).getTelephone())
+                    .clientNom(premierAdulte.getNom())
+                    .clientPrenom(premierAdulte.getPrenom())
+                    .clientEmail(contactEmail)
+                    .clientTelephone(contactTelephone)
                     .urlRetour(urlRetourPaiement)
                     .urlNotification(urlNotificationPaiement)
                     .build());
@@ -252,12 +372,19 @@ public class CommandeServiceImpl implements CommandeService {
                 .userId(userId)
                 .modeReglementId(modeReglementId)
                 .nombrePlaces(nombrePassagers)
+                .nombreAdultes(nombreAdultes)
+                .nombreEnfants(nombreEnfants)
+                .nombreBagages(nombreBagages)
+                .montantBagages(devis.getMontantBagages())
+                .contactEmail(contactEmail)
+                .contactTelephone(contactTelephone)
                 .montantUnitaire(montantUnitaire)
                 .montantTotal(montantTotal)
                 .montantFrais(montantFraisService)
                 .montantPaye(montantPaye)
                 .devise("GNF")
                 .statut(statutCommande)
+                .expireLe(expirationDe(statutCommande, createdAt))
                 .referencePaiement(referencePaiement)
                 .urlPaiement(urlPaiement)
                 .createdAt(createdAt)
@@ -298,6 +425,13 @@ public class CommandeServiceImpl implements CommandeService {
                         .datePaiement(rs.getObject("date_paiement", OffsetDateTime.class))
                         .referencePaiement(rs.getString("reference_paiement"))
                         .urlPaiement(rs.getString("url_paiement"))
+                        .nombreAdultes(rs.getObject("nombre_adultes", Integer.class))
+                        .nombreEnfants(rs.getObject("nombre_enfants", Integer.class))
+                        .nombreBagages(rs.getObject("nombre_bagages", Integer.class))
+                        .montantBagages(rs.getBigDecimal("montant_bagages"))
+                        .contactEmail(rs.getString("contact_email"))
+                        .contactTelephone(rs.getString("contact_telephone"))
+                        .expireLe(expirationDe(rs.getString("statut"), rs.getObject("date_reservation", OffsetDateTime.class)))
                         .notes(rs.getString("notes"))
                         .createdAt(rs.getObject("created_at", OffsetDateTime.class))
                         .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
@@ -330,6 +464,9 @@ public class CommandeServiceImpl implements CommandeService {
                         .nomPassager(rs.getString("nom_passager"))
                         .telephonePassager(rs.getString("telephone_passager"))
                         .pieceIdentite(rs.getString("piece_identite"))
+                        .typePassager(rs.getString("type_passager"))
+                        .dateNaissance(rs.getObject("date_naissance", java.time.LocalDate.class))
+                        .montant(rs.getBigDecimal("montant"))
                         .statut(rs.getString("statut"))
                         .dateValidation(rs.getObject("date_validation", OffsetDateTime.class))
                         .qrCodeData(rs.getString("qr_code_data"))
@@ -369,6 +506,13 @@ public class CommandeServiceImpl implements CommandeService {
                         .datePaiement(rs.getObject("date_paiement", OffsetDateTime.class))
                         .referencePaiement(rs.getString("reference_paiement"))
                         .urlPaiement(rs.getString("url_paiement"))
+                        .nombreAdultes(rs.getObject("nombre_adultes", Integer.class))
+                        .nombreEnfants(rs.getObject("nombre_enfants", Integer.class))
+                        .nombreBagages(rs.getObject("nombre_bagages", Integer.class))
+                        .montantBagages(rs.getBigDecimal("montant_bagages"))
+                        .contactEmail(rs.getString("contact_email"))
+                        .contactTelephone(rs.getString("contact_telephone"))
+                        .expireLe(expirationDe(rs.getString("statut"), rs.getObject("date_reservation", OffsetDateTime.class)))
                         .notes(rs.getString("notes"))
                         .createdAt(rs.getObject("created_at", OffsetDateTime.class))
                         .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
@@ -400,6 +544,9 @@ public class CommandeServiceImpl implements CommandeService {
                             .nomPassager(rs.getString("nom_passager"))
                             .telephonePassager(rs.getString("telephone_passager"))
                             .pieceIdentite(rs.getString("piece_identite"))
+                            .typePassager(rs.getString("type_passager"))
+                            .dateNaissance(rs.getObject("date_naissance", java.time.LocalDate.class))
+                            .montant(rs.getBigDecimal("montant"))
                             .statut(rs.getString("statut"))
                             .dateValidation(rs.getObject("date_validation", OffsetDateTime.class))
                             .qrCodeData(rs.getString("qr_code_data"))

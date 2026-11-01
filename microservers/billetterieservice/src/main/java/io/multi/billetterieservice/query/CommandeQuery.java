@@ -13,9 +13,13 @@ public final class CommandeQuery {
 
     public static final String INSERT_COMMANDE = """
         INSERT INTO commandes (offre_id, user_id, mode_reglement_id, nombre_places,
+                               nombre_adultes, nombre_enfants, nombre_bagages, montant_bagages,
+                               contact_email, contact_telephone,
                                montant_unitaire, montant_total, montant_frais, montant_paye,
                                devise, statut, date_confirmation, date_paiement, reference_paiement)
         VALUES (:offreId, :userId, :modeReglementId, :nombrePlaces,
+                :nombreAdultes, :nombreEnfants, :nombreBagages, :montantBagages,
+                :contactEmail, :contactTelephone,
                 :montantUnitaire, :montantTotal, :montantFrais, :montantPaye,
                 :devise, :statut, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :referencePaiement)
         RETURNING commande_id, commande_uuid, numero_commande, created_at
@@ -27,8 +31,10 @@ public final class CommandeQuery {
      * l'embarquement n'accepte que VALIDE.
      */
     public static final String INSERT_BILLET = """
-        INSERT INTO billets (commande_id, nom_passager, telephone_passager, piece_identite, statut)
-        VALUES (:commandeId, :nomPassager, :telephonePassager, :pieceIdentite, :statut)
+        INSERT INTO billets (commande_id, nom_passager, telephone_passager, piece_identite, statut,
+                             type_passager, date_naissance, montant)
+        VALUES (:commandeId, :nomPassager, :telephonePassager, :pieceIdentite, :statut,
+                :typePassager, :dateNaissance, :montant)
         RETURNING billet_id, billet_uuid, code_billet, statut, created_at
         """;
 
@@ -141,6 +147,8 @@ public final class CommandeQuery {
                c.montant_frais, c.montant_remise, c.montant_paye, c.devise, c.statut,
                c.date_reservation, c.date_confirmation, c.date_paiement,
                c.reference_paiement, c.url_paiement, c.notes, c.created_at, c.updated_at,
+               c.nombre_adultes, c.nombre_enfants, c.nombre_bagages, c.montant_bagages,
+               c.contact_email, c.contact_telephone,
                o.offre_uuid, o.date_depart, o.heure_depart,
                o.niveau_remplissage, o.point_rencontre AS point_rendez_vous,
                vd.libelle AS ville_depart_libelle,
@@ -176,6 +184,8 @@ public final class CommandeQuery {
                c.montant_frais, c.montant_remise, c.montant_paye, c.devise, c.statut,
                c.date_reservation, c.date_confirmation, c.date_paiement,
                c.reference_paiement, c.url_paiement, c.notes, c.created_at, c.updated_at,
+               c.nombre_adultes, c.nombre_enfants, c.nombre_bagages, c.montant_bagages,
+               c.contact_email, c.contact_telephone,
                o.offre_uuid, o.date_depart, o.heure_depart,
                o.niveau_remplissage, o.point_rencontre AS point_rendez_vous,
                vd.libelle AS ville_depart_libelle,
@@ -235,6 +245,7 @@ public final class CommandeQuery {
     public static final String FIND_BILLETS_BY_COMMANDE_ID = """
         SELECT billet_id, billet_uuid, commande_id, code_billet, numero_siege,
                nom_passager, telephone_passager, piece_identite, statut,
+               type_passager, date_naissance, montant,
                date_validation, valide_par, qr_code_data, created_at, updated_at
         FROM billets
         WHERE commande_id = :commandeId

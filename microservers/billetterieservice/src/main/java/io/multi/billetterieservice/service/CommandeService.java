@@ -10,6 +10,9 @@ public interface CommandeService {
 
     Commande creerCommande(CommandeRequest request, Long userId);
 
+    /** Prix d'une réservation avant toute saisie ; public, sans compte. */
+    io.multi.billetterieservice.domain.Devis devis(io.multi.billetterieservice.dto.DevisRequest request);
+
     /**
      * Traite le résultat d'un paiement en ligne pour une référence donnée.
      * Interroge le prestataire — seule source de vérité — puis confirme ou

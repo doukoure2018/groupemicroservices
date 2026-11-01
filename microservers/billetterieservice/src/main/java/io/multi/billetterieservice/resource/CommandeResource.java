@@ -3,7 +3,9 @@ package io.multi.billetterieservice.resource;
 import io.multi.billetterieservice.domain.Commande;
 import io.multi.billetterieservice.domain.Offre;
 import io.multi.billetterieservice.domain.Response;
+import io.multi.billetterieservice.domain.Devis;
 import io.multi.billetterieservice.dto.CommandeRequest;
+import io.multi.billetterieservice.dto.DevisRequest;
 import io.multi.billetterieservice.dto.ModifierDateRequest;
 import io.multi.billetterieservice.service.CommandeService;
 import io.multi.billetterieservice.utils.JwtUtils;
@@ -45,6 +47,20 @@ public class CommandeResource {
         return ResponseEntity.status(CREATED).body(
                 getResponse(request, Map.of("commande", commande),
                         "Commande créée avec succès", CREATED)
+        );
+    }
+
+    /**
+     * POST /billetterie/commandes/devis - Prix d'une réservation, sans compte.
+     * Public : le voyageur voit ce qu'il paiera avant qu'on lui demande de s'identifier.
+     */
+    @PostMapping("/devis")
+    public ResponseEntity<Response> devis(
+            @Valid @RequestBody DevisRequest devisRequest,
+            HttpServletRequest request) {
+        Devis devis = commandeService.devis(devisRequest);
+        return ResponseEntity.ok(
+                getResponse(request, Map.of("devis", devis), "Devis calculé", OK)
         );
     }
 

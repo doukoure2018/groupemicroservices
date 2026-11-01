@@ -29,6 +29,8 @@ public class Trajet {
     private Integer dureeEstimeeMinutes;
     private BigDecimal montantBase;
     private BigDecimal montantBagages;
+    /** Tarif enfant de la liaison ; vide = plein tarif. */
+    private BigDecimal montantEnfant;
     private String devise;
     private String description;
     private String instructions;

@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 @Data
@@ -21,6 +23,11 @@ public class Billet {
     private String nomPassager;
     private String telephonePassager;
     private String pieceIdentite;
+    /** ADULTE ou ENFANT, et la date de naissance qui justifie le tarif enfant. */
+    private String typePassager;
+    private LocalDate dateNaissance;
+    /** Ce que ce billet a coûté dans la commande. */
+    private BigDecimal montant;
     private String statut;
     private OffsetDateTime dateValidation;
     private Long validePar;

@@ -262,6 +262,10 @@ public class OffreServiceImpl implements OffreService {
                 .conditions(request.getConditions())
                 .annulationAutorisee(request.getAnnulationAutorisee() != null ? request.getAnnulationAutorisee() : true)
                 .delaiAnnulationHeures(request.getDelaiAnnulationHeures() != null ? request.getDelaiAnnulationHeures() : 24)
+                .montantEnfant(request.getMontantEnfant())
+                .bagagesAutorises(request.getBagagesAutorises() != null ? request.getBagagesAutorises() : true)
+                .bagagesInclusParPassager(request.getBagagesInclusParPassager() != null ? request.getBagagesInclusParPassager() : 1)
+                .montantBagageSupplementaire(request.getMontantBagageSupplementaire())
                 .build();
 
         Offre saved = offreRepository.save(offre);
@@ -318,6 +322,10 @@ public class OffreServiceImpl implements OffreService {
         existing.setConditions(request.getConditions());
         existing.setAnnulationAutorisee(request.getAnnulationAutorisee());
         existing.setDelaiAnnulationHeures(request.getDelaiAnnulationHeures());
+        existing.setMontantEnfant(request.getMontantEnfant());
+        existing.setBagagesAutorises(request.getBagagesAutorises() != null ? request.getBagagesAutorises() : true);
+        existing.setBagagesInclusParPassager(request.getBagagesInclusParPassager() != null ? request.getBagagesInclusParPassager() : 1);
+        existing.setMontantBagageSupplementaire(request.getMontantBagageSupplementaire());
 
         // Recalculer le niveau de remplissage
         int niveauRemplissage = calculateNiveauRemplissage(existing.getNombrePlacesReservees(), request.getNombrePlacesTotal());

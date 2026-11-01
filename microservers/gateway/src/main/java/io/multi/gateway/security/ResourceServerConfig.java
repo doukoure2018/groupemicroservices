@@ -72,6 +72,9 @@ public class ResourceServerConfig {
                         // Retour du prestataire de paiement : machine tierce, sans jeton.
                         // DOIT rester aligné avec billetterieservice ResourceServerConfig.
                         .requestMatchers(HttpMethod.POST, "/billetterie/paiements/notification").permitAll()
+                        // Devis d'une réservation : public, comme la recherche.
+                        // DOIT rester aligné avec billetterieservice ResourceServerConfig.
+                        .requestMatchers(HttpMethod.POST, "/billetterie/commandes/devis").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/immo/agences",
                                 "/immo/agences/*",

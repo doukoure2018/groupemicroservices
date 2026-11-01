@@ -36,6 +36,10 @@ public final class OffreQuery {
             o.conditions,
             o.annulation_autorisee,
             o.delai_annulation_heures,
+            o.montant_enfant,
+            o.bagages_autorises,
+            o.bagages_inclus_par_passager,
+            o.montant_bagage_supplementaire,
             o.date_publication,
             o.date_cloture,
             o.date_depart_effectif,
@@ -47,6 +51,8 @@ public final class OffreQuery {
             t.libelle_trajet AS trajet_libelle,
             t.distance_km AS trajet_distance_km,
             t.duree_estimee_minutes AS trajet_duree_minutes,
+            t.montant_enfant AS trajet_montant_enfant,
+            t.montant_bagages AS trajet_montant_bagages,
             -- Départ (V35 : ville directe du site prioritaire, chaîne en fallback)
             dep.depart_uuid,
             dep.libelle AS depart_libelle,
@@ -284,6 +290,7 @@ public final class OffreQuery {
             nombre_places_total, nombre_places_disponibles, nombre_places_reservees,
             montant, montant_promotion, devise, statut, niveau_remplissage,
             point_rencontre, conditions, annulation_autorisee, delai_annulation_heures,
+            montant_enfant, bagages_autorises, bagages_inclus_par_passager, montant_bagage_supplementaire,
             date_publication
         ) VALUES (
             :tokenOffre, :trajetId, :vehiculeId, :userId,
@@ -291,6 +298,7 @@ public final class OffreQuery {
             :nombrePlacesTotal, :nombrePlacesDisponibles, :nombrePlacesReservees,
             :montant, :montantPromotion, :devise, :statut, :niveauRemplissage,
             :pointRendezvous, :conditions, :annulationAutorisee, :delaiAnnulationHeures,
+            :montantEnfant, :bagagesAutorises, :bagagesInclusParPassager, :montantBagageSupplementaire,
             CURRENT_TIMESTAMP
         )
         RETURNING offre_id, offre_uuid, created_at, updated_at
@@ -308,7 +316,11 @@ public final class OffreQuery {
             point_rencontre = :pointRendezvous,
             conditions = :conditions,
             annulation_autorisee = :annulationAutorisee,
-            delai_annulation_heures = :delaiAnnulationHeures
+            delai_annulation_heures = :delaiAnnulationHeures,
+            montant_enfant = :montantEnfant,
+            bagages_autorises = :bagagesAutorises,
+            bagages_inclus_par_passager = :bagagesInclusParPassager,
+            montant_bagage_supplementaire = :montantBagageSupplementaire
         WHERE offre_uuid = :uuid
         RETURNING offre_id, created_at, updated_at
         """;

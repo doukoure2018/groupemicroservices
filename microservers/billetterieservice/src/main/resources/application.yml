@@ -133,6 +133,15 @@ sms:
 # Paiement en ligne. Le prestataire est choisi par le code du mode de règlement
 # (cf. table modes_reglement) : ajouter Soutra Money ou Kulu demain revient à
 # écrire une implémentation de PrestatairePaiement et à lister ses codes ici.
+# Règles de tarification d'une réservation. Le devis affiché au client et le
+# montant enregistré à la commande sortent du même calcul (Tarificateur).
+billetterie:
+  # Un passager est un enfant tant qu'il n'a pas cet âge le jour du voyage.
+  age-adulte-minimum: ${BILLETTERIE_AGE_ADULTE_MINIMUM:15}
+  # Frais de service par commande, en GNF, montrés au client avant qu'il paie.
+  # 0 pour ne rien facturer.
+  frais-service: ${BILLETTERIE_FRAIS_SERVICE:5000}
+
 paiement:
   # Page du site où le client revient après avoir payé.
   url-retour: ${PAIEMENT_URL_RETOUR:http://localhost:5173/paiement/retour}

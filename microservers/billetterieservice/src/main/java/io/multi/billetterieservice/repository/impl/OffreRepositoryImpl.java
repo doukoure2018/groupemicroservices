@@ -58,6 +58,10 @@ public class OffreRepositoryImpl implements OffreRepository {
             .conditions(rs.getString("conditions"))
             .annulationAutorisee(rs.getObject("annulation_autorisee", Boolean.class))
             .delaiAnnulationHeures(rs.getObject("delai_annulation_heures", Integer.class))
+            .montantEnfant(rs.getBigDecimal("montant_enfant"))
+            .bagagesAutorises(rs.getObject("bagages_autorises", Boolean.class))
+            .bagagesInclusParPassager(rs.getObject("bagages_inclus_par_passager", Integer.class))
+            .montantBagageSupplementaire(rs.getBigDecimal("montant_bagage_supplementaire"))
             .datePublication(rs.getObject("date_publication", OffsetDateTime.class))
             .dateCloture(rs.getObject("date_cloture", OffsetDateTime.class))
             .dateDepartEffectif(rs.getObject("date_depart_effectif", OffsetDateTime.class))
@@ -68,6 +72,8 @@ public class OffreRepositoryImpl implements OffreRepository {
             .trajetUuid(rs.getString("trajet_uuid"))
             .trajetLibelle(rs.getString("trajet_libelle"))
             .trajetDistanceKm(rs.getBigDecimal("trajet_distance_km"))
+            .trajetMontantEnfant(rs.getBigDecimal("trajet_montant_enfant"))
+            .trajetMontantBagages(rs.getBigDecimal("trajet_montant_bagages"))
             .trajetDureeMinutes(rs.getObject("trajet_duree_minutes", Integer.class))
             // Départ
             .departUuid(rs.getString("depart_uuid"))
@@ -374,6 +380,10 @@ public class OffreRepositoryImpl implements OffreRepository {
                 .param("conditions", offre.getConditions())
                 .param("annulationAutorisee", offre.getAnnulationAutorisee() != null ? offre.getAnnulationAutorisee() : true)
                 .param("delaiAnnulationHeures", offre.getDelaiAnnulationHeures() != null ? offre.getDelaiAnnulationHeures() : 24)
+                .param("montantEnfant", offre.getMontantEnfant())
+                .param("bagagesAutorises", offre.getBagagesAutorises() != null ? offre.getBagagesAutorises() : true)
+                .param("bagagesInclusParPassager", offre.getBagagesInclusParPassager() != null ? offre.getBagagesInclusParPassager() : 1)
+                .param("montantBagageSupplementaire", offre.getMontantBagageSupplementaire())
                 .query((rs, rowNum) -> {
                     offre.setOffreId(rs.getLong("offre_id"));
                     offre.setOffreUuid(rs.getString("offre_uuid"));
@@ -399,6 +409,10 @@ public class OffreRepositoryImpl implements OffreRepository {
                 .param("conditions", offre.getConditions())
                 .param("annulationAutorisee", offre.getAnnulationAutorisee())
                 .param("delaiAnnulationHeures", offre.getDelaiAnnulationHeures())
+                .param("montantEnfant", offre.getMontantEnfant())
+                .param("bagagesAutorises", offre.getBagagesAutorises() != null ? offre.getBagagesAutorises() : true)
+                .param("bagagesInclusParPassager", offre.getBagagesInclusParPassager() != null ? offre.getBagagesInclusParPassager() : 1)
+                .param("montantBagageSupplementaire", offre.getMontantBagageSupplementaire())
                 .param("uuid", offre.getOffreUuid())
                 .query((rs, rowNum) -> {
                     offre.setOffreId(rs.getLong("offre_id"));

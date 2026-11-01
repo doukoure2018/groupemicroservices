@@ -45,6 +45,9 @@ public class ResourceServerConfig {
                         // machine tierce, sans jeton. La sécurité tient à la
                         // vérification faite auprès du prestataire, pas à cet appel.
                         .requestMatchers(POST, "/billetterie/paiements/notification").permitAll()
+                        // Devis d'une réservation : le prix se consulte sans compte, comme
+                        // la recherche. Aligné avec la passerelle.
+                        .requestMatchers(POST, "/billetterie/commandes/devis").permitAll()
                         // Valider un billet à l'embarquement est un geste de contrôleur : sans
                         // cette règle, n'importe quel voyageur connecté pouvait marquer un
                         // billet comme utilisé. La revendication « authorities » du jeton

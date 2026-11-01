@@ -42,6 +42,11 @@ public class Offre {
     private String conditions;
     private Boolean annulationAutorisee;
     private Integer delaiAnnulationHeures;
+    // Tarification passagers et bagages (V43) : l'offre surcharge la liaison.
+    private BigDecimal montantEnfant;
+    private Boolean bagagesAutorises;
+    private Integer bagagesInclusParPassager;
+    private BigDecimal montantBagageSupplementaire;
     private OffsetDateTime datePublication;
     private OffsetDateTime dateCloture;
     private OffsetDateTime dateDepartEffectif;
@@ -54,6 +59,8 @@ public class Offre {
     private String trajetLibelle;
     private BigDecimal trajetDistanceKm;
     private Integer trajetDureeMinutes;
+    private BigDecimal trajetMontantEnfant;
+    private BigDecimal trajetMontantBagages;
 
     // ========== Champs du Départ (jointure via trajet) ==========
     private String departUuid;
@@ -100,6 +107,26 @@ public class Offre {
             return montantPromotion;
         }
         return montant;
+    }
+
+    /**
+     * Tarif enfant : celui de l'offre, sinon celui de la liaison, sinon le
+     * plein tarif. Jamais plus cher qu'un adulte, promotion comprise.
+     */
+    public BigDecimal getMontantEnfantEffectif() {
+        BigDecimal adulte = getMontantEffectif();
+        BigDecimal enfant = montantEnfant != null ? montantEnfant : trajetMontantEnfant;
+        if (enfant == null || adulte == null || enfant.compareTo(adulte) > 0) {
+            return adulte;
+        }
+        return enfant;
+    }
+
+    /** Prix d'un bagage supplémentaire : l'offre, sinon la liaison, sinon gratuit. */
+    public BigDecimal getMontantBagageEffectif() {
+        if (montantBagageSupplementaire != null) return montantBagageSupplementaire;
+        if (trajetMontantBagages != null) return trajetMontantBagages;
+        return BigDecimal.ZERO;
     }
 
     /**

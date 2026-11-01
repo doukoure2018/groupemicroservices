@@ -24,6 +24,7 @@ public final class TrajetQuery {
             t.duree_estimee_minutes,
             t.montant_base,
             t.montant_bagages,
+            t.montant_enfant,
             t.devise,
             t.description,
             t.instructions,
@@ -183,11 +184,11 @@ public final class TrajetQuery {
     public static final String INSERT = """
         INSERT INTO trajets (
             depart_id, arrivee_id, user_id, libelle_trajet, distance_km,
-            duree_estimee_minutes, montant_base, montant_bagages, devise,
+            duree_estimee_minutes, montant_base, montant_bagages, montant_enfant, devise,
             description, instructions, actif
         ) VALUES (
             :departId, :arriveeId, :userId, :libelleTrajet, :distanceKm,
-            :dureeEstimeeMinutes, :montantBase, :montantBagages, :devise,
+            :dureeEstimeeMinutes, :montantBase, :montantBagages, :montantEnfant, :devise,
             :description, :instructions, :actif
         )
         RETURNING trajet_id, trajet_uuid, created_at, updated_at
@@ -202,6 +203,7 @@ public final class TrajetQuery {
             duree_estimee_minutes = :dureeEstimeeMinutes,
             montant_base = :montantBase,
             montant_bagages = :montantBagages,
+            montant_enfant = :montantEnfant,
             devise = :devise,
             description = :description,
             instructions = :instructions,

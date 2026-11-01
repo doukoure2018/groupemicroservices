@@ -57,4 +57,17 @@ public class OffreRequest {
 
     @Min(value = 0, message = "Le délai d'annulation doit être positif")
     private Integer delaiAnnulationHeures;
+
+    // Tarification passagers et bagages : vide = valeur de la liaison.
+    @DecimalMin(value = "0.0", message = "Le tarif enfant doit être positif ou nul")
+    private BigDecimal montantEnfant;
+
+    private Boolean bagagesAutorises;
+
+    @Min(value = 0, message = "Le nombre de bagages inclus doit être positif ou nul")
+    @Max(value = 5, message = "Cinq bagages inclus par passager au plus")
+    private Integer bagagesInclusParPassager;
+
+    @DecimalMin(value = "0.0", message = "Le prix d'un bagage supplémentaire doit être positif ou nul")
+    private BigDecimal montantBagageSupplementaire;
 }

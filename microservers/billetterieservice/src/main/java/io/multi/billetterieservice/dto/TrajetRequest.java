@@ -40,6 +40,10 @@ public class TrajetRequest {
     @DecimalMin(value = "0.0", message = "Le montant bagages doit être positif ou nul")
     private BigDecimal montantBagages;
 
+    /** Tarif enfant de la liaison ; vide = plein tarif. */
+    @DecimalMin(value = "0.0", message = "Le tarif enfant doit être positif ou nul")
+    private BigDecimal montantEnfant;
+
     @Size(max = 3, message = "Le code devise ne doit pas dépasser 3 caractères")
     private String devise;
 

@@ -175,6 +175,7 @@ public class TrajetServiceImpl implements TrajetService {
                 .dureeEstimeeMinutes(request.getDureeEstimeeMinutes())
                 .montantBase(request.getMontantBase())
                 .montantBagages(request.getMontantBagages() != null ? request.getMontantBagages() : BigDecimal.ZERO)
+                .montantEnfant(request.getMontantEnfant())
                 .devise(request.getDevise() != null ? request.getDevise() : "GNF")
                 .description(request.getDescription())
                 .instructions(request.getInstructions())
@@ -224,6 +225,7 @@ public class TrajetServiceImpl implements TrajetService {
         existingTrajet.setDureeEstimeeMinutes(request.getDureeEstimeeMinutes());
         existingTrajet.setMontantBase(request.getMontantBase());
         existingTrajet.setMontantBagages(request.getMontantBagages());
+        existingTrajet.setMontantEnfant(request.getMontantEnfant());
         existingTrajet.setDevise(request.getDevise());
         existingTrajet.setDescription(request.getDescription());
         existingTrajet.setInstructions(request.getInstructions());
