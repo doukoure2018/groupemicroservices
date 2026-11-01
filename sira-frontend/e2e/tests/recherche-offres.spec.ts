@@ -23,8 +23,10 @@ test('une recherche avec deux villes déclenche l’appel public offres/recherch
     expect(res.request().headers()['authorization']).toBeUndefined();
     expect(res.status()).toBe(200);
 
-    // Résultats ou état vide explicite, jamais le message d'échec.
-    await expect(page.locator('ul.resultats, p.muted').filter({ hasText: /places disponibles|Aucun voyage/ }).first()).toBeVisible({ timeout: 15_000 });
+    // Résultats ou état vide explicite, jamais le message d'échec. La carte
+    // d'un départ annonce son prix « par personne » ; l'absence de départ se
+    // dit en une phrase, sans jargon.
+    await expect(page.locator('ul.resultats, p.muted').filter({ hasText: /par personne|Aucune offre disponible/ }).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('p.error')).toHaveCount(0);
 });
 
