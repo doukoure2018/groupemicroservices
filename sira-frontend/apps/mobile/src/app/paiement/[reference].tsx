@@ -6,6 +6,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, ScrollView, Text } from 'react-native';
 import { api } from '../../api';
+import { oublierPaiementEnCours, retenirPaiementEnCours } from '../../reservation/paiement-en-cours';
 import { Bandeau, Bouton, Carte, Chargement, EtatVide, styles as base } from '../../ui/base';
 import { CompteARebours } from '../../ui/compte-a-rebours';
 import { espaces } from '../../ui/theme';
@@ -69,6 +70,7 @@ function AttentePaiement() {
     useEffect(() => {
         if (!url || pageOuverte) return;
         setPageOuverte(true);
+        retenirPaiementEnCours(reference);
         const retourApplication = urlRetourApplication(reference);
         void WebBrowser.openAuthSessionAsync(url, retourApplication)
             .then(() => void etatQuery.refetch())
@@ -99,9 +101,11 @@ function AttentePaiement() {
 
     // Paiement encaissé : droit aux billets, sans bouton à toucher. L'écran
     // « Paiement reçu » ci-dessous ne sert plus que de filet si la navigation
-    // n'a pas eu lieu.
+    // n'a pas eu lieu. Tranché dans un sens ou l'autre, le paiement n'est
+    // plus « en cours ».
     useEffect(() => {
         if (!commande?.commandeUuid) return;
+        if (commande.statut !== 'EN_ATTENTE') oublierPaiementEnCours();
         if (commande.statut === 'CONFIRMEE' || commande.statut === 'PAYEE') {
             router.replace({ pathname: '/commande/[uuid]', params: { uuid: commande.commandeUuid } });
         }
@@ -147,7 +151,7 @@ function AttentePaiement() {
             <Text style={[base.sousTitre, { textAlign: 'center' }]}>
                 {expire
                     ? "Votre opérateur n'a pas encore répondu. Si le règlement aboutit, votre réservation sera confirmée automatiquement et vous recevrez un email. Vous pouvez suivre son statut dans Mes voyages."
-                    : 'Terminez le règlement dans la page qui vient de s\'ouvrir, puis revenez ici : vos billets apparaîtront dès que le paiement est confirmé.'}
+                    : "Validez le règlement — dans la page de l'opérateur, ou sur la demande de confirmation reçue sur votre téléphone. Cet écran se mettra à jour de lui-même, et vos billets s'ouvriront dès que l'opérateur aura confirmé."}
             </Text>
             <Carte style={{ gap: espaces.md }}>
                 <Bouton

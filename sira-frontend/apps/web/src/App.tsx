@@ -148,6 +148,7 @@ export function App() {
                             revient ici dans le navigateur du téléphone, sans session web. La page
                             distingue elle-même ce cas et renvoie vers l'application. */}
                         <Route path="/paiement/retour" element={<PaiementRetourPage />} />
+                        <Route path="/paiement/retour/:reference" element={<PaiementRetourPage />} />
                         <Route
                             path="/mes-voyages"
                             element={

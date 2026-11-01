@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { formatMontant, type CommandeClient } from '@sira/core';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth-context';
 import { ConfirmationCommande } from '../components/ConfirmationCommande';
@@ -23,11 +23,15 @@ const TENTATIVES_MAX = 30;
 
 export function PaiementRetourPage() {
     const [params] = useSearchParams();
+    const { reference: referenceChemin } = useParams<{ reference?: string }>();
     const { user } = useAuth();
 
     // Lue une seule fois : la référence ne change pas en cours de route, et la
-    // relire déclencherait une nouvelle requête à chaque rendu.
+    // relire déclencherait une nouvelle requête à chaque rendu. Le serveur la
+    // place dans le chemin ; la requête et le stockage de l'onglet restent des
+    // secours pour les retours plus anciens.
     const [reference] = useState(() => {
+        if (referenceChemin) return referenceChemin;
         for (const nom of PARAMS_REFERENCE) {
             const valeur = params.get(nom);
             if (valeur) return valeur;

@@ -420,7 +420,7 @@ public class CommandeServiceImpl implements CommandeService {
                     .clientPrenom(premierAdulte.getPrenom())
                     .clientEmail(contactEmail)
                     .clientTelephone(contactTelephone)
-                    .urlRetour(urlRetourPaiement)
+                    .urlRetour(urlRetourAvecReference(referencePaiement))
                     .urlNotification(urlNotificationPaiement)
                     .build());
             urlPaiement = resultat.urlPaiement();
@@ -912,6 +912,20 @@ public class CommandeServiceImpl implements CommandeService {
         if (telephone == null) return "";
         String chiffres = telephone.replaceAll("[^0-9]", "");
         return chiffres.length() > 8 ? chiffres.substring(chiffres.length() - 8) : chiffres;
+    }
+
+    /**
+     * Adresse de retour propre à cette commande : la référence est dans le
+     * CHEMIN, pas dans la requête. Les prestataires ne renvoient pas tous la
+     * référence au retour, et certains ajoutent leurs propres paramètres à
+     * l'adresse qu'on leur donne — une référence en requête se ferait écraser
+     * ou mal découper, une référence en chemin survit à tout. Le site et
+     * l'application lisent toutes deux `/paiement/retour/{reference}`.
+     */
+    private String urlRetourAvecReference(String referencePaiement) {
+        if (urlRetourPaiement == null || urlRetourPaiement.isBlank()) return urlRetourPaiement;
+        String base = urlRetourPaiement.endsWith("/") ? urlRetourPaiement.substring(0, urlRetourPaiement.length() - 1) : urlRetourPaiement;
+        return base + "/" + referencePaiement;
     }
 
     /** Email de l'utilisateur, vide si le service utilisateur est injoignable. */

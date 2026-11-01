@@ -1,23 +1,25 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
+import { paiementEnCours } from '../../reservation/paiement-en-cours';
 import { EtatVide } from '../../ui/base';
 
 /**
- * Porte d'entrée du retour de paiement.
+ * Porte d'entrée du retour de paiement quand l'adresse ne porte pas la
+ * référence dans son chemin (voir `retour/[reference]` pour le cas normal).
  *
- * Deux chemins y mènent : le lien d'application Android, quand le prestataire
- * renvoie vers `https://…/paiement/retour` et qu'Android reconnaît l'adresse
- * comme appartenant à l'application ; et le renvoi de la page du site, qui
- * rebondit vers le même chemin par le schéma de l'application. Dans les deux
- * cas on revient à l'écran d'attente, qui sait interroger l'état du paiement.
- *
- * Les prestataires ne nomment pas la référence de la même façon : Chap Chap
- * Pay renvoie son identifiant d'opération, CinetPay le sien. Le serveur sait
- * reconnaître les deux, il suffit de lui transmettre ce qui est arrivé.
+ * On lit alors ce que le prestataire a pu ajouter en requête — ils ne
+ * nomment pas tous la référence de la même façon — et, à défaut, le paiement
+ * que l'application vient elle-même d'ouvrir : c'est presque toujours lui.
  */
 export default function RetourPaiement() {
     const params = useLocalSearchParams<Record<string, string | undefined>>();
     const reference =
-        params.reference ?? params.operation_id ?? params.cpm_trans_id ?? params.transaction_id ?? params.order_id ?? params.merchant_transaction_id;
+        params.reference ??
+        params.operation_id ??
+        params.cpm_trans_id ??
+        params.transaction_id ??
+        params.order_id ??
+        params.merchant_transaction_id ??
+        paiementEnCours();
 
     if (!reference) {
         return (
