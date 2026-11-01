@@ -65,6 +65,13 @@ export function geoApi(client: SiraClient) {
         villes: () => client.get<{ villes: Ville[] }>(`${BASE}/villes`),
         /** Public — utilisé par la home sans authentification. */
         villesActives: () => client.get<{ villes: Ville[] }>(`${BASE}/villes/active`, { auth: false }),
+        /**
+         * Public — villes qu'au moins une liaison active relie. À préférer aux
+         * villes actives partout où l'on propose un départ ou une arrivée :
+         * le référentiel contient les 35 villes de Guinée, mais en proposer une
+         * qu'aucune liaison ne touche, c'est promettre un voyage qui n'existe pas.
+         */
+        villesDesservies: () => client.get<{ villes: Ville[] }>(`${BASE}/villes/desservies`, { auth: false }),
         setVilleActif: (uuid: string, actif: boolean) => client.patch<{ ville: Ville }>(`${BASE}/villes/${uuid}/status`, { body: { actif } }),
         createVille: (body: VilleCreateRequest) => client.post<{ ville: Ville }>(`${BASE}/villes`, { body }),
         updateVille: (uuid: string, body: VilleUpdateRequest) => client.put<{ ville: Ville }>(`${BASE}/villes/${uuid}`, { body }),

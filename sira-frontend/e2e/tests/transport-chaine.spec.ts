@@ -588,8 +588,13 @@ test('offres : annulation finale de l’offre de test', async ({ page }) => {
     await page.goto('/mes-voyages');
     await expect(page.locator('li.commande, .etat-vide').first()).toBeVisible({ timeout: 20_000 });
     for (let i = 0; i < 10; i++) {
-        const carte = page.locator('li.commande').filter({ hasText: VILLE }).filter({ has: page.getByRole('button', { name: 'Annuler la réservation' }) }).first();
-        if ((await carte.count()) === 0) break;
+        const annulable = page.locator('li.commande').filter({ hasText: VILLE }).filter({ has: page.getByRole('button', { name: 'Annuler la réservation' }) }).first();
+        if ((await annulable.count()) === 0) break;
+        // Le filtre « porte un bouton Annuler » cesse de décrire la carte dès
+        // que la confirmation s'ouvre : .first() désignerait alors une autre
+        // carte. On la fige donc sur son numéro de commande.
+        const numero = ((await annulable.locator('.commande-details .muted').first().textContent()) ?? '').replace('Commande', '').trim();
+        const carte = page.locator('li.commande').filter({ hasText: numero }).first();
         await carte.getByRole('button', { name: 'Annuler la réservation' }).click();
         await carte.getByRole('button', { name: 'Oui, annuler' }).click();
         await expect(carte.getByRole('button', { name: /Oui, annuler|Annuler la réservation/ })).toHaveCount(0, { timeout: 20_000 });

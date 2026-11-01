@@ -62,6 +62,7 @@ public class ResourceServerConfig {
                         // /billetterie/offres/* (protégerait mal mes-offres, stats…).
                         .requestMatchers(GET,
                                 "/billetterie/villes/active",
+                                "/billetterie/villes/desservies",
                                 "/billetterie/offres/recherche",
                                 // Modes de règlement actifs : le tunnel de réservation se
                                 // parcourt sans compte, il doit pouvoir les proposer.

@@ -51,6 +51,9 @@ public interface VilleRepository {
      */
     List<Ville> findAllActive();
 
+    /** Villes qu'au moins une liaison active relie. */
+    List<Ville> findDesservies();
+
     /**
      * Récupère les villes d'une région spécifique.
      *

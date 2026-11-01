@@ -20,9 +20,17 @@ const JOURS_A_L_AVANCE = 60;
  */
 export default function Accueil() {
     const { user } = useAuth();
+    // Seules les villes qu'une liaison relie sont proposées : choisir une ville
+    // sans liaison ne mènerait jamais à un départ. Si le serveur n'en renvoie
+    // aucune (référentiel encore vide), on retombe sur les villes actives
+    // plutôt que de présenter une recherche inutilisable.
     const villesQuery = useQuery({
-        queryKey: ['villes-actives'],
-        queryFn: async () => (await api.geo.villesActives()).data.villes ?? []
+        queryKey: ['villes-desservies'],
+        queryFn: async () => {
+            const desservies = (await api.geo.villesDesservies()).data.villes ?? [];
+            if (desservies.length > 0) return desservies;
+            return (await api.geo.villesActives()).data.villes ?? [];
+        }
     });
 
     const aujourdhui = aujourdhuiIso();

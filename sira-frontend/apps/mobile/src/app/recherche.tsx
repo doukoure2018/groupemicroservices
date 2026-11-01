@@ -107,8 +107,8 @@ export default function Recherche() {
                 ListEmptyComponent={
                     toutes.length === 0 ? (
                         <EtatVide
-                            titre="Aucun voyage ce jour-là"
-                            texte="Choisissez un autre jour en haut de l'écran : les transporteurs publient leurs départs quelques jours à l'avance."
+                            titre="Aucune offre disponible"
+                            texte="Aucun départ n'est proposé sur ce trajet à cette date. Choisissez un autre jour en haut de l'écran, ou un autre trajet."
                             action={<Bouton libelle="Modifier la recherche" variante="secondaire" onPress={() => router.back()} />}
                         />
                     ) : (

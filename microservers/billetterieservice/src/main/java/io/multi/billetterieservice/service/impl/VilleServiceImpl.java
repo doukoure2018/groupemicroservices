@@ -139,6 +139,17 @@ public class VilleServiceImpl implements VilleService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<VilleResponse> getVillesDesservies() {
+        List<Ville> villes = villeRepository.findDesservies();
+        log.info("Nombre de villes desservies: {}", villes.size());
+
+        return villes.stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<VilleResponse> getVillesByRegion(String regionUuid) {
         log.info("Récupération des villes de la région: {}", regionUuid);
 

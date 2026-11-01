@@ -52,6 +52,12 @@ public interface VilleService {
     List<VilleResponse> getActiveVilles();
 
     /**
+     * Villes qu'au moins une liaison active relie : les seules où un voyage
+     * peut exister, et donc les seules à proposer dans une recherche.
+     */
+    List<VilleResponse> getVillesDesservies();
+
+    /**
      * Récupère les villes d'une région.
      *
      * @param regionUuid L'UUID de la région

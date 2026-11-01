@@ -66,6 +66,45 @@ public final class VilleQuery {
             """;
 
     /**
+     * Villes réellement desservies : celles qu'au moins une liaison active
+     * relie, par son point de départ ou son point d'arrivée.
+     *
+     * Le référentiel compte les 35 villes de Guinée, mais proposer une ville
+     * qu'aucune liaison ne touche, c'est promettre un voyage qui n'existe pas.
+     * La ville d'un site se lit comme partout ailleurs : rattachement direct
+     * d'abord (V35), chaîne des localisations en repli.
+     */
+    public static final String FIND_VILLES_DESSERVIES = """
+            WITH villes_liaison AS (
+                SELECT COALESCE(sd.ville_id, cd.ville_id) AS ville_id
+                FROM trajets t
+                INNER JOIN departs dep ON t.depart_id = dep.depart_id
+                INNER JOIN sites sd ON dep.site_id = sd.site_id
+                LEFT JOIN localisations ld ON sd.localisation_id = ld.localisation_id
+                LEFT JOIN quartiers qd ON ld.quartier_id = qd.quartier_id
+                LEFT JOIN communes cd ON qd.commune_id = cd.commune_id
+                WHERE t.actif = TRUE AND sd.actif = TRUE
+                UNION
+                SELECT COALESCE(sa.ville_id, ca.ville_id)
+                FROM trajets t
+                INNER JOIN arrivees arr ON t.arrivee_id = arr.arrivee_id
+                INNER JOIN sites sa ON arr.site_id = sa.site_id
+                LEFT JOIN localisations la ON sa.localisation_id = la.localisation_id
+                LEFT JOIN quartiers qa ON la.quartier_id = qa.quartier_id
+                LEFT JOIN communes ca ON qa.commune_id = ca.commune_id
+                WHERE t.actif = TRUE AND sa.actif = TRUE
+            )
+            SELECT v.ville_id, v.ville_uuid, v.region_id, v.libelle, v.code_postal,
+                   v.actif, v.created_at, v.updated_at,
+                   r.libelle AS region_libelle, r.region_uuid
+            FROM villes v
+            INNER JOIN regions r ON r.region_id = v.region_id
+            WHERE v.actif = TRUE
+              AND v.ville_id IN (SELECT ville_id FROM villes_liaison WHERE ville_id IS NOT NULL)
+            ORDER BY r.libelle ASC, v.libelle ASC
+            """;
+
+    /**
      * Requête pour récupérer les villes d'une région spécifique par UUID de région.
      */
     public static final String FIND_VILLES_BY_REGION_UUID = """

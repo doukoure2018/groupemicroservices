@@ -135,6 +135,23 @@ public class VilleResource {
     }
 
     /**
+     * Villes réellement desservies : celles qu'au moins une liaison active
+     * relie. Publique, comme la recherche — c'est elle qui alimente les menus
+     * de départ et d'arrivée, pour ne jamais proposer un trajet qui n'existe pas.
+     * GET /billetterie/villes/desservies
+     */
+    @GetMapping("/desservies")
+    public ResponseEntity<Response> getVillesDesservies(HttpServletRequest httpRequest) {
+        log.info("GET /billetterie/villes/desservies");
+
+        List<VilleResponse> villes = villeService.getVillesDesservies();
+        return ResponseEntity.ok(
+                getResponse(httpRequest, Map.of("villes", villes, "total", villes.size()),
+                        "Liste des villes desservies récupérée avec succès", OK)
+        );
+    }
+
+    /**
      * Récupère les villes d'une région.
      * GET /billetterie/villes/region/{regionUuid}
      *

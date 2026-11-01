@@ -82,9 +82,16 @@ export function HomePage() {
     const heroRef = useRef<HTMLDivElement>(null);
     const resultatsRef = useRef<HTMLDivElement>(null);
 
+    // Deux listes, deux usages : la vitrine (carte, régions) montre tout le
+    // pays, les menus de recherche ne proposent que les villes qu'une liaison
+    // relie — proposer les autres, c'est promettre un voyage qui n'existe pas.
     const villesQuery = useQuery({
         queryKey: ['villes-actives'],
         queryFn: async () => (await api.geo.villesActives()).data.villes
+    });
+    const desserviesQuery = useQuery({
+        queryKey: ['villes-desservies'],
+        queryFn: async () => (await api.geo.villesDesservies()).data.villes
     });
 
     const recherche = useMutation({
@@ -107,6 +114,10 @@ export function HomePage() {
     }
 
     const villes = villesQuery.data ?? [];
+    // Repli sur les villes actives tant que le serveur n'a rien à desservir,
+    // pour ne pas présenter une recherche vide et inutilisable.
+    const villesRecherche = desserviesQuery.data?.length ? desserviesQuery.data : villes;
+    const estDesservie = (villeUuid: string) => villesRecherche.some((v) => v.villeUuid === villeUuid);
 
     /**
      * Régions de Guinée dérivées des villes actives (endpoint public), triées par
@@ -155,7 +166,10 @@ export function HomePage() {
     }
 
     function choisirRegion(r: RegionAccueil) {
-        if (r.villes[0]) setVilleDepartUuid(r.villes[0].villeUuid);
+        // Première ville desservie de la région, à défaut aucune : le menu ne
+        // propose que des villes reliées, il ne doit pas recevoir d'autre valeur.
+        const ville = r.villes.find((v) => estDesservie(v.villeUuid));
+        if (ville) setVilleDepartUuid(ville.villeUuid);
         allerAuFormulaire();
     }
 
@@ -166,6 +180,11 @@ export function HomePage() {
      * d'un nouveau départ. Choisir deux fois la même ville ne fait rien.
      */
     function choisirVilleCarte(ville: Ville) {
+        if (!estDesservie(ville.villeUuid)) {
+            setErreurSaisie(`Aucune liaison ne dessert encore ${ville.libelle}. Choisissez une autre ville.`);
+            return;
+        }
+        setErreurSaisie(null);
         if (!villeDepartUuid) {
             setVilleDepartUuid(ville.villeUuid);
             if (ville.villeUuid === villeArriveeUuid) setVilleArriveeUuid('');
@@ -208,7 +227,7 @@ export function HomePage() {
                             <span className="hero-barre-libelle">Ville de départ *</span>
                             <select value={villeDepartUuid} onChange={(e) => setVilleDepartUuid(e.target.value)} required disabled={villesQuery.isLoading}>
                                 <option value="">{villesQuery.isLoading ? 'Chargement…' : 'D’où partez-vous ?'}</option>
-                                {villes.map((v) => (
+                                {villesRecherche.map((v) => (
                                     <option key={v.villeUuid} value={v.villeUuid}>
                                         {v.libelle}
                                     </option>
@@ -227,7 +246,7 @@ export function HomePage() {
                             <span className="hero-barre-libelle">Ville d'arrivée *</span>
                             <select value={villeArriveeUuid} onChange={(e) => setVilleArriveeUuid(e.target.value)} required disabled={villesQuery.isLoading}>
                                 <option value="">{villesQuery.isLoading ? 'Chargement…' : 'Où allez-vous ?'}</option>
-                                {villes.map((v) => (
+                                {villesRecherche.map((v) => (
                                     <option key={v.villeUuid} value={v.villeUuid}>
                                         {v.libelle}
                                     </option>
@@ -457,7 +476,7 @@ function Resultats({
                 </div>
             )}
 
-            {offres.length === 0 && <p className="muted">Aucun voyage ne correspond à votre recherche. Essayez une autre date ou d'autres villes.</p>}
+            {offres.length === 0 && <p className="muted">Aucune offre disponible sur ce trajet à cette date. Essayez un autre jour, ou un autre trajet.</p>}
             {offres.length > 0 && visibles.length === 0 && (
                 <p className="muted">
                     Vos filtres ne laissent passer aucun départ.{' '}

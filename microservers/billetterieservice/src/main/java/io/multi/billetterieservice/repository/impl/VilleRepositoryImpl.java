@@ -79,6 +79,13 @@ public class VilleRepositoryImpl implements VilleRepository {
     }
 
     @Override
+    public List<Ville> findDesservies() {
+        return jdbcClient.sql(VilleQuery.FIND_VILLES_DESSERVIES)
+                .query(villeRowMapper)
+                .list();
+    }
+
+    @Override
     public List<Ville> findByRegionUuid(String regionUuid) {
         log.debug("Récupération des villes de la région UUID: {}", regionUuid);
 

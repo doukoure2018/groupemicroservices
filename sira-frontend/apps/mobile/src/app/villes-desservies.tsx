@@ -12,12 +12,19 @@ export default function VillesDesservies() {
         queryKey: ['villes-actives'],
         queryFn: async () => (await api.geo.villesActives()).data.villes ?? []
     });
+    const desserviesQuery = useQuery({
+        queryKey: ['villes-desservies'],
+        queryFn: async () => (await api.geo.villesDesservies()).data.villes ?? []
+    });
 
     if (villesQuery.isPending) return <Chargement />;
     if (villesQuery.isError) {
         return <EtatVide titre="Chargement impossible" texte="Vérifiez votre réseau puis réessayez." action={<Bouton libelle="Réessayer" onPress={() => void villesQuery.refetch()} />} />;
     }
 
+    // Une ville du référentiel n'est pas forcément reliée à quelque chose : on
+    // le dit, plutôt que de laisser croire qu'on y voyage.
+    const desservies = new Set((desserviesQuery.data ?? []).map((v) => v.villeUuid));
     const parRegion = new Map<string, Ville[]>();
     for (const v of villesQuery.data) {
         const region = v.regionLibelle || 'Autres';
@@ -36,16 +43,20 @@ export default function VillesDesservies() {
             keyExtractor={(v) => v.villeUuid}
             ListHeaderComponent={
                 <Text style={base.sousTitre}>
-                    {villesQuery.data.length} ville{villesQuery.data.length > 1 ? 's' : ''} desservie{villesQuery.data.length > 1 ? 's' : ''}. Touchez-en une pour chercher un
-                    départ.
+                    {desservies.size} ville{desservies.size > 1 ? 's' : ''} desservie{desservies.size > 1 ? 's' : ''} sur {villesQuery.data.length}. Les autres rejoindront
+                    le réseau à mesure que des transporteurs y ouvrent une liaison.
                 </Text>
             }
             renderSectionHeader={({ section }) => <Text style={styles.region}>{section.title}</Text>}
-            renderItem={({ item }) => (
-                <View style={styles.ville}>
-                    <Text style={styles.villeNom}>{item.libelle}</Text>
-                </View>
-            )}
+            renderItem={({ item }) => {
+                const desservie = desservies.has(item.villeUuid);
+                return (
+                    <View style={styles.ville}>
+                        <Text style={[styles.villeNom, !desservie && styles.villeNomAVenir]}>{item.libelle}</Text>
+                        {!desservie && <Text style={styles.aVenir}>Bientôt</Text>}
+                    </View>
+                );
+            }}
             ListFooterComponent={<Bouton libelle="Chercher un voyage" onPress={() => router.navigate('/(tabs)')} style={{ marginTop: espaces.lg }} />}
         />
     );
@@ -53,6 +64,8 @@ export default function VillesDesservies() {
 
 const styles = StyleSheet.create({
     region: { fontSize: 13, fontWeight: '800', color: couleurs.vert, textTransform: 'uppercase', letterSpacing: 1, marginTop: espaces.md },
-    ville: { paddingVertical: espaces.md, borderBottomWidth: 1, borderBottomColor: couleurs.ligne },
-    villeNom: { fontSize: 16, color: couleurs.encre }
+    ville: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: espaces.md, borderBottomWidth: 1, borderBottomColor: couleurs.ligne },
+    villeNom: { fontSize: 16, color: couleurs.encre },
+    villeNomAVenir: { color: couleurs.gris },
+    aVenir: { fontSize: 12, fontWeight: '700', color: couleurs.gris, textTransform: 'uppercase', letterSpacing: 1 }
 });
