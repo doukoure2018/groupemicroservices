@@ -6,6 +6,7 @@ import {
     getStatutCommandeLabel,
     getStatutCommandeSeverity,
     isCommandeAnnulable,
+    libelleVoyageurs,
     peutReprendrePaiement,
     type CommandeClient
 } from '@sira/core';
@@ -14,6 +15,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import { CompteARebours } from '../components/CompteARebours';
 
 export function MesVoyagesPage() {
     const commandesQuery = useQuery({
@@ -113,16 +115,23 @@ function CommandeCard({ commande }: { commande: CommandeClient }) {
             <div className="commande-details">
                 <span className="muted">Commande {commande.numeroCommande}</span>
                 <span>
-                    {commande.nombrePlaces} {(commande.nombrePlaces ?? 1) > 1 ? 'places' : 'place'} —{' '}
-                    <strong>{formatMontant(commande.montantTotal, commande.devise)}</strong>
+                    {libelleVoyageurs({
+                        adultes: commande.nombreAdultes ?? commande.nombrePlaces ?? 1,
+                        enfants: commande.nombreEnfants ?? 0,
+                        bagages: commande.nombreBagages ?? 0
+                    })}{' '}
+                    — <strong>{formatMontant(commande.montantPaye ?? commande.montantTotal, commande.devise)}</strong>
                 </span>
             </div>
 
             {commande.statut === 'EN_ATTENTE' && (
-                <p className="bandeau-alerte">
-                    <i className="pi pi-clock" aria-hidden="true" /> Paiement non terminé. Vos billets ne seront émis qu'après règlement, et les places seront
-                    remises en vente si le paiement n'aboutit pas.
-                </p>
+                <>
+                    <p className="bandeau-alerte">
+                        <i className="pi pi-clock" aria-hidden="true" /> Paiement non terminé. Vos billets ne seront émis qu'après règlement, et les places seront
+                        remises en vente si le paiement n'aboutit pas.
+                    </p>
+                    {commande.expireLe && <CompteARebours jusqua={commande.expireLe} />}
+                </>
             )}
 
             <div className="commande-actions">
@@ -173,7 +182,9 @@ function CommandeCard({ commande }: { commande: CommandeClient }) {
                             <QRCodeSVG value={billet.qrCodeData ?? billet.codeBillet ?? ''} size={110} />
                             <div>
                                 <strong>{billet.nomPassager}</strong>
-                                <span className="muted">Billet {billet.codeBillet}</span>
+                                <span className="muted">
+                                    {billet.typePassager === 'ENFANT' ? 'Enfant · ' : ''}Billet {billet.codeBillet}
+                                </span>
                                 {billet.numeroSiege && <span className="muted">Siège {billet.numeroSiege}</span>}
                                 {billet.statut && <span className="muted">{billet.statut}</span>}
                             </div>

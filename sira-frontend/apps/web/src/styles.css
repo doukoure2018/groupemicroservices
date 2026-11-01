@@ -2943,3 +2943,421 @@ html:has(.admin-app) {
     background-size: cover;
     background-position: center;
 }
+
+/* --- Processus de réservation (lot 4) : passagers, dates, résultats, tunnel, sièges --- */
+.hero-barre-champ.hero-barre-bouton {
+    position: relative;
+}
+.hero-barre-bouton > button {
+    all: unset;
+    cursor: pointer;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.hero-barre-bouton > button .hero-barre-valeur {
+    padding-top: 2px;
+    font-size: 0.96rem;
+    font-weight: 600;
+    color: var(--encre);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.hero-popover {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    z-index: 5;
+    width: min(360px, 90vw);
+    background: #fff;
+    border: 1px solid var(--ligne);
+    border-radius: 14px;
+    box-shadow: 0 16px 38px rgba(6, 30, 18, 0.18);
+    padding: 6px 16px 12px;
+    cursor: default;
+}
+.hero-popover .muted.petit {
+    font-size: 0.8rem;
+}
+.compteur {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--ligne);
+}
+.compteur:last-of-type {
+    border-bottom: none;
+}
+.compteur-texte {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+.compteur-libelle {
+    font-weight: 600;
+    color: var(--encre);
+}
+.compteur-commandes {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.compteur-rond {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1.5px solid var(--vert);
+    background: #fff;
+    color: var(--vert);
+    font-size: 1.2rem;
+    line-height: 1;
+}
+.compteur-rond:disabled {
+    border-color: var(--ligne);
+    color: var(--ligne);
+    opacity: 1;
+    cursor: not-allowed;
+}
+.compteur-valeur {
+    min-width: 22px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.bandeau-dates {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 2px 10px;
+    scrollbar-width: thin;
+}
+.bandeau-dates button {
+    flex: 0 0 auto;
+    background: #fff;
+    color: var(--encre);
+    border: 1px solid var(--ligne);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+.bandeau-dates button.actif {
+    background: var(--vert);
+    border-color: var(--vert);
+    color: #fff;
+}
+.filtres-barre {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    margin: 6px 0 14px;
+}
+.filtres-barre label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--gris);
+}
+.filtres-barre select {
+    padding: 6px 10px;
+    border: 1px solid var(--ligne);
+    border-radius: 8px;
+    background: #fff;
+}
+.puces {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.puce {
+    background: #fff;
+    color: var(--encre);
+    border: 1px solid var(--ligne);
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-weight: 600;
+}
+.puce.actif {
+    border-color: var(--vert);
+    background: #eef5ef;
+    color: var(--vert-fonce);
+}
+
+.offre {
+    grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.2fr) auto auto;
+}
+.offre.offre-complete {
+    opacity: 0.7;
+}
+.offre-horaires {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    align-items: start;
+}
+.offre-heure {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--encre);
+    line-height: 1.1;
+}
+.offre-lendemain {
+    color: var(--or-texte, #8a6d12);
+    font-size: 0.72rem;
+    font-weight: 700;
+    vertical-align: top;
+    margin-left: 4px;
+}
+.offre-duree {
+    align-self: center;
+    text-align: center;
+    color: var(--gris);
+    font-size: 0.8rem;
+    border-bottom: 1px solid var(--ligne);
+    padding-bottom: 2px;
+    margin-top: 10px;
+}
+.offre-gare {
+    display: block;
+    color: var(--gris);
+    font-size: 0.85rem;
+}
+.offre-horaires > div:last-child {
+    text-align: right;
+}
+.offre-date {
+    grid-column: 1 / -1;
+    color: var(--gris);
+    font-size: 0.85rem;
+}
+.offre-vehicule {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+}
+.pastille {
+    border: 1px solid var(--ligne);
+    border-radius: 8px;
+    padding: 3px 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+.offre-etiquettes {
+    color: var(--vert);
+    font-weight: 800;
+    font-size: 0.82rem;
+}
+.offre-places-rares {
+    color: var(--alerte, #b7791f);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.offre-prix .par-personne {
+    color: var(--gris);
+    font-size: 0.78rem;
+}
+.offre-prix .complet {
+    color: var(--danger, #b3402e);
+    font-weight: 700;
+}
+.offre-action {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: stretch;
+}
+.offre-detail {
+    grid-column: 1 / -1;
+    border-top: 1px dashed var(--ligne);
+    padding-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px 20px;
+    color: var(--gris);
+    font-size: 0.9rem;
+}
+.offre-detail strong {
+    color: var(--encre);
+}
+@media (max-width: 720px) {
+    .offre {
+        grid-template-columns: 1fr;
+    }
+    .offre-horaires > div:last-child {
+        text-align: right;
+    }
+}
+
+.etape {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 26px 0 10px;
+    color: var(--vert-fonce);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+.etape-numero {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--vert);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+.passager-ajouts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.ligne-choix {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    text-align: left;
+    background: #fff;
+    color: var(--encre);
+    border: 1px solid var(--ligne);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-weight: 400;
+}
+.ligne-choix:hover {
+    background: var(--fond);
+}
+.ligne-choix > div {
+    display: flex;
+    flex-direction: column;
+}
+.ligne-choix strong {
+    color: var(--encre);
+}
+.bloc-contact {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+.bloc-contact label,
+.passager-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-weight: 600;
+    color: var(--encre);
+}
+.aide-champ {
+    font-weight: 400;
+    color: var(--gris);
+    font-size: 0.8rem;
+}
+.champ-erreur {
+    color: var(--danger, #b3402e);
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+.plan-sieges {
+    display: grid;
+    gap: 6px;
+    justify-content: center;
+    padding: 22px 26px;
+    margin: 0 auto;
+    width: max-content;
+    max-width: 100%;
+    border: 2px solid var(--ligne);
+    border-radius: 28px 28px 20px 20px;
+    background: #fff;
+}
+.plan-case {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    color: var(--gris);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.plan-chauffeur {
+    border: 1.5px solid var(--ligne);
+    border-radius: 50%;
+    font-size: 1.3rem;
+}
+.siege {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 14px 14px 8px 8px;
+    border: 1.5px solid var(--vert);
+    background: #fff;
+    color: var(--vert-fonce);
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+.siege:hover:not(:disabled) {
+    background: #eef5ef;
+}
+.siege.siege-pris {
+    border-color: var(--ligne);
+    background: var(--fond);
+    color: var(--gris);
+    cursor: not-allowed;
+    opacity: 1;
+}
+.siege.siege-choisi {
+    background: var(--vert);
+    border-color: var(--vert);
+    color: #fff;
+}
+.siege-echantillon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 7px 7px 4px 4px;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+.legende-sieges {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    color: var(--gris);
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+}
+.plan-defilement {
+    overflow-x: auto;
+    padding-bottom: 6px;
+}
+.sieges-pied {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 14px;
+}
+.compte-a-rebours {
+    text-align: center;
+    font-weight: 700;
+    color: var(--vert-fonce);
+    font-variant-numeric: tabular-nums;
+}
+.compte-a-rebours.presse {
+    color: var(--alerte, #b7791f);
+}
+.compte-a-rebours.ecoule {
+    color: var(--danger, #b3402e);
+}

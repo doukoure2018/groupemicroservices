@@ -1,9 +1,41 @@
 import { ApiError } from '@sira/api-client';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { formatDateFr, formatHeure, formatMontant, getMontantEffectif, getPourcentageReduction, hasPromotion, type Offre, type Ville } from '@sira/core';
+import {
+    ajouterJours,
+    arriveeOffre,
+    aujourdhuiIso,
+    BAGAGES_MAX,
+    dureeOffreMinutes,
+    estComplete,
+    etiquettesOffres,
+    FILTRES_DEFAUT,
+    filtrerOffres,
+    formatDateFr,
+    formatDuree,
+    formatHeure,
+    formatMontant,
+    getMontantEffectif,
+    getPourcentageReduction,
+    hasPromotion,
+    libelleJourCourt,
+    libelleVoyageurs,
+    PLACES_MAX,
+    PLAGES_HORAIRES,
+    trierOffres,
+    TRIS_OFFRES,
+    typesVehiculePresents,
+    typeVehiculeOffre,
+    VOYAGEURS_DEFAUT,
+    type FiltresOffres,
+    type Offre,
+    type TriOffres,
+    type Ville,
+    type Voyageurs
+} from '@sira/core';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api';
+import { Compteur } from '../components/Compteur';
 import './accueil/accueil.css';
 import { APropos } from './accueil/APropos';
 import { AppelFinal } from './accueil/AppelFinal';
@@ -43,6 +75,10 @@ export function HomePage() {
     const [villeDepartUuid, setVilleDepartUuid] = useState('');
     const [villeArriveeUuid, setVilleArriveeUuid] = useState('');
     const [dateDepart, setDateDepart] = useState('');
+    const [voyageurs, setVoyageurs] = useState<Voyageurs>(VOYAGEURS_DEFAUT);
+    const [voyageursOuvert, setVoyageursOuvert] = useState(false);
+    /** Jour effectivement affiché : la date cherchée, puis celle du bandeau. */
+    const [jourAffiche, setJourAffiche] = useState<string | null>(null);
     const heroRef = useRef<HTMLDivElement>(null);
     const resultatsRef = useRef<HTMLDivElement>(null);
 
@@ -52,16 +88,23 @@ export function HomePage() {
     });
 
     const recherche = useMutation({
-        mutationFn: async () =>
+        mutationFn: async (jour?: string) =>
             (
                 await api.offres.recherche({
                     villeDepartUuid: villeDepartUuid || undefined,
                     villeArriveeUuid: villeArriveeUuid || undefined,
-                    dateDepart: dateDepart || undefined
+                    dateDepart: jour ?? dateDepart ?? undefined
                 })
             ).data.offres,
         onSuccess: () => setTimeout(() => resultatsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
     });
+
+    /** Changer de jour depuis le bandeau des résultats, sans repasser par le formulaire. */
+    function chercherLeJour(jour: string) {
+        setJourAffiche(jour);
+        setDateDepart(jour);
+        recherche.mutate(jour);
+    }
 
     const villes = villesQuery.data ?? [];
 
@@ -98,7 +141,8 @@ export function HomePage() {
             return;
         }
         setErreurSaisie(null);
-        recherche.mutate();
+        setJourAffiche(dateDepart || null);
+        recherche.mutate(dateDepart || undefined);
     }
 
     function inverser() {
@@ -196,9 +240,49 @@ export function HomePage() {
                         <i className="pi pi-calendar" aria-hidden="true" />
                         <span className="hero-barre-inner">
                             <span className="hero-barre-libelle">Date de départ</span>
-                            <input type="date" value={dateDepart} onChange={(e) => setDateDepart(e.target.value)} />
+                            <input type="date" min={aujourdhuiIso()} value={dateDepart} onChange={(e) => setDateDepart(e.target.value)} />
                         </span>
                     </label>
+
+                    <div className="hero-barre-champ hero-barre-bouton">
+                        <i className="pi pi-users" aria-hidden="true" />
+                        <button type="button" aria-expanded={voyageursOuvert} onClick={() => setVoyageursOuvert((o) => !o)}>
+                            <span className="hero-barre-libelle">Passagers / Bagages</span>
+                            <span className="hero-barre-valeur">{libelleVoyageurs(voyageurs)}</span>
+                        </button>
+                        {voyageursOuvert && (
+                            <div className="hero-popover">
+                                <Compteur
+                                    libelle="Adultes"
+                                    aide="15 ans et plus"
+                                    valeur={voyageurs.adultes}
+                                    min={1}
+                                    max={PLACES_MAX - voyageurs.enfants}
+                                    onChange={(adultes) => setVoyageurs((v) => ({ ...v, adultes }))}
+                                />
+                                <Compteur
+                                    libelle="Enfants"
+                                    aide="Moins de 15 ans, accompagnés d'un adulte"
+                                    valeur={voyageurs.enfants}
+                                    min={0}
+                                    max={PLACES_MAX - voyageurs.adultes}
+                                    onChange={(enfants) => setVoyageurs((v) => ({ ...v, enfants }))}
+                                />
+                                <Compteur
+                                    libelle="Bagages"
+                                    aide="En soute, en plus du sac que chacun garde avec lui"
+                                    valeur={voyageurs.bagages}
+                                    min={0}
+                                    max={BAGAGES_MAX}
+                                    onChange={(bagages) => setVoyageurs((v) => ({ ...v, bagages }))}
+                                />
+                                <p className="muted petit">Jusqu'à {PLACES_MAX} places par réservation.</p>
+                                <button type="button" className="secondary" onClick={() => setVoyageursOuvert(false)}>
+                                    Terminé
+                                </button>
+                            </div>
+                        )}
+                    </div>
 
                     <button type="submit" className="hero-barre-rechercher" disabled={recherche.isPending || !formulaireValide}>
                         <i className="pi pi-search" aria-hidden="true" /> {recherche.isPending ? 'Recherche…' : 'Rechercher'}
@@ -211,8 +295,7 @@ export function HomePage() {
                 {recherche.isError && <p className="error">{recherche.error instanceof ApiError ? recherche.error.message : 'La recherche a échoué. Réessayez.'}</p>}
                 {recherche.data && (
                     <section className="accueil-resultats">
-                        <h2>{recherche.data.length > 0 ? `${recherche.data.length} voyage${recherche.data.length > 1 ? 's' : ''} trouvé${recherche.data.length > 1 ? 's' : ''}` : 'Résultats de la recherche'}</h2>
-                        <Resultats offres={recherche.data} />
+                        <Resultats offres={recherche.data} voyageurs={voyageurs} jour={jourAffiche} onChangerJour={chercherLeJour} enCours={recherche.isPending} />
                     </section>
                 )}
             </div>
@@ -273,44 +356,217 @@ export function HomePage() {
     );
 }
 
-function Resultats({ offres }: { offres: Offre[] }) {
-    const navigate = useNavigate();
+const PLACES_RARES = 5;
+const JOURS_BANDEAU = 14;
 
-    if (offres.length === 0) {
-        return <p className="muted">Aucun voyage ne correspond à votre recherche. Essayez une autre date ou d'autres villes.</p>;
+/**
+ * Les départs trouvés : bandeau des jours suivants, tri et filtres sur le
+ * client, puis une carte par voyage — heures, durée, arrivée du lendemain,
+ * gares, véhicule, prix par personne et étiquettes qui le distinguent.
+ */
+function Resultats({
+    offres,
+    voyageurs,
+    jour,
+    onChangerJour,
+    enCours
+}: {
+    offres: Offre[];
+    voyageurs: Voyageurs;
+    jour: string | null;
+    onChangerJour: (jour: string) => void;
+    enCours: boolean;
+}) {
+    const navigate = useNavigate();
+    const [filtres, setFiltres] = useState<FiltresOffres>(FILTRES_DEFAUT);
+    const [detail, setDetail] = useState<string | null>(null);
+
+    const visibles = useMemo(() => trierOffres(filtrerOffres(offres, filtres), filtres.tri), [offres, filtres]);
+    const etiquettes = useMemo(() => etiquettesOffres(offres), [offres]);
+    const types = useMemo(() => typesVehiculePresents(offres), [offres]);
+    const jours = useMemo(() => {
+        if (!jour) return [];
+        const debut = jour < aujourdhuiIso() ? jour : aujourdhuiIso();
+        const liste = Array.from({ length: JOURS_BANDEAU }, (_, i) => ajouterJours(debut, i));
+        return liste.includes(jour) ? liste : [jour, ...liste].sort();
+    }, [jour]);
+
+    function basculer(cle: 'plagesDepart' | 'typesVehicule', code: string) {
+        setFiltres((f) => ({ ...f, [cle]: f[cle].includes(code) ? f[cle].filter((c) => c !== code) : [...f[cle], code] }));
     }
+
+    function reserver(offre: Offre) {
+        const params = new URLSearchParams({ adultes: String(voyageurs.adultes), enfants: String(voyageurs.enfants), bagages: String(voyageurs.bagages) });
+        navigate(`/reserver/${offre.offreUuid}?${params}`);
+    }
+
     return (
-        <ul className="resultats">
-            {offres.map((offre) => (
-                <li key={offre.offreUuid} className="offre">
-                    <div className="offre-trajet">
-                        <strong>
-                            {offre.villeDepartLibelle} → {offre.villeArriveeLibelle}
-                        </strong>
-                        <span className="muted">
-                            {offre.siteDepart} → {offre.siteArrivee}
-                        </span>
+        <>
+            <h2>{offres.length > 0 ? `${offres.length} voyage${offres.length > 1 ? 's' : ''} trouvé${offres.length > 1 ? 's' : ''}` : 'Résultats de la recherche'}</h2>
+
+            {jours.length > 0 && (
+                <div className="bandeau-dates" role="tablist" aria-label="Autres jours">
+                    {jours.map((j) => (
+                        <button key={j} type="button" role="tab" aria-selected={j === jour} className={j === jour ? 'actif' : ''} disabled={enCours} onClick={() => onChangerJour(j)}>
+                            {libelleJourCourt(j)}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {offres.length > 1 && (
+                <div className="filtres-barre">
+                    <label>
+                        Trier selon
+                        <select value={filtres.tri} onChange={(e) => setFiltres((f) => ({ ...f, tri: e.target.value as TriOffres }))}>
+                            {TRIS_OFFRES.map((t) => (
+                                <option key={t.code} value={t.code}>
+                                    {t.libelle}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <div className="puces" role="group" aria-label="Heure de départ">
+                        {PLAGES_HORAIRES.map((p) => (
+                            <button
+                                key={p.code}
+                                type="button"
+                                className={`puce ${filtres.plagesDepart.includes(p.code) ? 'actif' : ''}`}
+                                aria-pressed={filtres.plagesDepart.includes(p.code)}
+                                onClick={() => basculer('plagesDepart', p.code)}
+                            >
+                                {p.libelle}
+                            </button>
+                        ))}
                     </div>
-                    <div className="offre-date">
-                        {formatDateFr(offre.dateDepart)} à {formatHeure(offre.heureDepart)}
-                    </div>
-                    <div className="offre-prix">
-                        {hasPromotion(offre) ? (
-                            <>
-                                <span className="prix-barre">{formatMontant(offre.montant, offre.devise)}</span>
-                                <strong>{formatMontant(getMontantEffectif(offre), offre.devise)}</strong>
-                                <span className="promo">-{getPourcentageReduction(offre)}%</span>
-                            </>
-                        ) : (
-                            <strong>{formatMontant(offre.montant, offre.devise)}</strong>
-                        )}
-                        <span className="muted">{offre.nombrePlacesDisponibles} places disponibles</span>
-                    </div>
-                    <div className="offre-action">
-                        <button onClick={() => navigate(`/reserver/${offre.offreUuid}`)}>Réserver</button>
-                    </div>
-                </li>
-            ))}
-        </ul>
+                    {types.length > 1 && (
+                        <div className="puces" role="group" aria-label="Type de véhicule">
+                            {types.map((t) => (
+                                <button
+                                    key={t}
+                                    type="button"
+                                    className={`puce ${filtres.typesVehicule.includes(t) ? 'actif' : ''}`}
+                                    aria-pressed={filtres.typesVehicule.includes(t)}
+                                    onClick={() => basculer('typesVehicule', t)}
+                                >
+                                    {t}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {offres.length === 0 && <p className="muted">Aucun voyage ne correspond à votre recherche. Essayez une autre date ou d'autres villes.</p>}
+            {offres.length > 0 && visibles.length === 0 && (
+                <p className="muted">
+                    Vos filtres ne laissent passer aucun départ.{' '}
+                    <button type="button" className="link-btn" onClick={() => setFiltres(FILTRES_DEFAUT)}>
+                        Tout effacer
+                    </button>
+                </p>
+            )}
+
+            <ul className="resultats">
+                {visibles.map((offre) => {
+                    const arrivee = arriveeOffre(offre);
+                    const duree = dureeOffreMinutes(offre);
+                    const complet = estComplete(offre);
+                    const places = offre.nombrePlacesDisponibles ?? 0;
+                    const marques = etiquettes.get(offre.offreUuid ?? '') ?? [];
+                    const ouvert = detail === offre.offreUuid;
+                    return (
+                        <li key={offre.offreUuid} className={`offre ${complet ? 'offre-complete' : ''}`}>
+                            <div className="offre-trajet">
+                                <div className="offre-horaires">
+                                    <div>
+                                        <span className="offre-heure">{formatHeure(offre.heureDepart)}</span>
+                                        <span className="offre-gare">{offre.siteDepart ?? offre.villeDepartLibelle}</span>
+                                    </div>
+                                    <div className="offre-duree">{duree ? formatDuree(duree) : ''}</div>
+                                    <div>
+                                        <span className="offre-heure">
+                                            {arrivee?.heure ?? '—'}
+                                            {arrivee?.lendemain && <span className="offre-lendemain">+1 jour</span>}
+                                        </span>
+                                        <span className="offre-gare">{offre.siteArrivee ?? offre.villeArriveeLibelle}</span>
+                                    </div>
+                                </div>
+                                <strong>
+                                    {offre.villeDepartLibelle} → {offre.villeArriveeLibelle}
+                                </strong>
+                            </div>
+
+                            <div className="offre-vehicule">
+                                <span className="pastille">{typeVehiculeOffre(offre)}</span>
+                                {!complet && places <= PLACES_RARES && (
+                                    <span className="offre-places-rares">
+                                        {places} place{places > 1 ? 's' : ''} restante{places > 1 ? 's' : ''}
+                                    </span>
+                                )}
+                                {marques.length > 0 && <span className="offre-etiquettes">{marques.join(' · ')}</span>}
+                            </div>
+
+                            <div className="offre-prix">
+                                {complet ? (
+                                    <span className="complet">Complet</span>
+                                ) : (
+                                    <>
+                                        {hasPromotion(offre) && (
+                                            <>
+                                                <span className="prix-barre">{formatMontant(offre.montant, offre.devise)}</span>
+                                                <span className="promo">-{getPourcentageReduction(offre)}%</span>
+                                            </>
+                                        )}
+                                        <strong>{formatMontant(getMontantEffectif(offre), offre.devise)}</strong>
+                                        <span className="par-personne">par personne</span>
+                                    </>
+                                )}
+                            </div>
+
+                            <div className="offre-action">
+                                <button disabled={complet} onClick={() => reserver(offre)}>
+                                    Réserver
+                                </button>
+                                <button type="button" className="link-btn" aria-expanded={ouvert} onClick={() => setDetail(ouvert ? null : (offre.offreUuid ?? null))}>
+                                    {ouvert ? 'Masquer le détail' : 'Voir le détail'}
+                                </button>
+                            </div>
+
+                            <div className="offre-date">
+                                {formatDateFr(offre.dateDepart)} à {formatHeure(offre.heureDepart)}
+                            </div>
+
+                            {ouvert && (
+                                <div className="offre-detail">
+                                    <span>
+                                        Durée <strong>{duree ? formatDuree(duree) : 'non précisée'}</strong> · Direct
+                                    </span>
+                                    <span>
+                                        Véhicule <strong>{[typeVehiculeOffre(offre), offre.vehiculeMarque, offre.vehiculeModele].filter(Boolean).join(' ')}</strong>
+                                        {offre.vehiculeClimatise ? ' · climatisé' : ''}
+                                    </span>
+                                    {offre.userFullName && (
+                                        <span>
+                                            Exploité par <strong>{offre.userFullName}</strong>
+                                        </span>
+                                    )}
+                                    {offre.pointRendezvous && (
+                                        <span>
+                                            Rendez-vous <strong>{offre.pointRendezvous}</strong>
+                                        </span>
+                                    )}
+                                    <span>
+                                        Annulation{' '}
+                                        <strong>{offre.annulationAutorisee === false ? 'non remboursable' : `jusqu'à ${offre.delaiAnnulationHeures ?? 24} h avant le départ`}</strong>
+                                    </span>
+                                    {offre.conditions && <span>{offre.conditions}</span>}
+                                </div>
+                            )}
+                        </li>
+                    );
+                })}
+            </ul>
+        </>
     );
 }

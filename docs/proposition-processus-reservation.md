@@ -170,7 +170,7 @@ Même tunnel, mêmes règles, mêmes données : `HomePage` reçoit le sélecteur
 | **1 — Recherche enrichie** ✅ livré 2026-11-01 | feuille Passagers/Bagages, bandeau de dates, cartes complètes, étiquettes, filtres, détail en feuille basse, Continuer | non | 3–4 j |
 | **2 — Devis serveur, enfants, bagages** ✅ livré 2026-11-01 (web : devis et admin ; tunnel web complet au lot 4) | V43, `POST /devis`, création recalculée, tunnel ① ③ ④, récapitulatif, règle d'âge, compte à rebours, admin web des tarifs | oui | 4–5 j |
 | **3 — Sièges** ✅ livré 2026-11-01 (plan SVG web au lot 4) | V44, générateur des trois gabarits, `GET /sieges`, écran plan, étape ②, auto-attribution, siège sur les billets et au scanner | oui | 4–5 j |
-| **4 — Web en parité + e2e** | tunnel web, plan SVG, admin, tests | non | 3–4 j |
+| **4 — Web en parité + e2e** ✅ livré 2026-11-01 | tunnel web, plan SVG, admin, tests | non | 3–4 j |
 | **5 — Compte et services** | V45, préférences, Mon compte, Paramètres, Arrêts, aide, mentions légales, consultation d'une réservation | oui | 3 j |
 | **6 — Plus tard, sur décision** | sièges payants (Devant/Panorama), capacité de soute, aller-retour sous un seul paiement, commande invitée, bon d'achat, langues | oui | — |
 

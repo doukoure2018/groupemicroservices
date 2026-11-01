@@ -376,11 +376,29 @@ test('parcours voyageur : recherche publique, réservation, billets, annulation'
     await page.getByLabel(/Ville d'arrivée/).selectOption({ label: villeArrivee! });
     await expect(page.locator('p.error')).toHaveCount(0);
     await page.getByLabel('Date de départ').fill(DATE_OFFRE);
+
+    // Passagers / Bagages : le choix se fait avant la recherche et suit jusqu'au tunnel.
+    await page.getByRole('button', { name: /Passagers \/ Bagages/ }).click();
+    const passagersPopover = page.locator('.hero-popover');
+    await expect(passagersPopover).toContainText('Adultes');
+    await passagersPopover.getByRole('button', { name: 'Ajouter bagages' }).click();
+    await expect(page.getByRole('button', { name: /1 adulte, 1 bagage/ })).toBeVisible();
+    await passagersPopover.getByRole('button', { name: 'Retirer bagages' }).click();
+    await passagersPopover.getByRole('button', { name: 'Terminé' }).click();
+
     await expect(rechercher).toBeEnabled();
     await rechercher.click();
     const offre = page.locator('li.offre').filter({ hasText: VILLE }).first();
     await expect(offre).toBeVisible({ timeout: 20_000 });
     await expect(offre).toContainText(dateFr(DATE_OFFRE));
+    // Carte enrichie : véhicule et prix par personne ; le détail se déplie sur place.
+    await expect(offre.locator('.pastille')).toContainText(TYPE_VEHICULE);
+    await expect(offre.locator('.par-personne')).toHaveText('par personne');
+    await offre.getByRole('button', { name: 'Voir le détail' }).click();
+    await expect(offre.locator('.offre-detail')).toContainText('Annulation');
+    await offre.getByRole('button', { name: 'Masquer le détail' }).click();
+    // Le bandeau des jours permet de changer de date sans repasser par le formulaire.
+    await expect(page.locator('.bandeau-dates button.actif')).toHaveCount(1);
     await offre.getByRole('button', { name: 'Réserver' }).click();
     await page.waitForURL(/\/reserver\//);
 
@@ -392,22 +410,39 @@ test('parcours voyageur : recherche publique, réservation, billets, annulation'
     await page.getByRole('button', { name: 'Retirer ce passager' }).last().click();
     await expect(page.locator('fieldset.passager')).toHaveCount(1);
     const passager = page.locator('fieldset.passager').first();
+    await expect(passager.locator('legend')).toHaveText(/Adulte/);
     await champSousLabel(passager, /^Nom/).fill('Doe');
     await champSousLabel(passager, /^Prénom/).fill('E2E');
     await champSousLabel(passager, /^Téléphone/).fill('+224600000003');
     await expect(confirmer).toBeDisabled();
+
+    // Sièges : le plan du véhicule vient du serveur, un siège libre se choisit au clic.
+    await page.getByRole('button', { name: 'Choisir les sièges' }).click();
+    const plan = page.locator('.plan-sieges');
+    await expect(plan).toBeVisible({ timeout: 20_000 });
+    const siegeLibre = plan.locator('button.siege:not(.siege-pris)').first();
+    const numeroSiege = ((await siegeLibre.textContent()) ?? '').trim();
+    await siegeLibre.click();
+    await page.getByRole('button', { name: 'Confirmer', exact: true }).click();
+    await expect(page.getByRole('button', { name: new RegExp(`Sièges ${numeroSiege}`) })).toBeVisible();
+
+    // Contact : le téléphone est obligatoire, c'est par lui qu'on prévient d'un retard.
+    await champSousLabel(page.locator('.bloc-contact'), /Numéro de téléphone/).fill('+224600000003');
     // Mode choisi explicitement : « Espèces » se règle hors de la plateforme, donc
     // la commande est confirmée sur-le-champ et les billets sont émis. Un mode en
     // ligne redirigerait vers le prestataire, parcours que ce test ne peut pas suivre.
     await page.locator('.modes label').filter({ hasText: 'Espèces' }).locator('input[type=radio]').check();
     await expect(page.locator('.bandeau-info')).toContainText(/Règlement sur place/);
-    await expect(page.locator('.total-bar')).toContainText(/50[\s  ]?000/);
+    // Le récapitulatif vient du devis serveur : une ligne par poste, puis le total.
+    await expect(page.locator('.devis-lignes')).toContainText(/50[\s  ]?000/);
+    await expect(page.locator('.devis-total')).toContainText(/Total à payer/);
     await expect(confirmer).toBeEnabled();
     await confirmer.click();
 
     await expect(page.getByRole('heading', { name: /Réservation confirmée/ })).toBeVisible({ timeout: 30_000 });
     await expect(page.locator('li.billet')).toHaveCount(1);
     await expect(page.locator('li.billet svg')).toBeVisible();
+    await expect(page.locator('li.billet')).toContainText(`Siège ${numeroSiege}`);
     const numero = (await page.locator('p strong').first().textContent())?.trim() ?? '';
     expect(numero).not.toBe('');
 
@@ -431,6 +466,41 @@ test('parcours voyageur : recherche publique, réservation, billets, annulation'
 
     await page.goto('/admin/offres');
     await expect(await ligneOffreE2E(page)).toContainText(`${placesAvant}/4`);
+});
+
+test('réservation : la règle d’âge refuse un enfant de 15 ans ou plus', async ({ page, baseURL }) => {
+    const ctx = await apiConnectee(baseURL!);
+    const { offres } = await lireData<{ offres: Array<{ offreUuid: string; villeDepartLibelle: string; statut: string }> }>(ctx, '/billetterie/offres');
+    await ctx.dispose();
+    const offreE2E = offres.find((o) => o.villeDepartLibelle === VILLE && o.statut === 'OUVERT');
+    expect(offreE2E, 'une offre E2E ouverte doit exister').toBeTruthy();
+
+    await page.goto(`/reserver/${offreE2E!.offreUuid}`);
+    const confirmer = page.getByRole('button', { name: 'Confirmer la réservation' });
+    await expect(page.getByRole('heading', { name: 'Finaliser la réservation' })).toBeVisible();
+
+    const adulte = page.locator('fieldset.passager').first();
+    await champSousLabel(adulte, /^Nom/).fill('Doe');
+    await champSousLabel(adulte, /^Prénom/).fill('E2E');
+    await champSousLabel(page.locator('.bloc-contact'), /Numéro de téléphone/).fill('+224600000003');
+
+    await page.getByRole('button', { name: /Ajouter un enfant/ }).click();
+    const enfant = page.locator('fieldset.passager').nth(1);
+    await expect(enfant.locator('legend')).toHaveText(/Enfant/);
+    await champSousLabel(enfant, /^Nom/).fill('Doe');
+    await champSousLabel(enfant, /^Prénom/).fill('Junior');
+
+    // Né il y a vingt ans : adulte le jour du voyage, le formulaire le refuse.
+    await champSousLabel(enfant, /Date de naissance/).fill(dateIso(-365 * 20));
+    await expect(enfant.locator('.champ-erreur')).toContainText(/Âge maximum/);
+    await expect(confirmer).toBeDisabled();
+
+    // Né il y a cinq ans : enfant accepté, le devis prend le tarif enfant.
+    await champSousLabel(enfant, /Date de naissance/).fill(dateIso(-365 * 5));
+    await expect(enfant.locator('.champ-erreur')).toHaveCount(0);
+    await expect(page.locator('.devis-lignes')).toContainText('Enfant');
+    // Aucun mode de règlement choisi : rien n'est créé, l'offre garde ses places.
+    await expect(confirmer).toBeDisabled();
 });
 
 test('offres : annulation finale de l’offre de test', async ({ page }) => {

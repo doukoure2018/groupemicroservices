@@ -5,6 +5,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth-context';
 import { ConfirmationCommande } from '../components/ConfirmationCommande';
+import { CompteARebours } from '../components/CompteARebours';
 
 /**
  * Clé de secours. Les prestataires ne renvoient pas tous la référence dans
@@ -190,18 +191,21 @@ export function PaiementRetourPage() {
     return (
         <Message
             icone="pi-spin pi-spinner"
-            titre="Paiement en cours de validation"
+            titre="Attente de la confirmation de paiement"
             texte={
                 commande?.montantPaye
-                    ? `Nous attendons la confirmation de votre opérateur pour ${formatMontant(commande.montantPaye, commande.devise)}. Ne fermez pas cette page.`
-                    : "Nous attendons la confirmation de votre opérateur. Ne fermez pas cette page."
+                    ? `Nous attendons la confirmation de votre opérateur pour ${formatMontant(commande.montantPaye, commande.devise)}. Cela peut prendre quelques minutes : ne fermez pas cette page.`
+                    : 'Nous attendons la confirmation de votre opérateur. Cela peut prendre quelques minutes : ne fermez pas cette page.'
             }
             action={
-                commande?.urlPaiement ? (
-                    <a className="bouton-lien" href={commande.urlPaiement}>
-                        <i className="pi pi-external-link" aria-hidden="true" /> Reprendre le paiement
-                    </a>
-                ) : undefined
+                <>
+                    {commande?.expireLe && <CompteARebours jusqua={commande.expireLe} />}
+                    {commande?.urlPaiement && (
+                        <a className="bouton-lien" href={commande.urlPaiement}>
+                            <i className="pi pi-external-link" aria-hidden="true" /> Reprendre le paiement
+                        </a>
+                    )}
+                </>
             }
         />
     );

@@ -1,4 +1,4 @@
-import { formatMontant, type CommandeClient } from '@sira/core';
+import { formatMontant, libelleVoyageurs, type CommandeClient } from '@sira/core';
 import { QRCodeSVG } from 'qrcode.react';
 import { Link } from 'react-router-dom';
 
@@ -19,8 +19,12 @@ export function ConfirmationCommande({ commande, titre }: { commande: CommandeCl
 
             {/* Le premier <strong> dans un <p> est le numéro de commande : le test du parcours voyageur le relit ici. */}
             <p className="confirmation-ligne">
-                Commande <strong>{commande.numeroCommande}</strong> — {formatMontant(commande.montantTotal, commande.devise)} — {commande.nombrePlaces}{' '}
-                {(commande.nombrePlaces ?? 1) > 1 ? 'places' : 'place'}
+                Commande <strong>{commande.numeroCommande}</strong> — {formatMontant(commande.montantPaye ?? commande.montantTotal, commande.devise)} —{' '}
+                {libelleVoyageurs({
+                    adultes: commande.nombreAdultes ?? commande.nombrePlaces ?? 1,
+                    enfants: commande.nombreEnfants ?? 0,
+                    bagages: commande.nombreBagages ?? 0
+                })}
             </p>
 
             <h2 className="section-titre">Vos billets</h2>
@@ -30,7 +34,9 @@ export function ConfirmationCommande({ commande, titre }: { commande: CommandeCl
                         <QRCodeSVG value={billet.qrCodeData ?? billet.codeBillet ?? ''} size={128} />
                         <div>
                             <strong>{billet.nomPassager}</strong>
-                            <span className="muted">Billet {billet.codeBillet}</span>
+                            <span className="muted">
+                                {billet.typePassager === 'ENFANT' ? 'Enfant · ' : ''}Billet {billet.codeBillet}
+                            </span>
                             {billet.numeroSiege && <span className="muted">Siège {billet.numeroSiege}</span>}
                         </div>
                     </li>
