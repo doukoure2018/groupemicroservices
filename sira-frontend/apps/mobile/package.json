@@ -32,8 +32,8 @@
   "scripts": {
     "start": "expo start",
     "start:test": "EXPO_PUBLIC_ENV=test expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "export:check": "EXPO_PUBLIC_ENV=test expo export --platform android --output-dir .expo-export-check"

@@ -11,6 +11,19 @@ import { CompteARebours } from '../../ui/compte-a-rebours';
 import { espaces } from '../../ui/theme';
 import { ExigerSession } from '../../auth/exiger-session';
 
+/**
+ * Adresse qui ramène dans l'application après le passage chez le prestataire.
+ *
+ * Le schéma est imposé plutôt que laissé au défaut : l'application en déclare
+ * deux (« sira » et « synergia ») et la version de développement choisit le
+ * second, alors que la page de retour du site renvoie toujours vers « sira ».
+ * Sans cet accord, le navigateur ne reconnaîtrait pas son adresse de retour et
+ * resterait ouvert.
+ */
+function urlRetourApplication(reference: string): string {
+    return Linking.createURL(`paiement/${reference}`, { scheme: 'sira' });
+}
+
 /** Trois secondes pendant une minute trente : au-delà, une réponse franche. */
 const INTERVALLE_MS = 3000;
 const TENTATIVES_MAX = 30;
@@ -56,7 +69,7 @@ function AttentePaiement() {
     useEffect(() => {
         if (!url || pageOuverte) return;
         setPageOuverte(true);
-        const retourApplication = Linking.createURL(`paiement/${reference}`);
+        const retourApplication = urlRetourApplication(reference);
         void WebBrowser.openAuthSessionAsync(url, retourApplication)
             .then(() => void etatQuery.refetch())
             .catch(() => undefined);
@@ -139,7 +152,7 @@ function AttentePaiement() {
                     <Bouton
                         libelle="Rouvrir la page de paiement"
                         variante="secondaire"
-                        onPress={() => void WebBrowser.openAuthSessionAsync(url, Linking.createURL(`paiement/${reference}`)).then(() => void etatQuery.refetch()).catch(() => undefined)}
+                        onPress={() => void WebBrowser.openAuthSessionAsync(url, urlRetourApplication(reference)).then(() => void etatQuery.refetch()).catch(() => undefined)}
                     />
                 )}
                 <Bouton libelle="Mes voyages" variante="discret" onPress={() => router.replace('/(tabs)/voyages')} />
