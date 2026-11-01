@@ -1,4 +1,5 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, keepPreviousData } from '@tanstack/react-query';
+import { ApiError } from '@sira/api-client';
 import {
     formatDateFr,
     formatHeure,
@@ -18,6 +19,11 @@ const MAX_PLACES = 8;
 
 const passagerVide = (): PassagerRequest => ({ nom: '', prenom: '', telephone: '', pieceIdentite: '' });
 
+/**
+ * Le prix vient du serveur : le devis se recalcule à chaque changement de
+ * composition ou de mode, et c'est son total qui repart à la création. Si le
+ * tarif a bougé entre-temps, le serveur refuse et le message le dit.
+ */
 export function ReservationPage() {
     const { offreUuid } = useParams<{ offreUuid: string }>();
 
@@ -39,17 +45,34 @@ export function ReservationPage() {
 
     const offre = offreQuery.data;
     const prixUnitaire = offre ? getMontantEffectif(offre) : 0;
-    const total = prixUnitaire * passagers.length;
     const maxPassagers = Math.min(MAX_PLACES, offre?.nombrePlacesDisponibles ?? MAX_PLACES);
+
+    const devisQuery = useQuery({
+        queryKey: ['devis', offreUuid, passagers.length, modeReglementCode],
+        queryFn: async () =>
+            (
+                await api.commandes.devis({
+                    offreUuid: offreUuid!,
+                    nombreAdultes: passagers.length,
+                    nombreEnfants: 0,
+                    nombreBagages: 0,
+                    modeReglementCode: modeReglementCode || undefined
+                })
+            ).data.devis,
+        enabled: !!offreUuid && passagers.length > 0,
+        placeholderData: keepPreviousData
+    });
+    const devis = devisQuery.data;
 
     const reserver = useMutation({
         mutationFn: async () =>
             (
                 await api.commandes.create({
                     offreUuid: offreUuid!,
-                    passagers: passagers.map((p) => ({ ...p, pieceIdentite: p.pieceIdentite || undefined })),
+                    passagers: passagers.map((p) => ({ ...p, typePassager: 'ADULTE', pieceIdentite: p.pieceIdentite || undefined })),
                     modeReglementCode,
-                    montantTotal: total
+                    montantTotal: devis!.montantAPayer,
+                    nombreBagages: 0
                 })
             ).data.commande,
         onSuccess: (cmd) => {
@@ -107,7 +130,14 @@ export function ReservationPage() {
 
     const modeChoisi = (modesQuery.data ?? []).find((m) => m.code === modeReglementCode);
     const paiementEnLigne = modeChoisi?.enLigne === true;
-    const formulaireValide = modeReglementCode !== '' && passagers.every((p) => p.nom.trim() && p.prenom.trim() && p.telephone.trim());
+    const formulaireValide =
+        modeReglementCode !== '' && !!devis && !devisQuery.isError && passagers.every((p) => p.nom.trim() && p.prenom.trim() && p.telephone?.trim());
+    const messageErreur =
+        reserver.error instanceof ApiError && reserver.error.message
+            ? reserver.error.message
+            : paiementEnLigne
+              ? "Le paiement n'a pas pu être ouvert. Aucune place n'a été retenue, réessayez dans un instant."
+              : 'La réservation a échoué. Vérifiez les places disponibles et réessayez.';
 
     return (
         <section className="card card-large">
@@ -154,7 +184,7 @@ export function ReservationPage() {
                         </label>
                         <label>
                             Téléphone *
-                            <input type="tel" placeholder="+224 6XX XX XX XX" value={p.telephone} onChange={(e) => setPassager(i, 'telephone', e.target.value)} required />
+                            <input type="tel" placeholder="+224 6XX XX XX XX" value={p.telephone ?? ''} onChange={(e) => setPassager(i, 'telephone', e.target.value)} required />
                         </label>
                         <label>
                             Pièce d'identité
@@ -200,20 +230,34 @@ export function ReservationPage() {
             )}
             {modeChoisi && !paiementEnLigne && <p className="bandeau-info">Règlement sur place, au départ. Vos billets sont émis immédiatement.</p>}
 
-            <div className="total-bar">
-                <span>
-                    Total ({passagers.length} {passagers.length > 1 ? 'places' : 'place'})
-                </span>
-                <strong>{formatMontant(total, offre.devise)}</strong>
+            <div className="total-bar" aria-live="polite">
+                {devis ? (
+                    <>
+                        <ul className="devis-lignes">
+                            {devis.lignes.map((l) => (
+                                <li key={l.code}>
+                                    <span>
+                                        {l.quantite > 1 ? `${l.quantite} × ` : ''}
+                                        {l.libelle}
+                                        {l.quantite > 1 ? ` (${formatMontant(l.montantUnitaire, devis.devise)})` : ''}
+                                    </span>
+                                    <span>{formatMontant(l.montant, devis.devise)}</span>
+                                </li>
+                            ))}
+                        </ul>
+                        <div className="devis-total">
+                            <span>Total à payer</span>
+                            <strong>{formatMontant(devis.montantAPayer, devis.devise)}</strong>
+                        </div>
+                    </>
+                ) : devisQuery.isError ? (
+                    <p className="error">Le prix n'a pas pu être calculé. Réessayez dans un instant.</p>
+                ) : (
+                    <span className="muted">Calcul du prix…</span>
+                )}
             </div>
 
-            {reserver.isError && (
-                <p className="error">
-                    {paiementEnLigne
-                        ? "Le paiement n'a pas pu être ouvert. Aucune place n'a été retenue, réessayez dans un instant."
-                        : 'La réservation a échoué. Vérifiez les places disponibles et réessayez.'}
-                </p>
-            )}
+            {reserver.isError && <p className="error">{messageErreur}</p>}
             <button className="bouton-confirmer" disabled={!formulaireValide || reserver.isPending} onClick={() => reserver.mutate()}>
                 {reserver.isPending
                     ? paiementEnLigne

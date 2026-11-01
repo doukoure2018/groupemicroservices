@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AppState, ScrollView, Text } from 'react-native';
 import { api } from '../../api';
 import { Bandeau, Bouton, Carte, Chargement, EtatVide, styles as base } from '../../ui/base';
+import { CompteARebours } from '../../ui/compte-a-rebours';
 import { espaces } from '../../ui/theme';
 import { ExigerSession } from '../../auth/exiger-session';
 
@@ -107,6 +108,7 @@ function AttentePaiement() {
         <ScrollView style={base.ecran} contentContainerStyle={[base.contenu, { flexGrow: 1, justifyContent: 'center' }]}>
             {!expire && <Chargement />}
             <Text style={[base.titre, { textAlign: 'center' }]}>{expire ? 'Paiement toujours en attente' : `Paiement en cours${mode ? ` chez ${mode}` : ''}`}</Text>
+            {commande?.expireLe && !expire && <CompteARebours jusqua={commande.expireLe} />}
             <Text style={[base.sousTitre, { textAlign: 'center' }]}>
                 {expire
                     ? "Votre opérateur n'a pas encore répondu. Si le règlement aboutit, votre réservation sera confirmée automatiquement et vous recevrez un email. Vous pouvez suivre son statut dans Mes voyages."

@@ -44,6 +44,14 @@ export interface Offre {
     conditions?: string;
     annulationAutorisee?: boolean;
     delaiAnnulationHeures?: number;
+    /** Tarification passagers et bagages : vide = valeur de la liaison. */
+    montantEnfant?: number;
+    bagagesAutorises?: boolean;
+    bagagesInclusParPassager?: number;
+    montantBagageSupplementaire?: number;
+    /** Calculés par le serveur : tarif enfant et prix d'un bagage réellement appliqués. */
+    montantEnfantEffectif?: number;
+    montantBagageEffectif?: number;
     datePublication?: string;
     dateCloture?: string;
     dateDepartEffectif?: string;
@@ -56,6 +64,8 @@ export interface Offre {
     trajetLibelle?: string;
     trajetDistanceKm?: number;
     trajetDureeMinutes?: number;
+    trajetMontantEnfant?: number;
+    trajetMontantBagages?: number;
 
     // Jointure Départ
     departUuid?: string;
@@ -108,6 +118,10 @@ export interface OffreRequest {
     conditions?: string;
     annulationAutorisee?: boolean;
     delaiAnnulationHeures?: number;
+    montantEnfant?: number;
+    bagagesAutorises?: boolean;
+    bagagesInclusParPassager?: number;
+    montantBagageSupplementaire?: number;
 }
 
 export interface OffreStats {

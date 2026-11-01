@@ -66,7 +66,11 @@ const FORM_VIDE: OffreForm = {
     pointRendezvous: '',
     conditions: '',
     annulationAutorisee: true,
-    delaiAnnulationHeures: '24'
+    delaiAnnulationHeures: '24',
+    montantEnfant: '',
+    bagagesAutorises: true,
+    bagagesInclusParPassager: '1',
+    montantBagageSupplementaire: ''
 };
 
 interface OffreForm {
@@ -82,6 +86,12 @@ interface OffreForm {
     conditions: string;
     annulationAutorisee: boolean;
     delaiAnnulationHeures: string;
+    /** Vide = tarif enfant de la liaison. */
+    montantEnfant: string;
+    bagagesAutorises: boolean;
+    bagagesInclusParPassager: string;
+    /** Vide = prix bagages de la liaison. */
+    montantBagageSupplementaire: string;
 }
 
 export function OffresAdminPage() {
@@ -134,7 +144,11 @@ export function OffresAdminPage() {
                 pointRendezvous: form.pointRendezvous || undefined,
                 conditions: form.conditions || undefined,
                 annulationAutorisee: form.annulationAutorisee,
-                delaiAnnulationHeures: form.delaiAnnulationHeures ? Number(form.delaiAnnulationHeures) : undefined
+                delaiAnnulationHeures: form.delaiAnnulationHeures ? Number(form.delaiAnnulationHeures) : undefined,
+                montantEnfant: form.montantEnfant ? Number(form.montantEnfant) : undefined,
+                bagagesAutorises: form.bagagesAutorises,
+                bagagesInclusParPassager: form.bagagesInclusParPassager ? Number(form.bagagesInclusParPassager) : undefined,
+                montantBagageSupplementaire: form.montantBagageSupplementaire ? Number(form.montantBagageSupplementaire) : undefined
             };
             return enEdition ? api.offres.update(enEdition.offreUuid!, body) : api.offres.create(body);
         },
@@ -194,7 +208,11 @@ export function OffresAdminPage() {
             pointRendezvous: offre.pointRendezvous ?? '',
             conditions: offre.conditions ?? '',
             annulationAutorisee: offre.annulationAutorisee ?? true,
-            delaiAnnulationHeures: String(offre.delaiAnnulationHeures ?? '24')
+            delaiAnnulationHeures: String(offre.delaiAnnulationHeures ?? '24'),
+            montantEnfant: offre.montantEnfant != null ? String(offre.montantEnfant) : '',
+            bagagesAutorises: offre.bagagesAutorises ?? true,
+            bagagesInclusParPassager: String(offre.bagagesInclusParPassager ?? 1),
+            montantBagageSupplementaire: offre.montantBagageSupplementaire != null ? String(offre.montantBagageSupplementaire) : ''
         });
         setDialogOuvert(true);
     }
@@ -378,6 +396,10 @@ export function OffresAdminPage() {
                         <input type="number" min={0} step={1000} value={form.montant} onChange={(e) => setForm({ ...form, montant: e.target.value })} />
                     </label>
                     <label>
+                        Tarif enfant (vide = celui de la liaison)
+                        <input type="number" min={0} step={1000} value={form.montantEnfant} onChange={(e) => setForm({ ...form, montantEnfant: e.target.value })} />
+                    </label>
+                    <label>
                         Devise
                         <Dropdown
                             value={form.devise}
@@ -393,6 +415,32 @@ export function OffresAdminPage() {
                         Conditions
                         <textarea rows={2} value={form.conditions} onChange={(e) => setForm({ ...form, conditions: e.target.value })} />
                     </label>
+                    <label className="ligne">
+                        <input type="checkbox" checked={form.bagagesAutorises} onChange={(e) => setForm({ ...form, bagagesAutorises: e.target.checked })} />
+                        Bagages supplémentaires acceptés
+                    </label>
+                    <label>
+                        Bagages inclus par passager
+                        <input
+                            type="number"
+                            min={0}
+                            max={5}
+                            value={form.bagagesInclusParPassager}
+                            onChange={(e) => setForm({ ...form, bagagesInclusParPassager: e.target.value })}
+                        />
+                    </label>
+                    {form.bagagesAutorises && (
+                        <label>
+                            Prix d'un bagage supplémentaire (vide = celui de la liaison)
+                            <input
+                                type="number"
+                                min={0}
+                                step={1000}
+                                value={form.montantBagageSupplementaire}
+                                onChange={(e) => setForm({ ...form, montantBagageSupplementaire: e.target.value })}
+                            />
+                        </label>
+                    )}
                     <label className="ligne">
                         <input
                             type="checkbox"

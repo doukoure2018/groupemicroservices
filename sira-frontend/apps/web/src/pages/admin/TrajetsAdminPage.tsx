@@ -21,6 +21,7 @@ interface TrajetForm {
     dureeEstimeeMinutes: string;
     montantBase: string;
     montantBagages: string;
+    montantEnfant: string;
     devise: string;
 }
 
@@ -33,6 +34,7 @@ const FORM_VIDE: TrajetForm = {
     dureeEstimeeMinutes: '',
     montantBase: '',
     montantBagages: '',
+    montantEnfant: '',
     devise: 'GNF'
 };
 
@@ -76,6 +78,7 @@ export function TrajetsAdminPage() {
                 dureeEstimeeMinutes: form.dureeEstimeeMinutes ? Number(form.dureeEstimeeMinutes) : undefined,
                 montantBase: form.montantBase ? Number(form.montantBase) : undefined,
                 montantBagages: form.montantBagages ? Number(form.montantBagages) : undefined,
+                montantEnfant: form.montantEnfant ? Number(form.montantEnfant) : undefined,
                 devise: form.devise
             };
             return enEdition ? api.transport.updateTrajet(enEdition.trajetUuid!, body) : api.transport.createTrajet(body);
@@ -125,6 +128,7 @@ export function TrajetsAdminPage() {
             dureeEstimeeMinutes: String(t.dureeEstimeeMinutes ?? ''),
             montantBase: String(t.montantBase ?? ''),
             montantBagages: String(t.montantBagages ?? ''),
+            montantEnfant: t.montantEnfant != null ? String(t.montantEnfant) : '',
             devise: t.devise ?? 'GNF'
         });
         setDialogOuvert(true);
@@ -276,6 +280,10 @@ export function TrajetsAdminPage() {
                     <label>
                         Montant bagages
                         <input type="number" min={0} step={1000} value={form.montantBagages} onChange={(e) => setForm({ ...form, montantBagages: e.target.value })} />
+                    </label>
+                    <label>
+                        Tarif enfant (vide = plein tarif)
+                        <input type="number" min={0} step={1000} value={form.montantEnfant} onChange={(e) => setForm({ ...form, montantEnfant: e.target.value })} />
                     </label>
                     <label>
                         Devise

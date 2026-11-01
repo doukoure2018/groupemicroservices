@@ -1,18 +1,20 @@
 import type {
-    AppNotification,
-    AvisClient,
-    BilletValide,
-    AvisRequest,
     ActifStats,
+    AppNotification,
     Arrivee,
     ArriveeRequest,
+    AvisClient,
+    AvisRequest,
+    BilletValide,
+    CommandeClient,
+    CommandeCreateRequest,
     Commune,
     CommuneCreateRequest,
     CommuneUpdateRequest,
-    CommandeClient,
-    CommandeCreateRequest,
     Depart,
     DepartRequest,
+    Devis,
+    DevisRequest,
     Localisation,
     LocalisationCreateRequest,
     LocalisationUpdateRequest,
@@ -180,6 +182,8 @@ export function offreApi(client: SiraClient) {
 export function commandeApi(client: SiraClient) {
     return {
         create: (body: CommandeCreateRequest) => client.post<{ commande: CommandeClient }>(`${BASE}/commandes`, { body }),
+        /** Public — le prix avant toute saisie, sans compte. */
+        devis: (body: DevisRequest) => client.post<{ devis: Devis }>(`${BASE}/commandes/devis`, { body, auth: false }),
         mesCommandes: () => client.get<{ commandes: CommandeClient[] }>(`${BASE}/commandes/mes-commandes`),
         byUuid: (uuid: string) => client.get<{ commande: CommandeClient }>(`${BASE}/commandes/${uuid}`),
         // Contrôleur Java : @PutMapping("/{uuid}/annuler").

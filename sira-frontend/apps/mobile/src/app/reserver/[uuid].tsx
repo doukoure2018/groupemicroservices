@@ -1,50 +1,134 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ApiError } from '@sira/api-client';
-import { formatDateFr, formatHeure, formatMontant, getMontantEffectif, nombrePlaces, voyageursDepuisParams, type CommandeClient, type PassagerRequest } from '@sira/core';
+import { estEnfant, formatDateFr, formatHeure, formatMontant, voyageursDepuisParams, type CommandeClient, type TypePassager } from '@sira/core';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { api } from '../../api';
-import { Bandeau, Bouton, Carte, Champ, Chargement, EtatVide, styles as base } from '../../ui/base';
-import { couleurs, espaces, rayons } from '../../ui/theme';
+import { useAuth } from '../../auth/contexte';
 import { ExigerSession } from '../../auth/exiger-session';
+import { Bandeau, Bouton, Carte, Champ, Chargement, EtatVide, styles as base } from '../../ui/base';
+import { Compteur } from '../../ui/compteur';
+import { couleurs, espaces, rayons } from '../../ui/theme';
 
 const MAX_PLACES = 8;
-const passagerVide = (): PassagerRequest => ({ nom: '', prenom: '', telephone: '', pieceIdentite: '' });
+const BAGAGES_MAX = 10;
+
+interface PassagerForm {
+    typePassager: TypePassager;
+    nom: string;
+    prenom: string;
+    telephone: string;
+    pieceIdentite: string;
+    /** JJ/MM/AAAA, saisie au clavier numérique. */
+    naissance: string;
+}
+
+const passagerVide = (typePassager: TypePassager): PassagerForm => ({ typePassager, nom: '', prenom: '', telephone: '', pieceIdentite: '', naissance: '' });
+
+/** Les barres s'insèrent toutes seules : on ne tape que des chiffres. */
+function formaterSaisieDate(texte: string): string {
+    const chiffres = texte.replace(/\D/g, '').slice(0, 8);
+    return [chiffres.slice(0, 2), chiffres.slice(2, 4), chiffres.slice(4, 8)].filter(Boolean).join('/');
+}
+
+/** AAAA-MM-JJ si la saisie est une date réelle, sinon null. */
+function isoDepuisSaisie(saisie: string): string | null {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(saisie);
+    if (!m) return null;
+    const j = Number(m[1]);
+    const mois = Number(m[2]);
+    const a = Number(m[3]);
+    const d = new Date(a, mois - 1, j);
+    if (d.getFullYear() !== a || d.getMonth() !== mois - 1 || d.getDate() !== j) return null;
+    return `${m[3]}-${m[2]}-${m[1]}`;
+}
 
 /**
- * Passagers, mode de règlement, confirmation. Deux issues, décidées par le
- * serveur : un mode servi par un prestataire renvoie une adresse de paiement
- * et la commande attend les fonds ; un règlement sur place confirme tout de
- * suite et les billets sont émis.
+ * Le tunnel de réservation : passagers, bagages, contact, règlement, puis le
+ * récapitulatif tel que le serveur le chiffre. Le total renvoyé à la création
+ * est celui du devis affiché ; si le prix a bougé, le serveur refuse et le dit.
  */
 function Reserver() {
-    const { uuid, adultes, enfants } = useLocalSearchParams<{ uuid: string; adultes?: string; enfants?: string }>();
+    const params = useLocalSearchParams<{ uuid: string; adultes?: string; enfants?: string; bagages?: string }>();
+    const { uuid } = params;
+    const { user } = useAuth();
+    const initial = voyageursDepuisParams(params);
+
     const offreQuery = useQuery({ queryKey: ['offre', uuid], queryFn: async () => (await api.offres.byUuid(uuid)).data.offre, enabled: !!uuid });
     const modesQuery = useQuery({ queryKey: ['modes-reglement'], queryFn: async () => (await api.commercial.modesReglement()).data.modesReglement ?? [] });
 
-    // Autant de passagers que choisis sur l'accueil ; on peut toujours en ajouter ou en retirer ici.
-    const [passagers, setPassagers] = useState<PassagerRequest[]>(() =>
-        Array.from({ length: Math.min(MAX_PLACES, nombrePlaces(voyageursDepuisParams({ adultes, enfants }))) }, passagerVide)
-    );
+    const [passagers, setPassagers] = useState<PassagerForm[]>(() => [
+        ...Array.from({ length: initial.adultes }, () => passagerVide('ADULTE')),
+        ...Array.from({ length: initial.enfants }, () => passagerVide('ENFANT'))
+    ]);
+    const [bagages, setBagages] = useState(initial.bagages);
+    const [contactEmail, setContactEmail] = useState(user?.email ?? '');
+    const [contactTelephone, setContactTelephone] = useState(user?.phone ?? '');
     const [modeCode, setModeCode] = useState('');
 
     const offre = offreQuery.data;
-    const prixUnitaire = offre ? getMontantEffectif(offre) : 0;
-    const total = prixUnitaire * passagers.length;
+    const nbAdultes = passagers.filter((p) => p.typePassager === 'ADULTE').length;
+    const nbEnfants = passagers.length - nbAdultes;
     const maxPassagers = Math.min(MAX_PLACES, offre?.nombrePlacesDisponibles ?? MAX_PLACES);
     const modes = (modesQuery.data ?? []).filter((m) => m.actif !== false);
     const modeChoisi = modes.find((m) => m.code === modeCode);
     const enLigne = modeChoisi?.enLigne === true;
+    const bagagesAcceptes = offre?.bagagesAutorises !== false;
+
+    const devisQuery = useQuery({
+        queryKey: ['devis', uuid, nbAdultes, nbEnfants, bagages, modeCode],
+        queryFn: async () =>
+            (
+                await api.commandes.devis({
+                    offreUuid: uuid,
+                    nombreAdultes: nbAdultes,
+                    nombreEnfants: nbEnfants,
+                    nombreBagages: bagages,
+                    modeReglementCode: modeCode || undefined
+                })
+            ).data.devis,
+        enabled: !!uuid && nbAdultes >= 1,
+        placeholderData: keepPreviousData
+    });
+    const devis = devisQuery.data;
+    const ageAdulte = devis?.ageAdulteMinimum ?? 15;
+    const jourVoyage = offre?.dateDepart ? String(offre.dateDepart).slice(0, 10) : null;
+
+    function erreurNaissance(p: PassagerForm): string | null {
+        if (p.typePassager !== 'ENFANT' || p.naissance.length < 10) return null;
+        const iso = isoDepuisSaisie(p.naissance);
+        if (!iso) return 'Date invalide : JJ/MM/AAAA';
+        if (!jourVoyage) return null;
+        if (estEnfant(iso, jourVoyage, ageAdulte) === false) {
+            return `Âge maximum : ${ageAdulte - 1} ans le jour du voyage. Inscrivez ce passager comme adulte.`;
+        }
+        return null;
+    }
+
+    const passagersValides = passagers.every(
+        (p) => p.nom.trim() && p.prenom.trim() && (p.typePassager === 'ADULTE' || (isoDepuisSaisie(p.naissance) !== null && erreurNaissance(p) === null))
+    );
+    const formulaireValide = modeCode !== '' && nbAdultes >= 1 && passagersValides && contactTelephone.trim() !== '' && !!devis && !devisQuery.isError;
 
     const reserver = useMutation({
         mutationFn: async () =>
             (
                 await api.commandes.create({
                     offreUuid: uuid,
-                    passagers: passagers.map((p) => ({ ...p, pieceIdentite: p.pieceIdentite || undefined })),
+                    passagers: passagers.map((p) => ({
+                        nom: p.nom.trim(),
+                        prenom: p.prenom.trim(),
+                        telephone: p.telephone.trim() || undefined,
+                        pieceIdentite: p.pieceIdentite.trim() || undefined,
+                        typePassager: p.typePassager,
+                        dateNaissance: p.typePassager === 'ENFANT' ? (isoDepuisSaisie(p.naissance) ?? undefined) : undefined
+                    })),
                     modeReglementCode: modeCode,
-                    montantTotal: total
+                    montantTotal: devis!.montantAPayer,
+                    nombreBagages: bagages,
+                    contactEmail: contactEmail.trim() || undefined,
+                    contactTelephone: contactTelephone.trim()
                 })
             ).data.commande,
         onSuccess: (commande: CommandeClient) => {
@@ -64,17 +148,20 @@ function Reserver() {
         return <EtatVide titre="Voyage introuvable" action={<Bouton libelle="Retour" variante="secondaire" onPress={() => router.back()} />} />;
     }
 
-    function setPassager(i: number, champ: keyof PassagerRequest, valeur: string) {
+    function setPassager(i: number, champ: keyof PassagerForm, valeur: string) {
         setPassagers((prev) => prev.map((p, j) => (j === i ? { ...p, [champ]: valeur } : p)));
     }
+    function ajouter(type: TypePassager) {
+        setPassagers((prev) => [...prev, passagerVide(type)]);
+    }
 
-    const formulaireValide = modeCode !== '' && passagers.every((p) => p.nom.trim() && p.prenom.trim() && p.telephone.trim());
     const messageErreur =
-        reserver.error instanceof ApiError
+        reserver.error instanceof ApiError && reserver.error.message
             ? reserver.error.message
             : enLigne
               ? "Le paiement n'a pas pu être ouvert. Aucune place n'a été retenue, réessayez dans un instant."
               : 'La réservation a échoué. Vérifiez les places disponibles et réessayez.';
+    const erreurDevis = devisQuery.error instanceof ApiError && devisQuery.error.message ? devisQuery.error.message : "Le prix n'a pas pu être calculé. Vérifiez votre réseau.";
 
     return (
         <KeyboardAvoidingView style={base.ecran} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -84,33 +171,100 @@ function Reserver() {
                         {offre.villeDepartLibelle} → {offre.villeArriveeLibelle}
                     </Text>
                     <Text style={base.attenue}>
-                        {formatDateFr(offre.dateDepart)} à {formatHeure(offre.heureDepart)}
+                        {formatDateFr(offre.dateDepart)} à {formatHeure(offre.heureDepart)} · {offre.siteDepart} → {offre.siteArrivee}
                     </Text>
-                    <Text style={base.attenue}>{formatMontant(prixUnitaire, offre.devise)} par place</Text>
                 </Carte>
 
-                <Text style={base.sectionTitre}>Passagers ({passagers.length})</Text>
-                {passagers.map((p, i) => (
-                    <Carte key={i}>
-                        <View style={base.ligne}>
-                            <Text style={base.gras}>Passager {i + 1}</Text>
-                            {passagers.length > 1 && (
-                                <Pressable accessibilityRole="button" onPress={() => setPassagers((prev) => prev.filter((_, j) => j !== i))}>
-                                    <Text style={{ color: couleurs.danger, fontWeight: '600' }}>Retirer</Text>
-                                </Pressable>
+                <Etape numero={1} titre="Passagers" />
+                {passagers.map((p, i) => {
+                    const enfant = p.typePassager === 'ENFANT';
+                    const seulAdulte = !enfant && nbAdultes === 1;
+                    const erreurDate = erreurNaissance(p);
+                    return (
+                        <Carte key={i}>
+                            <View style={[base.ligne, { marginBottom: espaces.md }]}>
+                                <Text style={base.gras}>
+                                    {i + 1}. {enfant ? 'Enfant' : 'Adulte'}
+                                </Text>
+                                {passagers.length > 1 && !seulAdulte && (
+                                    <Pressable accessibilityRole="button" onPress={() => setPassagers((prev) => prev.filter((_, j) => j !== i))}>
+                                        <Text style={{ color: couleurs.danger, fontWeight: '600' }}>Retirer</Text>
+                                    </Pressable>
+                                )}
+                            </View>
+                            <Champ libelle="Prénom *" value={p.prenom} onChangeText={(v) => setPassager(i, 'prenom', v)} autoCapitalize="words" autoComplete="given-name" />
+                            <Champ libelle="Nom *" value={p.nom} onChangeText={(v) => setPassager(i, 'nom', v)} autoCapitalize="words" autoComplete="family-name" />
+                            {enfant ? (
+                                <Champ
+                                    libelle="Date de naissance *"
+                                    value={p.naissance}
+                                    onChangeText={(v) => setPassager(i, 'naissance', formaterSaisieDate(v))}
+                                    keyboardType="number-pad"
+                                    placeholder="JJ/MM/AAAA"
+                                    maxLength={10}
+                                    erreur={erreurDate}
+                                />
+                            ) : (
+                                <>
+                                    <Champ
+                                        libelle="Téléphone"
+                                        value={p.telephone}
+                                        onChangeText={(v) => setPassager(i, 'telephone', v)}
+                                        keyboardType="phone-pad"
+                                        autoComplete="tel"
+                                        placeholder="+224 6XX XX XX XX"
+                                    />
+                                    <Champ libelle="Pièce d'identité" value={p.pieceIdentite} onChangeText={(v) => setPassager(i, 'pieceIdentite', v)} />
+                                </>
                             )}
-                        </View>
-                        <Champ libelle="Nom *" value={p.nom} onChangeText={(v) => setPassager(i, 'nom', v)} autoCapitalize="words" />
-                        <Champ libelle="Prénom *" value={p.prenom} onChangeText={(v) => setPassager(i, 'prenom', v)} autoCapitalize="words" />
-                        <Champ libelle="Téléphone *" value={p.telephone} onChangeText={(v) => setPassager(i, 'telephone', v)} keyboardType="phone-pad" placeholder="+224 6XX XX XX XX" />
-                        <Champ libelle="Pièce d'identité" value={p.pieceIdentite ?? ''} onChangeText={(v) => setPassager(i, 'pieceIdentite', v)} />
-                    </Carte>
-                ))}
+                        </Carte>
+                    );
+                })}
                 {passagers.length < maxPassagers && (
-                    <Bouton libelle="+ Ajouter un passager" variante="secondaire" onPress={() => setPassagers((prev) => [...prev, passagerVide()])} />
+                    <View style={styles.ajouts}>
+                        <Bouton libelle="+ Adulte" variante="secondaire" onPress={() => ajouter('ADULTE')} style={{ flex: 1 }} />
+                        <Bouton libelle={`+ Enfant (moins de ${ageAdulte} ans)`} variante="secondaire" onPress={() => ajouter('ENFANT')} style={{ flex: 1 }} />
+                    </View>
                 )}
 
-                <Text style={base.sectionTitre}>Mode de règlement</Text>
+                <Etape numero={2} titre="Bagages" />
+                <Carte>
+                    <Text style={base.gras}>Inclus</Text>
+                    <Text style={base.attenue}>
+                        {devis?.bagagesInclus ?? passagers.length * (offre.bagagesInclusParPassager ?? 1)} bagage{(devis?.bagagesInclus ?? 1) > 1 ? 's' : ''} en soute pour{' '}
+                        {passagers.length} passager{passagers.length > 1 ? 's' : ''}, et le sac que chacun garde avec lui.
+                    </Text>
+                    {bagagesAcceptes ? (
+                        <Compteur
+                            libelle="Bagages supplémentaires"
+                            aide={`${formatMontant(offre.montantBagageEffectif ?? 0, offre.devise)} par bagage`}
+                            valeur={bagages}
+                            min={0}
+                            max={BAGAGES_MAX}
+                            onChange={setBagages}
+                        />
+                    ) : (
+                        <Bandeau type="info">Pas de bagage supplémentaire sur ce voyage.</Bandeau>
+                    )}
+                </Carte>
+
+                <Etape numero={3} titre="Contact" />
+                <Carte>
+                    <Text style={[base.attenue, { marginBottom: espaces.md }]}>Pour vous prévenir d'un retard ou d'un changement de départ.</Text>
+                    <Champ
+                        libelle="Email"
+                        value={contactEmail}
+                        onChangeText={setContactEmail}
+                        autoCapitalize="none"
+                        autoComplete="email"
+                        keyboardType="email-address"
+                        autoCorrect={false}
+                        spellCheck={false}
+                    />
+                    <Champ libelle="Téléphone *" value={contactTelephone} onChangeText={setContactTelephone} keyboardType="phone-pad" autoComplete="tel" placeholder="+224 6XX XX XX XX" />
+                </Carte>
+
+                <Etape numero={4} titre="Règlement" />
                 {modesQuery.isError && <Bandeau type="erreur">Impossible de charger les modes de règlement.</Bandeau>}
                 <View style={styles.modes}>
                     {modes.map((m) => (
@@ -133,16 +287,35 @@ function Reserver() {
                     </Bandeau>
                 )}
 
-                <Carte style={base.ligne}>
-                    <Text style={base.gras}>
-                        Total ({passagers.length} {passagers.length > 1 ? 'places' : 'place'})
-                    </Text>
-                    <Text style={styles.total}>{formatMontant(total, offre.devise)}</Text>
+                <Text style={base.sectionTitre}>Votre commande</Text>
+                <Carte style={{ gap: espaces.sm }}>
+                    {devis ? (
+                        <>
+                            {devis.lignes.map((l) => (
+                                <View key={l.code} style={base.ligne}>
+                                    <Text style={[base.attenue, { flexShrink: 1 }]}>
+                                        {l.quantite > 1 ? `${l.quantite} × ` : ''}
+                                        {l.libelle}
+                                        {l.quantite > 1 ? ` (${formatMontant(l.montantUnitaire, devis.devise)})` : ''}
+                                    </Text>
+                                    <Text style={base.gras}>{formatMontant(l.montant, devis.devise)}</Text>
+                                </View>
+                            ))}
+                            <View style={[base.ligne, styles.totalLigne]}>
+                                <Text style={base.gras}>Total à payer</Text>
+                                <Text style={styles.total}>{formatMontant(devis.montantAPayer, devis.devise)}</Text>
+                            </View>
+                        </>
+                    ) : devisQuery.isError ? (
+                        <Bandeau type="erreur">{erreurDevis}</Bandeau>
+                    ) : (
+                        <Text style={base.attenue}>Calcul du prix…</Text>
+                    )}
                 </Carte>
 
                 {reserver.isError && <Bandeau type="erreur">{messageErreur}</Bandeau>}
                 <Bouton
-                    libelle={enLigne ? 'Payer et confirmer' : 'Confirmer la réservation'}
+                    libelle={enLigne ? 'Payer maintenant' : 'Confirmer la réservation'}
                     onPress={() => reserver.mutate()}
                     desactive={!formulaireValide}
                     enCours={reserver.isPending}
@@ -152,12 +325,30 @@ function Reserver() {
     );
 }
 
+/** Les étapes sont une suite : le numéro dit où l'on en est. */
+function Etape({ numero, titre }: { numero: number; titre: string }) {
+    return (
+        <View style={styles.etape}>
+            <View style={styles.etapeNumero}>
+                <Text style={styles.etapeNumeroTexte}>{numero}</Text>
+            </View>
+            <Text style={styles.etapeTitre}>{titre}</Text>
+        </View>
+    );
+}
+
 const styles = StyleSheet.create({
+    etape: { flexDirection: 'row', alignItems: 'center', gap: espaces.md, marginTop: espaces.sm },
+    etapeNumero: { width: 28, height: 28, borderRadius: 14, backgroundColor: couleurs.vert, alignItems: 'center', justifyContent: 'center' },
+    etapeNumeroTexte: { color: couleurs.blanc, fontWeight: '800' },
+    etapeTitre: { fontSize: 18, fontWeight: '700', color: couleurs.encre },
+    ajouts: { flexDirection: 'row', gap: espaces.sm },
     modes: { flexDirection: 'row', flexWrap: 'wrap', gap: espaces.sm },
     mode: { paddingHorizontal: espaces.lg, paddingVertical: espaces.md, borderRadius: rayons.md, borderWidth: 1, borderColor: couleurs.ligne, backgroundColor: couleurs.blanc },
     modeActif: { borderColor: couleurs.vert, backgroundColor: couleurs.vertPale },
     modeTexte: { color: couleurs.encre, fontWeight: '600' },
     modeTexteActif: { color: couleurs.vertFonce },
+    totalLigne: { borderTopWidth: 1, borderTopColor: couleurs.ligne, paddingTop: espaces.sm, marginTop: espaces.xs },
     total: { fontSize: 20, fontWeight: '800', color: couleurs.vert }
 });
 

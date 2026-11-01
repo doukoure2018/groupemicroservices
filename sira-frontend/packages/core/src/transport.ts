@@ -153,6 +153,8 @@ export interface Trajet {
     dureeEstimeeMinutes?: number;
     montantBase?: number;
     montantBagages?: number;
+    /** Tarif enfant de la liaison ; vide = plein tarif. */
+    montantEnfant?: number;
     devise?: string;
     actif?: boolean;
     createdAt?: string;
@@ -196,6 +198,7 @@ export interface TrajetRequest {
     dureeEstimeeMinutes?: number;
     montantBase?: number;
     montantBagages?: number;
+    montantEnfant?: number;
     devise?: string;
     actif?: boolean;
 }

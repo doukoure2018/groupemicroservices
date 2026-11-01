@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { formatDateFr, formatHeure, formatMontant, type BilletClient } from '@sira/core';
+import { formatDateFr, formatHeure, formatMontant, libelleVoyageurs, type BilletClient } from '@sira/core';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
@@ -27,7 +27,8 @@ function Commande() {
             <View>
                 <Text style={base.titre}>{attend ? 'Paiement en attente' : 'Réservation confirmée'}</Text>
                 <Text style={base.sousTitre}>
-                    Commande {c.numeroCommande} · {formatMontant(c.montantTotal, c.devise)} · {c.nombrePlaces} {(c.nombrePlaces ?? 1) > 1 ? 'places' : 'place'}
+                    Commande {c.numeroCommande} · {formatMontant(c.montantPaye ?? c.montantTotal, c.devise)} ·{' '}
+                    {libelleVoyageurs({ adultes: c.nombreAdultes ?? c.nombrePlaces ?? 1, enfants: c.nombreEnfants ?? 0, bagages: c.nombreBagages ?? 0 })}
                 </Text>
             </View>
 
@@ -73,7 +74,9 @@ function Billet({ billet }: { billet: BilletClient }) {
                 <QRCode value={billet.qrCodeData ?? billet.codeBillet ?? '-'} size={160} />
             </View>
             <Text style={base.gras}>{billet.nomPassager}</Text>
-            <Text style={base.attenue}>Billet {billet.codeBillet}</Text>
+            <Text style={base.attenue}>
+                {billet.typePassager === 'ENFANT' ? 'Enfant · ' : ''}Billet {billet.codeBillet}
+            </Text>
             {billet.numeroSiege && <Text style={base.attenue}>Siège {billet.numeroSiege}</Text>}
             <Text style={[styles.statut, { color: valide ? couleurs.vertFonce : couleurs.alerte }]}>{valide ? 'Valide' : billet.statut}</Text>
         </Carte>

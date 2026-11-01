@@ -68,7 +68,12 @@ prochains jours sur les résultats, cartes heure-durée-arrivée (+1 jour)-gares
 véhicule-prix par personne, étiquettes « Le moins cher » et « Le plus rapide »,
 filtres de tri, de plages horaires et de véhicule, détail du voyage en feuille
 basse avec « Continuer » — tout se calcule sur le client avec `@sira/core`
-`recherche.ts`), réservation (passagers, mode de règlement), paiement en
+`recherche.ts`), réservation en quatre étapes (passagers adultes et enfants
+avec date de naissance et règle d'âge, bagages supplémentaires, contact,
+règlement) dont le récapitulatif vient du **devis serveur**
+(`POST /billetterie/commandes/devis`, public) : le total renvoyé à la
+création est celui affiché, le serveur refuse si le prix a changé ; compte à
+rebours du délai de paiement sur l'écran d'attente, paiement en
 ligne (page du prestataire dans le navigateur du système, puis interrogation
 de l'état jusqu'à décision), billets avec code QR, mes voyages avec reprise
 d'un paiement interrompu, changement de date vers un autre départ du même
