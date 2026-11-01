@@ -39,6 +39,30 @@ public class OffreResource {
     private final AvisRepository avisRepository;
     private final JwtUtils jwtUtils;
 
+    /**
+     * La recherche et la fiche d'un voyage se consultent sans compte : elles ne
+     * doivent donc rien livrer qu'un passant n'ait à connaître. Le nom du
+     * transporteur reste (c'est l'enseigne), mais son adresse, son identifiant,
+     * le téléphone du chauffeur et la plaque du véhicule disparaissent tant que
+     * l'appel n'est pas authentifié — un voyageur connecté les retrouve, il en
+     * a besoin pour joindre son départ.
+     */
+    private static Offre sansDonneesPrivees(Offre offre) {
+        if (offre == null) return null;
+        offre.setUserEmail(null);
+        offre.setUserPhone(null);
+        offre.setUserUsername(null);
+        offre.setUserUuid(null);
+        offre.setContactChauffeur(null);
+        offre.setVehiculeImmatriculation(null);
+        return offre;
+    }
+
+    private static List<Offre> sansDonneesPrivees(List<Offre> offres) {
+        offres.forEach(OffreResource::sansDonneesPrivees);
+        return offres;
+    }
+
     // ========== ENDPOINTS DE LECTURE ==========
 
     /**
@@ -73,9 +97,11 @@ public class OffreResource {
     @GetMapping("/{uuid}")
     public ResponseEntity<Response> getByUuid(
             @PathVariable String uuid,
+            @AuthenticationPrincipal Jwt jwt,
             HttpServletRequest request) {
         log.info("GET /billetterie/offres/{} - Récupération de l'offre", uuid);
         Offre offre = offreService.getByUuid(uuid);
+        if (jwt == null) sansDonneesPrivees(offre);
         return ResponseEntity.ok(
                 getResponse(request, Map.of("offre", offre),
                         "Offre récupérée avec succès", OK)
@@ -181,6 +207,7 @@ public class OffreResource {
             @RequestParam String villeDepartUuid,
             @RequestParam String villeArriveeUuid,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDepart,
+            @AuthenticationPrincipal Jwt jwt,
             HttpServletRequest request) {
         log.info("GET /billetterie/offres/recherche - {} -> {} le {}", villeDepartUuid, villeArriveeUuid, dateDepart);
 
@@ -190,6 +217,7 @@ public class OffreResource {
         } else {
             offres = offreService.getByVilles(villeDepartUuid, villeArriveeUuid);
         }
+        if (jwt == null) sansDonneesPrivees(offres);
 
         return ResponseEntity.ok(
                 getResponse(request, Map.of("offres", offres, "total", offres.size()),
