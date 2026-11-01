@@ -1,6 +1,7 @@
-import { formatDateFr } from '@sira/core';
-import { useMutation } from '@tanstack/react-query';
+import { formatDateFr, type PreferencesNotification } from '@sira/core';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from 'primereact/button';
+import { Checkbox } from 'primereact/checkbox';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { useState } from 'react';
@@ -95,6 +96,8 @@ export function ProfilPage() {
                 </div>
             </div>
 
+            <PreferencesNotificationBloc />
+
             <h2 className="section-titre">Informations personnelles</h2>
             <form
                 className="form-grid"
@@ -128,5 +131,52 @@ export function ProfilPage() {
                 </div>
             </form>
         </section>
+    );
+}
+
+/**
+ * Les deux interrupteurs de l'application, repris sur le site : ils ne
+ * gouvernent que les notifications poussées vers le téléphone.
+ */
+function PreferencesNotificationBloc() {
+    const queryClient = useQueryClient();
+    const prefs = useQuery({
+        queryKey: ['preferences-notification'],
+        queryFn: async () => (await api.notifications.preferences()).data.preferences
+    });
+    const enregistrer = useMutation({
+        mutationFn: async (valeurs: PreferencesNotification) => (await api.notifications.majPreferences(valeurs)).data.preferences,
+        onMutate: (valeurs) => queryClient.setQueryData(['preferences-notification'], valeurs),
+        onError: () => void prefs.refetch()
+    });
+
+    if (!prefs.data) return null;
+    const valeurs = prefs.data;
+    const basculer = (champ: keyof PreferencesNotification) => enregistrer.mutate({ ...valeurs, [champ]: !valeurs[champ] });
+
+    return (
+        <>
+            <h2 className="section-titre">Préférences de notification</h2>
+            <p className="muted">
+                Ces réglages ne concernent que les notifications poussées vers l'application mobile. Vos billets et les courriels de confirmation vous parviennent dans tous les
+                cas.
+            </p>
+            <div className="preferences-notification">
+                <label className="ligne">
+                    <Checkbox checked={valeurs.misesAJourTrajet} onChange={() => basculer('misesAJourTrajet')} />
+                    <span>
+                        <strong>Mises à jour du trajet</strong>
+                        <span className="muted">Confirmation, paiement, changement de départ et demande d'avis.</span>
+                    </span>
+                </label>
+                <label className="ligne">
+                    <Checkbox checked={valeurs.promotions} onChange={() => basculer('promotions')} />
+                    <span>
+                        <strong>Remises et promos</strong>
+                        <span className="muted">Offres spéciales et réductions sur vos trajets habituels.</span>
+                    </span>
+                </label>
+            </div>
+        </>
     );
 }

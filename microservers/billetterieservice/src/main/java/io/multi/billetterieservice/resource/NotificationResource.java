@@ -1,9 +1,11 @@
 package io.multi.billetterieservice.resource;
 
 import io.multi.billetterieservice.domain.InAppNotification;
+import io.multi.billetterieservice.domain.PreferencesNotification;
 import io.multi.billetterieservice.domain.Response;
 import io.multi.billetterieservice.utils.JwtUtils;
 import io.multi.billetterieservice.service.InAppNotificationService;
+import io.multi.billetterieservice.service.PreferencesNotificationService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +27,28 @@ import static org.springframework.http.HttpStatus.OK;
 public class NotificationResource {
 
     private final InAppNotificationService notificationService;
+    private final PreferencesNotificationService preferencesService;
     private final JwtUtils jwtUtils;
+
+    /**
+     * GET /billetterie/notifications/preferences — ce que le voyageur accepte
+     * de recevoir en notification poussée. Sans ligne enregistrée, tout est activé.
+     */
+    @GetMapping("/preferences")
+    public ResponseEntity<Response> getPreferences(@AuthenticationPrincipal Jwt jwt, HttpServletRequest request) {
+        PreferencesNotification preferences = preferencesService.lire(jwtUtils.extractUserId(jwt));
+        return ResponseEntity.ok(getResponse(request, Map.of("preferences", preferences),
+                "Préférences récupérées", OK));
+    }
+
+    @PutMapping("/preferences")
+    public ResponseEntity<Response> majPreferences(@RequestBody PreferencesNotification preferences,
+                                                   @AuthenticationPrincipal Jwt jwt,
+                                                   HttpServletRequest request) {
+        PreferencesNotification enregistrees = preferencesService.enregistrer(jwtUtils.extractUserId(jwt), preferences);
+        return ResponseEntity.ok(getResponse(request, Map.of("preferences", enregistrees),
+                "Préférences enregistrées", OK));
+    }
 
     @GetMapping
     public ResponseEntity<Response> getNotifications(

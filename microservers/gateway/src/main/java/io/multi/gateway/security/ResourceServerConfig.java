@@ -75,6 +75,9 @@ public class ResourceServerConfig {
                         // Devis d'une réservation : public, comme la recherche.
                         // DOIT rester aligné avec billetterieservice ResourceServerConfig.
                         .requestMatchers(HttpMethod.POST, "/billetterie/commandes/devis").permitAll()
+                        // Retrouver sa réservation avec son numéro et son contact, sans compte.
+                        // L'accès est bridé par appelant (LimiteurTentatives).
+                        .requestMatchers(HttpMethod.GET, "/billetterie/commandes/consultation").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/immo/agences",
                                 "/immo/agences/*",

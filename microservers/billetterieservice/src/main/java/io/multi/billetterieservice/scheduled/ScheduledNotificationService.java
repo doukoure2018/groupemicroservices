@@ -124,9 +124,7 @@ public class ScheduledNotificationService {
                         titre, message, false, offreId, "OFFRE");
 
                 // Push système (FCM/APNs), même garde d'idempotence que l'in-app
-                fcmSender.sendToTokens(
-                        deviceTokenService.getTokensByUser(userId),
-                        titre, message,
+                fcmSender.sendToUser(userId, categorie, titre, message,
                         Map.of("categorie", categorie, "offreUuid", offreUuid));
 
                 // Kafka → email + SMS
@@ -341,9 +339,7 @@ public class ScheduledNotificationService {
                     titre, message, false, commandeId, "COMMANDE", metadata);
 
             // Push système (FCM/APNs) en plus de l'in-app, si l'user a des devices.
-            fcmSender.sendToTokens(
-                    deviceTokenService.getTokensByUser(userId),
-                    titre, message,
+            fcmSender.sendToUser(userId, "DEMANDE_AVIS", titre, message,
                     Map.of("categorie", "DEMANDE_AVIS", "commandeUuid", commandeUuid));
         }
 

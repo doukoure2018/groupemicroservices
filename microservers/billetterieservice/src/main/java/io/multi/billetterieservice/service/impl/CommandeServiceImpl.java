@@ -126,6 +126,72 @@ public class CommandeServiceImpl implements CommandeService {
         return dateReservation.plusMinutes(delaiExpirationMinutes);
     }
 
+    /** Lecture d'une commande : mêmes colonnes pour la fiche, la liste et la consultation publique. */
+    private final org.springframework.jdbc.core.RowMapper<Commande> commandeRowMapper = (rs, rowNum) -> Commande.builder()
+                        .commandeId(rs.getLong("commande_id"))
+                        .commandeUuid(rs.getString("commande_uuid"))
+                        .numeroCommande(rs.getString("numero_commande"))
+                        .offreId(rs.getLong("offre_id"))
+                        .userId(rs.getLong("user_id"))
+                        .modeReglementId(rs.getLong("mode_reglement_id"))
+                        .nombrePlaces(rs.getInt("nombre_places"))
+                        .montantUnitaire(rs.getBigDecimal("montant_unitaire"))
+                        .montantTotal(rs.getBigDecimal("montant_total"))
+                        .montantFrais(rs.getBigDecimal("montant_frais"))
+                        .montantRemise(rs.getBigDecimal("montant_remise"))
+                        .montantPaye(rs.getBigDecimal("montant_paye"))
+                        .devise(rs.getString("devise"))
+                        .statut(rs.getString("statut"))
+                        .dateReservation(rs.getObject("date_reservation", OffsetDateTime.class))
+                        .dateConfirmation(rs.getObject("date_confirmation", OffsetDateTime.class))
+                        .datePaiement(rs.getObject("date_paiement", OffsetDateTime.class))
+                        .referencePaiement(rs.getString("reference_paiement"))
+                        .urlPaiement(rs.getString("url_paiement"))
+                        .nombreAdultes(rs.getObject("nombre_adultes", Integer.class))
+                        .nombreEnfants(rs.getObject("nombre_enfants", Integer.class))
+                        .nombreBagages(rs.getObject("nombre_bagages", Integer.class))
+                        .montantBagages(rs.getBigDecimal("montant_bagages"))
+                        .contactEmail(rs.getString("contact_email"))
+                        .contactTelephone(rs.getString("contact_telephone"))
+                        .expireLe(expirationDe(rs.getString("statut"), rs.getObject("date_reservation", OffsetDateTime.class)))
+                        .notes(rs.getString("notes"))
+                        .createdAt(rs.getObject("created_at", OffsetDateTime.class))
+                        .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+                        .offreUuid(rs.getString("offre_uuid"))
+                        .dateDepart(rs.getObject("date_depart", java.time.LocalDate.class))
+                        .heureDepart(rs.getObject("heure_depart", java.time.LocalTime.class))
+                        .villeDepartLibelle(rs.getString("ville_depart_libelle"))
+                        .villeArriveeLibelle(rs.getString("ville_arrivee_libelle"))
+                        .siteDepart(rs.getString("site_depart"))
+                        .siteArrivee(rs.getString("site_arrivee"))
+                        .vehiculeImmatriculation(rs.getString("vehicule_immatriculation"))
+                        .nomChauffeur(rs.getString("nom_chauffeur"))
+                        .contactChauffeur(rs.getString("contact_chauffeur"))
+                        .niveauRemplissage(rs.getObject("niveau_remplissage") != null ? rs.getInt("niveau_remplissage") : null)
+                        .pointRendezVous(rs.getString("point_rendez_vous"))
+                        .typeVehicule(rs.getString("type_vehicule"))
+                        .build();
+
+    /** Lecture d'un billet déjà en base, par opposition à celui que l'insertion construit. */
+    private final org.springframework.jdbc.core.RowMapper<Billet> billetRowMapper = (rs, rowNum) -> Billet.builder()
+            .billetId(rs.getLong("billet_id"))
+            .billetUuid(rs.getString("billet_uuid"))
+            .commandeId(rs.getLong("commande_id"))
+            .codeBillet(rs.getString("code_billet"))
+            .numeroSiege(rs.getString("numero_siege"))
+            .nomPassager(rs.getString("nom_passager"))
+            .telephonePassager(rs.getString("telephone_passager"))
+            .pieceIdentite(rs.getString("piece_identite"))
+            .typePassager(rs.getString("type_passager"))
+            .dateNaissance(rs.getObject("date_naissance", java.time.LocalDate.class))
+            .montant(rs.getBigDecimal("montant"))
+            .statut(rs.getString("statut"))
+            .dateValidation(rs.getObject("date_validation", OffsetDateTime.class))
+            .qrCodeData(rs.getString("qr_code_data"))
+            .createdAt(rs.getObject("created_at", OffsetDateTime.class))
+            .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+            .build();
+
     @Override
     public Commande creerCommande(CommandeRequest request, Long userId) {
         log.info("Création de commande - offreUuid: {}, userId: {}, passagers: {}",
@@ -423,74 +489,14 @@ public class CommandeServiceImpl implements CommandeService {
         log.info("Récupération de la commande: {}", commandeUuid);
         Commande commande = jdbcClient.sql(CommandeQuery.FIND_COMMANDE_BY_UUID)
                 .param("commandeUuid", commandeUuid)
-                .query((rs, rowNum) -> Commande.builder()
-                        .commandeId(rs.getLong("commande_id"))
-                        .commandeUuid(rs.getString("commande_uuid"))
-                        .numeroCommande(rs.getString("numero_commande"))
-                        .offreId(rs.getLong("offre_id"))
-                        .userId(rs.getLong("user_id"))
-                        .modeReglementId(rs.getLong("mode_reglement_id"))
-                        .nombrePlaces(rs.getInt("nombre_places"))
-                        .montantUnitaire(rs.getBigDecimal("montant_unitaire"))
-                        .montantTotal(rs.getBigDecimal("montant_total"))
-                        .montantFrais(rs.getBigDecimal("montant_frais"))
-                        .montantRemise(rs.getBigDecimal("montant_remise"))
-                        .montantPaye(rs.getBigDecimal("montant_paye"))
-                        .devise(rs.getString("devise"))
-                        .statut(rs.getString("statut"))
-                        .dateReservation(rs.getObject("date_reservation", OffsetDateTime.class))
-                        .dateConfirmation(rs.getObject("date_confirmation", OffsetDateTime.class))
-                        .datePaiement(rs.getObject("date_paiement", OffsetDateTime.class))
-                        .referencePaiement(rs.getString("reference_paiement"))
-                        .urlPaiement(rs.getString("url_paiement"))
-                        .nombreAdultes(rs.getObject("nombre_adultes", Integer.class))
-                        .nombreEnfants(rs.getObject("nombre_enfants", Integer.class))
-                        .nombreBagages(rs.getObject("nombre_bagages", Integer.class))
-                        .montantBagages(rs.getBigDecimal("montant_bagages"))
-                        .contactEmail(rs.getString("contact_email"))
-                        .contactTelephone(rs.getString("contact_telephone"))
-                        .expireLe(expirationDe(rs.getString("statut"), rs.getObject("date_reservation", OffsetDateTime.class)))
-                        .notes(rs.getString("notes"))
-                        .createdAt(rs.getObject("created_at", OffsetDateTime.class))
-                        .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-                        .offreUuid(rs.getString("offre_uuid"))
-                        .dateDepart(rs.getObject("date_depart", java.time.LocalDate.class))
-                        .heureDepart(rs.getObject("heure_depart", java.time.LocalTime.class))
-                        .villeDepartLibelle(rs.getString("ville_depart_libelle"))
-                        .villeArriveeLibelle(rs.getString("ville_arrivee_libelle"))
-                        .siteDepart(rs.getString("site_depart"))
-                        .siteArrivee(rs.getString("site_arrivee"))
-                        .vehiculeImmatriculation(rs.getString("vehicule_immatriculation"))
-                        .nomChauffeur(rs.getString("nom_chauffeur"))
-                        .contactChauffeur(rs.getString("contact_chauffeur"))
-                        .niveauRemplissage(rs.getObject("niveau_remplissage") != null ? rs.getInt("niveau_remplissage") : null)
-                        .pointRendezVous(rs.getString("point_rendez_vous"))
-                        .typeVehicule(rs.getString("type_vehicule"))
-                        .build())
+                .query(commandeRowMapper)
                 .optional()
                 .orElseThrow(() -> new ApiException("Commande non trouvée: " + commandeUuid));
 
         // Charger les billets
         List<Billet> billets = jdbcClient.sql(CommandeQuery.FIND_BILLETS_BY_COMMANDE_ID)
                 .param("commandeId", commande.getCommandeId())
-                .query((rs, rowNum) -> Billet.builder()
-                        .billetId(rs.getLong("billet_id"))
-                        .billetUuid(rs.getString("billet_uuid"))
-                        .commandeId(rs.getLong("commande_id"))
-                        .codeBillet(rs.getString("code_billet"))
-                        .numeroSiege(rs.getString("numero_siege"))
-                        .nomPassager(rs.getString("nom_passager"))
-                        .telephonePassager(rs.getString("telephone_passager"))
-                        .pieceIdentite(rs.getString("piece_identite"))
-                        .typePassager(rs.getString("type_passager"))
-                        .dateNaissance(rs.getObject("date_naissance", java.time.LocalDate.class))
-                        .montant(rs.getBigDecimal("montant"))
-                        .statut(rs.getString("statut"))
-                        .dateValidation(rs.getObject("date_validation", OffsetDateTime.class))
-                        .qrCodeData(rs.getString("qr_code_data"))
-                        .createdAt(rs.getObject("created_at", OffsetDateTime.class))
-                        .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-                        .build())
+                .query(billetRowMapper)
                 .list();
 
         commande.setBillets(billets);
@@ -504,73 +510,13 @@ public class CommandeServiceImpl implements CommandeService {
 
         List<Commande> commandes = jdbcClient.sql(CommandeQuery.FIND_COMMANDES_BY_USER_ID)
                 .param("userId", userId)
-                .query((rs, rowNum) -> Commande.builder()
-                        .commandeId(rs.getLong("commande_id"))
-                        .commandeUuid(rs.getString("commande_uuid"))
-                        .numeroCommande(rs.getString("numero_commande"))
-                        .offreId(rs.getLong("offre_id"))
-                        .userId(rs.getLong("user_id"))
-                        .modeReglementId(rs.getLong("mode_reglement_id"))
-                        .nombrePlaces(rs.getInt("nombre_places"))
-                        .montantUnitaire(rs.getBigDecimal("montant_unitaire"))
-                        .montantTotal(rs.getBigDecimal("montant_total"))
-                        .montantFrais(rs.getBigDecimal("montant_frais"))
-                        .montantRemise(rs.getBigDecimal("montant_remise"))
-                        .montantPaye(rs.getBigDecimal("montant_paye"))
-                        .devise(rs.getString("devise"))
-                        .statut(rs.getString("statut"))
-                        .dateReservation(rs.getObject("date_reservation", OffsetDateTime.class))
-                        .dateConfirmation(rs.getObject("date_confirmation", OffsetDateTime.class))
-                        .datePaiement(rs.getObject("date_paiement", OffsetDateTime.class))
-                        .referencePaiement(rs.getString("reference_paiement"))
-                        .urlPaiement(rs.getString("url_paiement"))
-                        .nombreAdultes(rs.getObject("nombre_adultes", Integer.class))
-                        .nombreEnfants(rs.getObject("nombre_enfants", Integer.class))
-                        .nombreBagages(rs.getObject("nombre_bagages", Integer.class))
-                        .montantBagages(rs.getBigDecimal("montant_bagages"))
-                        .contactEmail(rs.getString("contact_email"))
-                        .contactTelephone(rs.getString("contact_telephone"))
-                        .expireLe(expirationDe(rs.getString("statut"), rs.getObject("date_reservation", OffsetDateTime.class)))
-                        .notes(rs.getString("notes"))
-                        .createdAt(rs.getObject("created_at", OffsetDateTime.class))
-                        .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-                        .offreUuid(rs.getString("offre_uuid"))
-                        .dateDepart(rs.getObject("date_depart", java.time.LocalDate.class))
-                        .heureDepart(rs.getObject("heure_depart", java.time.LocalTime.class))
-                        .villeDepartLibelle(rs.getString("ville_depart_libelle"))
-                        .villeArriveeLibelle(rs.getString("ville_arrivee_libelle"))
-                        .siteDepart(rs.getString("site_depart"))
-                        .siteArrivee(rs.getString("site_arrivee"))
-                        .vehiculeImmatriculation(rs.getString("vehicule_immatriculation"))
-                        .nomChauffeur(rs.getString("nom_chauffeur"))
-                        .contactChauffeur(rs.getString("contact_chauffeur"))
-                        .niveauRemplissage(rs.getObject("niveau_remplissage") != null ? rs.getInt("niveau_remplissage") : null)
-                        .pointRendezVous(rs.getString("point_rendez_vous"))
-                        .typeVehicule(rs.getString("type_vehicule"))
-                        .build())
+                .query(commandeRowMapper)
                 .list();
 
         for (Commande commande : commandes) {
             List<Billet> billets = jdbcClient.sql(CommandeQuery.FIND_BILLETS_BY_COMMANDE_ID)
                     .param("commandeId", commande.getCommandeId())
-                    .query((rs, rowNum) -> Billet.builder()
-                            .billetId(rs.getLong("billet_id"))
-                            .billetUuid(rs.getString("billet_uuid"))
-                            .commandeId(rs.getLong("commande_id"))
-                            .codeBillet(rs.getString("code_billet"))
-                            .numeroSiege(rs.getString("numero_siege"))
-                            .nomPassager(rs.getString("nom_passager"))
-                            .telephonePassager(rs.getString("telephone_passager"))
-                            .pieceIdentite(rs.getString("piece_identite"))
-                            .typePassager(rs.getString("type_passager"))
-                            .dateNaissance(rs.getObject("date_naissance", java.time.LocalDate.class))
-                            .montant(rs.getBigDecimal("montant"))
-                            .statut(rs.getString("statut"))
-                            .dateValidation(rs.getObject("date_validation", OffsetDateTime.class))
-                            .qrCodeData(rs.getString("qr_code_data"))
-                            .createdAt(rs.getObject("created_at", OffsetDateTime.class))
-                            .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-                            .build())
+                    .query(billetRowMapper)
                     .list();
             commande.setBillets(billets);
         }
@@ -902,6 +848,70 @@ public class CommandeServiceImpl implements CommandeService {
                 .param("commandeId", commandeId)
                 .update();
         log.info("Commande {} expirée faute de paiement, places rendues", commandeUuid);
+    }
+
+    /**
+     * Retrouver sa réservation sans compte, avec le numéro imprimé sur la
+     * confirmation et le contact laissé à la réservation. Le même message
+     * couvre le numéro inconnu et le contact qui ne correspond pas : il ne
+     * doit pas révéler qu'une réservation existe chez quelqu'un d'autre.
+     * L'appelant est bridé en amont (LimiteurTentatives), faute de quoi on
+     * pourrait essayer les numéros à la chaîne.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Commande consulterReservation(String numeroCommande, String contact) {
+        String introuvable = "Aucune réservation ne correspond à ce numéro et à ce contact";
+        if (numeroCommande == null || numeroCommande.isBlank() || contact == null || contact.isBlank()) {
+            throw new ApiException(introuvable);
+        }
+        Commande commande = jdbcClient.sql(CommandeQuery.FIND_COMMANDE_BY_NUMERO)
+                .param("numero", numeroCommande.trim().toUpperCase())
+                .query(commandeRowMapper)
+                .optional()
+                .orElseThrow(() -> new ApiException(introuvable));
+
+        commande.setBillets(jdbcClient.sql(CommandeQuery.FIND_BILLETS_BY_COMMANDE_ID)
+                .param("commandeId", commande.getCommandeId())
+                .query(billetRowMapper)
+                .list());
+
+        if (!contactCorrespond(commande, contact)) {
+            log.warn("Consultation refusée pour la commande {} : contact non concordant", numeroCommande);
+            throw new ApiException(introuvable);
+        }
+
+        // Le demandeur a prouvé un contact, pas les autres : on ne lui rend ni
+        // l'autre moyen de joindre le titulaire, ni l'identité de son compte.
+        commande.setUserId(null);
+        commande.setContactEmail(null);
+        commande.setContactTelephone(null);
+        return commande;
+    }
+
+    /** Un e-mail (insensible à la casse) ou un téléphone, comparé sur ses chiffres significatifs. */
+    private static boolean contactCorrespond(Commande commande, String contact) {
+        String fourni = contact.trim();
+        if (fourni.contains("@")) {
+            return fourni.equalsIgnoreCase(commande.getContactEmail());
+        }
+        String chiffres = chiffresSignificatifs(fourni);
+        if (chiffres.isEmpty()) return false;
+        if (chiffres.equals(chiffresSignificatifs(commande.getContactTelephone()))) return true;
+        return commande.getBillets().stream()
+                .map(Billet::getTelephonePassager)
+                .anyMatch(t -> chiffres.equals(chiffresSignificatifs(t)));
+    }
+
+    /**
+     * Les huit derniers chiffres : un numéro guinéen se note +224 6XX XX XX XX,
+     * 00224 6XX…, 6XX… ou avec des espaces, et toutes ces formes désignent le
+     * même abonné.
+     */
+    private static String chiffresSignificatifs(String telephone) {
+        if (telephone == null) return "";
+        String chiffres = telephone.replaceAll("[^0-9]", "");
+        return chiffres.length() > 8 ? chiffres.substring(chiffres.length() - 8) : chiffres;
     }
 
     /** Email de l'utilisateur, vide si le service utilisateur est injoignable. */

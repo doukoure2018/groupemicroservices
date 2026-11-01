@@ -38,6 +38,9 @@ public interface CommandeService {
 
     Commande getByUuid(String commandeUuid);
 
+    /** Consultation publique d'une réservation par son numéro et un contact. */
+    Commande consulterReservation(String numeroCommande, String contact);
+
     List<Commande> getCommandesByUserId(Long userId);
 
     Commande annulerCommande(String commandeUuid, Long userId);

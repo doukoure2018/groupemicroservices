@@ -141,7 +141,8 @@ public final class CommandeQuery {
          WHERE commande_id = :commandeId
         """;
 
-    public static final String FIND_COMMANDE_BY_UUID = """
+    /** Colonnes et jointures communes aux lectures de commande ; seule la clause WHERE change. */
+    private static final String SELECT_COMMANDE = """
         SELECT c.commande_id, c.commande_uuid, c.numero_commande, c.offre_id, c.user_id,
                c.mode_reglement_id, c.nombre_places, c.montant_unitaire, c.montant_total,
                c.montant_frais, c.montant_remise, c.montant_paye, c.devise, c.statut,
@@ -175,43 +176,18 @@ public final class CommandeQuery {
         LEFT JOIN quartiers qa ON la.quartier_id = qa.quartier_id
         LEFT JOIN communes ca ON qa.commune_id = ca.commune_id
         LEFT JOIN villes va ON ca.ville_id = va.ville_id
+        """;
+
+    public static final String FIND_COMMANDE_BY_UUID = SELECT_COMMANDE + """
         WHERE c.commande_uuid = :commandeUuid
         """;
 
-    public static final String FIND_COMMANDES_BY_USER_ID = """
-        SELECT c.commande_id, c.commande_uuid, c.numero_commande, c.offre_id, c.user_id,
-               c.mode_reglement_id, c.nombre_places, c.montant_unitaire, c.montant_total,
-               c.montant_frais, c.montant_remise, c.montant_paye, c.devise, c.statut,
-               c.date_reservation, c.date_confirmation, c.date_paiement,
-               c.reference_paiement, c.url_paiement, c.notes, c.created_at, c.updated_at,
-               c.nombre_adultes, c.nombre_enfants, c.nombre_bagages, c.montant_bagages,
-               c.contact_email, c.contact_telephone,
-               o.offre_uuid, o.date_depart, o.heure_depart,
-               o.niveau_remplissage, o.point_rencontre AS point_rendez_vous,
-               vd.libelle AS ville_depart_libelle,
-               va.libelle AS ville_arrivee_libelle,
-               sd.nom AS site_depart,
-               sa.nom AS site_arrivee,
-               v.immatriculation AS vehicule_immatriculation,
-               v.nom_chauffeur, v.contact_chauffeur,
-               tv.libelle AS type_vehicule
-        FROM commandes c
-        INNER JOIN offres o ON c.offre_id = o.offre_id
-        INNER JOIN vehicules v ON o.vehicule_id = v.vehicule_id
-        LEFT JOIN types_vehicules tv ON v.type_vehicule_id = tv.type_vehicule_id
-        INNER JOIN trajets t ON o.trajet_id = t.trajet_id
-        INNER JOIN departs dep ON t.depart_id = dep.depart_id
-        INNER JOIN sites sd ON dep.site_id = sd.site_id
-        INNER JOIN localisations ld ON sd.localisation_id = ld.localisation_id
-        LEFT JOIN quartiers qd ON ld.quartier_id = qd.quartier_id
-        LEFT JOIN communes cd ON qd.commune_id = cd.commune_id
-        LEFT JOIN villes vd ON cd.ville_id = vd.ville_id
-        INNER JOIN arrivees arr ON t.arrivee_id = arr.arrivee_id
-        INNER JOIN sites sa ON arr.site_id = sa.site_id
-        INNER JOIN localisations la ON sa.localisation_id = la.localisation_id
-        LEFT JOIN quartiers qa ON la.quartier_id = qa.quartier_id
-        LEFT JOIN communes ca ON qa.commune_id = ca.commune_id
-        LEFT JOIN villes va ON ca.ville_id = va.ville_id
+    /** Consultation publique : le numéro lisible imprimé sur la confirmation. */
+    public static final String FIND_COMMANDE_BY_NUMERO = SELECT_COMMANDE + """
+        WHERE c.numero_commande = :numero
+        """;
+
+    public static final String FIND_COMMANDES_BY_USER_ID = SELECT_COMMANDE + """
         WHERE c.user_id = :userId
         ORDER BY o.date_depart DESC, c.created_at DESC
         """;

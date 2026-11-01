@@ -3361,3 +3361,19 @@ html:has(.admin-app) {
 .compte-a-rebours.ecoule {
     color: var(--danger, #b3402e);
 }
+
+/* Préférences de notification : deux cases à cocher avec leur explication. */
+.preferences-notification {
+    display: grid;
+    gap: 12px;
+    margin: 10px 0 4px;
+}
+.preferences-notification .ligne {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+.preferences-notification .ligne > span {
+    display: flex;
+    flex-direction: column;
+}

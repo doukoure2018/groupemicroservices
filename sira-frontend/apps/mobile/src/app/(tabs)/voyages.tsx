@@ -68,6 +68,12 @@ function BilletsSansCompte() {
                 onPress={() => router.push({ pathname: '/connexion', params: { suite: '/voyages' } })}
                 style={{ alignSelf: 'stretch', marginTop: espaces.xl }}
             />
+            <Bouton
+                libelle="Rechercher une réservation"
+                variante="secondaire"
+                onPress={() => router.push('/reservation-consultation')}
+                style={{ alignSelf: 'stretch' }}
+            />
         </View>
     );
 }

@@ -48,6 +48,9 @@ public class ResourceServerConfig {
                         // Devis d'une réservation : le prix se consulte sans compte, comme
                         // la recherche. Aligné avec la passerelle.
                         .requestMatchers(POST, "/billetterie/commandes/devis").permitAll()
+                        // Retrouver sa réservation avec son numéro et son contact, sans compte.
+                        // L'accès est bridé par appelant (LimiteurTentatives).
+                        .requestMatchers(GET, "/billetterie/commandes/consultation").permitAll()
                         // Valider un billet à l'embarquement est un geste de contrôleur : sans
                         // cette règle, n'importe quel voyageur connecté pouvait marquer un
                         // billet comme utilisé. La revendication « authorities » du jeton

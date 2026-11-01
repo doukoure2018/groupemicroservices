@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import { useAuth } from '../../auth/contexte';
 import { config } from '../../config';
@@ -9,11 +10,12 @@ import { couleurs, espaces } from '../../ui/theme';
 /**
  * « Mon compte » se visite sans session : la carte du haut invite alors à
  * s'identifier et le menu reste visible, pour montrer ce que le compte
- * apporte. Chaque rang qui a besoin d'une session la demande lui-même.
+ * apporte. Les pages légales et l'aide vivent sur le site, qui fait foi.
  */
 export default function MonCompte() {
     const { user, logout } = useAuth();
     const version = Constants.expoConfig?.version ?? '';
+    const ouvrirSite = (chemin: string) => void WebBrowser.openBrowserAsync(`${config.siteWeb}${chemin}`).catch(() => undefined);
 
     return (
         <ScrollView style={base.ecran} contentContainerStyle={base.contenu}>
@@ -42,7 +44,22 @@ export default function MonCompte() {
 
             <Text style={base.sectionTitre}>Général</Text>
             <Carte style={styles.menu}>
-                <LigneMenu libelle="Notifications" onPress={() => router.push('/notifications')} dernier />
+                <LigneMenu libelle="Notifications" onPress={() => router.push('/notifications')} />
+                <LigneMenu libelle="Paramètres" onPress={() => router.push('/parametres')} />
+                <LigneMenu libelle="Préférences de notification" onPress={() => router.push('/preferences-notification')} dernier />
+            </Carte>
+
+            <Text style={base.sectionTitre}>Services</Text>
+            <Carte style={styles.menu}>
+                <LigneMenu libelle="Retrouver une réservation" onPress={() => router.push('/reservation-consultation')} />
+                <LigneMenu libelle="Villes desservies" onPress={() => router.push('/villes-desservies')} />
+                <LigneMenu libelle="Besoin d'aide ?" onPress={() => ouvrirSite('/#contact')} dernier />
+            </Carte>
+
+            <Text style={base.sectionTitre}>Mentions légales</Text>
+            <Carte style={styles.menu}>
+                <LigneMenu libelle="Conditions générales" onPress={() => ouvrirSite('/#conditions')} />
+                <LigneMenu libelle="Confidentialité des données" onPress={() => ouvrirSite('/#confidentialite')} dernier />
             </Carte>
 
             <Text style={base.sectionTitre}>À propos</Text>

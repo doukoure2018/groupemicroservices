@@ -7,6 +7,8 @@ import io.multi.billetterieservice.domain.Devis;
 import io.multi.billetterieservice.dto.CommandeRequest;
 import io.multi.billetterieservice.dto.DevisRequest;
 import io.multi.billetterieservice.dto.ModifierDateRequest;
+import io.multi.billetterieservice.exception.ApiException;
+import io.multi.billetterieservice.utils.LimiteurTentatives;
 import io.multi.billetterieservice.service.CommandeService;
 import io.multi.billetterieservice.utils.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,6 +34,7 @@ public class CommandeResource {
 
     private final CommandeService commandeService;
     private final JwtUtils jwtUtils;
+    private final LimiteurTentatives limiteur;
 
     /**
      * POST /billetterie/commandes - Créer une commande avec billets et paiement
@@ -62,6 +65,32 @@ public class CommandeResource {
         return ResponseEntity.ok(
                 getResponse(request, Map.of("devis", devis), "Devis calculé", OK)
         );
+    }
+
+    /**
+     * GET /billetterie/commandes/consultation - Retrouver sa réservation sans compte,
+     * avec le numéro de la confirmation et le contact laissé à la réservation.
+     */
+    @GetMapping("/consultation")
+    public ResponseEntity<Response> consulter(
+            @RequestParam String numero,
+            @RequestParam String contact,
+            HttpServletRequest request) {
+        if (!limiteur.autorise(appelant(request))) {
+            log.warn("Consultation de réservation bridée pour {}", appelant(request));
+            throw new ApiException("Trop de recherches depuis cet appareil. Réessayez dans quelques minutes.");
+        }
+        Commande commande = commandeService.consulterReservation(numero, contact);
+        return ResponseEntity.ok(
+                getResponse(request, Map.of("commande", commande), "Réservation retrouvée", OK)
+        );
+    }
+
+    /** Derrière nginx, l'adresse réelle du client est dans X-Forwarded-For. */
+    private static String appelant(HttpServletRequest request) {
+        String transmis = request.getHeader("X-Forwarded-For");
+        if (transmis != null && !transmis.isBlank()) return transmis.split(",")[0].trim();
+        return request.getRemoteAddr();
     }
 
     /**

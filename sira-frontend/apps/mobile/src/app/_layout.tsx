@@ -50,6 +50,10 @@ export default function Racine() {
                         <Stack.Screen name="noter/[uuid]" options={{ title: 'Noter le voyage' }} />
                         <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
                         <Stack.Screen name="completer-profil" options={{ title: 'Votre profil', headerBackVisible: false }} />
+                        <Stack.Screen name="parametres" options={{ title: 'Paramètres' }} />
+                        <Stack.Screen name="preferences-notification" options={{ title: 'Préférences de notification' }} />
+                        <Stack.Screen name="reservation-consultation" options={{ title: 'Rechercher une réservation' }} />
+                        <Stack.Screen name="villes-desservies" options={{ title: 'Villes desservies' }} />
                     </Stack>
                 </AuthProvider>
             </QueryClientProvider>

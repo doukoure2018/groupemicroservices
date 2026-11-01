@@ -1,4 +1,16 @@
 /** Notification in-app, miroir de `InAppNotification` côté billetterieservice. */
+/**
+ * Ce que le voyageur accepte de recevoir en notification poussée. Les deux
+ * interrupteurs ne gouvernent que les pushes : la liste in-app reste écrite
+ * dans tous les cas, et les courriels de confirmation restent dus.
+ */
+export interface PreferencesNotification {
+    /** Réservation, paiement, départ, remplissage, demande d'avis. */
+    misesAJourTrajet: boolean;
+    /** Remises, promotions, nouveautés. */
+    promotions: boolean;
+}
+
 export interface AppNotification {
     notificationId?: number;
     notificationUuid?: string;

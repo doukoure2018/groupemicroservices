@@ -37,6 +37,7 @@ import { LoginPage } from './pages/LoginPage';
 import { MesVoyagesPage } from './pages/MesVoyagesPage';
 import { PaiementRetourPage } from './pages/PaiementRetourPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { ReservationConsultationPage } from './pages/ReservationConsultationPage';
 import { ReservationPage } from './pages/ReservationPage';
 import { VerifyAccountPage } from './pages/VerifyAccountPage';
 import { VerifyMobilePage } from './pages/VerifyMobilePage';
@@ -93,6 +94,8 @@ export function App() {
                     <Route element={<ChromePublic />}>
                         <Route path="/" element={<HomePage />} />
                         <Route path="/login" element={<LoginPage />} />
+                        {/* Retrouver ses billets sans compte, comme dans l'application. */}
+                        <Route path="/reservation" element={<ReservationConsultationPage />} />
                         {/* Chemins conservés à l'identique : ce sont ceux des liens envoyés par email. */}
                         <Route path="/auth/register" element={<RegisterPage />} />
                         <Route path="/auth/forgotpassword" element={<ForgotPasswordPage />} />

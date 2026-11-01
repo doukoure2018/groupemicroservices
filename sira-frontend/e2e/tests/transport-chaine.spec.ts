@@ -530,6 +530,33 @@ test('réservation : le tunnel et le plan des sièges se visitent sans compte', 
     await expect(page.getByRole('button', { name: 'Confirmer la réservation' })).toHaveCount(0);
 });
 
+test('réservation : retrouver ses billets sans compte, numéro et contact', async ({ page }) => {
+    // Le parcours voyageur a laissé une réservation confirmée avec ce contact.
+    await page.goto('/mes-voyages');
+    const carte = page.locator('li.commande').filter({ hasText: VILLE }).first();
+    await expect(carte).toBeVisible({ timeout: 20_000 });
+    const numero = ((await carte.locator('.muted').first().textContent()) ?? '').replace('Commande', '').trim();
+    expect(numero).toMatch(/^CMD-/);
+
+    await page.goto('/');
+    await page.evaluate(() => window.sessionStorage.clear());
+    await page.goto('/reservation');
+    await expect(page.getByRole('heading', { name: 'Rechercher une réservation' })).toBeVisible();
+
+    // Mauvais contact : refus sans dire si c'est le numéro ou le contact.
+    await champSousLabel(page.locator('form'), /Numéro de réservation/).fill(numero);
+    await champSousLabel(page.locator('form'), /E-mail ou numéro de téléphone/).fill('+224699999999');
+    await page.getByRole('button', { name: 'Rechercher une réservation' }).click();
+    await expect(page.locator('p.error')).toContainText(/Aucune réservation ne correspond/);
+
+    // Le bon contact ouvre la réservation et ses billets, sans session.
+    await champSousLabel(page.locator('form'), /E-mail ou numéro de téléphone/).fill('+224600000003');
+    await page.getByRole('button', { name: 'Rechercher une réservation' }).click();
+    await expect(page.getByRole('heading', { name: new RegExp(VILLE) })).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('.confirmation-ligne')).toContainText(numero);
+    await expect(page.locator('li.billet svg')).toBeVisible();
+});
+
 test('offres : annulation finale de l’offre de test', async ({ page }) => {
     // Le backend refuse d'annuler une offre qui a encore des réservations actives :
     // on annule d'abord toutes les réservations E2E restantes depuis « Mes voyages ».

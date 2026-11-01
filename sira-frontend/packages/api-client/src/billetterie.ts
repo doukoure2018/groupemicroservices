@@ -28,6 +28,7 @@ import type {
     PartenaireRequest,
     PlaceDetails,
     PlacePrediction,
+    PreferencesNotification,
     Quartier,
     QuartierCreateRequest,
     QuartierUpdateRequest,
@@ -187,6 +188,9 @@ export function commandeApi(client: SiraClient) {
         create: (body: CommandeCreateRequest) => client.post<{ commande: CommandeClient }>(`${BASE}/commandes`, { body }),
         /** Public — le prix avant toute saisie, sans compte. */
         devis: (body: DevisRequest) => client.post<{ devis: Devis }>(`${BASE}/commandes/devis`, { body, auth: false }),
+        /** Public — retrouver sa réservation avec son numéro et le contact laissé à la réservation. */
+        consultation: (numero: string, contact: string) =>
+            client.get<{ commande: CommandeClient }>(`${BASE}/commandes/consultation`, { params: { numero, contact }, auth: false }),
         mesCommandes: () => client.get<{ commandes: CommandeClient[] }>(`${BASE}/commandes/mes-commandes`),
         byUuid: (uuid: string) => client.get<{ commande: CommandeClient }>(`${BASE}/commandes/${uuid}`),
         // Contrôleur Java : @PutMapping("/{uuid}/annuler").
@@ -299,6 +303,10 @@ export function notificationApi(client: SiraClient) {
          * un jeton APNs brut d'iOS ne lui servirait à rien, l'application ne
          * l'enregistre donc pas tant que la chaîne iOS n'est pas décidée.
          */
+        /** Ce que le voyageur accepte de recevoir en push ; sans réglage, tout est activé. */
+        preferences: () => client.get<{ preferences: PreferencesNotification }>(`${BASE}/notifications/preferences`),
+        majPreferences: (body: PreferencesNotification) =>
+            client.put<{ preferences: PreferencesNotification }>(`${BASE}/notifications/preferences`, { body }),
         registerDeviceToken: (token: string, platform: 'IOS' | 'ANDROID') =>
             client.post<Record<string, never>>(`${BASE}/device-tokens`, { body: { token, platform } })
     };

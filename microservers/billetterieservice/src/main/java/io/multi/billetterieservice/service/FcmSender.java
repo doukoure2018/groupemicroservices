@@ -23,11 +23,29 @@ public class FcmSender {
 
     private final ObjectProvider<FirebaseMessaging> messagingProvider;
     private final DeviceTokenService deviceTokenService;
+    private final PreferencesNotificationService preferencesService;
 
     public FcmSender(ObjectProvider<FirebaseMessaging> messagingProvider,
-                     DeviceTokenService deviceTokenService) {
+                     DeviceTokenService deviceTokenService,
+                     PreferencesNotificationService preferencesService) {
         this.messagingProvider = messagingProvider;
         this.deviceTokenService = deviceTokenService;
+        this.preferencesService = preferencesService;
+    }
+
+    /**
+     * Pousse vers tous les appareils d'un voyageur, si ses préférences
+     * acceptent cette catégorie. Point d'entrée unique : un nouvel appel ne
+     * peut pas oublier de consulter les préférences. La notification in-app,
+     * elle, est écrite quoi qu'il arrive — c'est le journal du compte.
+     */
+    public void sendToUser(Long userId, String categorie, String title, String body,
+                           Map<String, String> data) {
+        if (!preferencesService.pushAutorisee(userId, categorie)) {
+            log.debug("Push {} non envoyée : l'utilisateur {} ne la souhaite pas", categorie, userId);
+            return;
+        }
+        sendToTokens(deviceTokenService.getTokensByUser(userId), title, body, data);
     }
 
     /**
