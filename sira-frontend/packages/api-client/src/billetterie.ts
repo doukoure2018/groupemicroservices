@@ -265,7 +265,10 @@ export function vehiculeApi(client: SiraClient) {
 /** Modes de règlement et partenaires commerciaux. */
 export function commercialApi(client: SiraClient) {
     return {
+        /** Administration : tous les modes, actifs ou non. */
         modesReglement: () => client.get<{ modesReglement: ModeReglement[] }>(`${BASE}/modes-reglement`),
+        /** Public — les modes proposés au voyageur, y compris avant qu'il se connecte. */
+        modesReglementActifs: () => client.get<{ modesReglement: ModeReglement[] }>(`${BASE}/modes-reglement/actifs`, { auth: false }),
         createModeReglement: (body: ModeReglementRequest) => client.post<{ modeReglement: ModeReglement }>(`${BASE}/modes-reglement`, { body }),
         updateModeReglement: (uuid: string, body: ModeReglementRequest) =>
             client.put<{ modeReglement: ModeReglement }>(`${BASE}/modes-reglement/${uuid}`, { body }),

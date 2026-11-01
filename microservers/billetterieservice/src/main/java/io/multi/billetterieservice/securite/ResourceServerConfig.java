@@ -62,7 +62,10 @@ public class ResourceServerConfig {
                         // /billetterie/offres/* (protégerait mal mes-offres, stats…).
                         .requestMatchers(GET,
                                 "/billetterie/villes/active",
-                                "/billetterie/offres/recherche"
+                                "/billetterie/offres/recherche",
+                                // Modes de règlement actifs : le tunnel de réservation se
+                                // parcourt sans compte, il doit pouvoir les proposer.
+                                "/billetterie/modes-reglement/actifs"
                         ).permitAll()
                         // Fiche d'un voyage par UUID, lisible sans compte (mobile sans
                         // session). Expression régulière : seul un UUID passe, mes-offres,

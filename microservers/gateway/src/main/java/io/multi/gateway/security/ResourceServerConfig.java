@@ -97,7 +97,10 @@ public class ResourceServerConfig {
                         // mes-offres, stats, etc. (endpoints nominatifs → NPE/fuite sans JWT).
                         .requestMatchers(HttpMethod.GET,
                                 "/billetterie/villes/active",
-                                "/billetterie/offres/recherche"
+                                "/billetterie/offres/recherche",
+                                // Modes de règlement actifs : le tunnel de réservation se
+                                // parcourt sans compte, il doit pouvoir les proposer.
+                                "/billetterie/modes-reglement/actifs"
                         ).permitAll()
                         // Fiche d'un voyage trouvé par la recherche publique : se lit sans
                         // compte (mobile sans session). Expression régulière et non joker,

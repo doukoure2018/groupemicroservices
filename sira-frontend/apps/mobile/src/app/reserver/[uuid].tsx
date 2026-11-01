@@ -52,7 +52,7 @@ export default function Reserver() {
     const brouillon = lireBrouillon(uuid);
 
     const offreQuery = useQuery({ queryKey: ['offre', uuid], queryFn: async () => (await api.offres.byUuid(uuid)).data.offre, enabled: !!uuid });
-    const modesQuery = useQuery({ queryKey: ['modes-reglement'], queryFn: async () => (await api.commercial.modesReglement()).data.modesReglement ?? [] });
+    const modesQuery = useQuery({ queryKey: ['modes-reglement'], queryFn: async () => (await api.commercial.modesReglementActifs()).data.modesReglement ?? [] });
 
     // Repris du brouillon au retour de la connexion, sinon de l'accueil.
     const [passagers, setPassagers] = useState<PassagerForm[]>(
