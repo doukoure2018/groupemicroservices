@@ -38,10 +38,13 @@ export async function enregistrerAppareil(): Promise<void> {
         if (accorde !== 'granted') return;
 
         // Canal Android obligatoire pour qu'une notification s'affiche (API 26+).
+        // « sound » attend le nom d'un fichier embarqué dans l'application ;
+        // l'omettre laisse Android jouer la sonnerie de notification du
+        // téléphone, ce que nous voulons — sans quoi le journal se plaint d'un
+        // son « default » introuvable à chaque enregistrement.
         await Notifications.setNotificationChannelAsync('voyages', {
             name: 'Voyages et paiements',
-            importance: Notifications.AndroidImportance.HIGH,
-            sound: 'default'
+            importance: Notifications.AndroidImportance.HIGH
         });
 
         const jeton = await Notifications.getDevicePushTokenAsync();
