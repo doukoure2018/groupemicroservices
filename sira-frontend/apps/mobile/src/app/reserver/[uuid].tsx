@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ApiError } from '@sira/api-client';
-import { formatDateFr, formatHeure, formatMontant, getMontantEffectif, type CommandeClient, type PassagerRequest } from '@sira/core';
+import { formatDateFr, formatHeure, formatMontant, getMontantEffectif, nombrePlaces, voyageursDepuisParams, type CommandeClient, type PassagerRequest } from '@sira/core';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -19,11 +19,14 @@ const passagerVide = (): PassagerRequest => ({ nom: '', prenom: '', telephone: '
  * suite et les billets sont émis.
  */
 function Reserver() {
-    const { uuid } = useLocalSearchParams<{ uuid: string }>();
+    const { uuid, adultes, enfants } = useLocalSearchParams<{ uuid: string; adultes?: string; enfants?: string }>();
     const offreQuery = useQuery({ queryKey: ['offre', uuid], queryFn: async () => (await api.offres.byUuid(uuid)).data.offre, enabled: !!uuid });
     const modesQuery = useQuery({ queryKey: ['modes-reglement'], queryFn: async () => (await api.commercial.modesReglement()).data.modesReglement ?? [] });
 
-    const [passagers, setPassagers] = useState<PassagerRequest[]>([passagerVide()]);
+    // Autant de passagers que choisis sur l'accueil ; on peut toujours en ajouter ou en retirer ici.
+    const [passagers, setPassagers] = useState<PassagerRequest[]>(() =>
+        Array.from({ length: Math.min(MAX_PLACES, nombrePlaces(voyageursDepuisParams({ adultes, enfants }))) }, passagerVide)
+    );
     const [modeCode, setModeCode] = useState('');
 
     const offre = offreQuery.data;

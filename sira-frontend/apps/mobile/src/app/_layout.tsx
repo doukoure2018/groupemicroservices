@@ -43,7 +43,6 @@ export default function Racine() {
                         <Stack.Screen name="verify" options={{ title: 'Activation', headerShown: false }} />
                         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                         <Stack.Screen name="recherche" options={{ title: 'Voyages disponibles' }} />
-                        <Stack.Screen name="offre/[uuid]" options={{ title: 'Détail du voyage' }} />
                         <Stack.Screen name="reserver/[uuid]" options={{ title: 'Réserver' }} />
                         <Stack.Screen name="paiement/[reference]" options={{ title: 'Paiement', headerBackVisible: false }} />
                         <Stack.Screen name="commande/[uuid]" options={{ title: 'Vos billets' }} />

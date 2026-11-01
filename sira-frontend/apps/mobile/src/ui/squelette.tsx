@@ -31,11 +31,6 @@ export function SqueletteRecherche() {
     return (
         <View style={styles.ecran} accessibilityRole="progressbar" accessibilityLabel="Recherche des voyages en cours">
             <Animated.View style={{ opacity: opacite, gap: espaces.lg }}>
-                <View style={styles.dates}>
-                    <View style={styles.date} />
-                    <View style={styles.date} />
-                    <View style={styles.date} />
-                </View>
                 {[0, 1, 2, 3].map((i) => (
                     <View key={i} style={styles.carte}>
                         <View style={styles.rangee}>
@@ -61,8 +56,6 @@ export function SqueletteRecherche() {
 
 const styles = StyleSheet.create({
     ecran: { flex: 1, backgroundColor: couleurs.fond, padding: espaces.lg },
-    dates: { flexDirection: 'row', gap: espaces.sm },
-    date: { flex: 1, height: 34, borderRadius: 999, backgroundColor: '#e3e8e0' },
     carte: { backgroundColor: couleurs.blanc, borderRadius: rayons.lg, borderWidth: 1, borderColor: couleurs.ligne, padding: espaces.lg, gap: espaces.md },
     rangee: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     bloc: { backgroundColor: '#e3e8e0', borderRadius: rayons.sm },

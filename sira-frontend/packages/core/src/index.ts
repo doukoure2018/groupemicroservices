@@ -11,3 +11,4 @@ export * from './partenaire.js';
 export * from './immo.js';
 export * from './format.js';
 export * from './notification.js';
+export * from './recherche.js';

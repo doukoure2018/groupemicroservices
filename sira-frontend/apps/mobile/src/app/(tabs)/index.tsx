@@ -1,25 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
-import type { Ville } from '@sira/core';
+import { ajouterJours, aujourdhuiIso, BAGAGES_MAX, libelleJourCourt, libelleVoyageurs, PLACES_MAX, VOYAGEURS_DEFAUT, type Ville, type Voyageurs } from '@sira/core';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
 import { api } from '../../api';
 import { useAuth } from '../../auth/contexte';
 import { Bandeau, Bouton, Carte, styles as base } from '../../ui/base';
+import { Calendrier } from '../../ui/calendrier';
+import { Compteur } from '../../ui/compteur';
+import { FeuilleBasse } from '../../ui/feuille';
 import { couleurs, espaces, rayons } from '../../ui/theme';
 
-/** Date du jour au format attendu par l'API (AAAA-MM-JJ), en heure locale. */
-function dateIso(decalageJours = 0): string {
-    const d = new Date();
-    d.setDate(d.getDate() + decalageJours);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+/** Jusqu'où l'on peut réserver à l'avance : les transporteurs publient rarement au-delà. */
+const JOURS_A_L_AVANCE = 60;
 
-function libelleDate(iso: string): string {
-    const [a, m, j] = iso.split('-').map(Number);
-    return new Date(a!, m! - 1, j!).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-}
-
+/**
+ * L'accueil : d'où, vers où, quand, qui. Aucun compte n'est demandé pour
+ * chercher ; la connexion n'intervient qu'au moment de réserver.
+ */
 export default function Accueil() {
     const { user } = useAuth();
     const villesQuery = useQuery({
@@ -27,10 +25,13 @@ export default function Accueil() {
         queryFn: async () => (await api.geo.villesActives()).data.villes ?? []
     });
 
+    const aujourdhui = aujourdhuiIso();
     const [depart, setDepart] = useState<Ville | null>(null);
     const [arrivee, setArrivee] = useState<Ville | null>(null);
-    const [date, setDate] = useState(dateIso());
+    const [date, setDate] = useState(aujourdhui);
+    const [voyageurs, setVoyageurs] = useState<Voyageurs>(VOYAGEURS_DEFAUT);
     const [selecteur, setSelecteur] = useState<'depart' | 'arrivee' | null>(null);
+    const [feuille, setFeuille] = useState<'date' | 'voyageurs' | null>(null);
 
     const memeVille = !!depart && !!arrivee && depart.villeUuid === arrivee.villeUuid;
     const valide = !!depart && !!arrivee && !memeVille;
@@ -39,57 +40,56 @@ export default function Accueil() {
         if (!valide) return;
         router.push({
             pathname: '/recherche',
-            params: { depart: depart!.villeUuid, arrivee: arrivee!.villeUuid, date, departLibelle: depart!.libelle, arriveeLibelle: arrivee!.libelle }
+            params: {
+                depart: depart!.villeUuid,
+                arrivee: arrivee!.villeUuid,
+                date,
+                departLibelle: depart!.libelle,
+                arriveeLibelle: arrivee!.libelle,
+                adultes: String(voyageurs.adultes),
+                enfants: String(voyageurs.enfants),
+                bagages: String(voyageurs.bagages)
+            }
         });
     }
 
-    // Sept prochains jours : assez pour un voyage interurbain, sans calendrier
-    // natif dont la configuration varie d'une plateforme à l'autre.
-    const jours = useMemo(() => Array.from({ length: 7 }, (_, i) => dateIso(i)), []);
-
     return (
-        <ScrollView style={base.ecran} contentContainerStyle={base.contenu} keyboardShouldPersistTaps="handled">
-            <View>
-                <Text style={base.titre}>{user ? `Bonjour ${user.firstName ?? ''}`.trim() : 'Où allez-vous ?'}</Text>
-                <Text style={base.sousTitre}>
-                    {user ? "Où allez-vous aujourd'hui ?" : 'Cherchez un départ et réservez votre place. Aucun compte n’est demandé pour chercher.'}
-                </Text>
-            </View>
+        <>
+            <ScrollView style={base.ecran} contentContainerStyle={{ paddingBottom: espaces.xl }} keyboardShouldPersistTaps="handled">
+                <View style={styles.bandeau}>
+                    <Text style={styles.salut}>{user ? `Bonjour ${user.firstName ?? ''}`.trim() : 'Où allez-vous ?'}</Text>
+                    <Text style={styles.sousSalut}>
+                        {user ? 'Choisissez votre prochain départ.' : 'Cherchez un départ et réservez votre place. Aucun compte n’est demandé pour chercher.'}
+                    </Text>
+                </View>
 
-            <Carte>
-                <ChoixVille libelle="Ville de départ" valeur={depart} onPress={() => setSelecteur('depart')} />
-                <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Inverser départ et arrivée"
-                    onPress={() => {
-                        setDepart(arrivee);
-                        setArrivee(depart);
-                    }}
-                    style={styles.inverser}
-                >
-                    <Text style={styles.inverserTexte}>⇅ Inverser</Text>
-                </Pressable>
-                <ChoixVille libelle="Ville d'arrivée" valeur={arrivee} onPress={() => setSelecteur('arrivee')} />
-                {memeVille && <Bandeau type="erreur">La ville d'arrivée doit être différente de la ville de départ.</Bandeau>}
-
-                <Text style={[base.sectionTitre, { marginTop: espaces.lg }]}>Date de départ</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: espaces.sm, paddingVertical: espaces.sm }}>
-                    {jours.map((j) => (
+                <View style={styles.formulaire}>
+                    <Carte style={{ gap: espaces.sm }}>
+                        <ChampChoix libelle="De" valeur={depart?.libelle} vide="Ville de départ" onPress={() => setSelecteur('depart')} />
                         <Pressable
-                            key={j}
                             accessibilityRole="button"
-                            accessibilityState={{ selected: j === date }}
-                            onPress={() => setDate(j)}
-                            style={[styles.jour, j === date && styles.jourActif]}
+                            accessibilityLabel="Inverser départ et arrivée"
+                            onPress={() => {
+                                setDepart(arrivee);
+                                setArrivee(depart);
+                            }}
+                            style={styles.inverser}
                         >
-                            <Text style={[styles.jourTexte, j === date && styles.jourTexteActif]}>{libelleDate(j)}</Text>
+                            <Text style={styles.inverserTexte}>⇅</Text>
                         </Pressable>
-                    ))}
-                </ScrollView>
+                        <ChampChoix libelle="Vers" valeur={arrivee?.libelle} vide="Ville d'arrivée" onPress={() => setSelecteur('arrivee')} />
+                        {memeVille && <Bandeau type="erreur">La ville d'arrivée doit être différente de la ville de départ.</Bandeau>}
 
-                {villesQuery.isError && <Bandeau type="erreur">Impossible de charger les villes. Vérifiez votre réseau.</Bandeau>}
-                <Bouton libelle="Rechercher" onPress={rechercher} desactive={!valide} style={{ marginTop: espaces.lg }} />
-            </Carte>
+                        <View style={styles.rangee}>
+                            <ChampChoix libelle="Aller" valeur={libelleJourCourt(date)} onPress={() => setFeuille('date')} style={{ flex: 1 }} />
+                            <ChampChoix libelle="Passagers / Bagages" valeur={libelleVoyageurs(voyageurs)} onPress={() => setFeuille('voyageurs')} style={{ flex: 1 }} />
+                        </View>
+
+                        {villesQuery.isError && <Bandeau type="erreur">Impossible de charger les villes. Vérifiez votre réseau.</Bandeau>}
+                        <Bouton libelle="Rechercher" onPress={rechercher} desactive={!valide} style={{ marginTop: espaces.sm }} />
+                    </Carte>
+                </View>
+            </ScrollView>
 
             <SelecteurVille
                 visible={selecteur !== null}
@@ -103,15 +103,62 @@ export default function Accueil() {
                 }}
                 onFermer={() => setSelecteur(null)}
             />
-        </ScrollView>
+
+            <FeuilleBasse visible={feuille === 'date'} titre="Date de départ" onFermer={() => setFeuille(null)}>
+                <Calendrier
+                    valeur={date}
+                    min={aujourdhui}
+                    max={ajouterJours(aujourdhui, JOURS_A_L_AVANCE)}
+                    onChoisir={(d) => {
+                        setDate(d);
+                        setFeuille(null);
+                    }}
+                />
+            </FeuilleBasse>
+
+            <FeuilleBasse
+                visible={feuille === 'voyageurs'}
+                titre="Passagers / Bagages"
+                onFermer={() => setFeuille(null)}
+                pied={<Bouton libelle="Valider" onPress={() => setFeuille(null)} />}
+            >
+                <Compteur
+                    libelle="Adultes"
+                    aide="15 ans et plus"
+                    valeur={voyageurs.adultes}
+                    min={1}
+                    max={PLACES_MAX - voyageurs.enfants}
+                    onChange={(adultes) => setVoyageurs((v) => ({ ...v, adultes }))}
+                />
+                <Compteur
+                    libelle="Enfants"
+                    aide="Moins de 15 ans, accompagnés d'un adulte"
+                    valeur={voyageurs.enfants}
+                    min={0}
+                    max={PLACES_MAX - voyageurs.adultes}
+                    onChange={(enfants) => setVoyageurs((v) => ({ ...v, enfants }))}
+                />
+                <Compteur
+                    libelle="Bagages"
+                    aide="Bagages en soute à déclarer, en plus du sac que chacun garde avec lui"
+                    valeur={voyageurs.bagages}
+                    min={0}
+                    max={BAGAGES_MAX}
+                    onChange={(bagages) => setVoyageurs((v) => ({ ...v, bagages }))}
+                />
+                <Text style={styles.aidePlaces}>Jusqu'à {PLACES_MAX} places par réservation.</Text>
+            </FeuilleBasse>
+        </>
     );
 }
 
-function ChoixVille({ libelle, valeur, onPress }: { libelle: string; valeur: Ville | null; onPress: () => void }) {
+function ChampChoix({ libelle, valeur, vide, onPress, style }: { libelle: string; valeur?: string; vide?: string; onPress: () => void; style?: StyleProp<ViewStyle> }) {
     return (
-        <Pressable accessibilityRole="button" accessibilityLabel={libelle} onPress={onPress} style={styles.choix}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`${libelle} : ${valeur ?? vide ?? ''}`} onPress={onPress} style={[styles.choix, style]}>
             <Text style={styles.choixLibelle}>{libelle}</Text>
-            <Text style={[styles.choixValeur, !valeur && styles.choixVide]}>{valeur?.libelle ?? 'Choisir une ville'}</Text>
+            <Text style={[styles.choixValeur, !valeur && styles.choixVide]} numberOfLines={1}>
+                {valeur ?? vide}
+            </Text>
         </Pressable>
     );
 }
@@ -168,16 +215,18 @@ function SelecteurVille({
 }
 
 const styles = StyleSheet.create({
+    bandeau: { backgroundColor: couleurs.vert, paddingHorizontal: espaces.lg, paddingTop: espaces.lg, paddingBottom: 56 },
+    salut: { color: couleurs.blanc, fontSize: 26, fontWeight: '800' },
+    sousSalut: { color: '#d7e6dc', lineHeight: 22, marginTop: espaces.xs },
+    formulaire: { marginTop: -40, paddingHorizontal: espaces.lg },
     choix: { borderWidth: 1, borderColor: couleurs.ligne, borderRadius: rayons.md, padding: espaces.md, backgroundColor: couleurs.blanc },
-    choixLibelle: { color: couleurs.gris, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 },
-    choixValeur: { color: couleurs.encre, fontSize: 18, fontWeight: '700', marginTop: 2 },
+    choixLibelle: { color: couleurs.gris, fontSize: 12 },
+    choixValeur: { color: couleurs.encre, fontSize: 17, fontWeight: '700', marginTop: 2 },
     choixVide: { color: couleurs.gris, fontWeight: '400' },
-    inverser: { alignSelf: 'center', paddingVertical: espaces.sm },
-    inverserTexte: { color: couleurs.vert, fontWeight: '700' },
-    jour: { paddingHorizontal: espaces.md, paddingVertical: espaces.sm, borderRadius: 999, borderWidth: 1, borderColor: couleurs.ligne, backgroundColor: couleurs.blanc },
-    jourActif: { backgroundColor: couleurs.vert, borderColor: couleurs.vert },
-    jourTexte: { color: couleurs.encre, textTransform: 'capitalize' },
-    jourTexteActif: { color: couleurs.blanc, fontWeight: '700' },
+    rangee: { flexDirection: 'row', gap: espaces.sm, marginTop: espaces.xs },
+    inverser: { alignSelf: 'flex-end', width: 40, height: 28, alignItems: 'center', justifyContent: 'center', marginVertical: -espaces.xs },
+    inverserTexte: { color: couleurs.vert, fontWeight: '800', fontSize: 20 },
+    aidePlaces: { color: couleurs.gris, fontSize: 13, marginTop: espaces.sm },
     villeLigne: { paddingVertical: espaces.md, borderBottomWidth: 1, borderBottomColor: couleurs.ligne },
     villeNom: { fontSize: 17, fontWeight: '600', color: couleurs.encre }
 });

@@ -60,8 +60,15 @@ Connexion par email et mot de passe ou par Google (avec complétion du profil,
 adresse exigée, au premier passage), inscription d'un particulier (les agences
 s'inscrivent sur le site), activation du compte par lien profond `sira://verify`
 (la page du site active puis renvoie vers l'application, connectée d'emblée),
-mot de passe oublié (le lien du courriel mène à la page du site), recherche de voyage (villes actives, sept prochains jours),
-résultats, détail, réservation (passagers, mode de règlement), paiement en
+mot de passe oublié (le lien du courriel mène à la page du site), recherche de
+voyage à la manière de l'application de référence (villes actives, calendrier
+sur soixante jours, feuille Passagers / Bagages avec adultes, enfants et
+bagages ; squelette avec l'emblème pendant le chargement ; bandeau des
+prochains jours sur les résultats, cartes heure-durée-arrivée (+1 jour)-gares-
+véhicule-prix par personne, étiquettes « Le moins cher » et « Le plus rapide »,
+filtres de tri, de plages horaires et de véhicule, détail du voyage en feuille
+basse avec « Continuer » — tout se calcule sur le client avec `@sira/core`
+`recherche.ts`), réservation (passagers, mode de règlement), paiement en
 ligne (page du prestataire dans le navigateur du système, puis interrogation
 de l'état jusqu'à décision), billets avec code QR, mes voyages avec reprise
 d'un paiement interrompu, changement de date vers un autre départ du même
