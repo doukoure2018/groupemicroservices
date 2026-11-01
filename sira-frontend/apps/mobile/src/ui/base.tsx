@@ -96,6 +96,24 @@ export function Chargement({ texte }: { texte?: string }) {
     );
 }
 
+/** Rang d'un menu : libellé, valeur facultative, chevron si l'on peut l'ouvrir. */
+export function LigneMenu({ libelle, valeur, onPress, dernier }: { libelle: string; valeur?: string; onPress?: () => void; dernier?: boolean }) {
+    return (
+        <Pressable
+            accessibilityRole={onPress ? 'button' : undefined}
+            onPress={onPress}
+            disabled={!onPress}
+            style={({ pressed }) => [styles.ligneMenu, !dernier && styles.ligneMenuBordure, pressed && !!onPress && styles.boutonPresse]}
+        >
+            <Text style={styles.ligneMenuLibelle}>{libelle}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: espaces.sm }}>
+                {valeur ? <Text style={styles.attenue}>{valeur}</Text> : null}
+                {onPress ? <Text style={styles.ligneMenuChevron}>›</Text> : null}
+            </View>
+        </Pressable>
+    );
+}
+
 export function Bandeau({ type, children }: { type: 'info' | 'alerte' | 'erreur' | 'succes'; children: ReactNode }) {
     const fond = { info: couleurs.vertPale, alerte: couleurs.alertePale, erreur: couleurs.dangerPale, succes: couleurs.succesPale }[type];
     const encre = { info: couleurs.vertFonce, alerte: couleurs.alerte, erreur: couleurs.danger, succes: couleurs.vertFonce }[type];
@@ -150,6 +168,11 @@ export const styles = StyleSheet.create({
     etatVideTitre: { fontSize: 20, fontWeight: '700', color: couleurs.encre, textAlign: 'center' },
     etatVideTexte: { color: couleurs.gris, textAlign: 'center', marginTop: espaces.sm, lineHeight: 22 },
     chargement: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: espaces.xl, gap: espaces.md },
+
+    ligneMenu: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: espaces.sm, minHeight: 52, paddingVertical: espaces.md },
+    ligneMenuBordure: { borderBottomWidth: 1, borderBottomColor: couleurs.ligne },
+    ligneMenuLibelle: { fontSize: 16, fontWeight: '600', color: couleurs.encre },
+    ligneMenuChevron: { fontSize: 24, lineHeight: 24, color: couleurs.gris },
 
     bandeau: { borderRadius: rayons.md, padding: espaces.md },
     bandeauTexte: { lineHeight: 20 },

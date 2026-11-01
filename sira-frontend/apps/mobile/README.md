@@ -46,6 +46,16 @@ EXPO_PUBLIC_ENV=test npx expo export --platform android --output-dir .expo-expor
 
 ## Parcours couverts
 
+L'application s'ouvre sur la recherche, **sans compte** : les onglets
+Réservation, Billets et Mon compte se visitent sans session, comme le site.
+Seuls les écrans qui en ont besoin (réserver, billets d'une commande,
+changement de date, notation, notifications) sont enveloppés par
+`ExigerSession` (`src/auth/exiger-session.tsx`) : sans session, la connexion
+s'ouvre à leur place avec le chemin visé en paramètre `suite`, et y revient
+une fois faite. Sans compte, Billets et Mon compte invitent à s'identifier.
+La fiche d'un voyage (`GET /billetterie/offres/{uuid}`) est lisible sans jeton,
+par une règle d'expression régulière sur l'UUID dans la passerelle et le service.
+
 Connexion par email et mot de passe ou par Google (avec complétion du profil,
 adresse exigée, au premier passage), inscription d'un particulier (les agences
 s'inscrivent sur le site), activation du compte par lien profond `sira://verify`

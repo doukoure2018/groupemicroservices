@@ -15,13 +15,23 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { api } from '../../api';
+import { useAuth } from '../../auth/contexte';
 import { Bandeau, Bouton, Carte, Chargement, EtatVide, styles as base } from '../../ui/base';
+import { IllustrationBillet } from '../../ui/illustrations';
 import { couleurs, espaces } from '../../ui/theme';
 
-export default function MesVoyages() {
-    const commandesQuery = useQuery({ queryKey: ['mes-commandes'], queryFn: async () => (await api.commandes.mesCommandes()).data.commandes ?? [] });
+/** L'onglet Billets se visite sans compte ; les billets, eux, sont ceux du compte. */
+export default function Billets() {
+    const { user } = useAuth();
+    const connecte = !!user;
+    const commandesQuery = useQuery({
+        queryKey: ['mes-commandes'],
+        queryFn: async () => (await api.commandes.mesCommandes()).data.commandes ?? [],
+        enabled: connecte
+    });
 
-    if (commandesQuery.isPending) return <Chargement texte="Chargement de vos réservations…" />;
+    if (!connecte) return <BilletsSansCompte />;
+    if (commandesQuery.isPending) return <Chargement texte="Chargement de vos billets…" />;
     if (commandesQuery.isError) {
         return <EtatVide titre="Chargement impossible" texte="Vérifiez votre réseau puis réessayez." action={<Bouton libelle="Réessayer" onPress={() => void commandesQuery.refetch()} />} />;
     }
@@ -42,6 +52,21 @@ export default function MesVoyages() {
             }
             renderItem={({ item }) => <CarteCommande commande={item} />}
         />
+    );
+}
+
+function BilletsSansCompte() {
+    return (
+        <View style={styles.sansCompte}>
+            <IllustrationBillet />
+            <Text style={base.etatVideTitre}>Vous n'avez pas encore de billets</Text>
+            <Text style={base.etatVideTexte}>Connectez-vous pour retrouver ici les billets achetés avec votre compte, sur ce téléphone comme sur le site.</Text>
+            <Bouton
+                libelle="S'identifier ou s'inscrire"
+                onPress={() => router.push({ pathname: '/connexion', params: { suite: '/voyages' } })}
+                style={{ alignSelf: 'stretch', marginTop: espaces.xl }}
+            />
+        </View>
     );
 }
 
@@ -130,6 +155,7 @@ function CarteCommande({ commande }: { commande: CommandeClient }) {
 }
 
 const styles = StyleSheet.create({
+    sansCompte: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: espaces.xl, gap: espaces.sm },
     badge: { paddingHorizontal: espaces.sm, paddingVertical: 2, borderRadius: 999, fontSize: 12, fontWeight: '700', overflow: 'hidden' },
     badge_success: { backgroundColor: couleurs.succesPale, color: couleurs.vertFonce },
     badge_warn: { backgroundColor: couleurs.alertePale, color: couleurs.alerte },

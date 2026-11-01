@@ -1,8 +1,7 @@
 import { AuthHttpError } from '@sira/auth';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/contexte';
 import { ConnexionGoogleAnnulee, ConnexionGoogleIndisponible } from '../auth/google';
 import { config } from '../config';
@@ -13,8 +12,11 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function Connexion() {
     const { login, loginGoogle } = useAuth();
+    // Écran demandé avant la connexion (réserver, billets…) : on y retourne une
+    // fois connecté. Seul un chemin interne est accepté.
+    const { suite } = useLocalSearchParams<{ suite?: string }>();
+    const destination = (suite && suite.startsWith('/') ? suite : '/(tabs)') as Href;
     const [googleEnCours, setGoogleEnCours] = useState(false);
-    const insets = useSafeAreaInsets();
     const [email, setEmail] = useState('');
     const [motDePasse, setMotDePasse] = useState('');
     const [enCours, setEnCours] = useState(false);
@@ -27,7 +29,7 @@ export default function Connexion() {
         setEnCours(true);
         try {
             await login(email.trim(), motDePasse);
-            router.replace('/(tabs)');
+            router.replace(destination);
         } catch (e) {
             // 401 ou 403 : identifiants refusés ou compte non activé. Le reste
             // est un problème de réseau, qu'il ne faut pas faire passer pour une
@@ -46,7 +48,7 @@ export default function Connexion() {
 
     return (
         <KeyboardAvoidingView style={base.ecran} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <ScrollView contentContainerStyle={[styles.page, { paddingTop: insets.top + espaces.xxl }]} keyboardShouldPersistTaps="handled">
+            <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
                 <View style={styles.entete}>
                     <Text style={styles.marque}>SYNERGIA</Text>
                     <Text style={styles.devise}>IMMO · TRANS · GUINÉE</Text>
@@ -94,7 +96,7 @@ export default function Connexion() {
                             setErreur(null);
                             setGoogleEnCours(true);
                             loginGoogle()
-                                .then(() => router.replace('/(tabs)'))
+                                .then(() => router.replace(destination))
                                 .catch((e: unknown) => {
                                     // Annuler n'est pas une erreur. Le reste, si : Google
                                     // indisponible, jeton refusé par le serveur, réseau.
@@ -116,7 +118,7 @@ export default function Connexion() {
 }
 
 const styles = StyleSheet.create({
-    page: { flexGrow: 1, padding: espaces.lg, backgroundColor: couleurs.vert },
+    page: { flexGrow: 1, padding: espaces.lg, paddingTop: espaces.xl, backgroundColor: couleurs.vert },
     entete: { alignItems: 'center', marginBottom: espaces.xl },
     marque: { color: couleurs.blanc, fontSize: 32, fontWeight: '800', letterSpacing: 2 },
     devise: { color: '#cfe3d6', letterSpacing: 3, fontSize: 12, marginTop: espaces.xs },

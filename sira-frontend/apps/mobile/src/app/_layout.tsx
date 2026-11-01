@@ -37,7 +37,7 @@ export default function Racine() {
                         }}
                     >
                         <Stack.Screen name="index" options={{ headerShown: false }} />
-                        <Stack.Screen name="connexion" options={{ title: 'Connexion', headerShown: false }} />
+                        <Stack.Screen name="connexion" options={{ title: 'Connexion', headerShadowVisible: false }} />
                         <Stack.Screen name="inscription" options={{ title: 'Créer un compte' }} />
                         <Stack.Screen name="mot-de-passe-oublie" options={{ title: 'Mot de passe oublié' }} />
                         <Stack.Screen name="verify" options={{ title: 'Activation', headerShown: false }} />

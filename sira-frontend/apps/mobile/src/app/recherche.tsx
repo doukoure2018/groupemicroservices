@@ -3,7 +3,8 @@ import { formatDateFr, formatHeure, formatMontant, getMontantEffectif, hasPromot
 import { router, useLocalSearchParams } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { api } from '../api';
-import { Bouton, Carte, Chargement, EtatVide, styles as base } from '../ui/base';
+import { Bouton, Carte, EtatVide, styles as base } from '../ui/base';
+import { SqueletteRecherche } from '../ui/squelette';
 import { couleurs, espaces } from '../ui/theme';
 
 export default function Recherche() {
@@ -21,7 +22,7 @@ export default function Recherche() {
         enabled: !!depart && !!arrivee
     });
 
-    if (offresQuery.isPending) return <Chargement texte="Recherche des voyages…" />;
+    if (offresQuery.isPending) return <SqueletteRecherche />;
     if (offresQuery.isError) {
         return (
             <EtatVide

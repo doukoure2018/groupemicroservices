@@ -7,6 +7,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import { api } from '../../api';
 import { Bandeau, Bouton, Carte, Champ, Chargement, EtatVide, styles as base } from '../../ui/base';
 import { couleurs, espaces, rayons } from '../../ui/theme';
+import { ExigerSession } from '../../auth/exiger-session';
 
 const MAX_PLACES = 8;
 const passagerVide = (): PassagerRequest => ({ nom: '', prenom: '', telephone: '', pieceIdentite: '' });
@@ -17,7 +18,7 @@ const passagerVide = (): PassagerRequest => ({ nom: '', prenom: '', telephone: '
  * et la commande attend les fonds ; un règlement sur place confirme tout de
  * suite et les billets sont émis.
  */
-export default function Reserver() {
+function Reserver() {
     const { uuid } = useLocalSearchParams<{ uuid: string }>();
     const offreQuery = useQuery({ queryKey: ['offre', uuid], queryFn: async () => (await api.offres.byUuid(uuid)).data.offre, enabled: !!uuid });
     const modesQuery = useQuery({ queryKey: ['modes-reglement'], queryFn: async () => (await api.commercial.modesReglement()).data.modesReglement ?? [] });
@@ -156,3 +157,12 @@ const styles = StyleSheet.create({
     modeTexteActif: { color: couleurs.vertFonce },
     total: { fontSize: 20, fontWeight: '800', color: couleurs.vert }
 });
+
+/** Sans compte, la connexion s'ouvre et revient ici une fois faite. */
+export default function Ecran() {
+    return (
+        <ExigerSession>
+            <Reserver />
+        </ExigerSession>
+    );
+}

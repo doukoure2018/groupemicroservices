@@ -7,6 +7,7 @@ import { AppState, ScrollView, Text } from 'react-native';
 import { api } from '../../api';
 import { Bandeau, Bouton, Carte, Chargement, EtatVide, styles as base } from '../../ui/base';
 import { espaces } from '../../ui/theme';
+import { ExigerSession } from '../../auth/exiger-session';
 
 /** Trois secondes pendant une minute trente : au-delà, une réponse franche. */
 const INTERVALLE_MS = 3000;
@@ -20,7 +21,7 @@ const TENTATIVES_MAX = 30;
  * la commande se confirme même si la notification serveur à serveur s'est
  * perdue.
  */
-export default function AttentePaiement() {
+function AttentePaiement() {
     const { reference, url, mode } = useLocalSearchParams<{ reference: string; url?: string; mode?: string }>();
     const queryClient = useQueryClient();
     const [tentatives, setTentatives] = useState(0);
@@ -125,5 +126,14 @@ export default function AttentePaiement() {
             </Carte>
             <Bandeau type="info">Ne payez pas deux fois : si la page du prestataire vous dit que c'est fait, utilisez « J'ai payé, vérifier ».</Bandeau>
         </ScrollView>
+    );
+}
+
+/** Sans compte, la connexion s'ouvre et revient ici une fois faite. */
+export default function Ecran() {
+    return (
+        <ExigerSession>
+            <AttentePaiement />
+        </ExigerSession>
     );
 }

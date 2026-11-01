@@ -14,6 +14,11 @@ function Icone({ symbole, color }: { symbole: string; color: ColorValue }) {
     return <Text style={{ fontSize: 20, color }}>{symbole}</Text>;
 }
 
+/**
+ * Les onglets se visitent sans compte : chercher un voyage n'exige rien.
+ * Ce sont les écrans qui ont besoin d'une session (réserver, billets d'une
+ * commande, notifications…) qui la demandent, via ExigerSession.
+ */
 export default function Onglets() {
     const { user } = useAuth();
     const connecte = !!user;
@@ -32,16 +37,14 @@ export default function Onglets() {
         refetchInterval: 60_000
     });
 
-    if (user === undefined) return <Chargement />;
-    // Toute la zone connectée passe par ici : pas de session, pas d'onglets.
-    if (user === null) return <Redirect href="/connexion" />;
+    if (user === undefined) return <Chargement texte="Ouverture de l'application…" />;
     // Un compte né d'une connexion Google n'a pas d'adresse : on la demande
     // une fois, comme l'inscription par email l'exige dès le départ.
-    if (!user.address) return <Redirect href="/completer-profil" />;
+    if (user && !user.address) return <Redirect href="/completer-profil" />;
 
     // Le contrôle des billets n'est montré qu'aux rôles qui ont le droit de
     // valider ; le serveur applique la même règle, l'onglet n'est qu'un confort.
-    const controleur = hasRole(user, 'CONTROLEUR') || hasRole(user, 'SUPER_ADMIN') || hasRole(user, 'ADMIN');
+    const controleur = !!user && (hasRole(user, 'CONTROLEUR') || hasRole(user, 'SUPER_ADMIN') || hasRole(user, 'ADMIN'));
 
     const cloche = (
         <Pressable
@@ -69,16 +72,16 @@ export default function Onglets() {
                 tabBarInactiveTintColor: couleurs.gris,
                 tabBarStyle: { borderTopColor: couleurs.ligne },
                 sceneStyle: { backgroundColor: couleurs.fond },
-                headerRight: () => cloche
+                headerRight: connecte ? () => cloche : undefined
             }}
         >
-            <Tabs.Screen name="index" options={{ title: 'Accueil', tabBarIcon: ({ color }) => <Icone symbole="⌂" color={color} /> }} />
-            <Tabs.Screen name="voyages" options={{ title: 'Mes voyages', tabBarIcon: ({ color }) => <Icone symbole="▣" color={color} /> }} />
+            <Tabs.Screen name="index" options={{ title: 'Réservation', tabBarIcon: ({ color }) => <Icone symbole="⌕" color={color} /> }} />
+            <Tabs.Screen name="voyages" options={{ title: 'Billets', tabBarIcon: ({ color }) => <Icone symbole="▣" color={color} /> }} />
             <Tabs.Screen
                 name="scanner"
                 options={{ title: 'Contrôle', href: controleur ? undefined : null, tabBarIcon: ({ color }) => <Icone symbole="⌗" color={color} /> }}
             />
-            <Tabs.Screen name="profil" options={{ title: 'Profil', tabBarIcon: ({ color }) => <Icone symbole="◉" color={color} /> }} />
+            <Tabs.Screen name="profil" options={{ title: 'Mon compte', tabBarIcon: ({ color }) => <Icone symbole="◉" color={color} /> }} />
         </Tabs>
     );
 }

@@ -6,9 +6,10 @@ import { api } from '../api';
 import { destinationNotification } from '../notifications/push';
 import { Bouton, Chargement, EtatVide, styles as base } from '../ui/base';
 import { couleurs, espaces, rayons } from '../ui/theme';
+import { ExigerSession } from '../auth/exiger-session';
 
 /** Centre de notifications in-app : la même liste que celle que le serveur pousse. */
-export default function NotificationsEcran() {
+function NotificationsEcran() {
     const queryClient = useQueryClient();
     const liste = useQuery({ queryKey: ['notifications'], queryFn: async () => (await api.notifications.list()).data.notifications ?? [] });
 
@@ -74,3 +75,12 @@ const styles = StyleSheet.create({
     date: { color: couleurs.gris, fontSize: 12, marginTop: 2 },
     point: { width: 10, height: 10, borderRadius: 5, backgroundColor: couleurs.vert }
 });
+
+/** Sans compte, la connexion s'ouvre et revient ici une fois faite. */
+export default function Ecran() {
+    return (
+        <ExigerSession>
+            <NotificationsEcran />
+        </ExigerSession>
+    );
+}

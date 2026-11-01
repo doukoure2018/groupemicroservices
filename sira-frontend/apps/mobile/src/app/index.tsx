@@ -1,10 +1,9 @@
 import { Redirect } from 'expo-router';
-import { useAuth } from '../auth/contexte';
-import { Chargement } from '../ui/base';
 
-/** Aiguillage au démarrage : session relue depuis le trousseau, puis onglets ou connexion. */
+/**
+ * L'application s'ouvre sur la recherche, avec ou sans compte. La session,
+ * si elle existe dans le trousseau, se relit pendant que les onglets s'ouvrent.
+ */
 export default function Index() {
-    const { user } = useAuth();
-    if (user === undefined) return <Chargement texte="Ouverture de votre session…" />;
-    return <Redirect href={user ? '/(tabs)' : '/connexion'} />;
+    return <Redirect href="/(tabs)" />;
 }

@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { api } from '../../api';
 import { Bandeau, Bouton, Carte, Chargement, EtatVide, styles as base } from '../../ui/base';
 import { couleurs, espaces, rayons } from '../../ui/theme';
+import { ExigerSession } from '../../auth/exiger-session';
 
 /**
  * Déplacer une réservation vers un autre départ du même trajet. Le serveur ne
@@ -14,7 +15,7 @@ import { couleurs, espaces, rayons } from '../../ui/theme';
  * montant déjà réglé tel quel, sans supplément ni remboursement, et l'écran
  * le dit avant la confirmation plutôt que de laisser le client le découvrir.
  */
-export default function ModifierDate() {
+function ModifierDate() {
     const { uuid } = useLocalSearchParams<{ uuid: string }>();
     const queryClient = useQueryClient();
     const [choix, setChoix] = useState<Offre | null>(null);
@@ -127,3 +128,12 @@ const styles = StyleSheet.create({
     optionDate: { fontSize: 17, fontWeight: '700', color: couleurs.encre, textTransform: 'capitalize' },
     optionPlaces: { fontWeight: '600', color: couleurs.vertFonce }
 });
+
+/** Sans compte, la connexion s'ouvre et revient ici une fois faite. */
+export default function Ecran() {
+    return (
+        <ExigerSession>
+            <ModifierDate />
+        </ExigerSession>
+    );
+}

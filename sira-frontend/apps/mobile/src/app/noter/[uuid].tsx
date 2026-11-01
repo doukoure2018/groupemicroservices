@@ -7,6 +7,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import { api } from '../../api';
 import { Bandeau, Bouton, Carte, Chargement, EtatVide, styles as base } from '../../ui/base';
 import { couleurs, espaces, rayons } from '../../ui/theme';
+import { ExigerSession } from '../../auth/exiger-session';
 
 const LIBELLES: Record<number, string> = { 1: 'Très mauvais', 2: 'Mauvais', 3: 'Correct', 4: 'Bien', 5: 'Excellent' };
 const COMMENTAIRE_MAX = 500;
@@ -17,7 +18,7 @@ const COMMENTAIRE_MAX = 500;
  * le dit et retient le refus pour la session, faute d'un moyen de le savoir
  * d'avance.
  */
-export default function Noter() {
+function Noter() {
     const { uuid } = useLocalSearchParams<{ uuid: string }>();
     const queryClient = useQueryClient();
     const [note, setNote] = useState(0);
@@ -107,3 +108,12 @@ const styles = StyleSheet.create({
     libelle: { fontSize: 17, fontWeight: '700', color: couleurs.encre },
     commentaire: { minHeight: 110, textAlignVertical: 'top', borderRadius: rayons.md }
 });
+
+/** Sans compte, la connexion s'ouvre et revient ici une fois faite. */
+export default function Ecran() {
+    return (
+        <ExigerSession>
+            <Noter />
+        </ExigerSession>
+    );
+}

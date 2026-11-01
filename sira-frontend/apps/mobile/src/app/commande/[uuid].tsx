@@ -6,9 +6,10 @@ import QRCode from 'react-native-qrcode-svg';
 import { api } from '../../api';
 import { Bandeau, Bouton, Carte, Chargement, EtatVide, styles as base } from '../../ui/base';
 import { couleurs, espaces } from '../../ui/theme';
+import { ExigerSession } from '../../auth/exiger-session';
 
 /** Billets d'une commande, chacun avec son code QR à présenter à l'embarquement. */
-export default function Commande() {
+function Commande() {
     const { uuid } = useLocalSearchParams<{ uuid: string }>();
     const commandeQuery = useQuery({ queryKey: ['commande', uuid], queryFn: async () => (await api.commandes.byUuid(uuid)).data.commande, enabled: !!uuid });
 
@@ -84,3 +85,12 @@ const styles = StyleSheet.create({
     qr: { padding: espaces.md, backgroundColor: couleurs.blanc, marginBottom: espaces.sm },
     statut: { fontWeight: '700', marginTop: espaces.xs }
 });
+
+/** Sans compte, la connexion s'ouvre et revient ici une fois faite. */
+export default function Ecran() {
+    return (
+        <ExigerSession>
+            <Commande />
+        </ExigerSession>
+    );
+}

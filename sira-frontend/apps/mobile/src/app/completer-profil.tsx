@@ -72,7 +72,7 @@ export default function CompleterProfil() {
                     libelle="Se déconnecter"
                     variante="discret"
                     onPress={() => {
-                        void logout().then(() => router.replace('/connexion'));
+                        void logout().then(() => router.replace('/(tabs)'));
                     }}
                 />
             </ScrollView>

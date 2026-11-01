@@ -50,8 +50,10 @@ export default function Accueil() {
     return (
         <ScrollView style={base.ecran} contentContainerStyle={base.contenu} keyboardShouldPersistTaps="handled">
             <View>
-                <Text style={base.titre}>Bonjour {user?.firstName ?? ''}</Text>
-                <Text style={base.sousTitre}>Où allez-vous aujourd'hui ?</Text>
+                <Text style={base.titre}>{user ? `Bonjour ${user.firstName ?? ''}`.trim() : 'Où allez-vous ?'}</Text>
+                <Text style={base.sousTitre}>
+                    {user ? "Où allez-vous aujourd'hui ?" : 'Cherchez un départ et réservez votre place. Aucun compte n’est demandé pour chercher.'}
+                </Text>
             </View>
 
             <Carte>
