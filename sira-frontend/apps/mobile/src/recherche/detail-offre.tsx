@@ -64,7 +64,6 @@ export function DetailOffre({ offre, voyageurs, onFermer, onContinuer }: { offre
             </View>
 
             <Carte style={{ gap: espaces.sm }}>
-                {o.userFullName ? <Ligne libelle="Exploité par" valeur={o.userFullName} /> : null}
                 {o.pointRendezvous ? <Ligne libelle="Rendez-vous" valeur={o.pointRendezvous} /> : null}
                 <Ligne
                     libelle="Annulation"

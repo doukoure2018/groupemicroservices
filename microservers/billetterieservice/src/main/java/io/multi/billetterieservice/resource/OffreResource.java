@@ -41,14 +41,17 @@ public class OffreResource {
 
     /**
      * La recherche et la fiche d'un voyage se consultent sans compte : elles ne
-     * doivent donc rien livrer qu'un passant n'ait à connaître. Le nom du
-     * transporteur reste (c'est l'enseigne), mais son adresse, son identifiant,
-     * le téléphone du chauffeur et la plaque du véhicule disparaissent tant que
-     * l'appel n'est pas authentifié — un voyageur connecté les retrouve, il en
-     * a besoin pour joindre son départ.
+     * doivent donc rien livrer qu'un passant n'ait à connaître. Une offre n'a
+     * pas de transporteur au sens commercial, elle a un compte — et un compte
+     * est une personne : son nom, son adresse, son identifiant, le téléphone
+     * du chauffeur et la plaque du véhicule disparaissent tant que l'appel
+     * n'est pas authentifié. Un voyageur connecté les retrouve, il en a besoin
+     * pour joindre son départ. Le jour où une raison sociale existera, c'est
+     * elle qu'il faudra montrer, pas ceci.
      */
     private static Offre sansDonneesPrivees(Offre offre) {
         if (offre == null) return null;
+        offre.setUserFullName(null);
         offre.setUserEmail(null);
         offre.setUserPhone(null);
         offre.setUserUsername(null);

@@ -565,11 +565,6 @@ function Resultats({
                                         Véhicule <strong>{[typeVehiculeOffre(offre), offre.vehiculeMarque, offre.vehiculeModele].filter(Boolean).join(' ')}</strong>
                                         {offre.vehiculeClimatise ? ' · climatisé' : ''}
                                     </span>
-                                    {offre.userFullName && (
-                                        <span>
-                                            Exploité par <strong>{offre.userFullName}</strong>
-                                        </span>
-                                    )}
                                     {offre.pointRendezvous && (
                                         <span>
                                             Rendez-vous <strong>{offre.pointRendezvous}</strong>
