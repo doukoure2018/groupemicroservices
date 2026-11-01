@@ -13,10 +13,11 @@ import {
     type CommandeClient,
     type TypePassager
 } from '@sira/core';
-import { useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth-context';
+import { ecrireBrouillon, effacerBrouillon, lireBrouillon, type PassagerForm } from '../brouillon-reservation';
 import { ConfirmationCommande } from '../components/ConfirmationCommande';
 import { LegendeSieges, PlanSiegesVue } from '../components/PlanSieges';
 import { Compteur } from '../components/Compteur';
@@ -25,28 +26,23 @@ import { CLE_REFERENCE_PAIEMENT } from './PaiementRetourPage';
 const MAX_PLACES = 8;
 const BAGAGES_MAX = 10;
 
-interface PassagerForm {
-    typePassager: TypePassager;
-    nom: string;
-    prenom: string;
-    telephone: string;
-    pieceIdentite: string;
-    /** AAAA-MM-JJ (champ date du navigateur), exigée pour un enfant. */
-    naissance: string;
-}
-
 const passagerVide = (typePassager: TypePassager): PassagerForm => ({ typePassager, nom: '', prenom: '', telephone: '', pieceIdentite: '', naissance: '' });
 
 /**
  * Le tunnel de réservation : passagers (adultes et enfants), sièges, bagages,
- * contact, règlement. Le prix vient du serveur — le devis se recalcule à
- * chaque changement et c'est son total qui repart à la création, si bien
- * qu'un tarif modifié entre-temps fait refuser la commande plutôt que de
- * faire payer un montant jamais affiché.
+ * contact, règlement. Tout se parcourt sans compte — y compris le choix des
+ * sièges — et la connexion n'est demandée qu'au dernier bouton, celui qui
+ * engage ; ce qui a été saisi est conservé le temps d'aller se connecter.
+ * Le prix vient du serveur — le devis se recalcule à chaque changement et
+ * c'est son total qui repart à la création, si bien qu'un tarif modifié
+ * entre-temps fait refuser la commande plutôt que de faire payer un montant
+ * jamais affiché.
  */
 export function ReservationPage() {
     const { offreUuid } = useParams<{ offreUuid: string }>();
+    const navigate = useNavigate();
     const [params] = useSearchParams();
+    const brouillon = lireBrouillon(offreUuid ?? '');
     const initial = voyageursDepuisParams({
         adultes: params.get('adultes') ?? undefined,
         enfants: params.get('enfants') ?? undefined,
@@ -65,16 +61,28 @@ export function ReservationPage() {
         queryFn: async () => (await api.commercial.modesReglement()).data.modesReglement
     });
 
-    const [passagers, setPassagers] = useState<PassagerForm[]>(() => [
-        ...Array.from({ length: initial.adultes }, () => passagerVide('ADULTE')),
-        ...Array.from({ length: initial.enfants }, () => passagerVide('ENFANT'))
-    ]);
-    const [bagages, setBagages] = useState(initial.bagages);
-    const [sieges, setSieges] = useState<string[]>([]);
+    // Repris du brouillon au retour de la connexion, sinon de la recherche.
+    const [passagers, setPassagers] = useState<PassagerForm[]>(
+        () =>
+            brouillon?.passagers ?? [
+                ...Array.from({ length: initial.adultes }, () => passagerVide('ADULTE')),
+                ...Array.from({ length: initial.enfants }, () => passagerVide('ENFANT'))
+            ]
+    );
+    const [bagages, setBagages] = useState(brouillon?.bagages ?? initial.bagages);
+    const [sieges, setSieges] = useState<string[]>(brouillon?.sieges ?? []);
     const [planOuvert, setPlanOuvert] = useState(false);
-    const [contactEmail, setContactEmail] = useState(user?.email ?? '');
-    const [contactTelephone, setContactTelephone] = useState(user?.phone ?? '');
-    const [modeReglementCode, setModeReglementCode] = useState('');
+    const [contactEmail, setContactEmail] = useState(brouillon?.contactEmail ?? user?.email ?? '');
+    const [contactTelephone, setContactTelephone] = useState(brouillon?.contactTelephone ?? user?.phone ?? '');
+    const [modeReglementCode, setModeReglementCode] = useState(brouillon?.modeReglementCode ?? '');
+
+    // La session arrive après coup (retour de connexion) : on complète le
+    // contact resté vide, sans jamais écraser ce que le voyageur a tapé.
+    useEffect(() => {
+        if (!user) return;
+        setContactEmail((v) => v || user.email || '');
+        setContactTelephone((v) => v || user.phone || '');
+    }, [user]);
     const [commande, setCommande] = useState<CommandeClient | null>(null);
     const [redirection, setRedirection] = useState(false);
 
@@ -136,6 +144,7 @@ export function ReservationPage() {
                 })
             ).data.commande,
         onSuccess: (cmd) => {
+            effacerBrouillon(offreUuid!);
             // Paiement en ligne : la commande attend les fonds, les billets ne
             // sont pas encore utilisables, et c'est le prestataire qui prend la
             // main. Hors ligne, rien ne change : la commande est déjà confirmée.
@@ -183,6 +192,16 @@ export function ReservationPage() {
     }
 
     if (commande) return <ConfirmationCommande commande={commande} />;
+
+    /** Réserver engage : c'est ici, et seulement ici, qu'un compte devient nécessaire. */
+    function confirmer() {
+        if (!user) {
+            ecrireBrouillon(offreUuid!, { passagers, bagages, sieges, contactEmail, contactTelephone, modeReglementCode });
+            navigate(`/login?redirect=${encodeURIComponent(`/reserver/${offreUuid}`)}`);
+            return;
+        }
+        reserver.mutate();
+    }
 
     function setPassager(index: number, champ: keyof PassagerForm, valeur: string) {
         setPassagers((prev) => prev.map((p, i) => (i === index ? { ...p, [champ]: valeur } : p)));
@@ -410,14 +429,17 @@ export function ReservationPage() {
             </div>
 
             {reserver.isError && <p className="error">{messageErreur}</p>}
-            <button className="bouton-confirmer" disabled={!formulaireValide || reserver.isPending} onClick={() => reserver.mutate()}>
+            {!user && formulaireValide && <p className="bandeau-info">Encore une étape : connectez-vous pour recevoir vos billets. Ce que vous avez saisi est conservé.</p>}
+            <button className="bouton-confirmer" disabled={!formulaireValide || reserver.isPending} onClick={confirmer}>
                 {reserver.isPending
                     ? paiementEnLigne
                         ? 'Ouverture du paiement…'
                         : 'Réservation en cours…'
-                    : paiementEnLigne
-                      ? 'Payer maintenant'
-                      : 'Confirmer la réservation'}
+                    : !user
+                      ? 'Continuer'
+                      : paiementEnLigne
+                        ? 'Payer maintenant'
+                        : 'Confirmer la réservation'}
             </button>
         </section>
     );

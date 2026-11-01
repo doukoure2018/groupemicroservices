@@ -1,12 +1,12 @@
 import { useMutation, useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ApiError } from '@sira/api-client';
 import { estEnfant, formatDateFr, formatHeure, formatMontant, jourIso, voyageursDepuisParams, type CommandeClient, type TypePassager } from '@sira/core';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { router, useLocalSearchParams, usePathname } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { api } from '../../api';
 import { useAuth } from '../../auth/contexte';
-import { ExigerSession } from '../../auth/exiger-session';
+import { ecrireBrouillon, effacerBrouillon, lireBrouillon, type PassagerForm } from '../../reservation/brouillon';
 import { SelecteurSieges } from '../../sieges/selecteur-sieges';
 import { Bandeau, Bouton, Carte, Champ, Chargement, EtatVide, styles as base } from '../../ui/base';
 import { Compteur } from '../../ui/compteur';
@@ -14,16 +14,6 @@ import { couleurs, espaces, rayons } from '../../ui/theme';
 
 const MAX_PLACES = 8;
 const BAGAGES_MAX = 10;
-
-interface PassagerForm {
-    typePassager: TypePassager;
-    nom: string;
-    prenom: string;
-    telephone: string;
-    pieceIdentite: string;
-    /** JJ/MM/AAAA, saisie au clavier numérique. */
-    naissance: string;
-}
 
 const passagerVide = (typePassager: TypePassager): PassagerForm => ({ typePassager, nom: '', prenom: '', telephone: '', pieceIdentite: '', naissance: '' });
 
@@ -46,30 +36,47 @@ function isoDepuisSaisie(saisie: string): string | null {
 }
 
 /**
- * Le tunnel de réservation : passagers, bagages, contact, règlement, puis le
- * récapitulatif tel que le serveur le chiffre. Le total renvoyé à la création
- * est celui du devis affiché ; si le prix a bougé, le serveur refuse et le dit.
+ * Le tunnel de réservation : passagers, sièges, bagages, contact, règlement,
+ * puis le récapitulatif tel que le serveur le chiffre. Tout se parcourt sans
+ * compte — y compris le choix des sièges — et la connexion n'est demandée
+ * qu'au dernier bouton, celui qui engage. Ce qui a été saisi est conservé le
+ * temps d'aller se connecter. Le total renvoyé à la création est celui du
+ * devis affiché ; si le prix a bougé, le serveur refuse et le dit.
  */
-function Reserver() {
+export default function Reserver() {
     const params = useLocalSearchParams<{ uuid: string; adultes?: string; enfants?: string; bagages?: string }>();
     const { uuid } = params;
     const { user } = useAuth();
+    const chemin = usePathname();
     const initial = voyageursDepuisParams(params);
+    const brouillon = lireBrouillon(uuid);
 
     const offreQuery = useQuery({ queryKey: ['offre', uuid], queryFn: async () => (await api.offres.byUuid(uuid)).data.offre, enabled: !!uuid });
     const modesQuery = useQuery({ queryKey: ['modes-reglement'], queryFn: async () => (await api.commercial.modesReglement()).data.modesReglement ?? [] });
 
-    const [passagers, setPassagers] = useState<PassagerForm[]>(() => [
-        ...Array.from({ length: initial.adultes }, () => passagerVide('ADULTE')),
-        ...Array.from({ length: initial.enfants }, () => passagerVide('ENFANT'))
-    ]);
-    const [bagages, setBagages] = useState(initial.bagages);
-    const [contactEmail, setContactEmail] = useState(user?.email ?? '');
-    const [contactTelephone, setContactTelephone] = useState(user?.phone ?? '');
-    const [modeCode, setModeCode] = useState('');
+    // Repris du brouillon au retour de la connexion, sinon de l'accueil.
+    const [passagers, setPassagers] = useState<PassagerForm[]>(
+        () =>
+            brouillon?.passagers ?? [
+                ...Array.from({ length: initial.adultes }, () => passagerVide('ADULTE')),
+                ...Array.from({ length: initial.enfants }, () => passagerVide('ENFANT'))
+            ]
+    );
+    const [bagages, setBagages] = useState(brouillon?.bagages ?? initial.bagages);
+    const [contactEmail, setContactEmail] = useState(brouillon?.contactEmail ?? user?.email ?? '');
+    const [contactTelephone, setContactTelephone] = useState(brouillon?.contactTelephone ?? user?.phone ?? '');
+    const [modeCode, setModeCode] = useState(brouillon?.modeCode ?? '');
     // Un siège par passager, dans l'ordre de la liste ; vide = laissé au serveur.
-    const [sieges, setSieges] = useState<string[]>([]);
+    const [sieges, setSieges] = useState<string[]>(brouillon?.sieges ?? []);
     const [choixSieges, setChoixSieges] = useState(false);
+
+    // La session arrive après coup (retour de connexion) : on complète le
+    // contact resté vide, sans jamais écraser ce que le voyageur a tapé.
+    useEffect(() => {
+        if (!user) return;
+        setContactEmail((v) => v || user.email || '');
+        setContactTelephone((v) => v || user.phone || '');
+    }, [user]);
 
     const offre = offreQuery.data;
     const nbAdultes = passagers.filter((p) => p.typePassager === 'ADULTE').length;
@@ -115,6 +122,16 @@ function Reserver() {
     );
     const formulaireValide = modeCode !== '' && nbAdultes >= 1 && passagersValides && contactTelephone.trim() !== '' && !!devis && !devisQuery.isError;
 
+    /** Réserver engage : c'est ici, et seulement ici, qu'un compte devient nécessaire. */
+    function confirmer() {
+        if (!user) {
+            ecrireBrouillon(uuid, { passagers, bagages, sieges, contactEmail, contactTelephone, modeCode });
+            router.push({ pathname: '/connexion', params: { suite: chemin } });
+            return;
+        }
+        reserver.mutate();
+    }
+
     const reserver = useMutation({
         mutationFn: async () =>
             (
@@ -137,6 +154,7 @@ function Reserver() {
                 })
             ).data.commande,
         onSuccess: (commande: CommandeClient) => {
+            effacerBrouillon(uuid);
             if (commande.urlPaiement && commande.referencePaiement) {
                 router.replace({
                     pathname: '/paiement/[reference]',
@@ -336,9 +354,12 @@ function Reserver() {
                 </Carte>
 
                 {reserver.isError && <Bandeau type="erreur">{messageErreur}</Bandeau>}
+                {!user && formulaireValide && (
+                    <Bandeau type="info">Encore une étape : connectez-vous pour recevoir vos billets. Ce que vous avez saisi est conservé.</Bandeau>
+                )}
                 <Bouton
-                    libelle={enLigne ? 'Payer maintenant' : 'Confirmer la réservation'}
-                    onPress={() => reserver.mutate()}
+                    libelle={!user ? 'Continuer' : enLigne ? 'Payer maintenant' : 'Confirmer la réservation'}
+                    onPress={confirmer}
                     desactive={!formulaireValide}
                     enCours={reserver.isPending}
                 />
@@ -390,12 +411,3 @@ const styles = StyleSheet.create({
     totalLigne: { borderTopWidth: 1, borderTopColor: couleurs.ligne, paddingTop: espaces.sm, marginTop: espaces.xs },
     total: { fontSize: 20, fontWeight: '800', color: couleurs.vert }
 });
-
-/** Sans compte, la connexion s'ouvre et revient ici une fois faite. */
-export default function Ecran() {
-    return (
-        <ExigerSession>
-            <Reserver />
-        </ExigerSession>
-    );
-}

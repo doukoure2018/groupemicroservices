@@ -503,6 +503,33 @@ test('réservation : la règle d’âge refuse un enfant de 15 ans ou plus', asy
     await expect(confirmer).toBeDisabled();
 });
 
+test('réservation : le tunnel et le plan des sièges se visitent sans compte', async ({ page, baseURL }) => {
+    const ctx = await apiConnectee(baseURL!);
+    const { offres } = await lireData<{ offres: Array<{ offreUuid: string; villeDepartLibelle: string; statut: string }> }>(ctx, '/billetterie/offres');
+    await ctx.dispose();
+    const offreE2E = offres.find((o) => o.villeDepartLibelle === VILLE && o.statut === 'OUVERT');
+    expect(offreE2E, 'une offre E2E ouverte doit exister').toBeTruthy();
+
+    // La session vit dans le sessionStorage de l'onglet : on la vide pour
+    // retrouver un visiteur anonyme sans quitter le contexte du test.
+    await page.goto('/');
+    await page.evaluate(() => window.sessionStorage.clear());
+    await page.goto(`/reserver/${offreE2E!.offreUuid}`);
+
+    // Pas de redirection vers la connexion : le tunnel s'ouvre.
+    await expect(page.getByRole('heading', { name: 'Finaliser la réservation' })).toBeVisible();
+    await expect(page).toHaveURL(/\/reserver\//);
+
+    // Le plan des sièges est public : il se consulte avant même d'avoir un compte.
+    await page.getByRole('button', { name: 'Choisir les sièges' }).click();
+    await expect(page.locator('.plan-sieges')).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('button.siege').first()).toBeVisible();
+
+    // Le dernier bouton annonce la connexion plutôt que la confirmation.
+    await expect(page.getByRole('button', { name: 'Continuer' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Confirmer la réservation' })).toHaveCount(0);
+});
+
 test('offres : annulation finale de l’offre de test', async ({ page }) => {
     // Le backend refuse d'annuler une offre qui a encore des réservations actives :
     // on annule d'abord toutes les réservations E2E restantes depuis « Mes voyages ».

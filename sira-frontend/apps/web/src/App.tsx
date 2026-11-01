@@ -101,11 +101,7 @@ export function App() {
                         <Route path="/auth/verify/mobile" element={<VerifyMobilePage />} />
                         <Route
                             path="/reserver/:offreUuid"
-                            element={
-                                <RequireAuth>
-                                    <ReservationPage />
-                                </RequireAuth>
-                            }
+                            element={<ReservationPage />}
                         />
                         <Route
                             path="/tableau-de-bord"
