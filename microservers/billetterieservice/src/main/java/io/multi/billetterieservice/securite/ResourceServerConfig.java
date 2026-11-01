@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -57,6 +58,11 @@ public class ResourceServerConfig {
                                 "/billetterie/villes/active",
                                 "/billetterie/offres/recherche"
                         ).permitAll()
+                        // Fiche d'un voyage par UUID, lisible sans compte (mobile sans
+                        // session). Expression régulière : seul un UUID passe, mes-offres,
+                        // stats… restent protégés. Aligné avec la passerelle.
+                        .requestMatchers(RegexRequestMatcher.regexMatcher(GET,
+                                "^/billetterie/offres/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .accessDeniedHandler(new CustomAccessDeniedHandler())
