@@ -7,7 +7,6 @@ import { expect, test } from '@playwright/test';
 const ROUTES_PROTEGEES = [
     '/tableau-de-bord',
     '/mes-voyages',
-    '/reserver/00000000-0000-0000-0000-000000000000',
     '/agence',
     '/agence/demandes',
     '/conformite',
@@ -25,6 +24,16 @@ for (const route of ROUTES_PROTEGEES) {
         await expect(page.getByRole('heading', { name: 'Connexion' })).toBeVisible();
     });
 }
+
+// Le tunnel de réservation se parcourt sans compte, sièges compris : c'est le
+// dernier bouton, celui qui engage, qui demande la connexion.
+test('sans session, /reserver ouvre le tunnel plutôt que /login', async ({ page }) => {
+    await page.goto('/reserver/00000000-0000-0000-0000-000000000000');
+    // Cet identifiant n'existe pas : le tunnel répond « voyage introuvable »,
+    // ce qui suffit à prouver qu'il s'est ouvert au lieu de renvoyer au login.
+    await expect(page.locator('p.error')).toContainText(/introuvable/, { timeout: 15_000 });
+    expect(new URL(page.url()).pathname).toBe('/reserver/00000000-0000-0000-0000-000000000000');
+});
 
 test('une route inconnue renvoie vers la home', async ({ page }) => {
     await page.goto('/cette-page-n-existe-pas');

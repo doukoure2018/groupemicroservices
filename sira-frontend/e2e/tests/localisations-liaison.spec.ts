@@ -95,12 +95,31 @@ test('assistant Nouvelle liaison : 5 étapes, validation de chaque étape, exéc
     // Étape 2 : arrivée = une ville QUI A DÉJÀ UN SITE (déterministe), lue via l'API,
     // pour rester en mode « Site existant » quel que soit le jeu de données.
     await expect(precedent).toBeEnabled();
+    // L'assistant propose les sites rattachés à la ville (/sites/ville/{uuid}),
+    // ce qui ne recouvre pas toujours la ville déduite de la chaîne des
+    // localisations : on choisit avec sa source à lui, sinon il bascule en
+    // « Créer un site » et le menu des sites n'existe plus.
     const ctx = await apiConnectee(baseURL!);
-    const { sites } = await lireData<{ sites: Array<{ nom: string; villeLibelle?: string; actif?: boolean }> }>(ctx, '/billetterie/sites');
+    const { sites } = await lireData<{ sites: Array<{ nom: string; villeUuid?: string; villeLibelle?: string; actif?: boolean }> }>(ctx, '/billetterie/sites');
+    const villesCandidates = [
+        ...new Map(
+            sites.filter((x) => x.villeUuid && x.villeLibelle && x.villeLibelle !== VILLE && x.actif !== false).map((x) => [x.villeUuid!, x.villeLibelle!])
+        ).entries()
+    ];
+    let siteArrivee: { nom: string } | undefined;
+    let villeArrivee: string | undefined;
+    for (const [villeUuid, villeLibelle] of villesCandidates) {
+        const { sites: sitesVille } = await lireData<{ sites: Array<{ nom: string; actif?: boolean }> }>(ctx, `/billetterie/sites/ville/${villeUuid}`);
+        const retenu = sitesVille.find((x) => x.actif !== false);
+        if (retenu) {
+            siteArrivee = retenu;
+            villeArrivee = villeLibelle;
+            break;
+        }
+    }
     await ctx.dispose();
-    const siteArrivee = sites.find((x) => x.villeLibelle && x.villeLibelle !== VILLE && x.actif !== false);
-    expect(siteArrivee, 'il faut un site actif dans une autre ville').toBeTruthy();
-    await choisirDropdown(page, dropdownSousLabel(page.locator('main'), /^Ville/), siteArrivee!.villeLibelle!);
+    expect(siteArrivee, 'il faut une ville avec un site actif rattaché').toBeTruthy();
+    await choisirDropdown(page, dropdownSousLabel(page.locator('main'), /^Ville/), villeArrivee!);
     await expect(page.getByRole('button', { name: 'Site existant' })).toBeVisible();
     await page.getByRole('button', { name: 'Site existant' }).click();
     await choisirDropdown(page, dropdownSousLabel(page.locator('main'), /^Site \*/), siteArrivee!.nom);

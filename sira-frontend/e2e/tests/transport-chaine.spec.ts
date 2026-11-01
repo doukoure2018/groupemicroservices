@@ -280,7 +280,7 @@ test('véhicules : création et transitions de statut (maintenance → remise en
     await boutonIcone(await trouverLigne(page, IMMAT_TEMP), 'pi-trash').click();
     await accepterConfirmation(page, 'Supprimer');
     await attendreToastSucces(page, /supprimé/);
-    expect(await trouverLigne(page, IMMAT_TEMP).catch(() => null)).toBeNull();
+    await expect(ligneTableau(page, IMMAT_TEMP)).toHaveCount(0);
 });
 
 async function ligneOffreE2E(page: Page) {
@@ -530,13 +530,34 @@ test('réservation : le tunnel et le plan des sièges se visitent sans compte', 
     await expect(page.getByRole('button', { name: 'Confirmer la réservation' })).toHaveCount(0);
 });
 
-test('réservation : retrouver ses billets sans compte, numéro et contact', async ({ page }) => {
-    // Le parcours voyageur a laissé une réservation confirmée avec ce contact.
-    await page.goto('/mes-voyages');
-    const carte = page.locator('li.commande').filter({ hasText: VILLE }).first();
-    await expect(carte).toBeVisible({ timeout: 20_000 });
-    const numero = ((await carte.locator('.muted').first().textContent()) ?? '').replace('Commande', '').trim();
-    expect(numero).toMatch(/^CMD-/);
+test('réservation : retrouver ses billets sans compte, numéro et contact', async ({ page, baseURL }) => {
+    // Réservation créée par l'API : le parcours voyageur annule la sienne, et
+    // un test ne doit pas dépendre de ce qu'un autre a laissé derrière lui.
+    const ctx = await apiConnectee(baseURL!);
+    const { offres } = await lireData<{ offres: Array<{ offreUuid: string; villeDepartLibelle: string; statut: string }> }>(ctx, '/billetterie/offres');
+    const offreE2E = offres.find((o) => o.villeDepartLibelle === VILLE && o.statut === 'OUVERT');
+    expect(offreE2E, 'une offre E2E ouverte doit exister').toBeTruthy();
+
+    const CONTACT = '+224600000009';
+    const devisRes = await ctx.post('/billetterie/commandes/devis', {
+        data: { offreUuid: offreE2E!.offreUuid, nombreAdultes: 1, nombreEnfants: 0, nombreBagages: 0, modeReglementCode: 'CASH' }
+    });
+    expect(devisRes.ok(), 'le devis doit être calculé').toBeTruthy();
+    const { montantAPayer } = ((await devisRes.json()) as { data: { devis: { montantAPayer: number } } }).data.devis;
+
+    const creation = await ctx.post('/billetterie/commandes', {
+        data: {
+            offreUuid: offreE2E!.offreUuid,
+            passagers: [{ nom: 'Doe', prenom: 'Consultation', telephone: CONTACT }],
+            modeReglementCode: 'CASH',
+            montantTotal: montantAPayer,
+            nombreBagages: 0,
+            contactTelephone: CONTACT
+        }
+    });
+    expect(creation.ok(), 'la réservation doit être créée').toBeTruthy();
+    const commande = ((await creation.json()) as { data: { commande: { commandeUuid: string; numeroCommande: string } } }).data.commande;
+    const numero = commande.numeroCommande;
 
     await page.goto('/');
     await page.evaluate(() => window.sessionStorage.clear());
@@ -550,11 +571,15 @@ test('réservation : retrouver ses billets sans compte, numéro et contact', asy
     await expect(page.locator('p.error')).toContainText(/Aucune réservation ne correspond/);
 
     // Le bon contact ouvre la réservation et ses billets, sans session.
-    await champSousLabel(page.locator('form'), /E-mail ou numéro de téléphone/).fill('+224600000003');
+    await champSousLabel(page.locator('form'), /E-mail ou numéro de téléphone/).fill(CONTACT);
     await page.getByRole('button', { name: 'Rechercher une réservation' }).click();
     await expect(page.getByRole('heading', { name: new RegExp(VILLE) })).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('.confirmation-ligne')).toContainText(numero);
     await expect(page.locator('li.billet svg')).toBeVisible();
+
+    // La place retenue est rendue : le test ne laisse rien derrière lui.
+    await ctx.put(`/billetterie/commandes/${commande.commandeUuid}/annuler`);
+    await ctx.dispose();
 });
 
 test('offres : annulation finale de l’offre de test', async ({ page }) => {

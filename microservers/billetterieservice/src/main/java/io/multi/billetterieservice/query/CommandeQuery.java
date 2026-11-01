@@ -152,8 +152,11 @@ public final class CommandeQuery {
                c.contact_email, c.contact_telephone,
                o.offre_uuid, o.date_depart, o.heure_depart,
                o.niveau_remplissage, o.point_rencontre AS point_rendez_vous,
-               vd.libelle AS ville_depart_libelle,
-               va.libelle AS ville_arrivee_libelle,
+               -- V35 : la ville directe du site prime, la chaîne des localisations
+               -- sert de repli. Sans ce COALESCE, les commandes des sites rattachés
+               -- directement à une ville n'affichaient ni départ ni arrivée.
+               COALESCE(vsd.libelle, vd.libelle) AS ville_depart_libelle,
+               COALESCE(vsa.libelle, va.libelle) AS ville_arrivee_libelle,
                sd.nom AS site_depart,
                sa.nom AS site_arrivee,
                v.immatriculation AS vehicule_immatriculation,
@@ -170,12 +173,14 @@ public final class CommandeQuery {
         LEFT JOIN quartiers qd ON ld.quartier_id = qd.quartier_id
         LEFT JOIN communes cd ON qd.commune_id = cd.commune_id
         LEFT JOIN villes vd ON cd.ville_id = vd.ville_id
+        LEFT JOIN villes vsd ON sd.ville_id = vsd.ville_id
         INNER JOIN arrivees arr ON t.arrivee_id = arr.arrivee_id
         INNER JOIN sites sa ON arr.site_id = sa.site_id
         INNER JOIN localisations la ON sa.localisation_id = la.localisation_id
         LEFT JOIN quartiers qa ON la.quartier_id = qa.quartier_id
         LEFT JOIN communes ca ON qa.commune_id = ca.commune_id
         LEFT JOIN villes va ON ca.ville_id = va.ville_id
+        LEFT JOIN villes vsa ON sa.ville_id = vsa.ville_id
         """;
 
     public static final String FIND_COMMANDE_BY_UUID = SELECT_COMMANDE + """
