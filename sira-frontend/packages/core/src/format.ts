@@ -25,23 +25,63 @@ export function formatDistance(km: number | undefined | null): string {
 }
 
 /**
- * Date côté backend = Java LocalDate. Selon le service, elle arrive en
- * "AAAA-MM-JJ", en "AAAA-MM-JJTHH:mm:ss" ou en tableau [année, mois, jour] —
- * c'est ce dernier cas qui affichait « Invalid Date » quand on la traitait
- * comme une chaîne.
+ * Dates et instants côté backend, tels que Jackson les sérialise ici :
+ *
+ *   LocalDate      → tableau [année, mois, jour]
+ *   OffsetDateTime → nombre de secondes depuis 1970, avec décimales
+ *   et parfois une chaîne ISO, selon le service et sa configuration.
+ *
+ * Les trois formes circulent réellement dans les réponses : une commande
+ * porte `dateDepart` en tableau et `createdAt` en nombre. Tout ce qui lit une
+ * date du serveur passe donc par ici plutôt que par `new Date(valeur)`, qui
+ * ne sait pas lire un tableau, ni par `valeur.slice()`, qui casse sur un nombre.
  */
-export type DateLocale = string | number[] | null | undefined;
+export type DateLocale = string | number | number[] | null | undefined;
 
-/** Jour civil AAAA-MM-JJ, quel que soit le format reçu ; null si la date est inexploitable. */
+function deuxChiffres(n: number): string {
+    return String(n).padStart(2, '0');
+}
+
+function jourDeLaDate(d: Date): string | null {
+    if (Number.isNaN(d.getTime())) return null;
+    return `${d.getFullYear()}-${deuxChiffres(d.getMonth() + 1)}-${deuxChiffres(d.getDate())}`;
+}
+
+/**
+ * Instant en millisecondes depuis 1970, ou null si la valeur est inexploitable.
+ * Un nombre inférieur à 10^11 est lu comme des secondes : une date en
+ * millisecondes de cet ordre tomberait en 1973, ce qu'aucune donnée de la
+ * plateforme ne contient.
+ */
+export function instantMs(valeur: DateLocale): number | null {
+    if (valeur === null || valeur === undefined || valeur === '') return null;
+    if (typeof valeur === 'number') {
+        if (!Number.isFinite(valeur)) return null;
+        return valeur < 1e11 ? Math.round(valeur * 1000) : Math.round(valeur);
+    }
+    if (Array.isArray(valeur)) {
+        const [a, m, j, h, mi, s] = valeur;
+        if (!a || !m || !j) return null;
+        return new Date(a, m - 1, j, h ?? 0, mi ?? 0, s ?? 0).getTime();
+    }
+    const t = new Date(valeur).getTime();
+    return Number.isNaN(t) ? null : t;
+}
+
+/** Jour civil AAAA-MM-JJ, quelle que soit la forme reçue ; null si inexploitable. */
 export function jourIso(valeur: DateLocale): string | null {
-    if (!valeur) return null;
+    if (valeur === null || valeur === undefined || valeur === '') return null;
     if (Array.isArray(valeur)) {
         const [a, m, j] = valeur;
         if (!a || !m || !j) return null;
-        return `${a}-${String(m).padStart(2, '0')}-${String(j).padStart(2, '0')}`;
+        return `${a}-${deuxChiffres(m)}-${deuxChiffres(j)}`;
     }
-    const jour = valeur.slice(0, 10);
-    return /^\d{4}-\d{2}-\d{2}$/.test(jour) ? jour : null;
+    if (typeof valeur === 'string') {
+        const jour = valeur.slice(0, 10);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(jour)) return jour;
+    }
+    const ms = instantMs(valeur);
+    return ms === null ? null : jourDeLaDate(new Date(ms));
 }
 
 export function formatDateFr(valeur: DateLocale): string {

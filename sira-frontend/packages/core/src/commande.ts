@@ -84,7 +84,7 @@ export interface CommandeClient {
     contactEmail?: string;
     contactTelephone?: string;
     /** Instant où une commande en attente sera abandonnée faute de paiement ; vide sinon. */
-    expireLe?: string;
+    expireLe?: DateLocale;
     referencePaiement?: string;
     /** Lien du prestataire, présent uniquement tant qu'un paiement en ligne reste à faire. */
     urlPaiement?: string;

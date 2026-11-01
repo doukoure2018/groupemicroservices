@@ -1,13 +1,16 @@
+import { instantMs, type DateLocale } from '@sira/core';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, type StyleProp, type TextStyle } from 'react-native';
 import { couleurs } from './theme';
 
-function secondesRestantes(iso: string): number {
-    return Math.max(0, Math.floor((new Date(iso).getTime() - Date.now()) / 1000));
+function secondesRestantes(jusqua: DateLocale): number {
+    const fin = instantMs(jusqua);
+    if (fin === null) return 0;
+    return Math.max(0, Math.floor((fin - Date.now()) / 1000));
 }
 
 /** Le temps qu'il reste avant que le serveur n'abandonne la commande : le sien, pas une minuterie locale. */
-export function CompteARebours({ jusqua, style }: { jusqua: string; style?: StyleProp<TextStyle> }) {
+export function CompteARebours({ jusqua, style }: { jusqua: DateLocale; style?: StyleProp<TextStyle> }) {
     const [restant, setRestant] = useState(() => secondesRestantes(jusqua));
 
     useEffect(() => {
