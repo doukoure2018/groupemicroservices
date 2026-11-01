@@ -88,6 +88,10 @@ public class Offre {
     private Boolean vehiculeClimatise;
     private String vehiculeStatut;
     private String typeVehiculeLibelle;
+    private String typeVehiculeGabarit;
+    /** Plan JSON propre au véhicule ; lu par le service des sièges, jamais renvoyé tel quel. */
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private String vehiculePlanSieges;
     private String nomChauffeur;
     private String contactChauffeur;
 

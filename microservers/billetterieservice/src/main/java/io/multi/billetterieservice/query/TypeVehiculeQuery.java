@@ -19,6 +19,7 @@ public final class TypeVehiculeQuery {
             description,
             capacite_min,
             capacite_max,
+            gabarit,
             actif,
             created_at,
             updated_at
@@ -84,9 +85,9 @@ public final class TypeVehiculeQuery {
 
     public static final String INSERT = """
         INSERT INTO types_vehicules (
-            libelle, description, capacite_min, capacite_max, actif
+            libelle, description, capacite_min, capacite_max, gabarit, actif
         ) VALUES (
-            :libelle, :description, :capaciteMin, :capaciteMax, :actif
+            :libelle, :description, :capaciteMin, :capaciteMax, :gabarit, :actif
         )
         RETURNING type_vehicule_id, type_vehicule_uuid, created_at, updated_at
         """;
@@ -97,6 +98,7 @@ public final class TypeVehiculeQuery {
             description = :description,
             capacite_min = :capaciteMin,
             capacite_max = :capaciteMax,
+            gabarit = :gabarit,
             actif = :actif
         WHERE type_vehicule_uuid = :uuid
         RETURNING type_vehicule_id, created_at, updated_at

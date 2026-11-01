@@ -19,6 +19,8 @@ public class TypeVehicule {
     private String description;
     private Integer capaciteMin;
     private Integer capaciteMax;
+    /** Gabarit du plan de sièges : BUS, MINIBUS ou VOITURE. */
+    private String gabarit;
     private Boolean actif;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;

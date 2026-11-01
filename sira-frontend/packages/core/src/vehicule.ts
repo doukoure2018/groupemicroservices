@@ -81,6 +81,8 @@ export interface TypeVehicule {
     description?: string;
     capaciteMin?: number;
     capaciteMax?: number;
+    /** Gabarit du plan de sièges : BUS, MINIBUS ou VOITURE. */
+    gabarit?: string;
     actif?: boolean;
     createdAt?: string;
     updatedAt?: string;
@@ -91,6 +93,7 @@ export interface TypeVehiculeRequest {
     description?: string;
     capaciteMin?: number;
     capaciteMax?: number;
+    gabarit?: string;
     actif?: boolean;
 }
 

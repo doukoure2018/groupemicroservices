@@ -65,7 +65,7 @@ public class ResourceServerConfig {
                         // session). Expression régulière : seul un UUID passe, mes-offres,
                         // stats… restent protégés. Aligné avec la passerelle.
                         .requestMatchers(RegexRequestMatcher.regexMatcher(GET,
-                                "^/billetterie/offres/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")).permitAll()
+                                "^/billetterie/offres/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(/sieges)?$")).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .accessDeniedHandler(new CustomAccessDeniedHandler())

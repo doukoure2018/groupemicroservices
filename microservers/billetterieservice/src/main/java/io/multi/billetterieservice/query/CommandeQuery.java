@@ -31,9 +31,9 @@ public final class CommandeQuery {
      * l'embarquement n'accepte que VALIDE.
      */
     public static final String INSERT_BILLET = """
-        INSERT INTO billets (commande_id, nom_passager, telephone_passager, piece_identite, statut,
+        INSERT INTO billets (commande_id, offre_id, numero_siege, nom_passager, telephone_passager, piece_identite, statut,
                              type_passager, date_naissance, montant)
-        VALUES (:commandeId, :nomPassager, :telephonePassager, :pieceIdentite, :statut,
+        VALUES (:commandeId, :offreId, :numeroSiege, :nomPassager, :telephonePassager, :pieceIdentite, :statut,
                 :typePassager, :dateNaissance, :montant)
         RETURNING billet_id, billet_uuid, code_billet, statut, created_at
         """;
@@ -235,6 +235,15 @@ public final class CommandeQuery {
         UPDATE commandes SET offre_id = :offreId, updated_at = CURRENT_TIMESTAMP
         WHERE commande_uuid = :commandeUuid AND user_id = :userId
           AND statut IN ('CONFIRMEE', 'PAYEE')
+        """;
+
+    /**
+     * Changement de date : le billet suit la commande sur la nouvelle offre et
+     * y reçoit un siège, l'ancien étant libéré de fait.
+     */
+    public static final String DEPLACER_BILLET = """
+        UPDATE billets SET offre_id = :offreId, numero_siege = :numeroSiege, updated_at = CURRENT_TIMESTAMP
+        WHERE billet_id = :billetId
         """;
 
     public static final String UPDATE_COMMANDE_STATUT_UTILISEE = """

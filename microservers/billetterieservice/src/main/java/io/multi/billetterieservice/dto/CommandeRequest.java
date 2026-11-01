@@ -72,5 +72,8 @@ public class CommandeRequest {
 
         /** Exigée pour un enfant : c'est elle qui justifie le tarif. */
         private LocalDate dateNaissance;
+
+        /** Siège souhaité ; vide = attribué automatiquement. */
+        private String numeroSiege;
     }
 }

@@ -70,7 +70,9 @@ filtres de tri, de plages horaires et de véhicule, détail du voyage en feuille
 basse avec « Continuer » — tout se calcule sur le client avec `@sira/core`
 `recherche.ts`), réservation en quatre étapes (passagers adultes et enfants
 avec date de naissance et règle d'âge, bagages supplémentaires, contact,
-règlement) dont le récapitulatif vient du **devis serveur**
+sièges — plan du véhicule dessiné depuis `GET /billetterie/offres/{uuid}/sieges`,
+choix au doigt ou « Ignorer la sélection » pour une attribution automatique
+côte à côte —, bagages, contact, règlement) dont le récapitulatif vient du **devis serveur**
 (`POST /billetterie/commandes/devis`, public) : le total renvoyé à la
 création est celui affiché, le serveur refuse si le prix a changé ; compte à
 rebours du délai de paiement sur l'écran d'attente, paiement en

@@ -34,6 +34,7 @@ import type {
     Region,
     RegionCreateRequest,
     RegionUpdateRequest,
+    SiegesOffre,
     Site,
     SiteRequest,
     StatutPartenaire,
@@ -150,6 +151,8 @@ export function offreApi(client: SiraClient) {
         ouvertes: () => client.get<{ offres: Offre[] }>(`${BASE}/offres/ouvertes`),
         mesOffres: () => client.get<{ offres: Offre[] }>(`${BASE}/offres/mes-offres`),
         byUuid: (uuid: string) => client.get<{ offre: Offre }>(`${BASE}/offres/${uuid}`),
+        /** Public — plan du véhicule et sièges déjà pris, pour choisir avant de réserver. */
+        sieges: (uuid: string) => client.get<{ sieges: SiegesOffre }>(`${BASE}/offres/${uuid}/sieges`, { auth: false }),
         aujourdHui: () => client.get<{ offres: Offre[] }>(`${BASE}/offres/aujourd-hui`),
         aVenir: () => client.get<{ offres: Offre[] }>(`${BASE}/offres/a-venir`),
         passees: () => client.get<{ offres: Offre[] }>(`${BASE}/offres/passees`),

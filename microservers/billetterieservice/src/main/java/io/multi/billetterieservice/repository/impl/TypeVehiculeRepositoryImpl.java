@@ -30,6 +30,7 @@ public class TypeVehiculeRepositoryImpl implements TypeVehiculeRepository {
             .description(rs.getString("description"))
             .capaciteMin(rs.getObject("capacite_min", Integer.class))
             .capaciteMax(rs.getObject("capacite_max", Integer.class))
+            .gabarit(rs.getString("gabarit"))
             .actif(rs.getBoolean("actif"))
             .createdAt(rs.getObject("created_at", OffsetDateTime.class))
             .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
@@ -146,6 +147,7 @@ public class TypeVehiculeRepositoryImpl implements TypeVehiculeRepository {
                 .param("description", typeVehicule.getDescription())
                 .param("capaciteMin", typeVehicule.getCapaciteMin())
                 .param("capaciteMax", typeVehicule.getCapaciteMax())
+                .param("gabarit", typeVehicule.getGabarit() != null ? typeVehicule.getGabarit() : "BUS")
                 .param("actif", typeVehicule.getActif() != null ? typeVehicule.getActif() : true)
                 .query((rs, rowNum) -> {
                     typeVehicule.setTypeVehiculeId(rs.getLong("type_vehicule_id"));
@@ -165,6 +167,7 @@ public class TypeVehiculeRepositoryImpl implements TypeVehiculeRepository {
                 .param("description", typeVehicule.getDescription())
                 .param("capaciteMin", typeVehicule.getCapaciteMin())
                 .param("capaciteMax", typeVehicule.getCapaciteMax())
+                .param("gabarit", typeVehicule.getGabarit() != null ? typeVehicule.getGabarit() : "BUS")
                 .param("actif", typeVehicule.getActif())
                 .param("uuid", typeVehicule.getTypeVehiculeUuid())
                 .query((rs, rowNum) -> {

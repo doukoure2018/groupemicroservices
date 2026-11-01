@@ -93,6 +93,7 @@ export interface Offre {
     vehiculeClimatise?: boolean;
     vehiculeStatut?: string;
     typeVehiculeLibelle?: string;
+    typeVehiculeGabarit?: string;
     nomChauffeur?: string;
     contactChauffeur?: string;
 

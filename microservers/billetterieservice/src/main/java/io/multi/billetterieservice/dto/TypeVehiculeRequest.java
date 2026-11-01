@@ -29,5 +29,9 @@ public class TypeVehiculeRequest {
     @Min(value = 1, message = "La capacité maximale doit être au moins 1")
     private Integer capaciteMax;
 
+    /** Gabarit du plan de sièges ; BUS par défaut. */
+    @jakarta.validation.constraints.Pattern(regexp = "BUS|MINIBUS|VOITURE", message = "Le gabarit doit être BUS, MINIBUS ou VOITURE")
+    private String gabarit;
+
     private Boolean actif;
 }

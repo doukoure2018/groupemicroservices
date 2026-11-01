@@ -8,6 +8,7 @@ import io.multi.clients.domain.User;
 import io.multi.billetterieservice.domain.Devis;
 import io.multi.billetterieservice.dto.CommandeRequest;
 import io.multi.billetterieservice.dto.DevisRequest;
+import io.multi.billetterieservice.service.sieges.SiegesService;
 import io.multi.billetterieservice.service.tarification.Tarificateur;
 import io.multi.billetterieservice.event.Event;
 import io.multi.billetterieservice.event.EventType;
@@ -58,6 +59,7 @@ public class CommandeServiceImpl implements CommandeService {
      */
     private final List<PrestatairePaiement> prestataires;
     private final Tarificateur tarificateur;
+    private final SiegesService siegesService;
 
     /** Même délai que la purge : c'est lui que le client voit s'écouler. */
     @org.springframework.beans.factory.annotation.Value("${paiement.delai-expiration-minutes:30}")
@@ -229,7 +231,7 @@ public class CommandeServiceImpl implements CommandeService {
         if (request.getMontantTotal() != null && request.getMontantTotal().compareTo(montantPaye) != 0) {
             log.warn("Commande refusée : total vu par le client {} ≠ total calculé {} (offre {})",
                     request.getMontantTotal(), montantPaye, offre.getOffreUuid());
-            throw new ApiException("Le prix a changé depuis l'affichage : " + montantPaye.toPlainString()
+            throw new ApiException("Le prix a changé depuis l'affichage : " + montantPaye.stripTrailingZeros().toPlainString()
                     + " " + (offre.getDevise() != null ? offre.getDevise() : "GNF")
                     + " à régler. Vérifiez le récapitulatif puis confirmez à nouveau.");
         }
@@ -271,14 +273,24 @@ public class CommandeServiceImpl implements CommandeService {
 
         log.info("Commande créée: {} ({})", numeroCommande, commandeUuid);
 
-        // 5. Insérer les billets
+        // 5. Insérer les billets, chacun avec son siège. Les sièges choisis sont
+        // vérifiés, les autres attribués ; l'index unique de la base tranche les
+        // courses entre deux commandes simultanées.
+        List<String> sieges = siegesService.attribuer(offre,
+                request.getPassagers().stream().map(CommandeRequest.PassagerDto::getNumeroSiege).toList(), nombrePassagers);
         List<Billet> billets = new ArrayList<>();
-        for (CommandeRequest.PassagerDto passager : request.getPassagers()) {
+        for (int i = 0; i < request.getPassagers().size(); i++) {
+            CommandeRequest.PassagerDto passager = request.getPassagers().get(i);
+            String siege = sieges.get(i);
             String nomComplet = passager.getPrenom() + " " + passager.getNom();
             String type = typePassager(passager);
             BigDecimal montantBillet = Tarificateur.ENFANT.equals(type) ? devis.getMontantEnfant() : devis.getMontantAdulte();
-            var billetResult = jdbcClient.sql(CommandeQuery.INSERT_BILLET)
+            Billet billetResult;
+            try {
+            billetResult = jdbcClient.sql(CommandeQuery.INSERT_BILLET)
                     .param("commandeId", commandeId)
+                    .param("offreId", offre.getOffreId())
+                    .param("numeroSiege", siege)
                     .param("nomPassager", nomComplet)
                     .param("telephonePassager", vide(passager.getTelephone()) ? null : passager.getTelephone())
                     .param("pieceIdentite", passager.getPieceIdentite())
@@ -299,8 +311,14 @@ public class CommandeServiceImpl implements CommandeService {
                             .typePassager(type)
                             .dateNaissance(passager.getDateNaissance())
                             .montant(montantBillet)
+                            .numeroSiege(siege)
                             .build())
                     .single();
+            } catch (org.springframework.dao.DuplicateKeyException e) {
+                // Un autre voyageur a pris ce siège entre la vérification et l'insertion :
+                // la transaction est défaite, rien n'est retenu.
+                throw new ApiException("Le siège " + siege + " vient d'être pris par un autre voyageur, choisissez-en un autre");
+            }
 
             billets.add(billetResult);
             log.info("Billet créé: {} pour {}", billetResult.getCodeBillet(), nomComplet);
@@ -739,6 +757,19 @@ public class CommandeServiceImpl implements CommandeService {
                 .update();
         if (updated == 0) {
             throw new ApiException("Impossible de modifier la commande");
+        }
+
+        // Les billets suivent la commande et reçoivent un siège sur le nouveau
+        // départ ; ceux de l'ancien sont libérés par le même geste.
+        List<Billet> billetsADeplacer = commande.getBillets() != null ? commande.getBillets() : List.of();
+        List<String> nouveauxSieges = siegesService.attribuer(nouvelleOffre,
+                java.util.Collections.nCopies(billetsADeplacer.size(), null), billetsADeplacer.size());
+        for (int i = 0; i < billetsADeplacer.size(); i++) {
+            jdbcClient.sql(CommandeQuery.DEPLACER_BILLET)
+                    .param("offreId", nouvelleOffre.getOffreId())
+                    .param("numeroSiege", nouveauxSieges.get(i))
+                    .param("billetId", billetsADeplacer.get(i).getBilletId())
+                    .update();
         }
 
         log.info("Commande {} déplacée: {} -> {} (montant d'origine conservé)", commandeUuid,

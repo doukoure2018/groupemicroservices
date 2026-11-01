@@ -7,6 +7,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import { api } from '../../api';
 import { useAuth } from '../../auth/contexte';
 import { ExigerSession } from '../../auth/exiger-session';
+import { SelecteurSieges } from '../../sieges/selecteur-sieges';
 import { Bandeau, Bouton, Carte, Champ, Chargement, EtatVide, styles as base } from '../../ui/base';
 import { Compteur } from '../../ui/compteur';
 import { couleurs, espaces, rayons } from '../../ui/theme';
@@ -66,6 +67,9 @@ function Reserver() {
     const [contactEmail, setContactEmail] = useState(user?.email ?? '');
     const [contactTelephone, setContactTelephone] = useState(user?.phone ?? '');
     const [modeCode, setModeCode] = useState('');
+    // Un siège par passager, dans l'ordre de la liste ; vide = laissé au serveur.
+    const [sieges, setSieges] = useState<string[]>([]);
+    const [choixSieges, setChoixSieges] = useState(false);
 
     const offre = offreQuery.data;
     const nbAdultes = passagers.filter((p) => p.typePassager === 'ADULTE').length;
@@ -116,13 +120,14 @@ function Reserver() {
             (
                 await api.commandes.create({
                     offreUuid: uuid,
-                    passagers: passagers.map((p) => ({
+                    passagers: passagers.map((p, i) => ({
                         nom: p.nom.trim(),
                         prenom: p.prenom.trim(),
                         telephone: p.telephone.trim() || undefined,
                         pieceIdentite: p.pieceIdentite.trim() || undefined,
                         typePassager: p.typePassager,
-                        dateNaissance: p.typePassager === 'ENFANT' ? (isoDepuisSaisie(p.naissance) ?? undefined) : undefined
+                        dateNaissance: p.typePassager === 'ENFANT' ? (isoDepuisSaisie(p.naissance) ?? undefined) : undefined,
+                        numeroSiege: siegesChoisis ? sieges[i] : undefined
                     })),
                     modeReglementCode: modeCode,
                     montantTotal: devis!.montantAPayer,
@@ -153,7 +158,13 @@ function Reserver() {
     }
     function ajouter(type: TypePassager) {
         setPassagers((prev) => [...prev, passagerVide(type)]);
+        setSieges([]);
     }
+    function retirer(i: number) {
+        setPassagers((prev) => prev.filter((_, j) => j !== i));
+        setSieges([]);
+    }
+    const siegesChoisis = sieges.length === passagers.length && sieges.length > 0;
 
     const messageErreur =
         reserver.error instanceof ApiError && reserver.error.message
@@ -187,7 +198,7 @@ function Reserver() {
                                     {i + 1}. {enfant ? 'Enfant' : 'Adulte'}
                                 </Text>
                                 {passagers.length > 1 && !seulAdulte && (
-                                    <Pressable accessibilityRole="button" onPress={() => setPassagers((prev) => prev.filter((_, j) => j !== i))}>
+                                    <Pressable accessibilityRole="button" onPress={() => retirer(i)}>
                                         <Text style={{ color: couleurs.danger, fontWeight: '600' }}>Retirer</Text>
                                     </Pressable>
                                 )}
@@ -227,7 +238,18 @@ function Reserver() {
                     </View>
                 )}
 
-                <Etape numero={2} titre="Bagages" />
+                <Etape numero={2} titre="Sièges" />
+                <Pressable accessibilityRole="button" onPress={() => setChoixSieges(true)}>
+                    <Carte style={styles.siegesLigne}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={base.gras}>{siegesChoisis ? `Sièges ${[...sieges].sort((a, b) => Number(a) - Number(b)).join(', ')}` : 'Choisir les sièges'}</Text>
+                            <Text style={base.attenue}>{siegesChoisis ? 'Toucher pour modifier' : 'Sinon, nous vous attribuons les premiers sièges libres, sans frais.'}</Text>
+                        </View>
+                        <Text style={styles.chevron}>›</Text>
+                    </Carte>
+                </Pressable>
+
+                <Etape numero={3} titre="Bagages" />
                 <Carte>
                     <Text style={base.gras}>Inclus</Text>
                     <Text style={base.attenue}>
@@ -248,7 +270,7 @@ function Reserver() {
                     )}
                 </Carte>
 
-                <Etape numero={3} titre="Contact" />
+                <Etape numero={4} titre="Contact" />
                 <Carte>
                     <Text style={[base.attenue, { marginBottom: espaces.md }]}>Pour vous prévenir d'un retard ou d'un changement de départ.</Text>
                     <Champ
@@ -264,7 +286,7 @@ function Reserver() {
                     <Champ libelle="Téléphone *" value={contactTelephone} onChangeText={setContactTelephone} keyboardType="phone-pad" autoComplete="tel" placeholder="+224 6XX XX XX XX" />
                 </Carte>
 
-                <Etape numero={4} titre="Règlement" />
+                <Etape numero={5} titre="Règlement" />
                 {modesQuery.isError && <Bandeau type="erreur">Impossible de charger les modes de règlement.</Bandeau>}
                 <View style={styles.modes}>
                     {modes.map((m) => (
@@ -321,6 +343,21 @@ function Reserver() {
                     enCours={reserver.isPending}
                 />
             </ScrollView>
+            <SelecteurSieges
+                offreUuid={uuid}
+                nombre={passagers.length}
+                choisis={sieges}
+                visible={choixSieges}
+                onConfirmer={(choix) => {
+                    setSieges(choix);
+                    setChoixSieges(false);
+                }}
+                onIgnorer={() => {
+                    setSieges([]);
+                    setChoixSieges(false);
+                }}
+                onFermer={() => setChoixSieges(false)}
+            />
         </KeyboardAvoidingView>
     );
 }
@@ -343,6 +380,8 @@ const styles = StyleSheet.create({
     etapeNumeroTexte: { color: couleurs.blanc, fontWeight: '800' },
     etapeTitre: { fontSize: 18, fontWeight: '700', color: couleurs.encre },
     ajouts: { flexDirection: 'row', gap: espaces.sm },
+    siegesLigne: { flexDirection: 'row', alignItems: 'center', gap: espaces.md },
+    chevron: { fontSize: 26, color: couleurs.gris, lineHeight: 28 },
     modes: { flexDirection: 'row', flexWrap: 'wrap', gap: espaces.sm },
     mode: { paddingHorizontal: espaces.lg, paddingVertical: espaces.md, borderRadius: rayons.md, borderWidth: 1, borderColor: couleurs.ligne, backgroundColor: couleurs.blanc },
     modeActif: { borderColor: couleurs.vert, backgroundColor: couleurs.vertPale },

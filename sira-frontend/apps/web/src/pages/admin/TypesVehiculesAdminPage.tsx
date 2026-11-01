@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { TypeVehicule, TypeVehiculeRequest } from '@sira/core';
+import { GABARITS_VEHICULE, libelleGabarit, type TypeVehicule, type TypeVehiculeRequest } from '@sira/core';
 import { Button } from 'primereact/button';
 import { Checkbox } from 'primereact/checkbox';
 import { Column } from 'primereact/column';
@@ -16,10 +16,11 @@ interface TypeForm {
     description: string;
     capaciteMin: string;
     capaciteMax: string;
+    gabarit: string;
     actif: boolean;
 }
 
-const FORM_VIDE: TypeForm = { libelle: '', description: '', capaciteMin: '', capaciteMax: '', actif: true };
+const FORM_VIDE: TypeForm = { libelle: '', description: '', capaciteMin: '', capaciteMax: '', gabarit: 'BUS', actif: true };
 
 export function TypesVehiculesAdminPage() {
     const { toast, succes, erreur } = useNotif();
@@ -47,6 +48,7 @@ export function TypesVehiculesAdminPage() {
                 description: form.description || undefined,
                 capaciteMin: num(form.capaciteMin),
                 capaciteMax: num(form.capaciteMax),
+                gabarit: form.gabarit,
                 actif: form.actif
             };
             return enEdition ? api.vehicules.updateType(enEdition.typeVehiculeUuid!, body) : api.vehicules.createType(body);
@@ -90,6 +92,7 @@ export function TypesVehiculesAdminPage() {
             description: t.description ?? '',
             capaciteMin: str(t.capaciteMin),
             capaciteMax: str(t.capaciteMax),
+            gabarit: t.gabarit ?? 'BUS',
             actif: t.actif ?? true
         });
         setDialogOuvert(true);
@@ -126,6 +129,7 @@ export function TypesVehiculesAdminPage() {
                         t.capaciteMin || t.capaciteMax ? `${t.capaciteMin ?? '?'} à ${t.capaciteMax ?? '?'} places` : <span className="muted">Non précisée</span>
                     }
                 />
+                <Column header="Plan de sièges" body={(t: TypeVehicule) => libelleGabarit(t.gabarit)} />
                 <Column header="Statut" body={(t: TypeVehicule) => <Tag value={t.actif ? 'Actif' : 'Inactif'} severity={t.actif ? 'success' : 'secondary'} />} />
                 <Column
                     header="Actions"
@@ -162,6 +166,16 @@ export function TypesVehiculesAdminPage() {
                         <input type="number" min={1} value={form.capaciteMax} onChange={(e) => setForm({ ...form, capaciteMax: e.target.value })} />
                     </label>
                     {!capaciteCoherente && <p className="error span-2">La capacité minimale doit être inférieure ou égale à la capacité maximale.</p>}
+                    <label className="span-2">
+                        Plan de sièges
+                        <select value={form.gabarit} onChange={(e) => setForm({ ...form, gabarit: e.target.value })}>
+                            {GABARITS_VEHICULE.map((g) => (
+                                <option key={g.code} value={g.code}>
+                                    {g.libelle}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
                     <label className="span-2">
                         Description
                         <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />

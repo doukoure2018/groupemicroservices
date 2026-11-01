@@ -114,6 +114,8 @@ export interface PassagerRequest {
     typePassager?: TypePassager;
     /** AAAA-MM-JJ, exigée pour un enfant. */
     dateNaissance?: string;
+    /** Siège souhaité ; vide = attribué automatiquement par le serveur. */
+    numeroSiege?: string;
 }
 
 export interface CommandeCreateRequest {

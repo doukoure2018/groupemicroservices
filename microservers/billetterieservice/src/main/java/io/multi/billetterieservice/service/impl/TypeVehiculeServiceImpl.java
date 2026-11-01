@@ -91,6 +91,7 @@ public class TypeVehiculeServiceImpl implements TypeVehiculeService {
                 .description(request.getDescription())
                 .capaciteMin(request.getCapaciteMin())
                 .capaciteMax(request.getCapaciteMax())
+                .gabarit(request.getGabarit() != null ? request.getGabarit() : "BUS")
                 .actif(request.getActif() != null ? request.getActif() : true)
                 .build();
 
@@ -117,6 +118,9 @@ public class TypeVehiculeServiceImpl implements TypeVehiculeService {
         existing.setDescription(request.getDescription());
         existing.setCapaciteMin(request.getCapaciteMin());
         existing.setCapaciteMax(request.getCapaciteMax());
+        if (request.getGabarit() != null) {
+            existing.setGabarit(request.getGabarit());
+        }
         if (request.getActif() != null) {
             existing.setActif(request.getActif());
         }

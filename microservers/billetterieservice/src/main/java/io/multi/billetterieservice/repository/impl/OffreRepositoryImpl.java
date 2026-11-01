@@ -99,6 +99,8 @@ public class OffreRepositoryImpl implements OffreRepository {
             .vehiculeClimatise(rs.getObject("vehicule_climatise", Boolean.class))
             .vehiculeStatut(rs.getString("vehicule_statut"))
             .typeVehiculeLibelle(rs.getString("type_vehicule_libelle"))
+            .typeVehiculeGabarit(rs.getString("type_vehicule_gabarit"))
+            .vehiculePlanSieges(rs.getString("vehicule_plan_sieges"))
             .nomChauffeur(rs.getString("nom_chauffeur"))
             .contactChauffeur(rs.getString("contact_chauffeur"))
             // Utilisateur

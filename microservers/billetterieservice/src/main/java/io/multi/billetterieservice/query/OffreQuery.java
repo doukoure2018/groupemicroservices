@@ -77,6 +77,8 @@ public final class OffreQuery {
             v.climatise AS vehicule_climatise,
             v.statut AS vehicule_statut,
             tv.libelle AS type_vehicule_libelle,
+            tv.gabarit AS type_vehicule_gabarit,
+            v.plan_sieges::text AS vehicule_plan_sieges,
             v.nom_chauffeur,
             v.contact_chauffeur,
             -- Utilisateur
