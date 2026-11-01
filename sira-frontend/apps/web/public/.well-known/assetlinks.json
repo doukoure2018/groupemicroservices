@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.billetterie.gn",
+      "sha256_cert_fingerprints": [
+        "C2:5E:CD:B5:4B:8A:47:C7:14:AD:76:67:F2:41:40:18:E0:8D:EF:CD:4F:25:1D:91:8E:00:72:84:21:CF:79:52"
+      ]
+    }
+  }
+]

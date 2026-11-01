@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CommandeClient } from '@sira/core';
+import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -45,11 +46,22 @@ function AttentePaiement() {
     const enAttente = commande?.statut === 'EN_ATTENTE';
 
     // Ouvre la page du prestataire une seule fois, dès l'arrivée sur l'écran.
+    //
+    // openAuthSessionAsync plutôt que openBrowserAsync : le navigateur se
+    // referme de lui-même dès qu'il atteint l'adresse de retour de
+    // l'application, et le voyageur se retrouve ici sans avoir rien à toucher.
+    // L'adresse est celle que Linking construit pour l'installation en cours
+    // (« sira://… » dans une version installée, « exp://…/--/… » dans Expo Go),
+    // et c'est vers elle que la page de retour du site renvoie.
     useEffect(() => {
         if (!url || pageOuverte) return;
         setPageOuverte(true);
-        void WebBrowser.openBrowserAsync(url).catch(() => undefined);
-    }, [url, pageOuverte]);
+        const retourApplication = Linking.createURL(`paiement/${reference}`);
+        void WebBrowser.openAuthSessionAsync(url, retourApplication)
+            .then(() => void etatQuery.refetch())
+            .catch(() => undefined);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [url, pageOuverte, reference]);
 
     // Retour au premier plan : vérifier sans attendre le prochain tour.
     useEffect(() => {
@@ -123,7 +135,13 @@ function AttentePaiement() {
                     }}
                     enCours={etatQuery.isFetching}
                 />
-                {url && <Bouton libelle="Rouvrir la page de paiement" variante="secondaire" onPress={() => void WebBrowser.openBrowserAsync(url).catch(() => undefined)} />}
+                {url && (
+                    <Bouton
+                        libelle="Rouvrir la page de paiement"
+                        variante="secondaire"
+                        onPress={() => void WebBrowser.openAuthSessionAsync(url, Linking.createURL(`paiement/${reference}`)).then(() => void etatQuery.refetch()).catch(() => undefined)}
+                    />
+                )}
                 <Bouton libelle="Mes voyages" variante="discret" onPress={() => router.replace('/(tabs)/voyages')} />
             </Carte>
             <Bandeau type="info">Ne payez pas deux fois : si la page du prestataire vous dit que c'est fait, utilisez « J'ai payé, vérifier ».</Bandeau>

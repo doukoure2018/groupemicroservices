@@ -46,7 +46,7 @@ test('une route inconnue renvoie vers la home', async ({ page }) => {
 // doit renvoyer vers l'application plutôt que vers le formulaire de connexion.
 test('sans session, /paiement/retour renvoie vers l’application plutôt que vers /login', async ({ page }) => {
     await page.goto('/paiement/retour?reference=PAY-TEST');
-    await expect(page.getByRole('heading', { name: /Retournez dans l’application|Retournez dans l'application/ })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: /Retour(nez)? dans l[’']application/ })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('link', { name: /Ouvrir l'application/ })).toHaveAttribute('href', 'sira://paiement/PAY-TEST');
     expect(new URL(page.url()).pathname).toBe('/paiement/retour');
 });

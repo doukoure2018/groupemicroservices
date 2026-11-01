@@ -71,6 +71,20 @@ export function PaiementRetourPage() {
         setTentatives((n) => n + 1);
     }, [enAttente, etatQuery.dataUpdatedAt]);
 
+    // Pas de session et un téléphone : le paiement vient presque sûrement de
+    // l'application, dont le navigateur a atterri ici. On y retourne tout de
+    // suite plutôt que d'attendre un geste. Une seule tentative : si
+    // l'application n'est pas installée, le navigateur ne bouge pas et le
+    // bouton de secours reste là. Sur un ordinateur on ne tente rien, il n'y a
+    // pas d'application à ouvrir.
+    const rebondTente = useRef(false);
+    useEffect(() => {
+        if (user !== null || rebondTente.current) return;
+        if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
+        rebondTente.current = true;
+        window.location.replace(lienApplication(reference));
+    }, [user, reference]);
+
     // Le règlement est tranché : la référence n'a plus à traîner dans l'onglet.
     useEffect(() => {
         if (!commande || commande.statut === 'EN_ATTENTE') return;
@@ -89,15 +103,14 @@ export function PaiementRetourPage() {
     // l'application mobile, dont le navigateur revient ici après le prestataire.
     // L'application suit le paiement d'elle-même ; il suffit d'y retourner.
     if (user === null) {
-        const lienApp = reference ? `sira://paiement/${encodeURIComponent(reference)}` : 'sira://';
         return (
             <Message
                 icone="pi-mobile"
-                titre="Retournez dans l'application"
-                texte="Votre paiement est pris en compte. L'application SYNERGIA vérifie son état et affichera vos billets dès que l'opérateur l'aura confirmé. Vous pouvez fermer cette page."
+                titre="Retour dans l'application…"
+                texte="Votre paiement est pris en compte. L'application SYNERGIA vérifie son état et affichera vos billets dès que l'opérateur l'aura confirmé. Si elle ne s'ouvre pas d'elle-même, touchez le bouton ci-dessous."
                 action={
                     <>
-                        <a className="bouton-lien" href={lienApp}>
+                        <a className="bouton-lien" href={lienApplication(reference)}>
                             <i className="pi pi-mobile" aria-hidden="true" /> Ouvrir l'application
                         </a>
                         <Link className="lien-discret" to={`/login?redirect=${encodeURIComponent('/paiement/retour' + (reference ? `?reference=${encodeURIComponent(reference)}` : ''))}`}>
@@ -209,6 +222,15 @@ export function PaiementRetourPage() {
             }
         />
     );
+}
+
+/**
+ * Adresse qui ramène dans l'application. Le schéma « sira » appartient à
+ * l'application installée ; Expo Go, lui, n'en possède aucun, si bien que ce
+ * retour ne peut se vérifier que sur une version installée.
+ */
+function lienApplication(reference: string | null): string {
+    return reference ? `sira://paiement/${encodeURIComponent(reference)}` : 'sira://';
 }
 
 /** Même habillage pour les cinq issues possibles de la page. */

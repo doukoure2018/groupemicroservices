@@ -19,7 +19,34 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.billetterie.gn",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "test.synergia-guinee.com",
+              "pathPrefix": "/paiement/retour"
+            },
+            {
+              "scheme": "https",
+              "host": "synergia-guinee.com",
+              "pathPrefix": "/paiement/retour"
+            },
+            {
+              "scheme": "https",
+              "host": "www.synergia-guinee.com",
+              "pathPrefix": "/paiement/retour"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
