@@ -3377,3 +3377,42 @@ html:has(.admin-app) {
     display: flex;
     flex-direction: column;
 }
+
+/* --- Retour de paiement : coquille nue, centrée, sans navigation --- */
+.page-retour {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 24px 16px;
+    background: var(--fond);
+}
+.page-retour-emblème {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+}
+.page-retour-contenu {
+    width: min(480px, 100%);
+}
+.page-retour .card {
+    margin: 0;
+}
+.page-retour .etat-vide {
+    padding: 28px 20px;
+}
+.page-retour .commande-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+}
+.page-retour .commande-actions .bouton-lien {
+    justify-content: center;
+}
+.page-retour .lien-discret,
+.page-retour .commande-actions a:not(.bouton-lien) {
+    text-align: center;
+}

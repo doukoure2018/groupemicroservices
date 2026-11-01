@@ -90,6 +90,15 @@ export function App() {
                         <Route path="leads" element={<LeadsAdminPage />} />
                     </Route>
 
+                    {/* Retour de paiement : une seule chose à dire, sur un écran nu — ni
+                        barre verte ni pied de page. Le voyageur arrive ici depuis
+                        l'opérateur, souvent dans le navigateur de son téléphone et sans
+                        session web ; la page distingue ce cas et renvoie vers l'application. */}
+                    <Route element={<ChromeRetour />}>
+                        <Route path="/paiement/retour" element={<PaiementRetourPage />} />
+                        <Route path="/paiement/retour/:reference" element={<PaiementRetourPage />} />
+                    </Route>
+
                     {/* Tout le reste : chrome public (barre verte + pied de page). */}
                     <Route element={<ChromePublic />}>
                         <Route path="/" element={<HomePage />} />
@@ -144,11 +153,6 @@ export function App() {
                                 </RequireAuth>
                             }
                         />
-                        {/* Pas de RequireAuth : un paiement lancé depuis l'application mobile
-                            revient ici dans le navigateur du téléphone, sans session web. La page
-                            distingue elle-même ce cas et renvoie vers l'application. */}
-                        <Route path="/paiement/retour" element={<PaiementRetourPage />} />
-                        <Route path="/paiement/retour/:reference" element={<PaiementRetourPage />} />
                         <Route
                             path="/mes-voyages"
                             element={
@@ -163,6 +167,21 @@ export function App() {
                 </BarriereErreur>
             </AuthProvider>
         </BrowserRouter>
+    );
+}
+
+/**
+ * Coquille du retour de paiement : l'emblème, le contenu centré, rien d'autre.
+ * Pas de navigation à offrir à quelqu'un qui n'a qu'une chose à faire.
+ */
+function ChromeRetour() {
+    return (
+        <div className="page-retour">
+            <img className="page-retour-emblème" src="/brand/synergia-emblem-512x512.png" alt="SYNERGIA" width={56} height={56} />
+            <main className="page-retour-contenu">
+                <Outlet />
+            </main>
+        </div>
     );
 }
 

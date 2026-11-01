@@ -111,7 +111,7 @@ export function PaiementRetourPage() {
             <Message
                 icone="pi-mobile"
                 titre="Retour dans l'application…"
-                texte="Votre paiement est pris en compte. L'application SYNERGIA vérifie son état et affichera vos billets dès que l'opérateur l'aura confirmé. Si elle ne s'ouvre pas d'elle-même, touchez le bouton ci-dessous."
+                texte="Votre paiement est pris en compte. L'application affichera vos billets dès que l'opérateur l'aura confirmé."
                 action={
                     <>
                         <a className="bouton-lien" href={lienApplication(reference)}>

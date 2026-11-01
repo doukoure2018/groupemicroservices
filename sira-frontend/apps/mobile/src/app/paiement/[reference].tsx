@@ -12,17 +12,17 @@ import { CompteARebours } from '../../ui/compte-a-rebours';
 import { espaces } from '../../ui/theme';
 import { ExigerSession } from '../../auth/exiger-session';
 
-/**
- * Adresse qui ramène dans l'application après le passage chez le prestataire.
- *
- * Le schéma est imposé plutôt que laissé au défaut : l'application en déclare
- * deux (« sira » et « synergia ») et la version de développement choisit le
- * second, alors que la page de retour du site renvoie toujours vers « sira ».
- * Sans cet accord, le navigateur ne reconnaîtrait pas son adresse de retour et
- * resterait ouvert.
- */
-function urlRetourApplication(reference: string): string {
-    return Linking.createURL(`paiement/${reference}`, { scheme: 'sira' });
+/** Le navigateur du téléphone ; à défaut (adresse refusée), l'onglet interne. */
+async function ouvrirChezLePrestataire(url: string): Promise<void> {
+    try {
+        if (await Linking.canOpenURL(url)) {
+            await Linking.openURL(url);
+            return;
+        }
+    } catch {
+        /* on retombe sur l'onglet interne */
+    }
+    await WebBrowser.openBrowserAsync(url).catch(() => undefined);
 }
 
 /** Trois secondes pendant une minute trente : au-delà, une réponse franche. */
@@ -59,22 +59,19 @@ function AttentePaiement() {
     const commande = etatQuery.data;
     const enAttente = commande?.statut === 'EN_ATTENTE';
 
-    // Ouvre la page du prestataire une seule fois, dès l'arrivée sur l'écran.
-    //
-    // openAuthSessionAsync plutôt que openBrowserAsync : le navigateur se
-    // referme de lui-même dès qu'il atteint l'adresse de retour de
-    // l'application, et le voyageur se retrouve ici sans avoir rien à toucher.
-    // L'adresse est celle que Linking construit pour l'installation en cours
-    // (« sira://… » dans une version installée, « exp://…/--/… » dans Expo Go),
-    // et c'est vers elle que la page de retour du site renvoie.
+    // Ouvre la page du prestataire une seule fois, dès l'arrivée sur l'écran,
+    // dans le navigateur du téléphone et non dans un onglet interne : Chrome
+    // ne relance pas l'application qui a ouvert son propre onglet, il y
+    // affiche la page de retour puis une invite « Ouvrir l'application ».
+    // Depuis le navigateur lui-même, l'adresse de retour — un lien
+    // d'application vérifié — rend la main à l'application d'un seul geste,
+    // sans rien montrer. Le secours reste le rebond de la page du site vers
+    // « sira:// », pour une installation dont les liens ne seraient pas vérifiés.
     useEffect(() => {
         if (!url || pageOuverte) return;
         setPageOuverte(true);
         retenirPaiementEnCours(reference);
-        const retourApplication = urlRetourApplication(reference);
-        void WebBrowser.openAuthSessionAsync(url, retourApplication)
-            .then(() => void etatQuery.refetch())
-            .catch(() => undefined);
+        void ouvrirChezLePrestataire(url);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [url, pageOuverte, reference]);
 
@@ -162,13 +159,7 @@ function AttentePaiement() {
                     }}
                     enCours={etatQuery.isFetching}
                 />
-                {url && (
-                    <Bouton
-                        libelle="Rouvrir la page de paiement"
-                        variante="secondaire"
-                        onPress={() => void WebBrowser.openAuthSessionAsync(url, urlRetourApplication(reference)).then(() => void etatQuery.refetch()).catch(() => undefined)}
-                    />
-                )}
+                {url && <Bouton libelle="Rouvrir la page de paiement" variante="secondaire" onPress={() => void ouvrirChezLePrestataire(url)} />}
                 <Bouton libelle="Mes voyages" variante="discret" onPress={() => router.replace('/(tabs)/voyages')} />
             </Carte>
             <Bandeau type="info">Ne payez pas deux fois : si la page du prestataire vous dit que c'est fait, utilisez « J'ai payé, vérifier ».</Bandeau>
