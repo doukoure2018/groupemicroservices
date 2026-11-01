@@ -76,6 +76,45 @@ class _PaymentScreenState extends State<PaymentScreen>
   bool _isProcessing = false;
   final BilletterieService _billetterieService = BilletterieService();
 
+  // ---- Devis -------------------------------------------------------------
+  // Le prix vient du serveur : places, tarif enfant, bagages et frais de
+  // service y sont calculés, et la création d'une commande refuse un total
+  // différent de celui-ci. Il se recharge à chaque changement de mode, dont
+  // les frais dépendent.
+  Map<String, dynamic>? _devis;
+  bool _devisEnCours = true;
+  String? _devisErreur;
+
+  int get _totalAPayer {
+    final montant = _devis?['montantAPayer'];
+    return montant is num ? montant.round() : widget.totalAmount;
+  }
+
+  Future<void> _chargerDevis() async {
+    setState(() {
+      _devisEnCours = true;
+      _devisErreur = null;
+    });
+    try {
+      final devis = await _billetterieService.getDevis(
+        offreUuid: widget.offer.id,
+        nombreAdultes: widget.passengers?.length ?? 1,
+        modeReglementCode: _selectedMethod.code,
+      );
+      if (!mounted) return;
+      setState(() {
+        _devis = devis;
+        _devisEnCours = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _devisEnCours = false;
+        _devisErreur = "Le prix n'a pas pu être calculé. Vérifiez votre réseau puis réessayez.";
+      });
+    }
+  }
+
   // ---- Paiement en ligne -------------------------------------------------
   // Quand le serveur renvoie une adresse de paiement, la commande attend les
   // fonds et les billets ne sont pas encore utilisables. Le client règle chez
@@ -99,6 +138,7 @@ class _PaymentScreenState extends State<PaymentScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _chargerDevis();
   }
 
   @override
@@ -154,15 +194,7 @@ class _PaymentScreenState extends State<PaymentScreen>
     ),
   ];
 
-  double get _feePercentage {
-    final method = _paymentMethods.firstWhere(
-      (m) => m.method == _selectedMethod,
-    );
-    return double.parse(method.fee.replaceAll('%', '')) / 100;
-  }
-
-  int get _fees => (widget.totalAmount * _feePercentage).round();
-  int get _grandTotal => widget.totalAmount + _fees;
+  int get _grandTotal => _totalAPayer;
 
   @override
   Widget build(BuildContext context) {
@@ -212,7 +244,9 @@ class _PaymentScreenState extends State<PaymentScreen>
                         ),
                         const SizedBox(height: AppSize.s8),
                         Text(
-                          '${_formatPrice(widget.totalAmount)} GNF',
+                          _devisEnCours
+                              ? '…'
+                              : '${_formatPrice(_totalAPayer)} GNF',
                           style: getBoldStyle(
                             color: ColorManager.primary,
                             fontSize: 32,
@@ -220,9 +254,14 @@ class _PaymentScreenState extends State<PaymentScreen>
                         ),
                         const SizedBox(height: AppSize.s4),
                         Text(
-                          '+ frais selon mode de paiement',
+                          _devisErreur ??
+                              (_devisEnCours
+                                  ? 'Calcul du prix…'
+                                  : 'Places, bagages et frais de service compris'),
                           style: getRegularStyle(
-                            color: ColorManager.textSecondary,
+                            color: _devisErreur != null
+                                ? ColorManager.error
+                                : ColorManager.textSecondary,
                             fontSize: FontSize.s12,
                           ),
                         ),
@@ -250,7 +289,11 @@ class _PaymentScreenState extends State<PaymentScreen>
                         onTap: _isProcessing
                             ? null
                             : () =>
-                                setState(() => _selectedMethod = method.method),
+                                () {
+                                  setState(() => _selectedMethod = method.method);
+                                  // Les frais dépendent du mode : le devis se refait.
+                                  _chargerDevis();
+                                }(),
                         child: Container(
                           padding: const EdgeInsets.all(AppPadding.p16),
                           decoration: BoxDecoration(
@@ -332,7 +375,9 @@ class _PaymentScreenState extends State<PaymentScreen>
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _isProcessing ? null : _handlePayment,
+                  onPressed: _isProcessing || _devisEnCours || _devis == null
+                      ? null
+                      : _handlePayment,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorManager.primary,
                     foregroundColor: ColorManager.white,
@@ -442,7 +487,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           p.map((k, v) => MapEntry(k, v.toString()))
         ).toList(),
         modeReglementCode: _selectedMethod.code,
-        montantTotal: widget.totalAmount,
+        montantTotal: _totalAPayer,
       );
 
       if (!mounted) return;

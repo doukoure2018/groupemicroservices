@@ -148,6 +148,32 @@ class BilletterieService {
     }
   }
 
+  /// POST /billetterie/commandes/devis - Prix d'une réservation, calculé par
+  /// le serveur avant toute commande.
+  ///
+  /// C'est la seule source du montant : depuis que le serveur facture des
+  /// frais de service et refuse un total différent de celui qu'il a calculé,
+  /// un prix deviné côté application ferait échouer la réservation.
+  Future<Map<String, dynamic>> getDevis({
+    required String offreUuid,
+    required int nombreAdultes,
+    int nombreEnfants = 0,
+    int nombreBagages = 0,
+    String? modeReglementCode,
+  }) async {
+    final response = await _api.post(
+      '$_basePath/commandes/devis',
+      data: {
+        'offreUuid': offreUuid,
+        'nombreAdultes': nombreAdultes,
+        'nombreEnfants': nombreEnfants,
+        'nombreBagages': nombreBagages,
+        if (modeReglementCode != null) 'modeReglementCode': modeReglementCode,
+      },
+    );
+    return response.data['data']['devis'] as Map<String, dynamic>;
+  }
+
   /// POST /billetterie/commandes - Créer commande + billets + paiement
   Future<Map<String, dynamic>> createCommande({
     required String offreUuid,
