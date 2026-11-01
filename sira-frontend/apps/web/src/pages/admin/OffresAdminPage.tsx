@@ -9,6 +9,7 @@ import {
     getTauxRemplissage,
     hasPromotion,
     hasRole,
+    jourIso,
     type Offre,
     type OffreRequest
 } from '@sira/core';
@@ -199,7 +200,7 @@ export function OffresAdminPage() {
         setForm({
             trajetUuid: offre.trajetUuid ?? '',
             vehiculeUuid: offre.vehiculeUuid ?? '',
-            dateDepart: offre.dateDepart ?? '',
+            dateDepart: jourIso(offre.dateDepart) ?? '',
             heureDepart: formatHeure(offre.heureDepart) === '-' ? '' : formatHeure(offre.heureDepart),
             heureArriveeEstimee: formatHeure(offre.heureArriveeEstimee) === '-' ? '' : formatHeure(offre.heureArriveeEstimee),
             nombrePlacesTotal: String(offre.nombrePlacesTotal ?? ''),

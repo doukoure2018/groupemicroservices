@@ -7,6 +7,7 @@ import {
     formatMontant,
     getMontantEffectif,
     hasPromotion,
+    jourIso,
     nombreSiegesLibres,
     voyageursDepuisParams,
     type CommandeClient,
@@ -101,7 +102,7 @@ export function ReservationPage() {
     });
     const devis = devisQuery.data;
     const ageAdulte = devis?.ageAdulteMinimum ?? 15;
-    const jourVoyage = offre?.dateDepart ? String(offre.dateDepart).slice(0, 10) : null;
+    const jourVoyage = jourIso(offre?.dateDepart);
     const siegesChoisis = sieges.length === passagers.length && sieges.length > 0;
 
     function erreurNaissance(p: PassagerForm): string | null {

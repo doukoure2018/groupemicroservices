@@ -6,6 +6,8 @@ import {
     getStatutCommandeLabel,
     getStatutCommandeSeverity,
     isCommandeAnnulable,
+    aujourdhuiIso,
+    jourIso,
     peutNoterVoyage,
     peutReprendrePaiement,
     type CommandeClient
@@ -73,9 +75,8 @@ function BilletsSansCompte() {
 /** Le serveur n'accepte que les commandes confirmées ou payées dont le départ est à venir. */
 function peutChangerDeDate(commande: CommandeClient): boolean {
     if (commande.statut !== 'CONFIRMEE' && commande.statut !== 'PAYEE') return false;
-    if (!commande.dateDepart) return false;
-    const aujourdhui = new Date().toISOString().slice(0, 10);
-    return String(commande.dateDepart).slice(0, 10) >= aujourdhui;
+    const jour = jourIso(commande.dateDepart);
+    return jour !== null && jour >= aujourdhuiIso();
 }
 
 function CarteCommande({ commande }: { commande: CommandeClient }) {

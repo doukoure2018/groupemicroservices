@@ -1,4 +1,4 @@
-import type { HeureLocale } from './format.js';
+import type { DateLocale, HeureLocale } from './format.js';
 
 /** Statuts de la machine à états des offres (billetterieservice). */
 export type StatutOffre =
@@ -29,7 +29,7 @@ export interface Offre {
     trajetId?: number;
     vehiculeId?: number;
     userId?: number;
-    dateDepart?: string;
+    dateDepart?: DateLocale;
     heureDepart?: HeureLocale;
     heureArriveeEstimee?: HeureLocale;
     nombrePlacesTotal?: number;

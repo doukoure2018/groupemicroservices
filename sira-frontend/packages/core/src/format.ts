@@ -24,9 +24,33 @@ export function formatDistance(km: number | undefined | null): string {
     return `${km.toFixed(1)} km`;
 }
 
-export function formatDateFr(dateStr: string | undefined | null): string {
-    if (!dateStr) return '-';
-    const date = new Date(dateStr);
+/**
+ * Date côté backend = Java LocalDate. Selon le service, elle arrive en
+ * "AAAA-MM-JJ", en "AAAA-MM-JJTHH:mm:ss" ou en tableau [année, mois, jour] —
+ * c'est ce dernier cas qui affichait « Invalid Date » quand on la traitait
+ * comme une chaîne.
+ */
+export type DateLocale = string | number[] | null | undefined;
+
+/** Jour civil AAAA-MM-JJ, quel que soit le format reçu ; null si la date est inexploitable. */
+export function jourIso(valeur: DateLocale): string | null {
+    if (!valeur) return null;
+    if (Array.isArray(valeur)) {
+        const [a, m, j] = valeur;
+        if (!a || !m || !j) return null;
+        return `${a}-${String(m).padStart(2, '0')}-${String(j).padStart(2, '0')}`;
+    }
+    const jour = valeur.slice(0, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(jour) ? jour : null;
+}
+
+export function formatDateFr(valeur: DateLocale): string {
+    const jour = jourIso(valeur);
+    if (!jour) return '-';
+    // Date construite en heure locale : "new Date('2026-11-01')" vaut minuit UTC
+    // et reculerait d'un jour dans les fuseaux à l'ouest.
+    const [a, m, j] = jour.split('-').map(Number);
+    const date = new Date(a!, m! - 1, j!);
     if (Number.isNaN(date.getTime())) return '-';
     return date.toLocaleDateString('fr-FR', {
         weekday: 'short',

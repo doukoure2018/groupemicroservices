@@ -1,4 +1,4 @@
-import type { HeureLocale } from './format.js';
+import { jourIso, type DateLocale, type HeureLocale } from './format.js';
 
 /** Commande de voyage (réservation) — miroir du domaine billetterieservice. */
 
@@ -92,7 +92,7 @@ export interface CommandeClient {
 
     // Offre / trajet joints
     offreUuid?: string;
-    dateDepart?: string;
+    dateDepart?: DateLocale;
     heureDepart?: HeureLocale;
     villeDepartLibelle?: string;
     villeArriveeLibelle?: string;
@@ -226,6 +226,6 @@ export interface AvisClient {
  */
 export function peutNoterVoyage(commande: CommandeClient, aujourdhuiIso: string = new Date().toISOString().slice(0, 10)): boolean {
     if (!['CONFIRMEE', 'PAYEE', 'UTILISEE', 'TERMINEE'].includes(commande.statut ?? '')) return false;
-    if (!commande.dateDepart) return false;
-    return String(commande.dateDepart).slice(0, 10) < aujourdhuiIso;
+    const jour = jourIso(commande.dateDepart);
+    return jour !== null && jour < aujourdhuiIso.slice(0, 10);
 }

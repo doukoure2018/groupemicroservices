@@ -1,6 +1,6 @@
 import { useMutation, useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ApiError } from '@sira/api-client';
-import { estEnfant, formatDateFr, formatHeure, formatMontant, voyageursDepuisParams, type CommandeClient, type TypePassager } from '@sira/core';
+import { estEnfant, formatDateFr, formatHeure, formatMontant, jourIso, voyageursDepuisParams, type CommandeClient, type TypePassager } from '@sira/core';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -97,7 +97,7 @@ function Reserver() {
     });
     const devis = devisQuery.data;
     const ageAdulte = devis?.ageAdulteMinimum ?? 15;
-    const jourVoyage = offre?.dateDepart ? String(offre.dateDepart).slice(0, 10) : null;
+    const jourVoyage = jourIso(offre?.dateDepart);
 
     function erreurNaissance(p: PassagerForm): string | null {
         if (p.typePassager !== 'ENFANT' || p.naissance.length < 10) return null;

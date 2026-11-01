@@ -8,6 +8,7 @@ import {
     formatHeure,
     formatMontant,
     getMontantEffectif,
+    jourIso,
     hasPromotion,
     libelleJourCourt,
     libelleVoyageurs,
@@ -31,7 +32,7 @@ export function DetailOffre({ offre, voyageurs, onFermer, onContinuer }: { offre
     const duree = dureeOffreMinutes(o);
     const complet = estComplete(o);
     const prix = getMontantEffectif(o);
-    const jourDepart = o.dateDepart ? String(o.dateDepart).slice(0, 10) : null;
+    const jourDepart = jourIso(o.dateDepart);
     const jourArrivee = jourDepart && arrivee?.lendemain ? ajouterJours(jourDepart, 1) : null;
     const titre = jourDepart ? (jourArrivee ? `${libelleJourCourt(jourDepart)} → ${libelleJourCourt(jourArrivee)}` : libelleJourCourt(jourDepart)) : 'Voyage';
     const vehicule = [typeVehiculeOffre(o), [o.vehiculeMarque, o.vehiculeModele].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
