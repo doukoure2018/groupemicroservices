@@ -59,7 +59,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/android-icon-monochrome.png",
+          "icon": "./assets/notification-icon.png",
           "color": "#1b5e3b"
         }
       ],
@@ -69,7 +69,16 @@
           "cameraPermission": "SYNERGIA utilise l'appareil photo pour lire le code QR des billets à l'embarquement."
         }
       ],
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#1b5e3b"
+        }
+      ]
     ],
     "scheme": [
       "sira",
