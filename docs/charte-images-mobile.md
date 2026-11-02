@@ -6,17 +6,23 @@ exigent d'elle. Les fichiers livrés se déposent tels quels dans
 `sira-frontend/apps/mobile/assets/` sous les noms indiqués ; le branchement
 dans l'application est fait de notre côté.
 
-État au 2 novembre 2026 : toutes les variantes techniques — icône iOS, calques
-de l'icône adaptative Android, icône monochrome, écran de lancement, favicon,
-icône de notification, emblème de chargement — ont été **dérivées
-mécaniquement de l'emblème existant** (recoloration en blanc et or, fenêtres
-transparentes, mise à l'échelle dans les zones de sécurité, fond vert) et sont
-en place dans l'application. Ce qui suit reste la référence pour les
-**redessiner** proprement à partir d'un fichier vectoriel : la dérivation a
-les limites de sa source — une image pixel de 1024 px, aux contours
-anticrénelés — et l'icône de notification, à 24 px, gagnerait à être une
-silhouette simplifiée. Les quatre illustrations d'écrans vides (§ 4.3)
-restent à dessiner.
+État au 2 novembre 2026 : l'application de billetterie porte désormais le logo
+**SYNERGIA Trans Guinée** (le bus), et non plus l'emblème immobilier. Toutes
+les variantes techniques en ont été **dérivées mécaniquement** — détourage du
+fond, recoloration en blanc et or, blancs intérieurs rendus au fond vert, mise
+à l'échelle dans les zones de sécurité : icône iOS, calques de l'icône
+adaptative Android, icône monochrome, écran de lancement, favicon, icône de
+notification (le bus seul, le reste étant illisible à 24 px) et emblème de
+chargement.
+
+Ce qui suit reste la référence pour les **redessiner** à partir d'un fichier
+vectoriel : la dérivation a les limites de sa source, une image pixel de
+1080 × 720 aux contours anticrénelés. Les quatre illustrations d'écrans vides
+(§ 4.3) restent à dessiner.
+
+Les sources livrées sont `mobile_app/assets/images/synergia-trans.png` et
+`synergia-immo.png` (fond blanc, 1080 × 720) ; leurs versions détourées, en
+couleurs et en blanc, sont dans `sira-frontend/apps/web/public/brand/`.
 
 ---
 

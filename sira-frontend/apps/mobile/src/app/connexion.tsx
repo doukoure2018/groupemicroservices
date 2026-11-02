@@ -1,7 +1,7 @@
 import { AuthHttpError } from '@sira/auth';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/contexte';
 import { ConnexionGoogleAnnulee, ConnexionGoogleIndisponible } from '../auth/google';
 import { config } from '../config';
@@ -50,8 +50,7 @@ export default function Connexion() {
         <KeyboardAvoidingView style={base.ecran} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
                 <View style={styles.entete}>
-                    <Text style={styles.marque}>SYNERGIA</Text>
-                    <Text style={styles.devise}>IMMO · TRANS · GUINÉE</Text>
+                    <Image source={require('../../assets/logo-trans-blanc.png')} style={styles.logo} accessibilityLabel="SYNERGIA Trans Guinée" />
                     {config.nom === 'test' && <Text style={styles.badgeTest}>Environnement de test</Text>}
                 </View>
 
@@ -120,8 +119,7 @@ export default function Connexion() {
 const styles = StyleSheet.create({
     page: { flexGrow: 1, padding: espaces.lg, paddingTop: espaces.xl, backgroundColor: couleurs.vert },
     entete: { alignItems: 'center', marginBottom: espaces.xl },
-    marque: { color: couleurs.blanc, fontSize: 32, fontWeight: '800', letterSpacing: 2 },
-    devise: { color: '#cfe3d6', letterSpacing: 3, fontSize: 12, marginTop: espaces.xs },
+    logo: { width: 220, height: 188, resizeMode: 'contain' },
     badgeTest: { marginTop: espaces.md, color: couleurs.vertFonce, backgroundColor: couleurs.or, paddingHorizontal: espaces.md, paddingVertical: 4, borderRadius: 999, fontWeight: '700', fontSize: 12 },
     carte: { backgroundColor: couleurs.blanc, borderRadius: 20, padding: espaces.xl },
     separateur: { height: 1, backgroundColor: couleurs.ligne, marginVertical: espaces.xl },
