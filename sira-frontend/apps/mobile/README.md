@@ -88,6 +88,23 @@ les contrôleurs un onglet de contrôle des billets : lecture du QR par
 l'appareil photo ou saisie du code, un seul scan traité à la fois, verdict
 vert ou rouge avec le message du serveur.
 
+## Paiement en ligne : pourquoi une WebView
+
+La page du prestataire s'affiche **dans** l'écran de paiement
+(`react-native-webview`), pas dans le navigateur du téléphone. Chrome refuse
+de rendre la main à une application sans un geste du voyageur ; or la
+redirection de retour est déclenchée par l'opérateur lui-même, et Chrome
+répondait par une page puis une demande de permission (« Poursuivre dans
+SYNERGIA ? »). Dans l'application, c'est nous qui voyons passer l'adresse de
+retour (`/paiement/retour…` ou `sira://`) et fermons la page ; l'application
+restant au premier plan, l'interrogation de l'état continue pendant le
+paiement, et une confirmation donnée sur la demande Orange Money suffit à
+ouvrir les billets. Les liens d'application Android (`assetlinks.json`, route
+`paiement/retour`) restent en place pour un paiement lancé depuis le site.
+
+Module natif : après son ajout, la version de développement se reconstruit
+(`npx expo run:android`) ; Expo Go ne l'embarque pas.
+
 ## Reste à porter depuis le Flutter
 
 Notifications poussées et connexion Google sur iOS : les deux demandent un
