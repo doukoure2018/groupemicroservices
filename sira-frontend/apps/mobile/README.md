@@ -1,10 +1,29 @@
-# SYNERGIA mobile (Expo)
+# SYNERGIA Trans (Expo)
 
-Application mobile voyageur, en React Native via Expo, qui remplace progressivement
-l'application Flutter de `mobile_app/`. Elle consomme les paquets partagés du
-monorepo : `@sira/core` (modèles, formatage), `@sira/api-client` (API typée) et
-`@sira/auth` (session, rafraîchissement silencieux), avec les jetons dans le
-trousseau du téléphone (`expo-secure-store`).
+Application mobile du **voyageur** — recherche, réservation, billets —, en React
+Native via Expo. Elle remplace progressivement la partie transport de
+l'application Flutter de `mobile_app/`, qui garde l'immobilier. Elle consomme
+les paquets partagés du monorepo : `@sira/core` (modèles, formatage),
+`@sira/api-client` (API typée) et `@sira/auth` (session, rafraîchissement
+silencieux), avec les jetons dans le trousseau du téléphone
+(`expo-secure-store`).
+
+**SYNERGIA Immo sera une application distincte.** Ce qui doit donc rester propre
+à celle-ci, pour que les deux cohabitent sur un même téléphone :
+
+| | |
+|---|---|
+| Nom affiché | `SYNERGIA Trans` |
+| Court nom Expo (`slug`) | `synergia-trans` — `synergia` tout court est laissé à l'immobilier |
+| Schémas de liens profonds | `synergia-trans://`, et `sira://` hérité : c'est lui que le site emploie pour le retour de paiement et l'activation par courriel |
+| Paquet Android | `com.billetterie.gn` |
+| Identifiant iOS | `com.sira.guinee.app` |
+
+Les deux derniers portent encore les noms d'avant la bascule de marque. Les
+changer ferait une application neuve aux yeux des magasins, casserait la
+vérification des liens (`assetlinks.json` déclare `com.billetterie.gn`) et
+empêcherait cette application de remplacer la Flutter en place : cela ne se
+décide qu'**avant la première publication**.
 
 ## Lancer
 

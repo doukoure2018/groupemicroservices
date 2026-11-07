@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "SYNERGIA",
-    "slug": "synergia",
+    "name": "SYNERGIA Trans",
+    "slug": "synergia-trans",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -82,7 +82,7 @@
     ],
     "scheme": [
       "sira",
-      "synergia"
+      "synergia-trans"
     ],
     "experiments": {
       "typedRoutes": true
