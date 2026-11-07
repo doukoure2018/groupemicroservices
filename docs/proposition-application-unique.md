@@ -1,0 +1,164 @@
+# Une seule application, deux univers — proposition d'architecture
+
+SYNERGIA Trans (voyages) et SYNERGIA Immo (logement) vivront dans **la même
+application mobile**. Ce document propose comment les y faire tenir ensemble
+sans que l'une encombre l'autre : ce que le voyageur voit en premier, comment
+il passe d'un univers à l'autre, ce qui est partagé, comment le code s'organise,
+et dans quel ordre construire. Rien ici n'est encore codé, sauf le point 7.
+
+---
+
+## 1. Ce qui existe déjà
+
+| Côté | Transport | Immobilier |
+|---|---|---|
+| Serveur | `billetterieservice`, complet | `immobilierservice`, **complet** : 20 tables, 19 ressources (biens, photos, favoris, contacts, visites, besoins, brouillons, agences, conformité, signalements, préférences) ; recherche et fiche d'un bien **publiques** |
+| Paquets partagés | `@sira/core` + `@sira/api-client` | **déjà là** : `immo.ts` dans les deux (modèles `Propriete`, `LeadContact`, `LeadVisite`, `DemandeBesoin`, `AgenceOnboarding`… ; clients `proprieteApi`, `immoClientApi`, `agenceApi`, `leadApi`) |
+| Site web | tout le parcours voyageur + administration | **côté agences seulement** : inscription d'agence, demandes clients, conformité, modération. Aucune recherche de bien pour le public |
+| Mobile Expo | 25 écrans, tout le parcours | rien |
+| Mobile Flutter | parcours ancien | 7 écrans : recherche avec filtres, fiche du bien (le plus riche : photos, carte, contact, visite, partage, favori), favoris, mes demandes, déclarer un besoin, assistant de publication en 4 étapes, mes annonces |
+
+Deux conséquences. **L'application mobile sera le canal grand public de
+l'immobilier** — le site n'en a pas — ce qui justifie d'y mettre du soin. Et
+**tout le travail serveur est fait** : l'immobilier mobile est un chantier
+d'écrans, pas de modèle.
+
+---
+
+## 2. Ce que le hub Flutter enseigne
+
+Il réunissait les deux univers dans une barre à trois onglets — *Immobilier*
+(premier au démarrage), *Billetterie*, *Profil* — chaque univers ayant **sa
+propre palette** (orange d'un côté, sarcelle de l'autre), et le transport
+embarqué comme une application dans l'application.
+
+Ce qu'il faut garder : **un seul compte, un seul profil, une seule session**,
+et des univers joignables en un geste.
+
+Ce qu'il faut changer :
+
+- **Deux palettes = deux applications.** Le voyageur sentait la couture. SYNERGIA a une charte — vert et or — et un emblème par univers (le bus, les bâtiments). L'univers se reconnaît à son emblème et à ses mots, pas à un changement de couleur.
+- **Les univers ne sont pas des onglets.** Chacun a besoin de sa propre barre : *Réservation · Billets* d'un côté, *Recherche · Favoris · Demandes* de l'autre. Les mettre au même niveau forçait soit des barres imbriquées, soit un onglet *Profil* fourre-tout où s'entassaient favoris, demandes et publication.
+- **L'immobilier en premier** était un choix d'époque. Le billet de bus est l'usage récurrent ; le logement, l'usage épisodique.
+
+---
+
+## 3. Le modèle proposé : un sélecteur d'univers, une barre par univers
+
+```
+┌──────────────────────────────────────────┐
+│  [🚌 Voyager]  [🏠 Me loger]        🔔   │  ← sélecteur dans l'en-tête de l'accueil
+│                                          │
+│  (contenu de l'univers choisi)           │
+│                                          │
+├──────────────────────────────────────────┤
+│ Réservation   Billets   Contrôle  Compte │  ← barre PROPRE à Voyager
+└──────────────────────────────────────────┘
+
+┌──────────────────────────────────────────┐
+│  [🚌 Voyager]  [🏠 Me loger]        🔔   │
+│                                          │
+│  (recherche de biens)                    │
+│                                          │
+├──────────────────────────────────────────┤
+│ Recherche    Favoris    Demandes  Compte │  ← barre PROPRE à Me loger
+└──────────────────────────────────────────┘
+```
+
+**Règles**
+
+1. **Premier lancement** : un écran de choix, deux grandes cartes — *Voyager* (le bus), *Me loger* (les bâtiments) — avec une ligne pour chacune. Un seul geste, jamais bloquant ensuite.
+2. **L'application se souvient** du dernier univers et s'y rouvre. Le voyageur régulier ne revoit jamais le choix ; il change d'univers par le sélecteur de l'en-tête, ou depuis *Compte*.
+3. **Une barre d'onglets par univers**, et seulement les siens. *Compte* figure dans les deux barres : c'est le même écran.
+4. **Une seule palette.** L'en-tête reste vert ; c'est l'emblème (bus ou bâtiments), le squelette de chargement et le vocabulaire qui disent où l'on est. Si l'on veut une nuance, l'or peut être plus présent dans l'immobilier (badges *Vente / Location*), jamais une autre couleur de fond.
+5. **Partagé, donc hors des univers** : connexion, inscription, activation, mot de passe oublié, compléter le profil, *Compte*, notifications, paramètres, préférences de notification, **paiement** (le logement aura un jour des frais de visite ou de mise en avant : l'écran et l'adresse de retour `/paiement/retour` restent communs).
+6. **La cloche est commune** et chaque notification porte son univers (petit emblème). Les préférences de notification se présentent en deux sections : *Voyages* (mises à jour du trajet, promotions) et *Logement* (nouveau contact, visite confirmée — déjà en base côté serveur).
+7. **Les rôles s'ajoutent sans gêner** : *Contrôle* n'apparaît qu'au contrôleur dans la barre Voyager ; *Mes annonces* et *Demandes clients* n'apparaissent qu'à l'agent d'agence, dans *Compte* et dans la barre Me loger.
+
+**Pourquoi pas un simple quatrième onglet « Immobilier »** : parce qu'il aurait fallu y loger recherche, favoris, demandes et publication derrière un seul bouton — c'est précisément l'onglet *Profil* fourre-tout du hub Flutter, reconstitué.
+
+**Pourquoi pas un écran d'accueil à chaque ouverture** : un geste de plus, à chaque fois, pour un voyageur qui a déjà choisi la veille. Le souvenir du dernier univers rend le choix initial gratuit.
+
+---
+
+## 4. Organisation du code (Expo Router)
+
+```
+src/app/
+├── _layout.tsx                 fournisseurs, pile de navigation
+├── index.tsx                   aiguillage : dernier univers mémorisé, sinon le choix
+├── choisir-univers.tsx         premier lancement : deux cartes
+│
+├── (voyager)/                  ← tout le transport actuel, déplacé tel quel
+│   ├── (tabs)/                 Réservation · Billets · Contrôle · Compte
+│   ├── recherche.tsx, reserver/[uuid].tsx, commande/[uuid].tsx,
+│   ├── modifier-date/, noter/, reservation-consultation.tsx, villes-desservies.tsx
+│
+├── (loger)/                    ← l'immobilier, à construire
+│   ├── (tabs)/                 Recherche · Favoris · Demandes · Compte
+│   ├── bien/[uuid].tsx         fiche d'un bien
+│   ├── contacter/[uuid].tsx, visite/[uuid].tsx
+│   ├── declarer-besoin.tsx
+│   ├── publier/                assistant : profil, infos, photos, validation
+│   ├── mes-annonces.tsx, mes-annonces/[uuid].tsx
+│
+├── compte.tsx                  partagé (aujourd'hui (tabs)/profil.tsx)
+├── notifications.tsx, parametres.tsx, preferences-notification.tsx
+├── connexion.tsx, inscription.tsx, verify.tsx, mot-de-passe-oublie.tsx, completer-profil.tsx
+└── paiement/                   partagé : [reference], retour, retour/[reference]
+```
+
+Trois précautions techniques :
+
+- **Les groupes `(voyager)` et `(loger)` n'apparaissent pas dans les adresses.** Deux écrans du même nom dans deux groupes auraient la même adresse : les écrans immobiliers portent donc des noms qui leur sont propres (`bien/[uuid]`, pas `offre/[uuid]`). Les adresses du transport **ne changent pas** — `/paiement/retour` reste reconnu par les liens d'application Android.
+- **Les routes typées d'Expo** rendent le déplacement sûr : chaque `router.push` vers une adresse déplacée devient une erreur de compilation, corrigée avant d'exécuter quoi que ce soit.
+- **L'univers courant** vit dans un petit état partagé (`src/univers.ts`), persisté dans le stockage local — ce n'est pas une donnée personnelle, elle peut rester sur l'appareil — et lu par `index.tsx`, le sélecteur et la cloche.
+
+Côté paquets partagés, rien à créer : `@sira/core/immo.ts` et `@sira/api-client/immo.ts` servent déjà le site. Les éléments d'interface (`ui/`) sont communs ; l'immobilier y ajoutera ce qui lui manque (carrousel de photos, badge *Vente / Location*, carte).
+
+---
+
+## 5. Identité : une application, SYNERGIA
+
+| | |
+|---|---|
+| Nom affiché | **SYNERGIA** (et non « SYNERGIA Trans », renommage du 7 novembre à défaire) |
+| Icône et écran de lancement | **l'emblème de marque** — les bâtiments et le toit, celui du site. C'est aussi le dessin du logo immobilier : c'est la marque qui l'a voulu ainsi, l'emblème mère étant né de l'immobilier. Le bus identifie l'univers Voyager **à l'intérieur** de l'application, pas l'application elle-même |
+| En-tête de connexion | le logotype SYNERGIA générique (blanc sur vert), sans mention d'univers |
+| Squelettes de chargement | l'emblème de l'univers : le bus pour une recherche de voyage, les bâtiments pour une recherche de bien |
+| Court nom Expo, schéma de liens | `synergia`, `synergia://` — un seul projet, plus de collision à craindre |
+| Paquet Android, identifiant iOS | inchangés (`com.billetterie.gn`, `com.sira.guinee.app`) ; à décider avant la première publication, voir le README de l'application |
+
+---
+
+## 6. Lots de construction
+
+| Lot | Contenu | Serveur | Ordre de grandeur |
+|---|---|---|---|
+| **I0 — Socle** | groupes `(voyager)` / `(loger)`, écran de choix, souvenir de l'univers, sélecteur dans l'en-tête, *Compte* partagé, barre Me loger avec *Recherche* seule, préférences en deux sections | non | 2–3 j |
+| **I1 — Chercher et voir** | recherche de biens (publique) : vente / location, type, ville, prix, commodités ; résultats ; **fiche du bien** (photos, carte, commodités, propriétaire ou agence) ; favoris | non | 4–5 j |
+| **I2 — Entrer en relation** | contacter, demander une visite, déclarer un besoin ; *Mes demandes* (contacts, visites, besoins) ; signaler une annonce | non | 3–4 j |
+| **I3 — Publier** | profil immobilier, assistant en 4 étapes, photos depuis l'appareil, brouillons, *Mes annonces* (publier, retirer, renouveler, vendu, loué) | non | 5–6 j |
+| **I4 — Notifications** | push sur contact reçu et visite confirmée, préférences *Logement*, liens profonds vers une fiche (`/biens/{uuid}` sur le site, à créer) | **oui**, léger | 2 j |
+| **I5 — Agences** *(optionnel)* | demandes clients et inscription d'agence sur mobile — ou renvoi au site, qui les a déjà | non | 2–3 j |
+
+Chaque lot se livre sur test, avec `tsc`, l'empaquetage Metro, l'essai sur le Samsung, et des tests e2e du site pour ce qui le touche.
+
+---
+
+## 7. Fait sans attendre : l'identité
+
+Le renommage en « SYNERGIA Trans » reposait sur une prémisse fausse ; il est
+défait dans le même mouvement que cette proposition : nom `SYNERGIA`, court nom
+`synergia`, schéma `synergia://`, icône et lancement sur l'emblème de marque,
+logotype générique à la connexion, bus réservé au squelette de la recherche de
+voyage.
+
+---
+
+## 8. À trancher avant le lot I0
+
+1. **Le premier écran** : le choix à deux cartes au premier lancement, puis souvenir (recommandé) — ou toujours *Voyager* en premier, avec le sélecteur pour aller au logement ?
+2. **Une seule palette** (recommandé), ou un accent or plus marqué pour l'immobilier ?
+3. **Les agences sur mobile** (lot I5) ou sur le site seulement ?
+4. **Les libellés** : *Voyager / Me loger* (verbes, recommandé) — ou *Transport / Immobilier* ?

@@ -47,7 +47,7 @@ export function SqueletteRecherche() {
             </Animated.View>
             <View style={styles.voile} pointerEvents="none">
                 <View style={styles.cadre}>
-                    <Image source={require('../../assets/logo-emblem.png')} style={styles.logo} accessibilityIgnoresInvertColors />
+                    <Image source={require('../../assets/logo-trans-emblem.png')} style={styles.logo} accessibilityIgnoresInvertColors />
                 </View>
             </View>
         </View>

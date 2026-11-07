@@ -50,7 +50,7 @@ export default function Connexion() {
         <KeyboardAvoidingView style={base.ecran} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
                 <View style={styles.entete}>
-                    <Image source={require('../../assets/logo-trans-blanc.png')} style={styles.logo} accessibilityLabel="SYNERGIA Trans Guinée" />
+                    <Image source={require('../../assets/logo-synergia-blanc.png')} style={styles.logo} accessibilityLabel="SYNERGIA" />
                     {config.nom === 'test' && <Text style={styles.badgeTest}>Environnement de test</Text>}
                 </View>
 
@@ -119,7 +119,7 @@ export default function Connexion() {
 const styles = StyleSheet.create({
     page: { flexGrow: 1, padding: espaces.lg, paddingTop: espaces.xl, backgroundColor: couleurs.vert },
     entete: { alignItems: 'center', marginBottom: espaces.xl },
-    logo: { width: 220, height: 188, resizeMode: 'contain' },
+    logo: { width: 264, height: 48, resizeMode: 'contain' },
     badgeTest: { marginTop: espaces.md, color: couleurs.vertFonce, backgroundColor: couleurs.or, paddingHorizontal: espaces.md, paddingVertical: 4, borderRadius: 999, fontWeight: '700', fontSize: 12 },
     carte: { backgroundColor: couleurs.blanc, borderRadius: 20, padding: espaces.xl },
     separateur: { height: 1, backgroundColor: couleurs.ligne, marginVertical: espaces.xl },

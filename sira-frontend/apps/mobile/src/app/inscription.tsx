@@ -107,7 +107,7 @@ export default function Inscription() {
             <ScrollView contentContainerStyle={base.contenu} keyboardShouldPersistTaps="handled">
                 <View>
                     <Text style={base.titre}>Créer un compte</Text>
-                    <Text style={base.sousTitre}>Rejoignez SYNERGIA Trans : vos voyages à travers la Guinée.</Text>
+                    <Text style={base.sousTitre}>Rejoignez SYNERGIA : voyages et immobilier en Guinée.</Text>
                 </View>
 
                 <View style={styles.carte}>

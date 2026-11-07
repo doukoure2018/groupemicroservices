@@ -6,14 +6,16 @@ exigent d'elle. Les fichiers livrés se déposent tels quels dans
 `sira-frontend/apps/mobile/assets/` sous les noms indiqués ; le branchement
 dans l'application est fait de notre côté.
 
-État au 2 novembre 2026 : l'application de billetterie porte désormais le logo
-**SYNERGIA Trans Guinée** (le bus), et non plus l'emblème immobilier. Toutes
-les variantes techniques en ont été **dérivées mécaniquement** — détourage du
-fond, recoloration en blanc et or, blancs intérieurs rendus au fond vert, mise
-à l'échelle dans les zones de sécurité : icône iOS, calques de l'icône
-adaptative Android, icône monochrome, écran de lancement, favicon, icône de
-notification (le bus seul, le reste étant illisible à 24 px) et emblème de
-chargement.
+État au 7 novembre 2026 : l'application réunit les deux univers, Voyager et
+Me loger (voir `proposition-application-unique.md`). Son icône, son écran de
+lancement et son favicon portent donc **l'emblème de marque** — les bâtiments
+et le toit, celui du site. Les deux logos d'univers (`synergia-trans.png`, le
+bus ; `synergia-immo.png`, les bâtiments avec le mot) identifient chaque
+univers **à l'intérieur** de l'application : en-tête de l'accueil, squelettes
+de chargement. Toutes les variantes techniques ont été **dérivées
+mécaniquement** des fichiers existants — détourage du fond depuis les bords,
+recoloration en blanc et or, blancs intérieurs rendus au fond vert, mise à
+l'échelle dans les zones de sécurité.
 
 Ce qui suit reste la référence pour les **redessiner** à partir d'un fichier
 vectoriel : la dérivation a les limites de sa source, une image pixel de

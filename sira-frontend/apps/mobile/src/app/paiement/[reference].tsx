@@ -25,7 +25,7 @@ const TENTATIVES_MAX = 30;
  * environnement à l'autre, le chemin, lui, ne change pas.
  */
 function estUnRetour(url: string): boolean {
-    if (/^(sira|synergia-trans):\/\//i.test(url)) return true;
+    if (/^(sira|synergia):\/\//i.test(url)) return true;
     try {
         return new URL(url).pathname.startsWith('/paiement/retour');
     } catch {
