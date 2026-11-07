@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@sira/api-client';
-import { formatDateFr, formatHeure, formatMontant, getMontantEffectif, type Offre } from '@sira/core';
+import { formatDateCourte, formatHeure, formatMontant, getMontantEffectif, type Offre } from '@sira/core';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { api } from '../../api';
 import { Bandeau, Bouton, Carte, Chargement, EtatVide, styles as base } from '../../ui/base';
-import { couleurs, espaces, rayons } from '../../ui/theme';
+import { couleurs, espaces, rayons, texte, zoomMax } from '../../ui/theme';
 import { ExigerSession } from '../../auth/exiger-session';
 
 /**
@@ -57,9 +57,9 @@ function ModifierDate() {
     return (
         <ScrollView style={base.ecran} contentContainerStyle={base.contenu}>
             <View>
-                <Text style={base.titre}>Changer de date</Text>
+                <Text maxFontSizeMultiplier={zoomMax} style={base.titre}>Changer de date</Text>
                 <Text style={base.sousTitre}>
-                    {commande.villeDepartLibelle} → {commande.villeArriveeLibelle}, actuellement le {formatDateFr(commande.dateDepart)} à {formatHeure(commande.heureDepart)}.
+                    {commande.villeDepartLibelle} → {commande.villeArriveeLibelle}, actuellement le {formatDateCourte(commande.dateDepart)} à {formatHeure(commande.heureDepart)}.
                 </Text>
             </View>
 
@@ -87,7 +87,7 @@ function ModifierDate() {
                             >
                                 <View style={base.ligne}>
                                     <Text style={styles.optionDate}>
-                                        {formatDateFr(o.dateDepart)} à {formatHeure(o.heureDepart)}
+                                        {formatDateCourte(o.dateDepart)} à {formatHeure(o.heureDepart)}
                                     </Text>
                                     <Text style={[styles.optionPlaces, places < nombrePlaces && { color: couleurs.danger }]}>
                                         {places} {places > 1 ? 'places' : 'place'}
@@ -110,7 +110,7 @@ function ModifierDate() {
                     )}
 
                     <Bouton
-                        libelle={choix ? `Confirmer le ${formatDateFr(choix.dateDepart)} à ${formatHeure(choix.heureDepart)}` : 'Choisissez un départ'}
+                        libelle={choix ? `Confirmer le ${formatDateCourte(choix.dateDepart)} à ${formatHeure(choix.heureDepart)}` : 'Choisissez un départ'}
                         onPress={() => choix && modifier.mutate(choix)}
                         desactive={!choix}
                         enCours={modifier.isPending}
@@ -125,7 +125,7 @@ function ModifierDate() {
 const styles = StyleSheet.create({
     option: { backgroundColor: couleurs.blanc, borderWidth: 1, borderColor: couleurs.ligne, borderRadius: rayons.lg, padding: espaces.lg, gap: espaces.xs },
     optionActive: { borderColor: couleurs.vert, backgroundColor: couleurs.vertPale },
-    optionDate: { fontSize: 17, fontWeight: '700', color: couleurs.encre, textTransform: 'capitalize' },
+    optionDate: { ...texte.appuye, color: couleurs.encre, textTransform: 'capitalize' },
     optionPlaces: { fontWeight: '600', color: couleurs.vertFonce }
 });
 

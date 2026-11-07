@@ -101,6 +101,25 @@ export function formatDateFr(valeur: DateLocale): string {
 }
 
 /**
+ * « sam. 8 nov. » : la date telle que le mobile la montre, sans zéro initial.
+ * L'année n'apparaît que si elle n'est pas celle en cours (« sam. 2 janv. 2027 »).
+ * Voir docs/charte-typographique-mobile.md, § 7.
+ */
+export function formatDateCourte(valeur: DateLocale, maintenant: Date = new Date()): string {
+    const jour = jourIso(valeur);
+    if (!jour) return '-';
+    const [a, m, j] = jour.split('-').map(Number);
+    const date = new Date(a!, m! - 1, j!);
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString('fr-FR', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        ...(date.getFullYear() !== maintenant.getFullYear() ? { year: 'numeric' as const } : {})
+    });
+}
+
+/**
  * Heure côté backend = Java LocalTime, sérialisé selon le service en "HH:mm:ss",
  * en tableau [heure, minute, seconde] ou en objet {hour, minute}.
  */

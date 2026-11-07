@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bouton, styles as base } from '../ui/base';
-import { couleurs, espaces, rayons } from '../ui/theme';
+import { couleurs, espaces, rayons, texte, zoomMax } from '../ui/theme';
 
 /**
  * Tri et filtres des résultats. Les choix se font sur un brouillon : le
@@ -40,7 +40,7 @@ export function FiltresEcran({
             <View style={[base.ecran, { paddingTop: Math.max(insets.top, espaces.md) }]}>
                 <View style={styles.entete}>
                     <View style={{ width: 40 }} />
-                    <Text style={styles.titre}>Filtres</Text>
+                    <Text style={styles.titre} maxFontSizeMultiplier={zoomMax}>Filtres</Text>
                     <Pressable onPress={onFermer} accessibilityRole="button" accessibilityLabel="Fermer" hitSlop={12} style={styles.fermer}>
                         <Text style={styles.fermerTexte}>✕</Text>
                     </Pressable>
@@ -109,7 +109,7 @@ function Puce({ libelle, actif, onPress }: { libelle: string; actif: boolean; on
 
 const styles = StyleSheet.create({
     entete: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: espaces.lg, paddingVertical: espaces.sm },
-    titre: { fontSize: 18, fontWeight: '700', color: couleurs.encre },
+    titre: { ...texte.titre, color: couleurs.encre },
     fermer: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
     fermerTexte: { fontSize: 18, color: couleurs.encre, fontWeight: '700' },
     contenu: { padding: espaces.lg, gap: espaces.sm, paddingBottom: espaces.xxl },
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     puces: { flexDirection: 'row', flexWrap: 'wrap', gap: espaces.sm, marginBottom: espaces.sm },
     puce: { borderWidth: 1, borderColor: couleurs.ligne, borderRadius: rayons.md, paddingHorizontal: espaces.md, paddingVertical: espaces.sm, backgroundColor: couleurs.blanc },
     puceActive: { borderColor: couleurs.vert, backgroundColor: couleurs.vertPale },
-    puceTexte: { color: couleurs.encre, fontWeight: '600' },
+    puceTexte: { ...texte.libelle, color: couleurs.encre },
     puceTexteActive: { color: couleurs.vertFonce },
     pied: { paddingHorizontal: espaces.lg, paddingTop: espaces.md, borderTopWidth: 1, borderTopColor: couleurs.ligne, backgroundColor: couleurs.blanc, gap: espaces.sm }
 });

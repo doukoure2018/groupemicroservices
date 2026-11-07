@@ -5,7 +5,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-na
 import { api } from '../api';
 import { useAuth } from '../auth/contexte';
 import { Bandeau, Bouton, Carte, Champ, styles as base } from '../ui/base';
-import { espaces } from '../ui/theme';
+import { espaces, zoomMax } from '../ui/theme';
 
 const ADRESSE_MAX = 100;
 
@@ -51,7 +51,7 @@ export default function CompleterProfil() {
         <KeyboardAvoidingView style={base.ecran} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView contentContainerStyle={base.contenu} keyboardShouldPersistTaps="handled">
                 <View>
-                    <Text style={base.titre}>Bienvenue {user?.firstName}</Text>
+                    <Text maxFontSizeMultiplier={zoomMax} style={base.titre}>Bienvenue {user?.firstName}</Text>
                     <Text style={base.sousTitre}>Encore une étape : votre adresse, et un téléphone si vous le souhaitez.</Text>
                 </View>
                 <Carte>

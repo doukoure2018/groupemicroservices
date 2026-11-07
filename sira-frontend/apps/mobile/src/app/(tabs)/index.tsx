@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { ajouterJours, aujourdhuiIso, BAGAGES_MAX, libelleJourCourt, libelleVoyageurs, PLACES_MAX, VOYAGEURS_DEFAUT, type Ville, type Voyageurs } from '@sira/core';
+import { AGE_ADULTE_DEFAUT, ajouterJours, aujourdhuiIso, BAGAGES_MAX, libelleJourCourt, libelleVoyageurs, PLACES_MAX, VOYAGEURS_DEFAUT, type Ville, type Voyageurs } from '@sira/core';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
@@ -9,7 +9,7 @@ import { Bandeau, Bouton, Carte, styles as base } from '../../ui/base';
 import { Calendrier } from '../../ui/calendrier';
 import { Compteur } from '../../ui/compteur';
 import { FeuilleBasse } from '../../ui/feuille';
-import { couleurs, espaces, rayons } from '../../ui/theme';
+import { couleurs, espaces, rayons, texte, zoomMax } from '../../ui/theme';
 
 /** Jusqu'où l'on peut réserver à l'avance : les transporteurs publient rarement au-delà. */
 const JOURS_A_L_AVANCE = 60;
@@ -65,18 +65,19 @@ export default function Accueil() {
         <>
             <ScrollView style={base.ecran} contentContainerStyle={{ paddingBottom: espaces.xl }} keyboardShouldPersistTaps="handled">
                 <View style={styles.bandeau}>
-                    <Text style={styles.salut}>{user ? `Bonjour ${user.firstName ?? ''}`.trim() : 'Où allez-vous ?'}</Text>
-                    <Text style={styles.sousSalut}>
-                        {user ? 'Choisissez votre prochain départ.' : 'Cherchez un départ et réservez votre place. Aucun compte n’est demandé pour chercher.'}
+                    <Text style={styles.salut} maxFontSizeMultiplier={zoomMax}>
+                        {user ? `Bonjour ${user.firstName ?? ''}`.trim() : 'Où allez-vous ?'}
                     </Text>
+                    <Text style={styles.sousSalut}>{user ? 'Choisissez votre prochain départ.' : 'Aucun compte n’est demandé pour chercher.'}</Text>
                 </View>
 
                 <View style={styles.formulaire}>
                     <Carte style={{ gap: espaces.sm }}>
-                        <ChampChoix libelle="De" valeur={depart?.libelle} vide="Ville de départ" onPress={() => setSelecteur('depart')} />
+                        {/* Les mots de la gare routière, qui se comprennent isolés : docs/charte-typographique-mobile.md, § 7. */}
+                        <ChampChoix libelle="Départ" valeur={depart?.libelle} vide="Choisir une ville" onPress={() => setSelecteur('depart')} />
                         <Pressable
                             accessibilityRole="button"
-                            accessibilityLabel="Inverser départ et arrivée"
+                            accessibilityLabel="Inverser départ et destination"
                             onPress={() => {
                                 setDepart(arrivee);
                                 setArrivee(depart);
@@ -85,13 +86,11 @@ export default function Accueil() {
                         >
                             <Text style={styles.inverserTexte}>⇅</Text>
                         </Pressable>
-                        <ChampChoix libelle="Vers" valeur={arrivee?.libelle} vide="Ville d'arrivée" onPress={() => setSelecteur('arrivee')} />
-                        {memeVille && <Bandeau type="erreur">La ville d'arrivée doit être différente de la ville de départ.</Bandeau>}
+                        <ChampChoix libelle="Destination" valeur={arrivee?.libelle} vide="Choisir une ville" onPress={() => setSelecteur('arrivee')} />
+                        {memeVille && <Bandeau type="erreur">La destination doit être différente du départ.</Bandeau>}
 
-                        <View style={styles.rangee}>
-                            <ChampChoix libelle="Aller" valeur={libelleJourCourt(date)} onPress={() => setFeuille('date')} style={{ flex: 1 }} />
-                            <ChampChoix libelle="Passagers / Bagages" valeur={libelleVoyageurs(voyageurs)} onPress={() => setFeuille('voyageurs')} style={{ flex: 1 }} />
-                        </View>
+                        <ChampChoix libelle="Date" valeur={libelleJourCourt(date)} onPress={() => setFeuille('date')} />
+                        <ChampChoix libelle="Passagers et bagages" valeur={libelleVoyageurs(voyageurs)} onPress={() => setFeuille('voyageurs')} />
 
                         {villesQuery.isError && <Bandeau type="erreur">Impossible de charger les villes. Vérifiez votre réseau.</Bandeau>}
                         <Bouton libelle="Rechercher" onPress={rechercher} desactive={!valide} style={{ marginTop: espaces.sm }} />
@@ -101,7 +100,7 @@ export default function Accueil() {
 
             <SelecteurVille
                 visible={selecteur !== null}
-                titre={selecteur === 'depart' ? 'Ville de départ' : "Ville d'arrivée"}
+                titre={selecteur === 'depart' ? 'Départ' : 'Destination'}
                 villes={villesQuery.data ?? []}
                 chargement={villesQuery.isPending}
                 onChoisir={(v) => {
@@ -112,7 +111,7 @@ export default function Accueil() {
                 onFermer={() => setSelecteur(null)}
             />
 
-            <FeuilleBasse visible={feuille === 'date'} titre="Date de départ" onFermer={() => setFeuille(null)}>
+            <FeuilleBasse visible={feuille === 'date'} titre="Date" onFermer={() => setFeuille(null)}>
                 <Calendrier
                     valeur={date}
                     min={aujourdhui}
@@ -126,29 +125,30 @@ export default function Accueil() {
 
             <FeuilleBasse
                 visible={feuille === 'voyageurs'}
-                titre="Passagers / Bagages"
+                titre="Passagers et bagages"
                 onFermer={() => setFeuille(null)}
                 pied={<Bouton libelle="Valider" onPress={() => setFeuille(null)} />}
             >
+                {/* La ligne nomme la catégorie, le compte dit le nombre ; l'aide est une phrase, sous la ligne qu'elle concerne. */}
                 <Compteur
-                    libelle="Adultes"
-                    aide="15 ans et plus"
+                    libelle="Adulte"
+                    aide={`${AGE_ADULTE_DEFAUT} ans et plus.`}
                     valeur={voyageurs.adultes}
                     min={1}
                     max={PLACES_MAX - voyageurs.enfants}
                     onChange={(adultes) => setVoyageurs((v) => ({ ...v, adultes }))}
                 />
                 <Compteur
-                    libelle="Enfants"
-                    aide="Moins de 15 ans, accompagnés d'un adulte"
+                    libelle="Enfant"
+                    aide={`De 0 à ${AGE_ADULTE_DEFAUT - 1} ans, accompagné d'un adulte.`}
                     valeur={voyageurs.enfants}
                     min={0}
                     max={PLACES_MAX - voyageurs.adultes}
                     onChange={(enfants) => setVoyageurs((v) => ({ ...v, enfants }))}
                 />
                 <Compteur
-                    libelle="Bagages"
-                    aide="Bagages en soute à déclarer, en plus du sac que chacun garde avec lui"
+                    libelle="Bagage"
+                    aide="En soute, en plus du sac gardé avec soi."
                     valeur={voyageurs.bagages}
                     min={0}
                     max={BAGAGES_MAX}
@@ -195,7 +195,9 @@ function SelecteurVille({
         <Modal visible={visible} animationType="slide" onRequestClose={onFermer}>
             <View style={[base.ecran, { padding: espaces.lg, paddingTop: espaces.xxl }]}>
                 <View style={base.ligne}>
-                    <Text style={base.titre}>{titre}</Text>
+                    <Text maxFontSizeMultiplier={zoomMax} style={base.titre}>
+                        {titre}
+                    </Text>
                     <Bouton libelle="Fermer" variante="discret" onPress={onFermer} />
                 </View>
                 <TextInput
@@ -224,17 +226,16 @@ function SelecteurVille({
 
 const styles = StyleSheet.create({
     bandeau: { backgroundColor: couleurs.vert, paddingHorizontal: espaces.lg, paddingTop: espaces.lg, paddingBottom: 56 },
-    salut: { color: couleurs.blanc, fontSize: 26, fontWeight: '800' },
-    sousSalut: { color: '#d7e6dc', lineHeight: 22, marginTop: espaces.xs },
+    salut: { ...texte.titre, color: couleurs.blanc },
+    sousSalut: { ...texte.secondaire, color: couleurs.surVertSecondaire, marginTop: espaces.xs },
     formulaire: { marginTop: -40, paddingHorizontal: espaces.lg },
     choix: { borderWidth: 1, borderColor: couleurs.ligne, borderRadius: rayons.md, padding: espaces.md, backgroundColor: couleurs.blanc },
-    choixLibelle: { color: couleurs.gris, fontSize: 12 },
-    choixValeur: { color: couleurs.encre, fontSize: 17, fontWeight: '700', marginTop: 2 },
+    choixLibelle: { ...texte.libelle, color: couleurs.gris },
+    choixValeur: { ...texte.appuye, color: couleurs.encre, marginTop: 2 },
     choixVide: { color: couleurs.gris, fontWeight: '400' },
-    rangee: { flexDirection: 'row', gap: espaces.sm, marginTop: espaces.xs },
     inverser: { alignSelf: 'flex-end', width: 40, height: 28, alignItems: 'center', justifyContent: 'center', marginVertical: -espaces.xs },
-    inverserTexte: { color: couleurs.vert, fontWeight: '800', fontSize: 20 },
-    aidePlaces: { color: couleurs.gris, fontSize: 13, marginTop: espaces.sm },
+    inverserTexte: { color: couleurs.vert, fontWeight: '700', fontSize: 20 },
+    aidePlaces: { ...texte.secondaire, color: couleurs.gris, marginTop: espaces.sm },
     villeLigne: { paddingVertical: espaces.md, borderBottomWidth: 1, borderBottomColor: couleurs.ligne },
-    villeNom: { fontSize: 17, fontWeight: '600', color: couleurs.encre }
+    villeNom: { ...texte.appuye, color: couleurs.encre }
 });

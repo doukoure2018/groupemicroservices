@@ -1,7 +1,7 @@
 import { ajouterJours, dateDepuisIso, dateIsoLocale } from '@sira/core';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { couleurs, espaces } from './theme';
+import { couleurs, espaces, texte } from './theme';
 
 const JOURS = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'];
 
@@ -78,16 +78,16 @@ function Fleche({ symbole, actif, libelle, onPress }: { symbole: string; actif: 
 // Sept colonnes ; la largeur en pourcentage évite tout calcul de mise en page.
 const styles = StyleSheet.create({
     entete: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: espaces.sm },
-    titre: { fontSize: 17, fontWeight: '700', color: couleurs.encre },
+    titre: { ...texte.section, color: couleurs.encre },
     fleche: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
     flecheTexte: { fontSize: 28, lineHeight: 30, color: couleurs.vert },
     grille: { flexDirection: 'row', flexWrap: 'wrap' },
-    jourSemaine: { width: '14.28%', textAlign: 'center', color: couleurs.gris, fontSize: 12, paddingVertical: espaces.xs },
+    jourSemaine: { ...texte.mention, width: '14.28%', textAlign: 'center', color: couleurs.gris, paddingVertical: espaces.xs },
     case: { width: '14.28%', height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22 },
     caseChoisie: { backgroundColor: couleurs.vert },
     jour: { fontSize: 16, color: couleurs.encre },
     jourHors: { color: couleurs.ligne },
-    jourAujourdhui: { fontWeight: '800', color: couleurs.vert },
+    jourAujourdhui: { fontWeight: '700', color: couleurs.vert },
     jourChoisi: { color: couleurs.blanc, fontWeight: '700' },
-    aide: { color: couleurs.gris, fontSize: 13, lineHeight: 18, marginTop: espaces.md }
+    aide: { ...texte.secondaire, color: couleurs.gris, marginTop: espaces.md }
 });

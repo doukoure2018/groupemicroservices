@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { api } from '../api';
 import { Bouton, Chargement, EtatVide, styles as base } from '../ui/base';
-import { couleurs, espaces } from '../ui/theme';
+import { couleurs, espaces, texte } from '../ui/theme';
 
 /** Où SYNERGIA dessert, groupé par région. Liste publique, utile avant même de chercher. */
 export default function VillesDesservies() {
@@ -63,9 +63,9 @@ export default function VillesDesservies() {
 }
 
 const styles = StyleSheet.create({
-    region: { fontSize: 13, fontWeight: '800', color: couleurs.vert, textTransform: 'uppercase', letterSpacing: 1, marginTop: espaces.md },
+    region: { ...texte.section, color: couleurs.vert, marginTop: espaces.md },
     ville: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: espaces.md, borderBottomWidth: 1, borderBottomColor: couleurs.ligne },
     villeNom: { fontSize: 16, color: couleurs.encre },
     villeNomAVenir: { color: couleurs.gris },
-    aVenir: { fontSize: 12, fontWeight: '700', color: couleurs.gris, textTransform: 'uppercase', letterSpacing: 1 }
+    aVenir: { ...texte.mention, color: couleurs.gris }
 });

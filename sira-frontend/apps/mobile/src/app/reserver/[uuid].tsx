@@ -1,6 +1,6 @@
 import { useMutation, useQuery, keepPreviousData } from '@tanstack/react-query';
 import { ApiError } from '@sira/api-client';
-import { estEnfant, formatDateFr, formatHeure, formatMontant, jourIso, voyageursDepuisParams, type CommandeClient, type TypePassager } from '@sira/core';
+import { AGE_ADULTE_DEFAUT, estEnfant, formatDateCourte, formatHeure, formatMontant, jourIso, voyageursDepuisParams, type CommandeClient, type TypePassager } from '@sira/core';
 import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -10,7 +10,7 @@ import { ecrireBrouillon, effacerBrouillon, lireBrouillon, type PassagerForm } f
 import { SelecteurSieges } from '../../sieges/selecteur-sieges';
 import { Bandeau, Bouton, Carte, Champ, Chargement, EtatVide, styles as base } from '../../ui/base';
 import { Compteur } from '../../ui/compteur';
-import { couleurs, espaces, rayons } from '../../ui/theme';
+import { couleurs, espaces, rayons, texte } from '../../ui/theme';
 
 const MAX_PLACES = 8;
 const BAGAGES_MAX = 10;
@@ -103,7 +103,7 @@ export default function Reserver() {
         placeholderData: keepPreviousData
     });
     const devis = devisQuery.data;
-    const ageAdulte = devis?.ageAdulteMinimum ?? 15;
+    const ageAdulte = devis?.ageAdulteMinimum ?? AGE_ADULTE_DEFAUT;
     const jourVoyage = jourIso(offre?.dateDepart);
 
     function erreurNaissance(p: PassagerForm): string | null {
@@ -200,7 +200,7 @@ export default function Reserver() {
                         {offre.villeDepartLibelle} → {offre.villeArriveeLibelle}
                     </Text>
                     <Text style={base.attenue}>
-                        {formatDateFr(offre.dateDepart)} à {formatHeure(offre.heureDepart)} · {offre.siteDepart} → {offre.siteArrivee}
+                        {formatDateCourte(offre.dateDepart)} à {formatHeure(offre.heureDepart)} · {offre.siteDepart} → {offre.siteArrivee}
                     </Text>
                 </Carte>
 
@@ -398,8 +398,8 @@ function Etape({ numero, titre }: { numero: number; titre: string }) {
 const styles = StyleSheet.create({
     etape: { flexDirection: 'row', alignItems: 'center', gap: espaces.md, marginTop: espaces.sm },
     etapeNumero: { width: 28, height: 28, borderRadius: 14, backgroundColor: couleurs.vert, alignItems: 'center', justifyContent: 'center' },
-    etapeNumeroTexte: { color: couleurs.blanc, fontWeight: '800' },
-    etapeTitre: { fontSize: 18, fontWeight: '700', color: couleurs.encre },
+    etapeNumeroTexte: { color: couleurs.blanc, fontWeight: '700' },
+    etapeTitre: { ...texte.section, color: couleurs.encre },
     ajouts: { flexDirection: 'row', gap: espaces.sm },
     siegesLigne: { flexDirection: 'row', alignItems: 'center', gap: espaces.md },
     chevron: { fontSize: 26, color: couleurs.gris, lineHeight: 28 },
@@ -409,5 +409,5 @@ const styles = StyleSheet.create({
     modeTexte: { color: couleurs.encre, fontWeight: '600' },
     modeTexteActif: { color: couleurs.vertFonce },
     totalLigne: { borderTopWidth: 1, borderTopColor: couleurs.ligne, paddingTop: espaces.sm, marginTop: espaces.xs },
-    total: { fontSize: 20, fontWeight: '800', color: couleurs.vert }
+    total: { ...texte.chiffre, color: couleurs.vert }
 });

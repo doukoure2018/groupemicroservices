@@ -1,12 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
 import { ApiError } from '@sira/api-client';
-import { formatDateFr, type BilletValide } from '@sira/core';
+import { formatDateCourte, type BilletValide } from '@sira/core';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { useCallback, useRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, Vibration, View } from 'react-native';
 import { api } from '../../api';
 import { Bandeau, Bouton, Carte, EtatVide, styles as base } from '../../ui/base';
-import { couleurs, espaces, rayons } from '../../ui/theme';
+import { couleurs, espaces, rayons, texte } from '../../ui/theme';
 
 /**
  * Contrôle à l'embarquement. Le QR d'un billet porte son code ; le serveur
@@ -130,7 +130,7 @@ function Resultat({ resultat, onSuivant }: { resultat: { billet?: BilletValide; 
                     <Text style={styles.passager}>{b?.nomPassager}</Text>
                     <Text style={base.attenue}>Billet {b?.codeBillet}{b?.numeroSiege ? ` · siège ${b.numeroSiege}` : ''}</Text>
                     {b?.telephonePassager && <Text style={base.attenue}>{b.telephonePassager}</Text>}
-                    {b?.dateValidation && <Text style={base.attenue}>Validé le {formatDateFr(b.dateValidation)}</Text>}
+                    {b?.dateValidation && <Text style={base.attenue}>Validé le {formatDateCourte(b.dateValidation)}</Text>}
                 </View>
             ) : (
                 <>
@@ -151,6 +151,6 @@ const styles = StyleSheet.create({
     resultat: { gap: espaces.md, borderWidth: 2 },
     resultatOk: { borderColor: couleurs.vert, backgroundColor: couleurs.succesPale },
     resultatKo: { borderColor: couleurs.danger, backgroundColor: couleurs.dangerPale },
-    verdict: { fontSize: 18, fontWeight: '800' },
-    passager: { fontSize: 20, fontWeight: '800', color: couleurs.encre }
+    verdict: { ...texte.titre },
+    passager: { ...texte.section, color: couleurs.encre }
 });

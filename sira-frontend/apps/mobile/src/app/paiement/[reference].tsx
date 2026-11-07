@@ -11,7 +11,7 @@ import { ExigerSession } from '../../auth/exiger-session';
 import { oublierPaiementEnCours, retenirPaiementEnCours } from '../../reservation/paiement-en-cours';
 import { Bandeau, Bouton, Carte, Chargement, EtatVide, styles as base } from '../../ui/base';
 import { CompteARebours } from '../../ui/compte-a-rebours';
-import { couleurs, espaces } from '../../ui/theme';
+import { couleurs, espaces, texte, zoomMax } from '../../ui/theme';
 
 /** Trois secondes pendant une minute trente : au-delà, une réponse franche. */
 const INTERVALLE_MS = 3000;
@@ -239,7 +239,7 @@ function AttentePaiement() {
         <ScrollView style={base.ecran} contentContainerStyle={[base.contenu, { flexGrow: 1, justifyContent: 'center' }]}>
             <Stack.Screen options={{ title: 'Paiement', headerRight: undefined }} />
             {!expire && <Chargement />}
-            <Text style={[base.titre, { textAlign: 'center' }]}>{expire ? 'Paiement toujours en attente' : `Paiement en cours${mode ? ` chez ${mode}` : ''}`}</Text>
+            <Text maxFontSizeMultiplier={zoomMax} style={[base.titre, { textAlign: 'center' }]}>{expire ? 'Paiement toujours en attente' : `Paiement en cours${mode ? ` chez ${mode}` : ''}`}</Text>
             {commande?.expireLe && !expire && <CompteARebours jusqua={commande.expireLe} />}
             <Text style={[base.sousTitre, { textAlign: 'center' }]}>
                 {expire
@@ -273,7 +273,7 @@ function AttentePaiement() {
 }
 
 const styles = StyleSheet.create({
-    annuler: { color: couleurs.blanc, fontWeight: '700', fontSize: 15 },
+    annuler: { ...texte.bouton, color: couleurs.blanc },
     chargementPage: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: couleurs.fond },
     piedPage: { paddingVertical: espaces.sm, paddingHorizontal: espaces.lg, borderTopWidth: 1, borderTopColor: couleurs.ligne, backgroundColor: couleurs.blanc }
 });

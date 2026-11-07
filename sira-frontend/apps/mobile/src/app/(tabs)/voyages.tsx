@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-    formatDateFr,
+    formatDateCourte,
     formatHeure,
     formatMontant,
     getStatutCommandeLabel,
@@ -108,7 +108,7 @@ function CarteCommande({ commande }: { commande: CommandeClient }) {
                 <Text style={[styles.badge, styles[`badge_${severite}`]]}>{getStatutCommandeLabel(commande.statut)}</Text>
             </View>
             <Text style={base.attenue}>
-                {formatDateFr(commande.dateDepart)} à {formatHeure(commande.heureDepart)}
+                {formatDateCourte(commande.dateDepart)} à {formatHeure(commande.heureDepart)}
             </Text>
             <Text style={base.attenue}>
                 Commande {commande.numeroCommande} · {commande.nombrePlaces} {(commande.nombrePlaces ?? 1) > 1 ? 'places' : 'place'} · {formatMontant(commande.montantTotal, commande.devise)}

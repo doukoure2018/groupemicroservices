@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { api } from '../api';
 import { useAuth } from '../auth/contexte';
 import { Bandeau, Bouton, Carte, Chargement, EtatVide, styles as base } from '../ui/base';
-import { couleurs, espaces } from '../ui/theme';
+import { couleurs, espaces, texte } from '../ui/theme';
 
 /**
  * Deux interrupteurs, comme l'écran de référence. Ils ne taisent que les
@@ -91,5 +91,5 @@ function Reglage({ libelle, aide, valeur, onChange }: { libelle: string; aide: s
 
 const styles = StyleSheet.create({
     ligne: { flexDirection: 'row', alignItems: 'center', gap: espaces.lg },
-    libelle: { fontSize: 17, fontWeight: '700', color: couleurs.encre, marginBottom: 2 }
+    libelle: { ...texte.appuye, color: couleurs.encre, marginBottom: 2 }
 });

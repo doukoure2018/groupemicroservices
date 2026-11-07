@@ -55,7 +55,7 @@ export default function Onglets() {
         >
             <Text style={{ fontSize: 20, color: couleurs.blanc }}>🔔</Text>
             {!!nonLues.data && (
-                <Text style={{ backgroundColor: couleurs.or, color: couleurs.vertFonce, fontWeight: '800', fontSize: 12, borderRadius: 999, paddingHorizontal: 6, overflow: 'hidden' }}>
+                <Text style={{ backgroundColor: couleurs.or, color: couleurs.encre, fontWeight: '700', fontSize: 12, borderRadius: 999, paddingHorizontal: 6, overflow: 'hidden' }}>
                     {nonLues.data > 9 ? '9+' : nonLues.data}
                 </Text>
             )}
@@ -70,6 +70,7 @@ export default function Onglets() {
                 headerTitleStyle: { fontWeight: '700' },
                 tabBarActiveTintColor: couleurs.vert,
                 tabBarInactiveTintColor: couleurs.gris,
+                tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
                 tabBarStyle: { borderTopColor: couleurs.ligne },
                 sceneStyle: { backgroundColor: couleurs.fond },
                 headerRight: connecte ? () => cloche : undefined

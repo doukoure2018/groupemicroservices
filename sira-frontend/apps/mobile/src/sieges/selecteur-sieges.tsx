@@ -5,7 +5,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../api';
 import { Bandeau, Bouton, Chargement, EtatVide, styles as base } from '../ui/base';
-import { couleurs, espaces } from '../ui/theme';
+import { couleurs, espaces, texte, zoomMax } from '../ui/theme';
 import { LegendeSieges, PlanSiegesVue } from './plan-sieges';
 
 /**
@@ -61,7 +61,7 @@ export function SelecteurSieges({
                 <View style={styles.entete}>
                     <View style={{ width: 40 }} />
                     <View style={{ alignItems: 'center' }}>
-                        <Text style={styles.titre}>Sélectionner des sièges</Text>
+                        <Text style={styles.titre} maxFontSizeMultiplier={zoomMax}>Sélectionner des sièges</Text>
                         <Text style={base.attenue}>
                             {nombre} siège{nombre > 1 ? 's' : ''} à choisir
                         </Text>
@@ -104,7 +104,7 @@ export function SelecteurSieges({
 
 const styles = StyleSheet.create({
     entete: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: espaces.lg, paddingVertical: espaces.sm },
-    titre: { fontSize: 18, fontWeight: '700', color: couleurs.encre },
+    titre: { ...texte.titre, color: couleurs.encre },
     fermer: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
     fermerTexte: { fontSize: 18, color: couleurs.encre, fontWeight: '700' },
     contenu: { paddingBottom: espaces.xl, gap: espaces.md },

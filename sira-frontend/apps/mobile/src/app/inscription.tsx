@@ -5,7 +5,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } fr
 import { api } from '../api';
 import { config } from '../config';
 import { Bandeau, Bouton, Champ, EtatVide, styles as base } from '../ui/base';
-import { couleurs, espaces } from '../ui/theme';
+import { couleurs, espaces, zoomMax } from '../ui/theme';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** Le serveur d'autorisation refuse en dessous, et l'adresse plafonne à 100 en base. */
@@ -106,7 +106,7 @@ export default function Inscription() {
         <KeyboardAvoidingView style={base.ecran} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView contentContainerStyle={base.contenu} keyboardShouldPersistTaps="handled">
                 <View>
-                    <Text style={base.titre}>Créer un compte</Text>
+                    <Text maxFontSizeMultiplier={zoomMax} style={base.titre}>Créer un compte</Text>
                     <Text style={base.sousTitre}>Rejoignez SYNERGIA : voyages et immobilier en Guinée.</Text>
                 </View>
 

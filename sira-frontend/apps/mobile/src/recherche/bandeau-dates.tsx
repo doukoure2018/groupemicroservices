@@ -1,7 +1,7 @@
 import { ajouterJours, aujourdhuiIso, libelleJourCourt } from '@sira/core';
 import { useEffect, useMemo, useRef, type ComponentRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
-import { couleurs, espaces } from '../ui/theme';
+import { couleurs, espaces, texte } from '../ui/theme';
 
 const LARGEUR = 104;
 const ESPACE = espaces.sm;
@@ -52,6 +52,6 @@ const styles = StyleSheet.create({
     contenu: { paddingHorizontal: espaces.lg, paddingBottom: espaces.md, paddingTop: espaces.xs, gap: ESPACE },
     jour: { width: LARGEUR, paddingVertical: espaces.sm, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.55)', alignItems: 'center' },
     jourActif: { backgroundColor: couleurs.blanc, borderColor: couleurs.blanc },
-    jourTexte: { color: couleurs.blanc, fontWeight: '600', textTransform: 'capitalize', fontSize: 13 },
-    jourTexteActif: { color: couleurs.vertFonce, fontWeight: '800' }
+    jourTexte: { ...texte.libelle, color: couleurs.blanc, textTransform: 'capitalize' },
+    jourTexteActif: { color: couleurs.vertFonce, fontWeight: '700' }
 });

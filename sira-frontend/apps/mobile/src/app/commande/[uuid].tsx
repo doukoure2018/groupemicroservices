@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { formatDateFr, formatHeure, formatMontant, libelleVoyageurs, type BilletClient } from '@sira/core';
+import { formatDateCourte, formatHeure, formatMontant, libelleVoyageurs, type BilletClient } from '@sira/core';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { api } from '../../api';
 import { Bandeau, Bouton, Carte, Chargement, EtatVide, styles as base } from '../../ui/base';
-import { couleurs, espaces } from '../../ui/theme';
+import { couleurs, espaces, zoomMax } from '../../ui/theme';
 import { ExigerSession } from '../../auth/exiger-session';
 
 /** Billets d'une commande, chacun avec son code QR à présenter à l'embarquement. */
@@ -25,7 +25,7 @@ function Commande() {
     return (
         <ScrollView style={base.ecran} contentContainerStyle={base.contenu}>
             <View>
-                <Text style={base.titre}>{attend ? 'Paiement en attente' : 'Réservation confirmée'}</Text>
+                <Text maxFontSizeMultiplier={zoomMax} style={base.titre}>{attend ? 'Paiement en attente' : 'Réservation confirmée'}</Text>
                 <Text style={base.sousTitre}>
                     Commande {c.numeroCommande} · {formatMontant(c.montantPaye ?? c.montantTotal, c.devise)} ·{' '}
                     {libelleVoyageurs({ adultes: c.nombreAdultes ?? c.nombrePlaces ?? 1, enfants: c.nombreEnfants ?? 0, bagages: c.nombreBagages ?? 0 })}
@@ -37,7 +37,7 @@ function Commande() {
                     {c.villeDepartLibelle} → {c.villeArriveeLibelle}
                 </Text>
                 <Text style={base.attenue}>
-                    {formatDateFr(c.dateDepart)} à {formatHeure(c.heureDepart)}
+                    {formatDateCourte(c.dateDepart)} à {formatHeure(c.heureDepart)}
                 </Text>
                 {c.siteDepart && (
                     <Text style={base.attenue}>
@@ -86,7 +86,7 @@ function Billet({ billet }: { billet: BilletClient }) {
 const styles = StyleSheet.create({
     billet: { alignItems: 'center', gap: espaces.xs },
     qr: { padding: espaces.md, backgroundColor: couleurs.blanc, marginBottom: espaces.sm },
-    statut: { fontWeight: '700', marginTop: espaces.xs }
+    statut: { fontWeight: '600', marginTop: espaces.xs }
 });
 
 /** Sans compte, la connexion s'ouvre et revient ici une fois faite. */

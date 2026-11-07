@@ -107,11 +107,11 @@ reconsidérer.
 |---|---|---|---|---|---|
 | Titre d'écran | 22 / 28 | 700 | encre, ou blanc sur vert | « Où allez-vous ? », « Mes billets », titre d'une feuille | `texte.titre` |
 | Titre de section | 17 / 22 | 700 | encre | « Prochain départ », « À Ratoma, cette semaine » | `texte.section` |
-| Chiffre fort | 20 / 26, tabulaire | 700 | encre, vert ou or-texte | heures de départ et d'arrivée, total à payer, siège, compte d'une feuille | `texte.chiffre` |
-| Prix | 18 / 24, tabulaire | 700 | encre ou vert | prix d'une offre, loyer | `texte.prix` |
-| Corps | 16 / 22 | 400 | encre | description, adresse, message | `texte.corps` |
+| Chiffre fort | 20 / 26, tabulaire | 700 | encre, vert ou or-texte | heures de départ et d'arrivée, total à payer, siège | `texte.chiffre` |
+| Prix | 18 / 24, tabulaire | 700 | encre ou vert | prix d'une offre, loyer, compte d'une feuille | `texte.prix` |
+| Corps | 16 / 22 | 400 | encre | description, adresse, message, bandeau d'information | `texte.corps` |
 | Corps appuyé | 16 / 22 | 600 | encre | valeur d'un champ, nom de gare, nom du bien, ligne de menu | `texte.appuye` |
-| Libellé de champ | 14 / 18 | 600 | encre | « Départ », « Destination », « Date » | `texte.libelle` |
+| Libellé de champ | 14 / 18 | 600 | encre au-dessus d'une saisie, gris foncé à l'intérieur d'un champ de choix | « Départ », « Destination », « Date » | `texte.libelle` |
 | Secondaire | 14 / 20 | 400 | gris foncé | durée, « par personne », « publié il y a 3 jours » | `texte.secondaire` |
 | Mention | 12 / 16 | 600 | selon le fond | badge, libellé d'onglet, compteur de photos | `texte.mention` |
 | Bouton | 16 / 20 | 700 | blanc sur vert, vert sur blanc | tous les boutons | `texte.bouton` |
@@ -209,6 +209,15 @@ Le lot T est indépendant des décisions sur l'application unique : il
 s'applique à l'univers Voyager existant et s'imposera de lui-même à Me loger.
 Il se livre sur test avec `npx tsc --noEmit`, `npx expo export` et un
 `npx expo run:android`.
+
+**État au 7 novembre 2026** : T1 à T4 sont faits. `theme.ts` porte les
+couleurs corrigées, les dix rôles `texte.*` et `zoomMax` ; `base.tsx` et les
+23 écrans n'ont plus de taille sous 12 ni de graisse 800 ; les dates
+passent par `formatDateCourte` (`@sira/core`), les libellés par le § 7 ;
+les titres, la feuille basse et les boutons plafonnent le zoom à 1,6. Les
+tailles de 13 subsistent à trois endroits contraints : numéros de siège
+dans le plan, prix barré et étiquettes « Le moins cher » d'une carte
+d'offre. T5, l'essai dehors sur le Samsung, reste à faire.
 
 ---
 

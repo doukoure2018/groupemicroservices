@@ -1,7 +1,7 @@
 import { arriveeOffre, dureeOffreMinutes, estComplete, formatDuree, formatHeure, formatMontant, getMontantEffectif, hasPromotion, typeVehiculeOffre, type Offre } from '@sira/core';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Carte } from '../ui/base';
-import { couleurs, espaces, rayons } from '../ui/theme';
+import { couleurs, espaces, rayons, texte } from '../ui/theme';
 
 const PLACES_RARES = 5;
 
@@ -85,23 +85,23 @@ const styles = StyleSheet.create({
     horaires: { flexDirection: 'row', alignItems: 'flex-start', gap: espaces.sm },
     bout: { flex: 3 },
     milieu: { flex: 2, alignItems: 'center', paddingTop: 4 },
-    heure: { fontSize: 22, fontWeight: '800', color: couleurs.encre },
+    heure: { ...texte.chiffre, color: couleurs.encre },
     arrivee: { flexDirection: 'row', alignItems: 'flex-start', gap: 4 },
-    lendemain: { color: couleurs.orTexte, fontSize: 11, fontWeight: '700', marginTop: 3 },
-    gare: { color: couleurs.gris, fontSize: 13, marginTop: 2 },
-    duree: { color: couleurs.gris, fontSize: 12 },
+    lendemain: { ...texte.mention, color: couleurs.orTexte, marginTop: 2 },
+    gare: { ...texte.secondaire, lineHeight: 18, color: couleurs.gris, marginTop: 2 },
+    duree: { ...texte.libelle, color: couleurs.gris },
     trait: { height: 1, alignSelf: 'stretch', backgroundColor: couleurs.ligne, marginTop: 4 },
     bas: { flexDirection: 'row', alignItems: 'center', gap: espaces.md },
     pastille: { alignSelf: 'flex-start', borderWidth: 1, borderColor: couleurs.ligne, borderRadius: rayons.sm, paddingHorizontal: espaces.sm, paddingVertical: 4 },
-    pastilleTexte: { color: couleurs.encre, fontWeight: '600', fontSize: 13 },
-    places: { color: couleurs.alerte, fontSize: 12, fontWeight: '600' },
+    pastilleTexte: { ...texte.libelle, color: couleurs.encre },
+    places: { ...texte.libelle, color: couleurs.alerte },
     prixBloc: { flex: 1, alignItems: 'flex-end' },
-    prix: { fontSize: 20, fontWeight: '800', color: couleurs.encre },
-    prixBarre: { color: couleurs.gris, textDecorationLine: 'line-through', fontSize: 12 },
-    parPersonne: { color: couleurs.gris, fontSize: 12 },
-    complet: { color: couleurs.danger, fontWeight: '700', fontSize: 16 },
+    prix: { ...texte.prix, color: couleurs.encre },
+    prixBarre: { ...texte.mention, fontWeight: '400', color: couleurs.gris, textDecorationLine: 'line-through' },
+    parPersonne: { ...texte.mention, color: couleurs.gris },
+    complet: { ...texte.appuye, color: couleurs.danger },
     chevron: { width: 40, height: 40, borderRadius: 20, backgroundColor: couleurs.vert, alignItems: 'center', justifyContent: 'center' },
     chevronInactif: { backgroundColor: couleurs.ligne },
     chevronTexte: { color: couleurs.blanc, fontSize: 26, lineHeight: 28, fontWeight: '700', marginTop: -2 },
-    etiquettes: { color: couleurs.vert, fontWeight: '800', fontSize: 13, textAlign: 'right' }
+    etiquettes: { ...texte.mention, fontSize: 13, color: couleurs.vert, textAlign: 'right' }
 });

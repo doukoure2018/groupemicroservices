@@ -3,7 +3,7 @@ import {
     arriveeOffre,
     dureeOffreMinutes,
     estComplete,
-    formatDateFr,
+    formatDateCourte,
     formatDuree,
     formatHeure,
     formatMontant,
@@ -19,7 +19,7 @@ import {
 import { StyleSheet, Text, View } from 'react-native';
 import { Bandeau, Bouton, Carte, styles as base } from '../ui/base';
 import { FeuilleBasse } from '../ui/feuille';
-import { couleurs, espaces, rayons } from '../ui/theme';
+import { couleurs, espaces, rayons, texte } from '../ui/theme';
 
 /**
  * Le voyage avant de s'engager : chronologie, véhicule, transporteur,
@@ -55,7 +55,7 @@ export function DetailOffre({ offre, voyageurs, onFermer, onContinuer }: { offre
                 <Etape heure={arrivee?.heure ?? '—'} lieu={o.siteArrivee} ville={o.villeArriveeLibelle} />
             </View>
 
-            {jourArrivee && <Bandeau type="info">Arrivée le {formatDateFr(jourArrivee)}, le lendemain du départ.</Bandeau>}
+            {jourArrivee && <Bandeau type="info">Arrivée le {formatDateCourte(jourArrivee)}, le lendemain du départ.</Bandeau>}
 
             <View style={styles.puces}>
                 <Puce texte={vehicule} />
@@ -123,15 +123,15 @@ const styles = StyleSheet.create({
     point: { width: 16, height: 16, borderRadius: 8, borderWidth: 2, borderColor: couleurs.vert },
     pointPlein: { backgroundColor: couleurs.vert },
     pointVide: { backgroundColor: couleurs.blanc },
-    etapeLieu: { fontSize: 17, fontWeight: '700', color: couleurs.encre },
-    etapeHeure: { fontSize: 18, fontWeight: '800', color: couleurs.encre },
+    etapeLieu: { ...texte.appuye, color: couleurs.encre },
+    etapeHeure: { ...texte.chiffre, color: couleurs.encre },
     puces: { flexDirection: 'row', flexWrap: 'wrap', gap: espaces.sm },
     puce: { borderRadius: rayons.sm, backgroundColor: couleurs.vertPale, paddingHorizontal: espaces.md, paddingVertical: 6 },
     puceAlerte: { backgroundColor: couleurs.dangerPale },
-    puceTexte: { color: couleurs.vertFonce, fontWeight: '600', fontSize: 13 },
+    puceTexte: { ...texte.libelle, color: couleurs.vertFonce },
     puceTexteAlerte: { color: couleurs.danger },
-    conditions: { color: couleurs.gris, lineHeight: 20, borderTopWidth: 1, borderTopColor: couleurs.ligne, paddingTop: espaces.sm },
+    conditions: { ...texte.secondaire, color: couleurs.gris, borderTopWidth: 1, borderTopColor: couleurs.ligne, paddingTop: espaces.sm },
     prixLigne: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: espaces.md },
-    prix: { fontSize: 24, fontWeight: '800', color: couleurs.vert },
-    prixBarre: { color: couleurs.gris, textDecorationLine: 'line-through', fontSize: 13 }
+    prix: { ...texte.titre, fontVariant: ['tabular-nums'], color: couleurs.vert },
+    prixBarre: { ...texte.secondaire, color: couleurs.gris, textDecorationLine: 'line-through' }
 });

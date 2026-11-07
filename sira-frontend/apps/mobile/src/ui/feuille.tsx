@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { couleurs, espaces } from './theme';
+import { couleurs, espaces, texte, zoomMax } from './theme';
 
 /**
  * Feuille qui monte du bas de l'écran : un choix court (date, passagers,
@@ -29,7 +29,7 @@ export function FeuilleBasse({
                 <View style={[styles.feuille, { paddingBottom: Math.max(insets.bottom, espaces.lg) }]}>
                     <View style={styles.poignee} />
                     <View style={styles.entete}>
-                        <Text style={styles.titre} numberOfLines={2}>
+                        <Text style={styles.titre} numberOfLines={2} maxFontSizeMultiplier={zoomMax}>
                             {titre}
                         </Text>
                         <Pressable onPress={onFermer} accessibilityRole="button" accessibilityLabel="Fermer" hitSlop={12} style={styles.fermer}>
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     feuille: { backgroundColor: couleurs.blanc, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '88%', paddingTop: espaces.sm },
     poignee: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: couleurs.ligne, marginBottom: espaces.sm },
     entete: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: espaces.md, paddingHorizontal: espaces.lg, paddingVertical: espaces.sm },
-    titre: { flex: 1, fontSize: 22, fontWeight: '800', color: couleurs.encre },
+    titre: { ...texte.titre, flex: 1, color: couleurs.encre },
     fermer: { width: 32, height: 32, borderRadius: 16, backgroundColor: couleurs.fond, alignItems: 'center', justifyContent: 'center' },
     fermerTexte: { fontSize: 16, color: couleurs.encre, fontWeight: '700' },
     defilement: { flexGrow: 0 },

@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, Text } from 'react-native';
 import { useAuth } from '../../auth/contexte';
 import { config } from '../../config';
 import { Bouton, Carte, LigneMenu, styles as base } from '../../ui/base';
-import { couleurs, espaces } from '../../ui/theme';
+import { couleurs, espaces, texte, zoomMax } from '../../ui/theme';
 
 /**
  * « Mon compte » se visite sans session : la carte du haut invite alors à
@@ -21,7 +21,7 @@ export default function MonCompte() {
         <ScrollView style={base.ecran} contentContainerStyle={base.contenu}>
             {user ? (
                 <Carte style={{ gap: espaces.xs }}>
-                    <Text style={base.titre}>
+                    <Text maxFontSizeMultiplier={zoomMax} style={base.titre}>
                         {user.firstName} {user.lastName}
                     </Text>
                     <Text style={base.sousTitre}>{user.email}</Text>
@@ -83,7 +83,7 @@ export default function MonCompte() {
 
 const styles = StyleSheet.create({
     invitation: { backgroundColor: couleurs.vert, borderColor: couleurs.vert, padding: espaces.xl },
-    invitationTitre: { color: couleurs.blanc, fontSize: 22, fontWeight: '800' },
-    invitationTexte: { color: '#d7e6dc', lineHeight: 22, marginTop: espaces.sm },
+    invitationTitre: { ...texte.titre, color: couleurs.blanc },
+    invitationTexte: { ...texte.secondaire, color: couleurs.surVertSecondaire, marginTop: espaces.sm },
     menu: { paddingVertical: 0 }
 });

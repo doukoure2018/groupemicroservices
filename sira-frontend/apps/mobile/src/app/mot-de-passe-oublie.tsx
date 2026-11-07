@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { api } from '../api';
 import { Bandeau, Bouton, Carte, Champ, EtatVide, styles as base } from '../ui/base';
-import { espaces } from '../ui/theme';
+import { espaces, zoomMax } from '../ui/theme';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -51,7 +51,7 @@ export default function MotDePasseOublie() {
         <KeyboardAvoidingView style={base.ecran} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView contentContainerStyle={base.contenu} keyboardShouldPersistTaps="handled">
                 <View>
-                    <Text style={base.titre}>Mot de passe oublié</Text>
+                    <Text maxFontSizeMultiplier={zoomMax} style={base.titre}>Mot de passe oublié</Text>
                     <Text style={base.sousTitre}>Indiquez l'email de votre compte. Vous recevrez un lien pour en choisir un nouveau.</Text>
                 </View>
                 <Carte>

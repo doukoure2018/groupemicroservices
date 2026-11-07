@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@sira/api-client';
-import { formatDateFr } from '@sira/core';
+import { formatDateCourte } from '@sira/core';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { api } from '../../api';
 import { Bandeau, Bouton, Carte, Chargement, EtatVide, styles as base } from '../../ui/base';
-import { couleurs, espaces, rayons } from '../../ui/theme';
+import { couleurs, espaces, rayons, texte, zoomMax } from '../../ui/theme';
 import { ExigerSession } from '../../auth/exiger-session';
 
 const LIBELLES: Record<number, string> = { 1: 'Très mauvais', 2: 'Mauvais', 3: 'Correct', 4: 'Bien', 5: 'Excellent' };
@@ -47,9 +47,9 @@ function Noter() {
         <KeyboardAvoidingView style={base.ecran} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView contentContainerStyle={base.contenu} keyboardShouldPersistTaps="handled">
                 <View>
-                    <Text style={base.titre}>Comment s'est passé votre voyage ?</Text>
+                    <Text maxFontSizeMultiplier={zoomMax} style={base.titre}>Comment s'est passé votre voyage ?</Text>
                     <Text style={base.sousTitre}>
-                        {c.villeDepartLibelle} → {c.villeArriveeLibelle}, le {formatDateFr(c.dateDepart)}. Votre avis aide les autres voyageurs et le transporteur.
+                        {c.villeDepartLibelle} → {c.villeArriveeLibelle}, le {formatDateCourte(c.dateDepart)}. Votre avis aide les autres voyageurs et le transporteur.
                     </Text>
                 </View>
 
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     etoiles: { flexDirection: 'row', gap: espaces.sm },
     etoile: { fontSize: 44, color: couleurs.ligne },
     etoilePleine: { color: couleurs.or },
-    libelle: { fontSize: 17, fontWeight: '700', color: couleurs.encre },
+    libelle: { ...texte.appuye, color: couleurs.encre },
     commentaire: { minHeight: 110, textAlignVertical: 'top', borderRadius: rayons.md }
 });
 

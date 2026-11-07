@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatDateFr, type AppNotification } from '@sira/core';
+import { formatDateCourte, type AppNotification } from '@sira/core';
 import { router } from 'expo-router';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { api } from '../api';
 import { destinationNotification } from '../notifications/push';
 import { Bouton, Chargement, EtatVide, styles as base } from '../ui/base';
-import { couleurs, espaces, rayons } from '../ui/theme';
+import { couleurs, espaces, rayons, texte } from '../ui/theme';
 import { ExigerSession } from '../auth/exiger-session';
 
 /** Centre de notifications in-app : la même liste que celle que le serveur pousse. */
@@ -57,7 +57,7 @@ function NotificationsEcran() {
                     <View style={{ flex: 1, gap: 2 }}>
                         <Text style={[styles.titre, !item.lue && styles.titreNonLu]}>{item.titre ?? item.categorie ?? 'Notification'}</Text>
                         <Text style={styles.message}>{item.message}</Text>
-                        <Text style={styles.date}>{formatDateFr(item.dateEnvoi ?? item.createdAt)}</Text>
+                        <Text style={styles.date}>{formatDateCourte(item.dateEnvoi ?? item.createdAt)}</Text>
                     </View>
                     {!item.lue && <View style={styles.point} accessibilityLabel="Non lue" />}
                 </Pressable>
@@ -69,10 +69,10 @@ function NotificationsEcran() {
 const styles = StyleSheet.create({
     ligne: { flexDirection: 'row', alignItems: 'center', gap: espaces.md, backgroundColor: couleurs.blanc, borderRadius: rayons.lg, padding: espaces.lg, borderWidth: 1, borderColor: couleurs.ligne },
     ligneNonLue: { borderColor: couleurs.vert },
-    titre: { fontWeight: '600', color: couleurs.encre },
-    titreNonLu: { fontWeight: '800' },
-    message: { color: couleurs.gris, lineHeight: 20 },
-    date: { color: couleurs.gris, fontSize: 12, marginTop: 2 },
+    titre: { ...texte.appuye, color: couleurs.encre },
+    titreNonLu: { fontWeight: '700' },
+    message: { ...texte.corps, color: couleurs.gris },
+    date: { ...texte.mention, color: couleurs.gris, marginTop: 2 },
     point: { width: 10, height: 10, borderRadius: 5, backgroundColor: couleurs.vert }
 });
 

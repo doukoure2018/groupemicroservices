@@ -19,6 +19,12 @@ export const VOYAGEURS_DEFAUT: Voyageurs = { adultes: 1, enfants: 0, bagages: 0 
 /** Places par commande : la même borne que l'écran de réservation. */
 export const PLACES_MAX = 8;
 export const BAGAGES_MAX = 10;
+/**
+ * Âge à partir duquel on paie plein tarif, tel que le tarificateur du serveur
+ * le fixe aujourd'hui (`billetterie.age-adulte`). Le devis renvoie la valeur
+ * réelle ; celle-ci ne sert qu'avant le devis, dans la feuille des passagers.
+ */
+export const AGE_ADULTE_DEFAUT = 15;
 
 export function nombrePlaces(v: Voyageurs): number {
     return v.adultes + v.enfants;

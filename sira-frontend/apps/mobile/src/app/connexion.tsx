@@ -6,7 +6,7 @@ import { useAuth } from '../auth/contexte';
 import { ConnexionGoogleAnnulee, ConnexionGoogleIndisponible } from '../auth/google';
 import { config } from '../config';
 import { Bandeau, Bouton, Champ, styles as base } from '../ui/base';
-import { couleurs, espaces } from '../ui/theme';
+import { couleurs, espaces, texte, zoomMax } from '../ui/theme';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -55,7 +55,7 @@ export default function Connexion() {
                 </View>
 
                 <View style={styles.carte}>
-                    <Text style={base.titre}>Connexion</Text>
+                    <Text maxFontSizeMultiplier={zoomMax} style={base.titre}>Connexion</Text>
                     <Text style={[base.sousTitre, { marginBottom: espaces.lg }]}>Retrouvez vos réservations et vos billets.</Text>
 
                     <Champ
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     page: { flexGrow: 1, padding: espaces.lg, paddingTop: espaces.xl, backgroundColor: couleurs.vert },
     entete: { alignItems: 'center', marginBottom: espaces.xl },
     logo: { width: 264, height: 48, resizeMode: 'contain' },
-    badgeTest: { marginTop: espaces.md, color: couleurs.vertFonce, backgroundColor: couleurs.or, paddingHorizontal: espaces.md, paddingVertical: 4, borderRadius: 999, fontWeight: '700', fontSize: 12 },
+    badgeTest: { ...texte.mention, marginTop: espaces.md, color: couleurs.encre, backgroundColor: couleurs.or, paddingHorizontal: espaces.md, paddingVertical: 4, borderRadius: 999, overflow: 'hidden' },
     carte: { backgroundColor: couleurs.blanc, borderRadius: 20, padding: espaces.xl },
     separateur: { height: 1, backgroundColor: couleurs.ligne, marginVertical: espaces.xl },
     pied: { color: couleurs.gris, marginBottom: espaces.md, textAlign: 'center' }

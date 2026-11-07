@@ -1,6 +1,6 @@
 import { estSiege, type PlanSieges } from '@sira/core';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { couleurs, espaces } from '../ui/theme';
+import { couleurs, espaces, texte } from '../ui/theme';
 
 const CASE = 44;
 const ESPACE = 6;
@@ -120,8 +120,8 @@ const styles = StyleSheet.create({
     siegeTexteChoisi: { color: couleurs.blanc },
     chauffeur: { borderWidth: 1.5, borderColor: couleurs.ligne, borderRadius: 22 },
     chauffeurTexte: { color: couleurs.gris, fontSize: 22 },
-    numeroRangee: { color: couleurs.gris, fontSize: 12, fontWeight: '600' },
+    numeroRangee: { ...texte.mention, color: couleurs.gris },
     legende: { flexDirection: 'row', justifyContent: 'center', gap: espaces.lg, paddingVertical: espaces.md },
     legendeItem: { flexDirection: 'row', alignItems: 'center', gap: espaces.sm },
-    legendeTexte: { color: couleurs.gris, fontSize: 13 }
+    legendeTexte: { ...texte.secondaire, color: couleurs.gris }
 });

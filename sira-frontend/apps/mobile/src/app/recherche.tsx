@@ -149,6 +149,6 @@ const styles = StyleSheet.create({
     resume: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: espaces.sm },
     filtres: { borderWidth: 1, borderColor: couleurs.ligne, borderRadius: rayons.md, paddingHorizontal: espaces.md, paddingVertical: espaces.sm, backgroundColor: couleurs.blanc },
     filtresActifs: { borderColor: couleurs.vert, backgroundColor: couleurs.vertPale },
-    filtresTexte: { color: couleurs.encre, fontWeight: '700' },
+    filtresTexte: { color: couleurs.encre, fontWeight: '600' },
     filtresTexteActifs: { color: couleurs.vertFonce }
 });

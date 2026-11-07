@@ -1,12 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
 import { ApiError } from '@sira/api-client';
-import { formatDateFr, formatHeure, formatMontant, getStatutCommandeLabel, libelleVoyageurs, type BilletClient, type CommandeClient } from '@sira/core';
+import { formatDateCourte, formatHeure, formatMontant, getStatutCommandeLabel, libelleVoyageurs, type BilletClient, type CommandeClient } from '@sira/core';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { api } from '../api';
 import { Bandeau, Bouton, Carte, Champ, styles as base } from '../ui/base';
-import { couleurs, espaces } from '../ui/theme';
+import { couleurs, espaces, zoomMax } from '../ui/theme';
 
 /**
  * Retrouver ses billets sans compte : le numéro de la confirmation et le
@@ -78,11 +78,11 @@ function Reservation({ commande, onRecommencer }: { commande: CommandeClient; on
     return (
         <ScrollView style={base.ecran} contentContainerStyle={base.contenu}>
             <View>
-                <Text style={base.titre}>
+                <Text maxFontSizeMultiplier={zoomMax} style={base.titre}>
                     {commande.villeDepartLibelle} → {commande.villeArriveeLibelle}
                 </Text>
                 <Text style={base.sousTitre}>
-                    {formatDateFr(commande.dateDepart)} à {formatHeure(commande.heureDepart)}
+                    {formatDateCourte(commande.dateDepart)} à {formatHeure(commande.heureDepart)}
                 </Text>
             </View>
 

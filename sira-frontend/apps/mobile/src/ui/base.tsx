@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
-import { couleurs, espaces, rayons } from './theme';
+import { couleurs, espaces, rayons, texte, zoomMax } from './theme';
 
 /** Bouton plein, secondaire ou discret, avec état d'attente. */
 export function Bouton({
@@ -40,6 +40,7 @@ export function Bouton({
                 <ActivityIndicator color={variante === 'plein' || variante === 'danger' ? couleurs.blanc : couleurs.vert} />
             ) : (
                 <Text
+                    maxFontSizeMultiplier={zoomMax}
                     style={[
                         styles.boutonTexte,
                         (variante === 'secondaire' || variante === 'discret') && styles.boutonTexteVert
@@ -138,11 +139,11 @@ export const styles = StyleSheet.create({
     boutonDiscret: { backgroundColor: 'transparent' },
     boutonInactif: { opacity: 0.5 },
     boutonPresse: { opacity: 0.85 },
-    boutonTexte: { color: couleurs.blanc, fontWeight: '700', fontSize: 16 },
+    boutonTexte: { ...texte.bouton, color: couleurs.blanc },
     boutonTexteVert: { color: couleurs.vert },
 
     champ: { marginBottom: espaces.lg },
-    champLibelle: { color: couleurs.encre, fontWeight: '600', marginBottom: espaces.xs },
+    champLibelle: { ...texte.libelle, color: couleurs.encre, marginBottom: espaces.xs },
     champSaisie: {
         borderWidth: 1,
         borderColor: couleurs.ligne,
@@ -154,7 +155,7 @@ export const styles = StyleSheet.create({
         backgroundColor: couleurs.blanc
     },
     champSaisieErreur: { borderColor: couleurs.danger },
-    champErreur: { color: couleurs.danger, marginTop: espaces.xs, fontSize: 13 },
+    champErreur: { ...texte.secondaire, color: couleurs.danger, marginTop: espaces.xs },
 
     carte: {
         backgroundColor: couleurs.blanc,
@@ -165,25 +166,25 @@ export const styles = StyleSheet.create({
     },
 
     etatVide: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: espaces.xl },
-    etatVideTitre: { fontSize: 20, fontWeight: '700', color: couleurs.encre, textAlign: 'center' },
-    etatVideTexte: { color: couleurs.gris, textAlign: 'center', marginTop: espaces.sm, lineHeight: 22 },
+    etatVideTitre: { ...texte.titre, color: couleurs.encre, textAlign: 'center' },
+    etatVideTexte: { ...texte.corps, color: couleurs.gris, textAlign: 'center', marginTop: espaces.sm },
     chargement: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: espaces.xl, gap: espaces.md },
 
     ligneMenu: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: espaces.sm, minHeight: 52, paddingVertical: espaces.md },
     ligneMenuBordure: { borderBottomWidth: 1, borderBottomColor: couleurs.ligne },
-    ligneMenuLibelle: { fontSize: 16, fontWeight: '600', color: couleurs.encre },
+    ligneMenuLibelle: { ...texte.appuye, color: couleurs.encre },
     ligneMenuChevron: { fontSize: 24, lineHeight: 24, color: couleurs.gris },
 
     bandeau: { borderRadius: rayons.md, padding: espaces.md },
-    bandeauTexte: { lineHeight: 20 },
+    bandeauTexte: { ...texte.corps },
 
-    // Styles partagés par les écrans.
+    // Styles partagés par les écrans, exprimés avec les rôles de la charte (ui/theme.ts).
     ecran: { flex: 1, backgroundColor: couleurs.fond },
     contenu: { padding: espaces.lg, gap: espaces.lg },
-    titre: { fontSize: 24, fontWeight: '800', color: couleurs.encre },
-    sousTitre: { color: couleurs.gris, lineHeight: 22 },
-    sectionTitre: { fontSize: 17, fontWeight: '700', color: couleurs.encre, marginTop: espaces.sm },
+    titre: { ...texte.titre, color: couleurs.encre },
+    sousTitre: { ...texte.corps, color: couleurs.gris },
+    sectionTitre: { ...texte.section, color: couleurs.encre, marginTop: espaces.sm },
     ligne: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: espaces.sm },
-    attenue: { color: couleurs.gris },
-    gras: { fontWeight: '700', color: couleurs.encre }
+    attenue: { ...texte.secondaire, color: couleurs.gris },
+    gras: { fontWeight: '600', color: couleurs.encre }
 });
