@@ -1,12 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { AccessibilityInfo, Animated, Image, StyleSheet, View } from 'react-native';
+import { EMBLEMES, type Univers } from '../univers';
 import { couleurs, espaces, rayons } from './theme';
 
 /**
- * Pendant la recherche : la silhouette des résultats à venir, et l'emblème au
- * centre. Le battement s'arrête si le système demande moins d'animations.
+ * Pendant la recherche : la silhouette des résultats à venir, et l'emblème de
+ * l'univers au centre (le bus, ou les bâtiments pour un bien). Le battement
+ * s'arrête si le système demande moins d'animations.
  */
-export function SqueletteRecherche() {
+export function SqueletteRecherche({ univers = 'voyager' }: { univers?: Univers }) {
     const opacite = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
@@ -29,7 +31,7 @@ export function SqueletteRecherche() {
     }, [opacite]);
 
     return (
-        <View style={styles.ecran} accessibilityRole="progressbar" accessibilityLabel="Recherche des voyages en cours">
+        <View style={styles.ecran} accessibilityRole="progressbar" accessibilityLabel={univers === 'voyager' ? 'Recherche des voyages en cours' : 'Recherche des biens en cours'}>
             <Animated.View style={{ opacity: opacite, gap: espaces.lg }}>
                 {[0, 1, 2, 3].map((i) => (
                     <View key={i} style={styles.carte}>
@@ -47,7 +49,7 @@ export function SqueletteRecherche() {
             </Animated.View>
             <View style={styles.voile} pointerEvents="none">
                 <View style={styles.cadre}>
-                    <Image source={require('../../assets/logo-trans-emblem.png')} style={styles.logo} accessibilityIgnoresInvertColors />
+                    <Image source={EMBLEMES[univers]} style={styles.logo} accessibilityIgnoresInvertColors />
                 </View>
             </View>
         </View>

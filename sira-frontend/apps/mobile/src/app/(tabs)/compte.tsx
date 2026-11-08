@@ -6,14 +6,17 @@ import { useAuth } from '../../auth/contexte';
 import { config } from '../../config';
 import { Bouton, Carte, LigneMenu, styles as base } from '../../ui/base';
 import { couleurs, espaces, texte, zoomMax } from '../../ui/theme';
+import { UNIVERS, useUnivers } from '../../univers';
 
 /**
- * « Mon compte » se visite sans session : la carte du haut invite alors à
- * s'identifier et le menu reste visible, pour montrer ce que le compte
- * apporte. Les pages légales et l'aide vivent sur le site, qui fait foi.
+ * « Compte » est commun aux deux univers : un seul profil, une seule session.
+ * Il se visite sans session : la carte du haut invite alors à s'identifier et
+ * le menu reste visible, pour montrer ce que le compte apporte. Les entrées
+ * se groupent par univers ; les pages légales et l'aide vivent sur le site.
  */
-export default function MonCompte() {
+export default function Compte() {
     const { user, logout } = useAuth();
+    const { univers } = useUnivers();
     const version = Constants.expoConfig?.version ?? '';
     const ouvrirSite = (chemin: string) => void WebBrowser.openBrowserAsync(`${config.siteWeb}${chemin}`).catch(() => undefined);
 
@@ -36,7 +39,7 @@ export default function MonCompte() {
                     <Bouton
                         libelle="S'identifier ou s'inscrire"
                         variante="secondaire"
-                        onPress={() => router.push({ pathname: '/connexion', params: { suite: '/profil' } })}
+                        onPress={() => router.push({ pathname: '/connexion', params: { suite: '/compte' } })}
                         style={{ marginTop: espaces.lg }}
                     />
                 </Carte>
@@ -44,16 +47,17 @@ export default function MonCompte() {
 
             <Text style={base.sectionTitre}>Général</Text>
             <Carte style={styles.menu}>
+                <LigneMenu libelle="Univers" valeur={univers ? UNIVERS[univers].libelle : undefined} onPress={() => router.push('/choisir-univers')} />
                 <LigneMenu libelle="Notifications" onPress={() => router.push('/notifications')} />
+                <LigneMenu libelle="Préférences de notification" onPress={() => router.push('/preferences-notification')} />
                 <LigneMenu libelle="Paramètres" onPress={() => router.push('/parametres')} />
-                <LigneMenu libelle="Préférences de notification" onPress={() => router.push('/preferences-notification')} dernier />
+                <LigneMenu libelle="Besoin d'aide ?" onPress={() => ouvrirSite('/#contact')} dernier />
             </Carte>
 
-            <Text style={base.sectionTitre}>Services</Text>
+            <Text style={base.sectionTitre}>Voyages</Text>
             <Carte style={styles.menu}>
                 <LigneMenu libelle="Retrouver une réservation" onPress={() => router.push('/reservation-consultation')} />
-                <LigneMenu libelle="Villes desservies" onPress={() => router.push('/villes-desservies')} />
-                <LigneMenu libelle="Besoin d'aide ?" onPress={() => ouvrirSite('/#contact')} dernier />
+                <LigneMenu libelle="Villes desservies" onPress={() => router.push('/villes-desservies')} dernier />
             </Carte>
 
             <Text style={base.sectionTitre}>Mentions légales</Text>
@@ -73,7 +77,7 @@ export default function MonCompte() {
                     libelle="Se déconnecter"
                     variante="secondaire"
                     onPress={() => {
-                        void logout().then(() => router.replace('/(tabs)'));
+                        void logout().then(() => router.replace(UNIVERS[univers ?? 'voyager'].accueil));
                     }}
                 />
             )}

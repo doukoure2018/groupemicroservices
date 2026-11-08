@@ -77,6 +77,22 @@ export function Carte({ children, style }: { children: ReactNode; style?: StyleP
     return <View style={[styles.carte, style]}>{children}</View>;
 }
 
+/**
+ * Champ que l'on touche pour choisir (ville, date, passagers, type de bien) :
+ * le libellé au-dessus de la valeur, tous deux toujours visibles ; vide, il
+ * garde son libellé et dit ce qu'il attend (charte typographique, § 7).
+ */
+export function ChampChoix({ libelle, valeur, vide, onPress, style }: { libelle: string; valeur?: string; vide?: string; onPress: () => void; style?: StyleProp<ViewStyle> }) {
+    return (
+        <Pressable accessibilityRole="button" accessibilityLabel={`${libelle} : ${valeur ?? vide ?? ''}`} onPress={onPress} style={[styles.choix, style]}>
+            <Text style={styles.choixLibelle}>{libelle}</Text>
+            <Text style={[styles.choixValeur, !valeur && styles.choixVide]} numberOfLines={2}>
+                {valeur ?? vide}
+            </Text>
+        </Pressable>
+    );
+}
+
 /** Écran vide ou d'erreur : icône texte, titre, explication, action. */
 export function EtatVide({ titre, texte, action }: { titre: string; texte?: string; action?: ReactNode }) {
     return (
@@ -164,6 +180,11 @@ export const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: couleurs.ligne
     },
+
+    choix: { borderWidth: 1, borderColor: couleurs.ligne, borderRadius: rayons.md, padding: espaces.md, backgroundColor: couleurs.blanc, minHeight: 56, justifyContent: 'center' },
+    choixLibelle: { ...texte.libelle, color: couleurs.gris },
+    choixValeur: { ...texte.appuye, color: couleurs.encre, marginTop: 2 },
+    choixVide: { color: couleurs.gris, fontWeight: '400' },
 
     etatVide: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: espaces.xl },
     etatVideTitre: { ...texte.titre, color: couleurs.encre, textAlign: 'center' },

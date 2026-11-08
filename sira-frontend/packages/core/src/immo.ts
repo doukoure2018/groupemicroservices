@@ -321,3 +321,11 @@ export interface DemandeBesoin {
 
 /** Zone de diffusion consultée par une agence. */
 export type ScopeDemandes = 'ZONE' | 'TOUTES';
+
+/** Ce que l'utilisateur accepte de recevoir par SMS côté logement ; miroir de `PreferencesNotification` d'immobilierservice. */
+export interface PreferencesNotificationImmo {
+    /** Quand quelqu'un écrit au sujet d'un bien que l'utilisateur a publié. */
+    contactSms: boolean;
+    /** Quand une visite demandée est confirmée. */
+    visiteConfirmeeSms: boolean;
+}

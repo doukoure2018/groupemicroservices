@@ -7,7 +7,9 @@ import { api } from '../../api';
 import { ecouterTapsNotifications, enregistrerAppareil } from '../../notifications/push';
 import { useAuth } from '../../auth/contexte';
 import { Chargement } from '../../ui/base';
+import { SelecteurUnivers } from '../../ui/selecteur-univers';
 import { couleurs } from '../../ui/theme';
+import { chargerUnivers, useUnivers } from '../../univers';
 
 /** Icônes en texte pour ne dépendre d'aucune police d'icônes au démarrage. */
 function Icone({ symbole, color }: { symbole: string; color: ColorValue }) {
@@ -15,13 +17,25 @@ function Icone({ symbole, color }: { symbole: string; color: ColorValue }) {
 }
 
 /**
- * Les onglets se visitent sans compte : chercher un voyage n'exige rien.
- * Ce sont les écrans qui ont besoin d'une session (réserver, billets d'une
- * commande, notifications…) qui la demandent, via ExigerSession.
+ * Une seule barre d'onglets, dont la composition dépend de l'univers :
+ * Réservation · Billets · Contrôle · Compte pour Voyager, Recherche · Compte
+ * pour Me loger (Favoris et Demandes arrivent avec les lots I1 et I2). Les
+ * onglets de l'autre univers sont retirés de la barre (`href: null`) mais
+ * restent joignables : une notification de voyage ouvre toujours ses billets.
+ * On ne réaligne pas l'univers sur l'onglet affiché : changer la composition
+ * de la barre pendant une navigation relançait la navigation, sans fin.
+ *
+ * Les onglets se visitent sans compte : chercher n'exige rien. Ce sont les
+ * écrans qui ont besoin d'une session qui la demandent, via ExigerSession.
  */
 export default function Onglets() {
     const { user } = useAuth();
     const connecte = !!user;
+    const { univers, pret } = useUnivers();
+
+    useEffect(() => {
+        void chargerUnivers();
+    }, []);
 
     // Une fois connecté : jeton d'appareil enregistré, taps sur les pushs écoutés.
     useEffect(() => {
@@ -37,14 +51,16 @@ export default function Onglets() {
         refetchInterval: 60_000
     });
 
-    if (user === undefined) return <Chargement texte="Ouverture de l'application…" />;
+    if (user === undefined || !pret) return <Chargement texte="Ouverture de l'application…" />;
     // Un compte né d'une connexion Google n'a pas d'adresse : on la demande
     // une fois, comme l'inscription par email l'exige dès le départ.
     if (user && !user.address) return <Redirect href="/completer-profil" />;
+    if (univers === null) return <Redirect href="/choisir-univers" />;
 
     // Le contrôle des billets n'est montré qu'aux rôles qui ont le droit de
     // valider ; le serveur applique la même règle, l'onglet n'est qu'un confort.
     const controleur = !!user && (hasRole(user, 'CONTROLEUR') || hasRole(user, 'SUPER_ADMIN') || hasRole(user, 'ADMIN'));
+    const voyager = univers === 'voyager';
 
     const cloche = (
         <Pressable
@@ -61,6 +77,7 @@ export default function Onglets() {
             )}
         </Pressable>
     );
+    const selecteur = () => <SelecteurUnivers />;
 
     return (
         <Tabs
@@ -76,13 +93,23 @@ export default function Onglets() {
                 headerRight: connecte ? () => cloche : undefined
             }}
         >
-            <Tabs.Screen name="index" options={{ title: 'Réservation', tabBarIcon: ({ color }) => <Icone symbole="⌕" color={color} /> }} />
-            <Tabs.Screen name="voyages" options={{ title: 'Billets', tabBarIcon: ({ color }) => <Icone symbole="▣" color={color} /> }} />
+            {/* Voyager */}
+            <Tabs.Screen
+                name="index"
+                options={{ title: 'Réservation', href: voyager ? undefined : null, headerTitle: selecteur, headerTitleAlign: 'left', tabBarIcon: ({ color }) => <Icone symbole="⌕" color={color} /> }}
+            />
+            <Tabs.Screen name="voyages" options={{ title: 'Billets', href: voyager ? undefined : null, tabBarIcon: ({ color }) => <Icone symbole="▣" color={color} /> }} />
             <Tabs.Screen
                 name="scanner"
-                options={{ title: 'Contrôle', href: controleur ? undefined : null, tabBarIcon: ({ color }) => <Icone symbole="⌗" color={color} /> }}
+                options={{ title: 'Contrôle', href: voyager && controleur ? undefined : null, tabBarIcon: ({ color }) => <Icone symbole="⌗" color={color} /> }}
             />
-            <Tabs.Screen name="profil" options={{ title: 'Mon compte', tabBarIcon: ({ color }) => <Icone symbole="◉" color={color} /> }} />
+            {/* Me loger */}
+            <Tabs.Screen
+                name="biens"
+                options={{ title: 'Recherche', href: voyager ? null : undefined, headerTitle: selecteur, headerTitleAlign: 'left', tabBarIcon: ({ color }) => <Icone symbole="⌂" color={color} /> }}
+            />
+            {/* Commun */}
+            <Tabs.Screen name="compte" options={{ title: 'Compte', tabBarIcon: ({ color }) => <Icone symbole="◉" color={color} /> }} />
         </Tabs>
     );
 }

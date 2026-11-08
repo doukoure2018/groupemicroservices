@@ -2,14 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { AGE_ADULTE_DEFAUT, ajouterJours, aujourdhuiIso, BAGAGES_MAX, libelleJourCourt, libelleVoyageurs, PLACES_MAX, VOYAGEURS_DEFAUT, type Ville, type Voyageurs } from '@sira/core';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { api } from '../../api';
 import { useAuth } from '../../auth/contexte';
-import { Bandeau, Bouton, Carte, styles as base } from '../../ui/base';
+import { Bandeau, Bouton, Carte, ChampChoix, styles as base } from '../../ui/base';
 import { Calendrier } from '../../ui/calendrier';
 import { Compteur } from '../../ui/compteur';
 import { FeuilleBasse } from '../../ui/feuille';
-import { couleurs, espaces, rayons, texte, zoomMax } from '../../ui/theme';
+import { couleurs, espaces, texte, zoomMax } from '../../ui/theme';
 
 /** Jusqu'où l'on peut réserver à l'avance : les transporteurs publient rarement au-delà. */
 const JOURS_A_L_AVANCE = 60;
@@ -160,17 +160,6 @@ export default function Accueil() {
     );
 }
 
-function ChampChoix({ libelle, valeur, vide, onPress, style }: { libelle: string; valeur?: string; vide?: string; onPress: () => void; style?: StyleProp<ViewStyle> }) {
-    return (
-        <Pressable accessibilityRole="button" accessibilityLabel={`${libelle} : ${valeur ?? vide ?? ''}`} onPress={onPress} style={[styles.choix, style]}>
-            <Text style={styles.choixLibelle}>{libelle}</Text>
-            <Text style={[styles.choixValeur, !valeur && styles.choixVide]} numberOfLines={1}>
-                {valeur ?? vide}
-            </Text>
-        </Pressable>
-    );
-}
-
 /** Liste filtrable plein écran : plus lisible qu'une liste déroulante sur un téléphone. */
 function SelecteurVille({
     visible,
@@ -229,10 +218,6 @@ const styles = StyleSheet.create({
     salut: { ...texte.titre, color: couleurs.blanc },
     sousSalut: { ...texte.secondaire, color: couleurs.surVertSecondaire, marginTop: espaces.xs },
     formulaire: { marginTop: -40, paddingHorizontal: espaces.lg },
-    choix: { borderWidth: 1, borderColor: couleurs.ligne, borderRadius: rayons.md, padding: espaces.md, backgroundColor: couleurs.blanc },
-    choixLibelle: { ...texte.libelle, color: couleurs.gris },
-    choixValeur: { ...texte.appuye, color: couleurs.encre, marginTop: 2 },
-    choixVide: { color: couleurs.gris, fontWeight: '400' },
     inverser: { alignSelf: 'flex-end', width: 40, height: 28, alignItems: 'center', justifyContent: 'center', marginVertical: -espaces.xs },
     inverserTexte: { color: couleurs.vert, fontWeight: '700', fontSize: 20 },
     aidePlaces: { ...texte.secondaire, color: couleurs.gris, marginTop: espaces.sm },

@@ -40,6 +40,21 @@ le test, jamais la production.
 Expo Go suffit tant qu'aucun module natif hors de sa liste n'est ajouté. Les
 routes vivent dans `src/app/` (Expo Router) ; le reste dans `src/`.
 
+### Deux univers, une barre d'onglets
+
+L'application réunit *Voyager* (le transport) et *Me loger* (l'immobilier).
+Le choix se fait une fois, au premier lancement (`src/app/choisir-univers.tsx`),
+puis l'application rouvre le dernier univers utilisé : l'état vit dans
+`src/univers.ts`, retenu sur l'appareil. La barre d'onglets est unique
+(`src/app/(tabs)/_layout.tsx`) et sa composition dépend de l'univers :
+Réservation · Billets · Contrôle · Compte d'un côté, Recherche · Compte de
+l'autre ; les onglets de l'autre univers sont retirés de la barre (`href: null`)
+mais restent joignables, et y arriver bascule l'univers. *Compte*, la
+connexion, les notifications, les préférences et le paiement sont communs. Le
+sélecteur « Voyager | Me loger » vit dans l'en-tête des deux accueils
+(`src/ui/selecteur-univers.tsx`). Les raisons de ce découpage sont dans
+`docs/proposition-application-unique.md`, § 4.
+
 ## Construire avec EAS
 
 ```bash

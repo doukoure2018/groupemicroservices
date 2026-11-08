@@ -9,6 +9,7 @@ import type {
     LeadContactView,
     LeadVisiteView,
     PageMeta,
+    PreferencesNotificationImmo,
     Propriete,
     ProprieteDetail,
     Proprietaire,
@@ -28,7 +29,7 @@ export function proprieteApi(client: SiraClient) {
         recherche: (params: RechercheProprietesParams) =>
             client.get<{ proprietes: Propriete[] } & PageMeta>(`${BASE}/proprietes/recherche`, { params: params as QueryParams, auth: false }),
         byUuid: (uuid: string) => client.get<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}`, { auth: false }),
-        typesBien: () => client.get<{ typesBien: TypeBien[] }>(`${BASE}/types-bien`, { auth: false }),
+        typesBien: () => client.get<{ types: TypeBien[] }>(`${BASE}/types-bien`, { auth: false }),
         commodites: () => client.get<{ commodites: Commodite[] }>(`${BASE}/commodites`, { auth: false }),
 
         // ---- Propriétaire / agence ----
@@ -71,7 +72,11 @@ export function immoClientApi(client: SiraClient) {
         saveBrouillon: (body: Record<string, unknown>) => client.post<{ brouillon: unknown }>(`${BASE}/brouillons`, { body }),
         materialiserBrouillon: (uuid: string) => client.post<{ propriete: Propriete }>(`${BASE}/brouillons/${uuid}/materialiser`),
 
-        monProfil: () => client.get<{ profil: unknown }>(`${BASE}/profils/me`)
+        monProfil: () => client.get<{ profil: unknown }>(`${BASE}/profils/me`),
+
+        // ---- Préférences de notification du logement (SMS envoyés par le service immobilier) ----
+        preferences: () => client.get<{ preferences: PreferencesNotificationImmo }>(`${BASE}/preferences`),
+        majPreferences: (body: Partial<PreferencesNotificationImmo>) => client.patch<{ preferences: PreferencesNotificationImmo }>(`${BASE}/preferences`, { body })
     };
 }
 

@@ -108,6 +108,20 @@ src/app/
 └── paiement/                   partagé : [reference], retour, retour/[reference]
 ```
 
+**Mise en œuvre retenue au lot I0 (7 novembre 2026)** : une seule barre
+d'onglets, dont la composition dépend de l'univers courant, plutôt que deux
+groupes `(voyager)` et `(loger)`. Deux groupes auraient donné deux écrans
+`index` à la même adresse `/`, et *Compte*, pourtant le même écran, aurait dû
+exister deux fois. Avec une barre unique, les onglets de l'autre univers sont
+simplement retirés de la barre (`href: null`) et restent joignables : une
+notification de voyage ouvre toujours ses billets, et ouvrir un écran de
+l'autre univers y bascule la barre, puisque l'application retient le dernier
+univers *utilisé*. L'état vit dans `src/univers.ts` (SecureStore, clé
+`synergia.univers`) ; l'aiguillage est le `index.tsx` racine ; le choix du
+premier lancement est `choisir-univers.tsx`. Les écrans immobiliers à venir
+gardent des noms qui leur sont propres (`biens`, `bien/[uuid]`…) et les
+adresses du transport ne changent pas.
+
 Trois précautions techniques :
 
 - **Les groupes `(voyager)` et `(loger)` n'apparaissent pas dans les adresses.** Deux écrans du même nom dans deux groupes auraient la même adresse : les écrans immobiliers portent donc des noms qui leur sont propres (`bien/[uuid]`, pas `offre/[uuid]`). Les adresses du transport **ne changent pas** — `/paiement/retour` reste reconnu par les liens d'application Android.
@@ -135,7 +149,7 @@ Côté paquets partagés, rien à créer : `@sira/core/immo.ts` et `@sira/api-cl
 
 | Lot | Contenu | Serveur | Ordre de grandeur |
 |---|---|---|---|
-| **I0 — Socle** | groupes `(voyager)` / `(loger)`, écran de choix, souvenir de l'univers, sélecteur dans l'en-tête, *Compte* partagé, barre Me loger avec *Recherche* seule, préférences en deux sections | non | 2–3 j |
+| **I0 — Socle** ✅ livré le 7 nov. | barre d'onglets par univers (voir § 4), écran de choix, souvenir de l'univers, sélecteur dans l'en-tête des deux accueils, *Compte* commun avec l'entrée *Univers*, accueil Me loger avec le formulaire de recherche (résultats au lot I1), préférences en deux sections *Voyages* / *Logement* (les réglages SMS d'`immobilierservice`, exposés dans `@sira/api-client`) | non | fait en ½ j |
 | **I1 — Chercher et voir** | recherche de biens (publique) : vente / location, type, ville, prix, commodités ; résultats ; **fiche du bien** (photos, carte, commodités, propriétaire ou agence) ; favoris | non | 4–5 j |
 | **I2 — Entrer en relation** | contacter, demander une visite, déclarer un besoin ; *Mes demandes* (contacts, visites, besoins) ; signaler une annonce | non | 3–4 j |
 | **I3 — Publier** | profil immobilier, assistant en 4 étapes, photos depuis l'appareil, brouillons, *Mes annonces* (publier, retirer, renouveler, vendu, loué) | non | 5–6 j |
