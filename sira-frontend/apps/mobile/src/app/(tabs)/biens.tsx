@@ -1,42 +1,49 @@
 import { useQuery } from '@tanstack/react-query';
-import { formatMontant, type TypeAnnonce, type TypeBien } from '@sira/core';
+import type { TypeAnnonce, TypeBien, Ville } from '@sira/core';
+import { router } from 'expo-router';
 import { useRef, useState, type ComponentRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
 import { api } from '../../api';
 import { useAuth } from '../../auth/contexte';
+import { paramsDepuisCriteres } from '../../immo/criteres';
 import { Bandeau, Bouton, Carte, ChampChoix, styles as base } from '../../ui/base';
 import { FeuilleBasse } from '../../ui/feuille';
+import { SelecteurVille } from '../../ui/selecteur-ville';
 import { couleurs, espaces, rayons, texte, zoomMax } from '../../ui/theme';
 
 /**
- * L'accueil de Me loger : louer ou acheter, où, quoi, pour quel budget.
- * Lot I0 : le socle et le formulaire. Les résultats, la fiche d'un bien et
- * les favoris arrivent avec le lot I1 (docs/proposition-application-unique.md).
+ * L'accueil de Me loger : louer ou acheter, où, quoi, pour quel budget. On
+ * cherche large ici ; les filtres fins se posent sur les résultats, en voyant
+ * ce qui sort. Aucun compte n'est demandé pour chercher.
  */
 export default function AccueilLoger() {
     const { user } = useAuth();
     const [typeAnnonce, setTypeAnnonce] = useState<TypeAnnonce>('LOCATION');
-    const [ville, setVille] = useState('');
+    const [ville, setVille] = useState<Ville | null>(null);
     const [typeBien, setTypeBien] = useState<TypeBien | null>(null);
     const [budget, setBudget] = useState('');
     const [feuille, setFeuille] = useState<'type' | null>(null);
-    const [recapitulatif, setRecapitulatif] = useState<string | null>(null);
+    const [selecteurVille, setSelecteurVille] = useState(false);
 
-    // Référentiel public, le même que celui du site.
-    const typesBien = useQuery({
-        queryKey: ['types-bien'],
-        queryFn: async () => (await api.immo.proprietes.typesBien()).data.types ?? []
-    });
+    // Référentiels publics, les mêmes que ceux du site.
+    const typesBien = useQuery({ queryKey: ['types-bien'], queryFn: async () => (await api.immo.proprietes.typesBien()).data.types ?? [] });
+    const villes = useQuery({ queryKey: ['villes-actives'], queryFn: async () => (await api.geo.villesActives()).data.villes ?? [] });
 
     function rechercher() {
         const budgetNombre = Number.parseInt(budget.replace(/\D/g, ''), 10);
-        const criteres = [
-            typeAnnonce === 'LOCATION' ? 'Location' : 'Achat',
-            ville.trim() || 'toutes les villes',
-            typeBien?.libelle ?? 'tous les types de bien',
-            Number.isFinite(budgetNombre) ? `jusqu’à ${formatMontant(budgetNombre)}` : null
-        ].filter(Boolean);
-        setRecapitulatif(criteres.join(', '));
+        router.push({
+            pathname: '/biens/resultats',
+            params: paramsDepuisCriteres(
+                {
+                    typeAnnonce,
+                    ...(ville ? { villeUuid: ville.villeUuid } : {}),
+                    ...(typeBien?.code ? { typeBienCodes: [typeBien.code] } : {}),
+                    ...(Number.isFinite(budgetNombre) && budgetNombre > 0 ? { prixMax: budgetNombre } : {}),
+                    trier: 'DATE_DESC'
+                },
+                ville?.libelle
+            )
+        });
     }
 
     return (
@@ -55,18 +62,29 @@ export default function AccueilLoger() {
                             <Puce libelle="Louer" actif={typeAnnonce === 'LOCATION'} onPress={() => setTypeAnnonce('LOCATION')} />
                             <Puce libelle="Acheter" actif={typeAnnonce === 'VENTE'} onPress={() => setTypeAnnonce('VENTE')} />
                         </View>
-                        <ChampSaisie libelle="Ville ou quartier" valeur={ville} onChange={setVille} attendu="Conakry, Ratoma, Kindia…" />
+                        <ChampChoix libelle="Ville" valeur={ville?.libelle} vide="Toutes les villes" onPress={() => setSelecteurVille(true)} />
                         <View style={styles.rangee}>
                             <ChampChoix libelle="Type de bien" valeur={typeBien?.libelle} vide="Tous" onPress={() => setFeuille('type')} style={{ flex: 1 }} />
-                            <ChampSaisie libelle="Budget maximal" valeur={budget} onChange={setBudget} attendu="En GNF" numerique style={{ flex: 1 }} />
+                            <ChampSaisie libelle="Budget maximal" valeur={budget} onChange={setBudget} attendu="En GNF" style={{ flex: 1 }} />
                         </View>
+                        {villes.isError && <Bandeau type="erreur">Impossible de charger les villes. Vérifiez votre réseau.</Bandeau>}
                         <Bouton libelle="Rechercher" onPress={rechercher} style={{ marginTop: espaces.sm }} />
-                        {recapitulatif && (
-                            <Bandeau type="info">La recherche de biens arrive avec le prochain lot. Vos critères : {recapitulatif}.</Bandeau>
-                        )}
                     </Carte>
                 </View>
             </ScrollView>
+
+            <SelecteurVille
+                visible={selecteurVille}
+                titre="Ville"
+                villes={villes.data ?? []}
+                chargement={villes.isPending}
+                toutes="Toutes les villes"
+                onChoisir={(v) => {
+                    setVille(v);
+                    setSelecteurVille(false);
+                }}
+                onFermer={() => setSelecteurVille(false)}
+            />
 
             <FeuilleBasse visible={feuille === 'type'} titre="Type de bien" onFermer={() => setFeuille(null)}>
                 <Option
@@ -81,7 +99,7 @@ export default function AccueilLoger() {
                 {typesBien.isError && <Bandeau type="erreur">Impossible de charger les types de bien. Vérifiez votre réseau.</Bandeau>}
                 {(typesBien.data ?? []).map((t) => (
                     <Option
-                        key={t.code ?? t.libelle ?? String(t.typeBienId)}
+                        key={t.code ?? String(t.typeBienId)}
                         libelle={t.libelle ?? t.code ?? ''}
                         actif={typeBien?.code === t.code}
                         onPress={() => {
@@ -98,27 +116,15 @@ export default function AccueilLoger() {
 function Puce({ libelle, actif, onPress }: { libelle: string; actif: boolean; onPress: () => void }) {
     return (
         <Pressable accessibilityRole="radio" accessibilityState={{ checked: actif }} onPress={onPress} style={[styles.puce, actif && styles.puceActive]}>
-            <Text style={[styles.puceTexte, actif && styles.puceTexteActif]}>{libelle}</Text>
+            <Text maxFontSizeMultiplier={zoomMax} style={[styles.puceTexte, actif && styles.puceTexteActif]}>
+                {libelle}
+            </Text>
         </Pressable>
     );
 }
 
-/** Même dessin que les champs de choix : libellé au-dessus, valeur saisie en dessous. */
-function ChampSaisie({
-    libelle,
-    valeur,
-    onChange,
-    attendu,
-    numerique,
-    style
-}: {
-    libelle: string;
-    valeur: string;
-    onChange: (v: string) => void;
-    attendu: string;
-    numerique?: boolean;
-    style?: object;
-}) {
+/** Même dessin que les champs de choix : libellé au-dessus, valeur en dessous, et toute la case se touche. */
+function ChampSaisie({ libelle, valeur, onChange, attendu, style }: { libelle: string; valeur: string; onChange: (v: string) => void; attendu: string; style?: StyleProp<ViewStyle> }) {
     const saisie = useRef<ComponentRef<typeof TextInput>>(null);
     return (
         <Pressable style={[base.choix, style]} onPress={() => saisie.current?.focus()} accessible={false}>
@@ -129,7 +135,7 @@ function ChampSaisie({
                 onChangeText={onChange}
                 placeholder={attendu}
                 placeholderTextColor={couleurs.gris}
-                keyboardType={numerique ? 'number-pad' : 'default'}
+                keyboardType="number-pad"
                 accessibilityLabel={libelle}
                 style={styles.saisie}
             />
@@ -141,7 +147,7 @@ function Option({ libelle, actif, onPress }: { libelle: string; actif: boolean; 
     return (
         <Pressable accessibilityRole="radio" accessibilityState={{ checked: actif }} onPress={onPress} style={styles.option}>
             <Text style={[styles.optionTexte, actif && { color: couleurs.vert }]}>{libelle}</Text>
-            {actif && <Text style={{ color: couleurs.vert, fontWeight: '700' }}>✓</Text>}
+            {actif && <Text style={[styles.optionTexte, { color: couleurs.vert }]}>✓</Text>}
         </Pressable>
     );
 }
@@ -152,7 +158,7 @@ const styles = StyleSheet.create({
     sousSalut: { ...texte.secondaire, color: couleurs.surVertSecondaire, marginTop: espaces.xs },
     formulaire: { marginTop: -40, paddingHorizontal: espaces.lg },
     puces: { flexDirection: 'row', gap: espaces.sm },
-    puce: { borderWidth: 1, borderColor: couleurs.ligne, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 16, backgroundColor: couleurs.blanc },
+    puce: { borderWidth: 1, borderColor: couleurs.ligne, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 16, backgroundColor: couleurs.blanc, minHeight: 44, justifyContent: 'center' },
     puceActive: { borderColor: couleurs.vert, backgroundColor: couleurs.vertPale },
     puceTexte: { ...texte.libelle, color: couleurs.encre },
     puceTexteActif: { color: couleurs.vertFonce },

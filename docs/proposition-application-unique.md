@@ -150,13 +150,24 @@ Côté paquets partagés, rien à créer : `@sira/core/immo.ts` et `@sira/api-cl
 | Lot | Contenu | Serveur | Ordre de grandeur |
 |---|---|---|---|
 | **I0 — Socle** ✅ livré le 7 nov. | barre d'onglets par univers (voir § 4), écran de choix, souvenir de l'univers, sélecteur dans l'en-tête des deux accueils, *Compte* commun avec l'entrée *Univers*, accueil Me loger avec le formulaire de recherche (résultats au lot I1), préférences en deux sections *Voyages* / *Logement* (les réglages SMS d'`immobilierservice`, exposés dans `@sira/api-client`) | non | fait en ½ j |
-| **I1 — Chercher et voir** | recherche de biens (publique) : vente / location, type, ville, prix, commodités ; résultats ; **fiche du bien** (photos, carte, commodités, propriétaire ou agence) ; favoris | non | 4–5 j |
+| **I1 — Chercher et voir** ✅ livré le 8 nov. | recherche publique (louer / acheter, ville, type, budget), résultats paginés avec filtres (type, budget, chambres, commodités) et tri, **fiche du bien** (photos, commodités, conditions de location, qui publie), favoris. Voir les réserves ci-dessous | non | fait en 1 j |
 | **I2 — Entrer en relation** | contacter, demander une visite, déclarer un besoin ; *Mes demandes* (contacts, visites, besoins) ; signaler une annonce | non | 3–4 j |
 | **I3 — Publier** | profil immobilier, assistant en 4 étapes, photos depuis l'appareil, brouillons, *Mes annonces* (publier, retirer, renouveler, vendu, loué) | non | 5–6 j |
 | **I4 — Notifications** | push sur contact reçu et visite confirmée, préférences *Logement*, liens profonds vers une fiche (`/biens/{uuid}` sur le site, à créer) | **oui**, léger | 2 j |
 | **I5 — Agences** *(optionnel)* | demandes clients et inscription d'agence sur mobile — ou renvoi au site, qui les a déjà | non | 2–3 j |
 
 Chaque lot se livre sur test, avec `tsc`, l'empaquetage Metro, l'essai sur le Samsung, et des tests e2e du site pour ce qui le touche.
+
+**Réserves du lot I1**, à lever plus tard :
+
+- **La carte n'est pas dessinée.** La fiche donne l'adresse et un bouton qui ouvre le point dans l'application de cartes du téléphone. Une vraie carte demanderait un module natif (`react-native-maps`) et une clé ; cela viendra avec les photos prises depuis l'appareil, au lot I3.
+- **Le filtre par ville ne trouve rien pour l'instant.** Le serveur relie un bien à une ville par sa *localisation*, qui exige un quartier ; or les communes de Conakry n'ont aucun quartier au référentiel. Le filtre fonctionne, il n'a rien à trouver. À décider : créer les quartiers de Conakry.
+- **Pas de photos** sur les biens de démonstration : l'envoi de photos est un chantier du lot I3.
+- **Contacter et demander une visite** sont le lot I2 ; la fiche se contente de dire qui publie.
+
+**Données de démonstration.** Quatre biens ont été publiés sur l'environnement de test pour vérifier ces écrans : appartement à Kipé, villa à Nongo, terrain à Kagbelen, bureau à Kaloum. Ils appartiennent au compte de gestion ; le serveur refusant qu'on mette sa propre annonce en favori, le cœur répond par un message sur ces quatre-là. `DELETE /immo/proprietes/{uuid}` les retire.
+
+**Leçon de contrat.** Les modèles partagés de l'immobilier n'avaient jamais été confrontés au serveur, le site n'ayant pas de recherche publique : les noms des critères (`villeUuid`, `typeBienCodes`, `chambresMin`, `commoditesCodes`, `trier`), la clé de la liste des types de bien (`types`) et les valeurs de tri (`DATE_DESC`, et non `RECENT`) étaient tous faux. Ils sont corrigés et vérifiés appel par appel contre test.
 
 ---
 

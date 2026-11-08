@@ -18,8 +18,8 @@ function Icone({ symbole, color }: { symbole: string; color: ColorValue }) {
 
 /**
  * Une seule barre d'onglets, dont la composition dépend de l'univers :
- * Réservation · Billets · Contrôle · Compte pour Voyager, Recherche · Compte
- * pour Me loger (Favoris et Demandes arrivent avec les lots I1 et I2). Les
+ * Réservation · Billets · Contrôle · Compte pour Voyager, Recherche · Favoris
+ * · Compte pour Me loger (Demandes arrive avec le lot I2). Les
  * onglets de l'autre univers sont retirés de la barre (`href: null`) mais
  * restent joignables : une notification de voyage ouvre toujours ses billets.
  * On ne réaligne pas l'univers sur l'onglet affiché : changer la composition
@@ -108,6 +108,7 @@ export default function Onglets() {
                 name="biens"
                 options={{ title: 'Recherche', href: voyager ? null : undefined, headerTitle: selecteur, headerTitleAlign: 'left', tabBarIcon: ({ color }) => <Icone symbole="⌂" color={color} /> }}
             />
+            <Tabs.Screen name="favoris" options={{ title: 'Favoris', href: voyager ? null : undefined, tabBarIcon: ({ color }) => <Icone symbole="♥" color={color} /> }} />
             {/* Commun */}
             <Tabs.Screen name="compte" options={{ title: 'Compte', tabBarIcon: ({ color }) => <Icone symbole="◉" color={color} /> }} />
         </Tabs>

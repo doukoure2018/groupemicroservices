@@ -5,26 +5,49 @@ export interface Photo {
     photoUuid: string;
     url: string;
     urlThumbnail: string;
-    ordre: number;
-    couverture: boolean;
+    ordreAffichage?: number;
+    estCouverture?: boolean;
 }
 
 export interface Commodite {
     commoditeId: number;
+    commoditeUuid?: string;
     code: string;
     libelle: string;
-    categorie: string;
-    icone: string;
+    categorie?: string;
+    icone?: string;
+    ordreAffichage?: number;
+    actif?: boolean;
 }
 
 export interface TypeBien {
     typeBienId?: number;
+    typeBienUuid?: string;
     code?: string;
     libelle?: string;
-    categorie?: string;
+    description?: string;
+    icone?: string;
+    ordreAffichage?: number;
+    actif?: boolean;
 }
 
 export type TypeAnnonce = 'VENTE' | 'LOCATION';
+export type DureeLocation = 'COURT_SEJOUR' | 'LONG_SEJOUR';
+
+/** « 4 500 000 GNF / mois » : le prix tel qu'il se dit, période comprise. */
+export function libellePeriode(periode: string | null | undefined): string | null {
+    if (!periode) return null;
+    return { PAR_MOIS: '/ mois', PAR_AN: '/ an', PAR_JOUR: '/ jour', PAR_NUIT: '/ nuit', UNIQUE: null }[periode] ?? null;
+}
+
+/** Ce qui se dit d'un bien en une ligne : « 85 m² · 2 chambres · 1 salle de bain ». */
+export function resumeBien(p: Pick<Propriete, 'surfaceM2' | 'nombreChambres' | 'nombreSallesBain'>): string {
+    const bouts: string[] = [];
+    if (p.surfaceM2) bouts.push(`${p.surfaceM2} m²`);
+    if (p.nombreChambres) bouts.push(`${p.nombreChambres} chambre${p.nombreChambres > 1 ? 's' : ''}`);
+    if (p.nombreSallesBain) bouts.push(`${p.nombreSallesBain} salle${p.nombreSallesBain > 1 ? 's' : ''} de bain`);
+    return bouts.join(' · ');
+}
 
 export interface Propriete {
     proprieteId: number;
@@ -41,9 +64,20 @@ export interface Propriete {
     periode: string | null;
     prixSurDemande: boolean;
     prixNegociable: boolean;
+    typeBienId?: number | null;
+    typeBien?: TypeBien | null;
     nombreChambres: number | null;
     nombreSallesBain: number | null;
     surfaceM2: number | null;
+    nombreEtages?: number | null;
+    etageSituation?: number | null;
+    anneeConstruction?: number | null;
+    /** Location : ce que le locataire avance à l'entrée, en mois de loyer. */
+    moisCaution?: number | null;
+    moisAvance?: number | null;
+    moisHonoraire?: number | null;
+    dateDisponibilite?: string | number[] | null;
+    localisationId?: number | null;
     adresseComplete: string | null;
     latitude: number | null;
     longitude: number | null;
@@ -59,6 +93,11 @@ export interface Propriete {
     photos: Photo[];
     commodites: Commodite[];
     photoCouverture: Photo | null;
+    premium?: boolean;
+    /** Distance au point de recherche, en mètres, quand la recherche est géolocalisée. */
+    distanceM?: number | null;
+    /** Renseigné seulement si la recherche est faite avec un jeton ; null sinon. */
+    isFavorite?: boolean | null;
     createdAt: string;
     updatedAt: string;
 }
@@ -86,23 +125,43 @@ export interface ProprieteDetail {
     vendeur: Vendeur;
 }
 
+/**
+ * Critères de `GET /immo/proprietes/recherche`. Les noms sont ceux que le
+ * serveur attend, au caractère près : les listes sont répétées en paramètres
+ * (`typeBienCodes=MAISON&typeBienCodes=VILLA`), la ville se désigne par son
+ * identifiant et non par son nom, et le tri s'appelle « trier ».
+ */
 export interface RechercheProprietesParams {
     typeAnnonce?: TypeAnnonce;
-    typeBienCode?: string;
-    villeLibelle?: string;
+    dureeLocation?: DureeLocation;
+    typeBienCodes?: string[];
+    villeUuid?: string;
+    communeUuid?: string;
+    quartierUuid?: string;
     prixMin?: number;
     prixMax?: number;
-    nombreChambresMin?: number;
+    devise?: string;
+    chambresMin?: number;
     surfaceMin?: number;
-    commodites?: string[];
-    latitude?: number;
-    longitude?: number;
+    commoditesCodes?: string[];
+    q?: string;
+    lat?: number;
+    lng?: number;
     rayonKm?: number;
-    tri?: string;
+    trier?: TriProprietes;
     limit?: number;
     offset?: number;
-    q?: string;
 }
+
+/** Les valeurs que `trier` accepte côté serveur ; toute autre est refusée en 400. */
+export type TriProprietes = 'DATE_DESC' | 'PRIX_ASC' | 'PRIX_DESC' | 'PERTINENCE' | 'DISTANCE_ASC';
+
+/** Les tris proposés au client ; « pertinence » et « distance » supposent une recherche textuelle ou géolocalisée. */
+export const TRIS_PROPRIETES: { valeur: TriProprietes; libelle: string }[] = [
+    { valeur: 'DATE_DESC', libelle: 'Les plus récents' },
+    { valeur: 'PRIX_ASC', libelle: 'Prix croissant' },
+    { valeur: 'PRIX_DESC', libelle: 'Prix décroissant' }
+];
 
 // ---- Leads back-office (intermédiation) ----
 

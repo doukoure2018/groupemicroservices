@@ -55,6 +55,8 @@ export default function Racine() {
                         <Stack.Screen name="preferences-notification" options={{ title: 'Préférences de notification' }} />
                         <Stack.Screen name="reservation-consultation" options={{ title: 'Rechercher une réservation' }} />
                         <Stack.Screen name="villes-desservies" options={{ title: 'Villes desservies' }} />
+                        <Stack.Screen name="biens/resultats" options={{ title: 'Biens disponibles' }} />
+                        <Stack.Screen name="bien/[uuid]" options={{ title: 'Le bien' }} />
                     </Stack>
                 </AuthProvider>
             </QueryClientProvider>

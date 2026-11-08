@@ -2,13 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { AGE_ADULTE_DEFAUT, ajouterJours, aujourdhuiIso, BAGAGES_MAX, libelleJourCourt, libelleVoyageurs, PLACES_MAX, VOYAGEURS_DEFAUT, type Ville, type Voyageurs } from '@sira/core';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { api } from '../../api';
 import { useAuth } from '../../auth/contexte';
 import { Bandeau, Bouton, Carte, ChampChoix, styles as base } from '../../ui/base';
 import { Calendrier } from '../../ui/calendrier';
 import { Compteur } from '../../ui/compteur';
 import { FeuilleBasse } from '../../ui/feuille';
+import { SelecteurVille } from '../../ui/selecteur-ville';
 import { couleurs, espaces, texte, zoomMax } from '../../ui/theme';
 
 /** Jusqu'où l'on peut réserver à l'avance : les transporteurs publient rarement au-delà. */
@@ -160,59 +161,6 @@ export default function Accueil() {
     );
 }
 
-/** Liste filtrable plein écran : plus lisible qu'une liste déroulante sur un téléphone. */
-function SelecteurVille({
-    visible,
-    titre,
-    villes,
-    chargement,
-    onChoisir,
-    onFermer
-}: {
-    visible: boolean;
-    titre: string;
-    villes: Ville[];
-    chargement: boolean;
-    onChoisir: (v: Ville) => void;
-    onFermer: () => void;
-}) {
-    const [filtre, setFiltre] = useState('');
-    const normaliser = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-    const visibles = villes.filter((v) => normaliser(v.libelle).includes(normaliser(filtre)));
-
-    return (
-        <Modal visible={visible} animationType="slide" onRequestClose={onFermer}>
-            <View style={[base.ecran, { padding: espaces.lg, paddingTop: espaces.xxl }]}>
-                <View style={base.ligne}>
-                    <Text maxFontSizeMultiplier={zoomMax} style={base.titre}>
-                        {titre}
-                    </Text>
-                    <Bouton libelle="Fermer" variante="discret" onPress={onFermer} />
-                </View>
-                <TextInput
-                    value={filtre}
-                    onChangeText={setFiltre}
-                    placeholder="Rechercher une ville"
-                    placeholderTextColor={couleurs.gris}
-                    autoFocus
-                    style={[base.champSaisie, { marginVertical: espaces.md }]}
-                    accessibilityLabel="Filtrer les villes"
-                />
-                <ScrollView keyboardShouldPersistTaps="handled">
-                    {chargement && <Text style={base.attenue}>Chargement des villes…</Text>}
-                    {!chargement && visibles.length === 0 && <Text style={base.attenue}>Aucune ville ne correspond.</Text>}
-                    {visibles.map((v) => (
-                        <Pressable key={v.villeUuid} accessibilityRole="button" onPress={() => onChoisir(v)} style={styles.villeLigne}>
-                            <Text style={styles.villeNom}>{v.libelle}</Text>
-                            <Text style={base.attenue}>{v.regionLibelle}</Text>
-                        </Pressable>
-                    ))}
-                </ScrollView>
-            </View>
-        </Modal>
-    );
-}
-
 const styles = StyleSheet.create({
     bandeau: { backgroundColor: couleurs.vert, paddingHorizontal: espaces.lg, paddingTop: espaces.lg, paddingBottom: 56 },
     salut: { ...texte.titre, color: couleurs.blanc },
@@ -220,7 +168,5 @@ const styles = StyleSheet.create({
     formulaire: { marginTop: -40, paddingHorizontal: espaces.lg },
     inverser: { alignSelf: 'flex-end', width: 40, height: 28, alignItems: 'center', justifyContent: 'center', marginVertical: -espaces.xs },
     inverserTexte: { color: couleurs.vert, fontWeight: '700', fontSize: 20 },
-    aidePlaces: { ...texte.secondaire, color: couleurs.gris, marginTop: espaces.sm },
-    villeLigne: { paddingVertical: espaces.md, borderBottomWidth: 1, borderBottomColor: couleurs.ligne },
-    villeNom: { ...texte.appuye, color: couleurs.encre }
+    aidePlaces: { ...texte.secondaire, color: couleurs.gris, marginTop: espaces.sm }
 });

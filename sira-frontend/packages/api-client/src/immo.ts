@@ -26,8 +26,16 @@ const BASE = '/immo';
 export function proprieteApi(client: SiraClient) {
     return {
         // ---- Public ----
+        /**
+         * Recherche publique. Le jeton est envoyé s'il y en a un : le serveur
+         * renseigne alors `isFavorite` sur chaque bien ; sans jeton, la
+         * recherche reste ouverte et le champ vaut null.
+         */
         recherche: (params: RechercheProprietesParams) =>
-            client.get<{ proprietes: Propriete[] } & PageMeta>(`${BASE}/proprietes/recherche`, { params: params as QueryParams, auth: false }),
+            // `auth` reste au défaut : le jeton part s'il y en a un, sinon rien.
+            client.get<{ proprietes: Propriete[]; total: number; limit: number; offset: number; tri?: string }>(`${BASE}/proprietes/recherche`, {
+                params: params as QueryParams
+            }),
         byUuid: (uuid: string) => client.get<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}`, { auth: false }),
         typesBien: () => client.get<{ types: TypeBien[] }>(`${BASE}/types-bien`, { auth: false }),
         commodites: () => client.get<{ commodites: Commodite[] }>(`${BASE}/commodites`, { auth: false }),
@@ -55,9 +63,11 @@ export function proprieteApi(client: SiraClient) {
 /** Favoris, contacts, visites, demandes de besoin, brouillons — parcours client mobile. */
 export function immoClientApi(client: SiraClient) {
     return {
-        favoris: () => client.get<{ proprietes: Propriete[] }>(`${BASE}/favoris/mes-favoris`),
-        addFavori: (proprieteUuid: string) => client.post<Record<string, never>>(`${BASE}/favoris/${proprieteUuid}`),
-        removeFavori: (proprieteUuid: string) => client.delete<Record<string, never>>(`${BASE}/favoris/${proprieteUuid}`),
+        favoris: (params?: { limit?: number; offset?: number }) =>
+            client.get<{ proprietes: Propriete[]; total: number; limit: number; offset: number }>(`${BASE}/favoris/mes-favoris`, { params }),
+        estFavori: (proprieteUuid: string) => client.get<{ isFavorite: boolean }>(`${BASE}/favoris/check`, { params: { proprieteUuid } }),
+        addFavori: (proprieteUuid: string) => client.post<{ ajouteCetteFois: boolean }>(`${BASE}/favoris/${proprieteUuid}`),
+        removeFavori: (proprieteUuid: string) => client.delete<{ retire: boolean }>(`${BASE}/favoris/${proprieteUuid}`),
 
         contacter: (proprieteUuid: string, body: { message: string; typeDemande?: string }) =>
             client.post<Record<string, never>>(`${BASE}/proprietes/${proprieteUuid}/contact`, { body }),
