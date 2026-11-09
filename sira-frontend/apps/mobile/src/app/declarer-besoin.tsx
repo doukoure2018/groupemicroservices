@@ -1,15 +1,16 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import type { Commune, TypeBien } from '@sira/core';
 import { router } from 'expo-router';
-import { useRef, useState, type ComponentRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, Text } from 'react-native';
 import { api } from '../api';
 import { useAuth } from '../auth/contexte';
 import { ExigerSession } from '../auth/exiger-session';
 import { messageErreur } from '../immo/feuilles-relation';
 import { Bandeau, Bouton, Carte, ChampChoix, styles as base } from '../ui/base';
 import { FeuilleBasse } from '../ui/feuille';
-import { couleurs, espaces, rayons, texte, zoomMax } from '../ui/theme';
+import { ChampSaisie, Option, Puce, Puces } from '../ui/formulaire';
+import { espaces } from '../ui/theme';
 
 /**
  * Quand la recherche ne trouve rien : dire ce que l'on cherche, et laisser
@@ -58,26 +59,26 @@ function DeclarerBesoinEcran() {
                 <Text style={base.sousTitre}>Dites ce que vous cherchez : les agences de la zone vous contactent si elles ont ce qu'il faut.</Text>
 
                 <Carte style={{ gap: espaces.sm }}>
-                    <View style={styles.puces} accessibilityRole="radiogroup">
-                        <Puce libelle="Louer" actif={typeAnnonce === 'LOCATION'} onPress={() => setTypeAnnonce('LOCATION')} />
-                        <Puce libelle="Acheter" actif={typeAnnonce === 'ACHAT'} onPress={() => setTypeAnnonce('ACHAT')} />
-                    </View>
+                    <Puces>
+                        <Puce role="radio" libelle="Louer" actif={typeAnnonce === 'LOCATION'} onPress={() => setTypeAnnonce('LOCATION')} />
+                        <Puce role="radio" libelle="Acheter" actif={typeAnnonce === 'ACHAT'} onPress={() => setTypeAnnonce('ACHAT')} />
+                    </Puces>
                     <ChampChoix libelle="Type de bien" valeur={typeBien?.libelle} vide="Peu importe" onPress={() => setFeuille('type')} />
                     <ChampChoix libelle="Commune" valeur={commune ? `${commune.libelle} (${commune.villeLibelle})` : undefined} vide="Choisir une commune" onPress={() => setFeuille('commune')} />
                     <ChampSaisie libelle="Quartier" valeur={quartier} onChange={setQuartier} attendu="Facultatif" />
-                    <ChampSaisie libelle="Budget maximal" valeur={budget} onChange={setBudget} attendu="En GNF, facultatif" numerique />
+                    <ChampSaisie libelle="Budget maximal" valeur={budget} onChange={setBudget} attendu="En GNF, facultatif" clavier="numerique" />
                     <Text style={base.sectionTitre}>Chambres, au moins</Text>
-                    <View style={styles.puces}>
+                    <Puces>
                         {[0, 1, 2, 3, 4].map((n) => (
-                            <Puce key={n} libelle={n === 0 ? 'Peu importe' : `${n}+`} actif={chambres === n} onPress={() => setChambres(n)} />
+                            <Puce key={n} role="radio" libelle={n === 0 ? 'Peu importe' : `${n}+`} actif={chambres === n} onPress={() => setChambres(n)} />
                         ))}
-                    </View>
-                    <ChampSaisie libelle="Autres précisions" valeur={description} onChange={setDescription} attendu="Cour fermée, rez-de-chaussée, proche d'une école…" multiligne />
+                    </Puces>
+                    <ChampSaisie libelle="Autres précisions" valeur={description} onChange={setDescription} attendu="Cour fermée, rez-de-chaussée, proche d'une école…" multiligne longueurMax={2000} />
                 </Carte>
 
                 <Carte style={{ gap: espaces.sm }}>
                     <Text style={base.sectionTitre}>Pour vous joindre</Text>
-                    <ChampSaisie libelle="Téléphone" valeur={telephone} onChange={setTelephone} attendu="+224 6XX XX XX XX" numerique />
+                    <ChampSaisie libelle="Téléphone" valeur={telephone} onChange={setTelephone} attendu="+224 6XX XX XX XX" clavier="telephone" />
                     <Text style={base.attenue}>Les agences vous appelleront à ce numéro. Votre nom leur est transmis avec la demande.</Text>
                 </Carte>
 
@@ -112,71 +113,3 @@ export default function Ecran() {
         </ExigerSession>
     );
 }
-
-function Puce({ libelle, actif, onPress }: { libelle: string; actif: boolean; onPress: () => void }) {
-    return (
-        <Pressable accessibilityRole="radio" accessibilityState={{ checked: actif }} onPress={onPress} style={[styles.puce, actif && styles.puceActive]}>
-            <Text maxFontSizeMultiplier={zoomMax} style={[styles.puceTexte, actif && styles.puceTexteActif]}>
-                {libelle}
-            </Text>
-        </Pressable>
-    );
-}
-
-function ChampSaisie({
-    libelle,
-    valeur,
-    onChange,
-    attendu,
-    numerique,
-    multiligne,
-    style
-}: {
-    libelle: string;
-    valeur: string;
-    onChange: (v: string) => void;
-    attendu: string;
-    numerique?: boolean;
-    multiligne?: boolean;
-    style?: StyleProp<ViewStyle>;
-}) {
-    const saisie = useRef<ComponentRef<typeof TextInput>>(null);
-    return (
-        <Pressable style={[base.choix, multiligne && styles.zoneTexte, style]} onPress={() => saisie.current?.focus()} accessible={false}>
-            <Text style={base.choixLibelle}>{libelle}</Text>
-            <TextInput
-                ref={saisie}
-                value={valeur}
-                onChangeText={onChange}
-                placeholder={attendu}
-                placeholderTextColor={couleurs.gris}
-                keyboardType={numerique ? 'phone-pad' : 'default'}
-                multiline={multiligne}
-                accessibilityLabel={libelle}
-                style={[styles.saisie, multiligne && styles.saisieLongue]}
-            />
-        </Pressable>
-    );
-}
-
-function Option({ libelle, actif, onPress }: { libelle: string; actif: boolean; onPress: () => void }) {
-    return (
-        <Pressable accessibilityRole="radio" accessibilityState={{ checked: actif }} onPress={onPress} style={styles.option}>
-            <Text style={[styles.optionTexte, actif && { color: couleurs.vert }]}>{libelle}</Text>
-            {actif && <Text style={[styles.optionTexte, { color: couleurs.vert }]}>✓</Text>}
-        </Pressable>
-    );
-}
-
-const styles = StyleSheet.create({
-    puces: { flexDirection: 'row', flexWrap: 'wrap', gap: espaces.sm },
-    puce: { borderWidth: 1, borderColor: couleurs.ligne, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 16, backgroundColor: couleurs.blanc, minHeight: 44, justifyContent: 'center' },
-    puceActive: { borderColor: couleurs.vert, backgroundColor: couleurs.vertPale },
-    puceTexte: { ...texte.libelle, color: couleurs.encre },
-    puceTexteActif: { color: couleurs.vertFonce },
-    saisie: { ...texte.appuye, color: couleurs.encre, padding: 0, marginTop: 2 },
-    zoneTexte: { minHeight: 96, justifyContent: 'flex-start' },
-    saisieLongue: { ...texte.corps, minHeight: 64, textAlignVertical: 'top' },
-    option: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: espaces.md, borderBottomWidth: 1, borderBottomColor: couleurs.ligne, borderRadius: rayons.sm },
-    optionTexte: { ...texte.appuye, color: couleurs.encre }
-});

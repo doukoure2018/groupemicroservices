@@ -15,7 +15,8 @@ import { api } from '../api';
 import { Bandeau, Bouton, ChampChoix, styles as base } from '../ui/base';
 import { Calendrier } from '../ui/calendrier';
 import { FeuilleBasse } from '../ui/feuille';
-import { couleurs, espaces, texte, zoomMax } from '../ui/theme';
+import { Puce, Puces } from '../ui/formulaire';
+import { couleurs, espaces, texte } from '../ui/theme';
 
 /**
  * Entrer en relation depuis la fiche d'un bien : écrire au publieur, demander
@@ -63,11 +64,11 @@ export function FeuilleContact({ visible, proprieteUuid, onFermer, onEnvoye }: P
             pied={<Bouton libelle="Envoyer" onPress={() => envoi.mutate()} desactive={message.trim().length < 10} enCours={envoi.isPending} />}
         >
             <Text style={base.sectionTitre}>Vous souhaitez</Text>
-            <View style={styles.puces}>
+            <Puces>
                 {TYPES_DEMANDE_CONTACT.map((t) => (
-                    <Puce key={t.valeur} libelle={t.libelle} actif={type === t.valeur} onPress={() => setType(t.valeur)} />
+                    <Puce key={t.valeur} role="radio" libelle={t.libelle} actif={type === t.valeur} onPress={() => setType(t.valeur)} />
                 ))}
-            </View>
+            </Puces>
             <Text style={base.sectionTitre}>Votre message</Text>
             <View style={[base.choix, styles.zoneTexte]}>
                 <TextInput
@@ -128,11 +129,11 @@ export function FeuilleVisite({ visible, proprieteUuid, onFermer, onEnvoye }: Pr
                 <>
                     <ChampChoix libelle="Date" valeur={formatDateCourte(date)} onPress={() => setChoixDate(true)} />
                     <Text style={base.sectionTitre}>Heure</Text>
-                    <View style={styles.puces}>
+                    <Puces>
                         {HEURES_VISITE.map((h) => (
                             <Puce key={h} libelle={h} actif={heure === h} onPress={() => setHeure(heure === h ? null : h)} />
                         ))}
-                    </View>
+                    </Puces>
                     <Text style={base.attenue}>Sans heure, le publieur en proposera une.</Text>
                     <View style={[base.choix, styles.zoneTexte]}>
                         <Text style={base.choixLibelle}>Un mot pour le publieur, si besoin</Text>
@@ -200,22 +201,7 @@ export function FeuilleSignalement({ visible, proprieteUuid, onFermer, onEnvoye 
     );
 }
 
-function Puce({ libelle, actif, onPress }: { libelle: string; actif: boolean; onPress: () => void }) {
-    return (
-        <Pressable accessibilityRole="button" accessibilityState={{ selected: actif }} onPress={onPress} style={[styles.puce, actif && styles.puceActive]}>
-            <Text maxFontSizeMultiplier={zoomMax} style={[styles.puceTexte, actif && styles.puceTexteActif]}>
-                {libelle}
-            </Text>
-        </Pressable>
-    );
-}
-
 const styles = StyleSheet.create({
-    puces: { flexDirection: 'row', flexWrap: 'wrap', gap: espaces.sm },
-    puce: { borderWidth: 1, borderColor: couleurs.ligne, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 14, backgroundColor: couleurs.blanc, minHeight: 44, justifyContent: 'center' },
-    puceActive: { borderColor: couleurs.vert, backgroundColor: couleurs.vertPale },
-    puceTexte: { ...texte.libelle, color: couleurs.encre },
-    puceTexteActif: { color: couleurs.vertFonce },
     zoneTexte: { minHeight: 120, justifyContent: 'flex-start' },
     saisieLongue: { ...texte.corps, color: couleurs.encre, padding: 0, marginTop: 2, minHeight: 88, textAlignVertical: 'top' },
     option: { borderWidth: 1, borderColor: couleurs.ligne, borderRadius: 12, padding: espaces.md, backgroundColor: couleurs.blanc, minHeight: 48, justifyContent: 'center' },

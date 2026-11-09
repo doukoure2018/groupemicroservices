@@ -140,7 +140,21 @@ Module natif : après son ajout, la version de développement se reconstruit
 
 Notifications poussées et connexion Google sur iOS : les deux demandent un
 fichier `GoogleService-Info.plist` et une décision sur la chaîne de push
-(voir ci-dessous). Le périmètre fonctionnel du Flutter est couvert.
+(voir ci-dessous). Le périmètre fonctionnel du Flutter est couvert, immobilier
+compris depuis les lots I0 à I3 (recherche, fiche, favoris, demandes,
+publication) ; voir `docs/proposition-application-unique.md`.
+
+## Immobilier : où sont les écrans
+
+L'univers Me loger vit dans les onglets `biens` (recherche), `favoris`,
+`demandes`, et dans les écrans `biens/resultats`, `bien/[uuid]` (fiche, avec
+contact, visite et signalement), `declarer-besoin`, `mes-annonces` et
+`publier/*` (profil, assistant en quatre étapes, photos). Les briques de
+formulaire communes sont dans `src/ui/formulaire.tsx`. Les modèles et les
+appels sont dans `@sira/core` et `@sira/api-client` (`immo.ts`), vérifiés
+appel par appel contre le serveur de test : les noms des critères de
+recherche, les clés des réponses et les valeurs de tri viennent du serveur,
+jamais d'une supposition.
 
 ## Lien profond d'activation
 

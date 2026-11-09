@@ -234,6 +234,110 @@ export function libelleStatutBesoin(statut: string | null | undefined): string {
     return { ACTIVE: 'En cours', POURVUE: 'Pourvue', ANNULEE: 'Annulée', EXPIREE: 'Expirée' }[statut ?? ''] ?? statut ?? '';
 }
 
+// ---- Publier : profil, brouillon par étapes, cycle de vie d'une annonce ----
+
+export type TypeProfilImmo = 'PROPRIETAIRE_SIMPLE' | 'DEMARCHEUR' | 'AGENT_AGENCE';
+/** Les deux profils qu'un particulier peut se donner seul ; l'agent d'agence passe par l'invitation de son agence. */
+export const TYPES_PROFIL_IMMO: { valeur: TypeProfilImmo; libelle: string; aide: string }[] = [
+    { valeur: 'PROPRIETAIRE_SIMPLE', libelle: 'Je loue ou je vends mon bien', aide: 'Un particulier, pour un ou quelques biens à lui.' },
+    { valeur: 'DEMARCHEUR', libelle: 'Je suis démarcheur', aide: 'Vous proposez des biens pour le compte d’autres personnes.' }
+];
+
+/** Le profil immobilier d'un utilisateur : qui publie, et s'il a été vérifié. */
+export interface ProfilImmo {
+    profilId?: number;
+    profilUuid: string;
+    userId?: number;
+    typeProfil: TypeProfilImmo;
+    agenceId?: number | null;
+    statutVerification: 'EN_ATTENTE' | 'VERIFIE' | 'REJETE';
+    documentsKycUrl?: string | null;
+    bio?: string | null;
+    telephoneContact?: string | null;
+    noteMoyenne?: number | null;
+    nombreAvis?: number;
+    nombreProprietesActives?: number;
+    actif?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+}
+export interface ProfilImmoRequest {
+    typeProfil: TypeProfilImmo;
+    agenceUuid?: string;
+    documentsKycUrl?: string;
+    bio?: string;
+    telephoneContact?: string;
+}
+
+/**
+ * Le contenu d'un brouillon d'annonce, organisé par étapes exactement comme
+ * le serveur le relit pour créer l'annonce (`BrouillonServiceImpl`) : les
+ * clés et leur étape ne se choisissent pas côté client.
+ */
+export interface DonneesBrouillon {
+    etape1?: { typeAnnonce?: TypeAnnonce; dureeLocation?: DureeLocation; typeBienCode?: string };
+    etape2?: { localisationUuid?: string; adresseComplete?: string; latitude?: number; longitude?: number; afficherAdresseExacte?: boolean };
+    etape3?: {
+        prix?: number;
+        devise?: string;
+        periode?: PeriodePrix;
+        prixSurDemande?: boolean;
+        prixNegociable?: boolean;
+        nombreChambres?: number;
+        nombreSallesBain?: number;
+        surfaceM2?: number;
+        nombreEtages?: number;
+        etageSituation?: number;
+        anneeConstruction?: number;
+        moisCaution?: number;
+        moisAvance?: number;
+        moisHonoraire?: number;
+        /** AAAA-MM-JJ. */
+        dateDisponibilite?: string;
+        commoditesCodes?: string[];
+    };
+    etape4?: { titre?: string; description?: string; nomContactPublic?: string; telephoneContact?: string };
+}
+export interface Brouillon {
+    brouillonId?: number;
+    brouillonUuid: string;
+    userId?: number;
+    donneesJson: DonneesBrouillon;
+    etapeActuelle: number;
+    /** Renseigné une fois le brouillon transformé en annonce. */
+    proprieteId?: number | null;
+    derniereModification?: string;
+    createdAt?: string;
+}
+export interface BrouillonSaveRequest {
+    etapeActuelle: number;
+    donneesJson: DonneesBrouillon;
+}
+
+export type PeriodePrix = 'PAR_MOIS' | 'PAR_AN' | 'UNIQUE';
+export const PERIODES_PRIX: { valeur: PeriodePrix; libelle: string }[] = [
+    { valeur: 'PAR_MOIS', libelle: 'Par mois' },
+    { valeur: 'PAR_AN', libelle: 'Par an' },
+    { valeur: 'UNIQUE', libelle: 'Prix total' }
+];
+
+/** Statuts d'une annonce tels que le serveur les écrit, et comment on les dit au publieur. */
+export function libelleStatutAnnonce(statut: string | null | undefined): string {
+    return (
+        {
+            BROUILLON: 'Brouillon',
+            EN_ATTENTE_VALIDATION: 'En attente de validation',
+            PUBLIE: 'Publiée',
+            RESERVE: 'Réservée',
+            RETIRE: 'Retirée',
+            VENDU: 'Vendue',
+            LOUE: 'Louée',
+            REJETE: 'Refusée',
+            EXPIRE: 'Expirée'
+        }[statut ?? ''] ?? statut ?? ''
+    );
+}
+
 // ---- Leads back-office (intermédiation) ----
 
 export interface LeadContact {

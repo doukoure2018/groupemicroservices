@@ -78,6 +78,13 @@
           "resizeMode": "contain",
           "backgroundColor": "#1b5e3b"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "SYNERGIA accède à vos photos pour illustrer vos annonces.",
+          "cameraPermission": "SYNERGIA utilise l'appareil photo pour photographier votre bien."
+        }
       ]
     ],
     "scheme": [

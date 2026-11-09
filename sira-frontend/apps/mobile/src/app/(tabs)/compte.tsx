@@ -60,6 +60,13 @@ export default function Compte() {
                 <LigneMenu libelle="Villes desservies" onPress={() => router.push('/villes-desservies')} dernier />
             </Carte>
 
+            <Text style={base.sectionTitre}>Logement</Text>
+            <Carte style={styles.menu}>
+                <LigneMenu libelle="Mes annonces" onPress={() => router.push('/mes-annonces')} />
+                <LigneMenu libelle="Mes favoris" onPress={() => router.navigate('/(tabs)/favoris')} />
+                <LigneMenu libelle="Mes demandes" onPress={() => router.navigate('/(tabs)/demandes')} dernier />
+            </Carte>
+
             <Text style={base.sectionTitre}>Mentions légales</Text>
             <Carte style={styles.menu}>
                 <LigneMenu libelle="Conditions générales" onPress={() => ouvrirSite('/#conditions')} />

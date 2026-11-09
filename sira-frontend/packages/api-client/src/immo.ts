@@ -4,6 +4,8 @@ import type {
     AgenceAnnonce,
     AgenceOnboarding,
     AgenceOnboardingRequest,
+    Brouillon,
+    BrouillonSaveRequest,
     Commodite,
     ContactCreateRequest,
     DemandeBesoin,
@@ -13,7 +15,10 @@ import type {
     LeadContactView,
     LeadVisiteView,
     PageMeta,
+    Photo,
     PreferencesNotificationImmo,
+    ProfilImmo,
+    ProfilImmoRequest,
     Propriete,
     ProprieteDetail,
     Proprietaire,
@@ -55,7 +60,12 @@ export function proprieteApi(client: SiraClient) {
         renouveler: (uuid: string) => client.post<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/renouveler`),
         marquerVendu: (uuid: string) => client.patch<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/marquer-vendu`),
         marquerLoue: (uuid: string) => client.patch<{ propriete: Propriete }>(`${BASE}/proprietes/${uuid}/marquer-loue`),
-        uploadPhoto: (uuid: string, formData: FormData) => client.post<{ photo: unknown }>(`${BASE}/proprietes/${uuid}/photos`, { formData }),
+        supprimer: (uuid: string) => client.delete<Record<string, never>>(`${BASE}/proprietes/${uuid}`),
+        /** Le champ multipart s'appelle `file` ; douze photos au plus par bien. */
+        uploadPhoto: (uuid: string, formData: FormData) => client.post<{ photo: Photo }>(`${BASE}/proprietes/${uuid}/photos`, { formData }),
+        photos: (uuid: string) => client.get<{ photos: Photo[] }>(`${BASE}/proprietes/${uuid}/photos`),
+        definirCouverture: (photoUuid: string) => client.patch<{ photo: Photo }>(`${BASE}/photos/${photoUuid}/couverture`),
+        supprimerPhoto: (photoUuid: string) => client.delete<Record<string, never>>(`${BASE}/photos/${photoUuid}`),
 
         // ---- Modération (ADMIN / SUPER_ADMIN) ----
         moderation: (params?: { limit?: number; offset?: number }) =>
@@ -97,11 +107,18 @@ export function immoClientApi(client: SiraClient) {
         mesDemandes: (params?: { scope?: string; limit?: number; offset?: number }) =>
             client.get<{ demandes: DemandeBesoin[]; scope?: string } & PageMeta>(`${BASE}/demandes`, { params }),
 
-        brouillons: () => client.get<{ brouillons: unknown[] }>(`${BASE}/brouillons`),
-        saveBrouillon: (body: Record<string, unknown>) => client.post<{ brouillon: unknown }>(`${BASE}/brouillons`, { body }),
+        // ---- Brouillons d'annonce : sauvegardés étape par étape, puis transformés en annonce ----
+        brouillons: () => client.get<{ brouillons: Brouillon[] }>(`${BASE}/brouillons`),
+        brouillon: (uuid: string) => client.get<{ brouillon: Brouillon }>(`${BASE}/brouillons/${uuid}`),
+        creerBrouillon: (body: BrouillonSaveRequest) => client.post<{ brouillon: Brouillon }>(`${BASE}/brouillons`, { body }),
+        majBrouillon: (uuid: string, body: BrouillonSaveRequest) => client.put<{ brouillon: Brouillon }>(`${BASE}/brouillons/${uuid}`, { body }),
+        supprimerBrouillon: (uuid: string) => client.delete<Record<string, never>>(`${BASE}/brouillons/${uuid}`),
+        /** Crée l'annonce (statut BROUILLON) à partir du brouillon ; les photos puis la publication viennent ensuite. */
         materialiserBrouillon: (uuid: string) => client.post<{ propriete: Propriete }>(`${BASE}/brouillons/${uuid}/materialiser`),
 
-        monProfil: () => client.get<{ profil: unknown }>(`${BASE}/profils/me`),
+        /** 404 tant que l'utilisateur n'a pas de profil immobilier. */
+        monProfil: () => client.get<{ profil: ProfilImmo }>(`${BASE}/profils/me`),
+        creerProfil: (body: ProfilImmoRequest) => client.post<{ profil: ProfilImmo }>(`${BASE}/profils`, { body }),
 
         // ---- Préférences de notification du logement (SMS envoyés par le service immobilier) ----
         preferences: () => client.get<{ preferences: PreferencesNotificationImmo }>(`${BASE}/preferences`),

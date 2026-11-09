@@ -9,6 +9,7 @@ import { criteresDepuisParams, nombreDeFiltres, type ParamsRecherche } from '../
 import { useFavori } from '../../immo/favoris';
 import { Bandeau, Bouton, EtatVide, styles as base } from '../../ui/base';
 import { FeuilleBasse } from '../../ui/feuille';
+import { Puce, Puces } from '../../ui/formulaire';
 import { SqueletteRecherche } from '../../ui/squelette';
 import { couleurs, espaces, texte, zoomMax } from '../../ui/theme';
 
@@ -164,12 +165,12 @@ function FeuilleFiltres({
             }
         >
             <Text style={base.sectionTitre}>Type de bien</Text>
-            <View style={styles.puces}>
+            <Puces>
                 {(typesBien.data ?? []).map((t: TypeBien) => (
                     <Puce key={t.code} libelle={t.libelle ?? ''} actif={types.includes(t.code ?? '')} onPress={() => setTypes(basculer(types, t.code ?? ''))} />
                 ))}
                 {typesBien.isPending && <Text style={base.attenue}>Chargement…</Text>}
-            </View>
+            </Puces>
 
             <Text style={base.sectionTitre}>Budget maximal</Text>
             <View style={base.choix}>
@@ -186,31 +187,21 @@ function FeuilleFiltres({
             </View>
 
             <Text style={base.sectionTitre}>Chambres, au moins</Text>
-            <View style={styles.puces}>
+            <Puces>
                 {[0, 1, 2, 3, 4].map((n) => (
                     <Puce key={n} libelle={n === 0 ? 'Peu importe' : `${n}+`} actif={chambres === n} onPress={() => setChambres(n)} />
                 ))}
-            </View>
+            </Puces>
 
             <Text style={base.sectionTitre}>Commodités</Text>
-            <View style={styles.puces}>
+            <Puces>
                 {(listeCommodites.data ?? []).map((c: Commodite) => (
                     <Puce key={c.code} libelle={c.libelle} actif={commodites.includes(c.code)} onPress={() => setCommodites(basculer(commodites, c.code))} />
                 ))}
                 {listeCommodites.isPending && <Text style={base.attenue}>Chargement…</Text>}
                 {listeCommodites.isError && <Bandeau type="alerte">Les commodités n'ont pas pu être chargées.</Bandeau>}
-            </View>
+            </Puces>
         </FeuilleBasse>
-    );
-}
-
-function Puce({ libelle, actif, onPress }: { libelle: string; actif: boolean; onPress: () => void }) {
-    return (
-        <Pressable accessibilityRole="button" accessibilityState={{ selected: actif }} onPress={onPress} style={[styles.puce, actif && styles.puceActive]}>
-            <Text maxFontSizeMultiplier={zoomMax} style={[styles.puceTexte, actif && styles.puceTexteActif]}>
-                {libelle}
-            </Text>
-        </Pressable>
     );
 }
 
@@ -221,10 +212,5 @@ const styles = StyleSheet.create({
     option: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: espaces.md, borderBottomWidth: 1, borderBottomColor: couleurs.ligne },
     optionTexte: { ...texte.appuye, color: couleurs.encre },
     coche: { ...texte.appuye, color: couleurs.vert },
-    puces: { flexDirection: 'row', flexWrap: 'wrap', gap: espaces.sm },
-    puce: { borderWidth: 1, borderColor: couleurs.ligne, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 14, backgroundColor: couleurs.blanc, minHeight: 44, justifyContent: 'center' },
-    puceActive: { borderColor: couleurs.vert, backgroundColor: couleurs.vertPale },
-    puceTexte: { ...texte.libelle, color: couleurs.encre },
-    puceTexteActif: { color: couleurs.vertFonce },
     saisie: { ...texte.appuye, color: couleurs.encre, padding: 0, marginTop: 2 }
 });

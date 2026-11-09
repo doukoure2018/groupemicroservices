@@ -151,8 +151,8 @@ Côté paquets partagés, rien à créer : `@sira/core/immo.ts` et `@sira/api-cl
 |---|---|---|---|
 | **I0 — Socle** ✅ livré le 7 nov. | barre d'onglets par univers (voir § 4), écran de choix, souvenir de l'univers, sélecteur dans l'en-tête des deux accueils, *Compte* commun avec l'entrée *Univers*, accueil Me loger avec le formulaire de recherche (résultats au lot I1), préférences en deux sections *Voyages* / *Logement* (les réglages SMS d'`immobilierservice`, exposés dans `@sira/api-client`) | non | fait en ½ j |
 | **I1 — Chercher et voir** ✅ livré le 8 nov. | recherche publique (louer / acheter, ville, type, budget), résultats paginés avec filtres (type, budget, chambres, commodités) et tri, **fiche du bien** (photos, commodités, conditions de location, qui publie), favoris. Voir les réserves ci-dessous | non | fait en 1 j |
-| **I2 — Entrer en relation** | contacter, demander une visite, déclarer un besoin ; *Mes demandes* (contacts, visites, besoins) ; signaler une annonce | non | 3–4 j |
-| **I3 — Publier** | profil immobilier, assistant en 4 étapes, photos depuis l'appareil, brouillons, *Mes annonces* (publier, retirer, renouveler, vendu, loué) | non | 5–6 j |
+| **I2 — Entrer en relation** ✅ livré le 8 nov. | depuis la fiche : contacter, demander une visite, signaler ; onglet *Demandes* (visites, contacts, besoins, annulations) ; *Déclarer un besoin*, diffusé aux agences de la zone | **oui**, léger : les listes « mes contacts » et « mes visites » nomment désormais le bien (même vue que les leads du back-office) | fait en ½ j |
+| **I3 — Publier** ✅ livré le 9 nov. | profil de publieur, assistant en quatre étapes avec brouillon enregistré sur le serveur à chaque pas, photos depuis la galerie ou l'appareil (`expo-image-picker`, douze au plus, couverture), *Mes annonces* avec les gestes propres à chaque état. Voir les réserves ci-dessous | non | fait en ½ j |
 | **I4 — Notifications** | push sur contact reçu et visite confirmée, préférences *Logement*, liens profonds vers une fiche (`/biens/{uuid}` sur le site, à créer) | **oui**, léger | 2 j |
 | **I5 — Agences** *(optionnel)* | demandes clients et inscription d'agence sur mobile — ou renvoi au site, qui les a déjà | non | 2–3 j |
 
@@ -166,6 +166,14 @@ Chaque lot se livre sur test, avec `tsc`, l'empaquetage Metro, l'essai sur le Sa
 - **Contacter et demander une visite** sont le lot I2 ; la fiche se contente de dire qui publie.
 
 **Données de démonstration.** Quatre biens ont été publiés sur l'environnement de test pour vérifier ces écrans : appartement à Kipé, villa à Nongo, terrain à Kagbelen, bureau à Kaloum. Ils appartiennent au compte de gestion ; le serveur refusant qu'on mette sa propre annonce en favori, le cœur répond par un message sur ces quatre-là. `DELETE /immo/proprietes/{uuid}` les retire.
+
+**Réserves du lot I3.** L'adresse est saisie en texte, sans position GPS ni
+carte : les nouvelles annonces n'ont donc pas de bouton « Ouvrir dans les
+cartes » tant qu'un choix sur la carte n'existe pas. La date de disponibilité
+n'est pas demandée. Le profil « agent d'agence » ne se crée pas ici : il naît
+de l'invitation d'une agence, lot I5. **Les constructions de développement
+doivent être refaites** (`npx expo run:android`, `npx expo run:ios`) pour que
+le sélecteur de photos, module natif, soit présent ; Expo Go l'a déjà.
 
 **Leçon de contrat.** Les modèles partagés de l'immobilier n'avaient jamais été confrontés au serveur, le site n'ayant pas de recherche publique : les noms des critères (`villeUuid`, `typeBienCodes`, `chambresMin`, `commoditesCodes`, `trier`), la clé de la liste des types de bien (`types`) et les valeurs de tri (`DATE_DESC`, et non `RECENT`) étaient tous faux. Ils sont corrigés et vérifiés appel par appel contre test.
 
