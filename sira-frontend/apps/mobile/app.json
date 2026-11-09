@@ -45,6 +45,31 @@
             "BROWSABLE",
             "DEFAULT"
           ]
+        },
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "test.synergia-guinee.com",
+              "pathPrefix": "/biens/"
+            },
+            {
+              "scheme": "https",
+              "host": "synergia-guinee.com",
+              "pathPrefix": "/biens/"
+            },
+            {
+              "scheme": "https",
+              "host": "www.synergia-guinee.com",
+              "pathPrefix": "/biens/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },

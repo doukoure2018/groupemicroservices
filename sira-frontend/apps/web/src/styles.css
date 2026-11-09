@@ -3416,3 +3416,44 @@ html:has(.admin-app) {
 .page-retour .commande-actions a:not(.bouton-lien) {
     text-align: center;
 }
+
+/* ---- Fiche publique d'un bien (/biens/:uuid) ---- */
+.prix-bien {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--vert);
+    margin: 0 0 12px;
+}
+.galerie {
+    margin: 0 0 8px;
+}
+.galerie-vignettes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+.galerie-bouton {
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    background: none;
+    cursor: pointer;
+    line-height: 0;
+}
+.galerie-bouton.active {
+    border-color: var(--vert);
+}
+.actions-bien {
+    margin-top: 20px;
+    display: grid;
+    gap: 8px;
+}
+@media (max-width: 640px) {
+    .grille-detail {
+        grid-template-columns: 1fr;
+    }
+    .grille-detail .span-2 {
+        grid-column: span 1;
+    }
+}

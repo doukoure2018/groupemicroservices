@@ -1,4 +1,4 @@
-import { commandeUuidDeNotification, estDemandeAvis, type AppNotification } from '@sira/core';
+import { commandeUuidDeNotification, estDemandeAvis, metadataNotification, type AppNotification } from '@sira/core';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Device from 'expo-device';
 import { router } from 'expo-router';
@@ -79,9 +79,29 @@ export async function enregistrerAppareil(): Promise<void> {
     }
 }
 
+/** Le logement a ses propres notifications ; on le reconnaît à la catégorie ou aux données. */
+export function estNotificationLogement(donnees: Record<string, unknown> | AppNotification): boolean {
+    const categorie = String((donnees as Record<string, unknown>)['categorie'] ?? (donnees as AppNotification).categorie ?? '').toUpperCase();
+    if (categorie.startsWith('IMMO_')) return true;
+    const meta = 'notificationUuid' in donnees || 'notificationId' in donnees ? metadataNotification(donnees as AppNotification) : (donnees as Record<string, unknown>);
+    return meta['univers'] === 'loger';
+}
+
 /** Données portées par un push ou une notification in-app, ramenées à une destination. */
 export function destinationNotification(donnees: Record<string, unknown> | AppNotification): string | null {
     const categorie = String((donnees as Record<string, unknown>)['categorie'] ?? (donnees as AppNotification).categorie ?? '').toUpperCase();
+
+    if (estNotificationLogement(donnees)) {
+        // Le serveur dit l'écran utile (« bien », « demandes », « mes-annonces ») et le bien visé.
+        const meta = 'notificationUuid' in donnees || 'notificationId' in donnees ? metadataNotification(donnees as AppNotification) : (donnees as Record<string, unknown>);
+        const proprieteUuid = typeof meta['proprieteUuid'] === 'string' ? (meta['proprieteUuid'] as string) : null;
+        const ecran = String(meta['ecran'] ?? '');
+        if (ecran === 'demandes') return '/demandes';
+        if (ecran === 'mes-annonces') return '/mes-annonces';
+        if (proprieteUuid) return `/bien/${proprieteUuid}`;
+        return '/notifications';
+    }
+
     const commandeUuid =
         typeof (donnees as Record<string, unknown>)['commandeUuid'] === 'string'
             ? ((donnees as Record<string, unknown>)['commandeUuid'] as string)

@@ -38,6 +38,7 @@ import { MesVoyagesPage } from './pages/MesVoyagesPage';
 import { PaiementRetourPage } from './pages/PaiementRetourPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ReservationConsultationPage } from './pages/ReservationConsultationPage';
+import { BienPage } from './pages/BienPage';
 import { ReservationPage } from './pages/ReservationPage';
 import { VerifyAccountPage } from './pages/VerifyAccountPage';
 import { VerifyMobilePage } from './pages/VerifyMobilePage';
@@ -105,6 +106,8 @@ export function App() {
                         <Route path="/login" element={<LoginPage />} />
                         {/* Retrouver ses billets sans compte, comme dans l'application. */}
                         <Route path="/reservation" element={<ReservationConsultationPage />} />
+                        {/* La fiche publique d'un bien : cible des liens envoyés par courriel, SMS et notification. */}
+                        <Route path="/biens/:uuid" element={<BienPage />} />
                         {/* Chemins conservés à l'identique : ce sont ceux des liens envoyés par email. */}
                         <Route path="/auth/register" element={<RegisterPage />} />
                         <Route path="/auth/forgotpassword" element={<ForgotPasswordPage />} />
