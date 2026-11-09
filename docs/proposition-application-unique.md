@@ -161,7 +161,7 @@ Chaque lot se livre sur test, avec `tsc`, l'empaquetage Metro, l'essai sur le Sa
 **Réserves du lot I1**, à lever plus tard :
 
 - **La carte n'est pas dessinée.** La fiche donne l'adresse et un bouton qui ouvre le point dans l'application de cartes du téléphone. Une vraie carte demanderait un module natif (`react-native-maps`) et une clé ; cela viendra avec les photos prises depuis l'appareil, au lot I3.
-- **Le filtre par ville ne trouve rien pour l'instant.** Le serveur relie un bien à une ville par sa *localisation*, qui exige un quartier ; or les communes de Conakry n'ont aucun quartier au référentiel. Le filtre fonctionne, il n'a rien à trouver. À décider : créer les quartiers de Conakry.
+- **Le filtre par ville**, levé sur test le 9 novembre : 48 quartiers des cinq communes de Conakry ont été créés au référentiel de test, et trois biens de démonstration rattachés à une localisation ; le filtre « Conakry » les trouve. En production, les quartiers restent à créer par l'administration du site avant l'ouverture, avec la même liste (`scratchpad/semer-quartiers.py` la contient). Un bien publié depuis l'application n'a toujours pas de localisation reliée à un quartier : l'assistant saisit l'adresse en texte, voir les réserves du lot I3.
 - **Pas de photos** sur les biens de démonstration : l'envoi de photos est un chantier du lot I3.
 - **Contacter et demander une visite** sont le lot I2 ; la fiche se contente de dire qui publie.
 
