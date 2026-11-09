@@ -20,9 +20,13 @@ public final class VisiteQuery {
             """;
 
     /** Visites côté visiteur (mes demandes). */
+    /** Côté visiteur : chaque visite porte le bien visé, pour qu'une liste « mes demandes » puisse le nommer. */
     public static final String FIND_BY_VISITEUR = """
-            SELECT * FROM immo_visite WHERE visiteur_user_id = :userId
-            ORDER BY date_visite DESC, heure_visite DESC
+            SELECT v.*, p.propriete_uuid AS propriete_uuid, p.reference AS propriete_reference, p.titre AS propriete_titre
+            FROM immo_visite v
+            INNER JOIN immo_propriete p ON p.propriete_id = v.propriete_id
+            WHERE v.visiteur_user_id = :userId
+            ORDER BY v.date_visite DESC, v.heure_visite DESC
             LIMIT :limit OFFSET :offset
             """;
 

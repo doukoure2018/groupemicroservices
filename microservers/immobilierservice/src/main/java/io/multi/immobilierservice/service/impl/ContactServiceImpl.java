@@ -220,7 +220,7 @@ public class ContactServiceImpl implements ContactService {
     }
 
     @Override
-    public List<Contact> findMesContactsEnvoyes(Long userId, int limit, int offset) {
+    public List<LeadAdminView> findMesContactsEnvoyes(Long userId, int limit, int offset) {
         return contactRepository.findEnvoyesByUser(userId, limit, offset);
     }
 

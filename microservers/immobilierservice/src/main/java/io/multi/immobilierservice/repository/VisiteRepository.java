@@ -12,7 +12,7 @@ public interface VisiteRepository {
 
     Optional<Visite> findByUuid(String visiteUuid);
 
-    List<Visite> findByVisiteur(Long visiteurUserId, int limit, int offset);
+    List<LeadVisiteAdminView> findByVisiteur(Long visiteurUserId, int limit, int offset);
     long countByVisiteur(Long visiteurUserId);
 
     List<Visite> findByVendeur(Long vendeurUserId, int limit, int offset);

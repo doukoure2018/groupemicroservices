@@ -39,10 +39,13 @@ public final class ContactQuery {
             """;
 
     /** Contacts envoyés par un user (acheteur potentiel). */
+    /** Côté demandeur : chaque contact porte le bien visé, pour qu'une liste « mes demandes » puisse le nommer. */
     public static final String FIND_ENVOYES_BY_USER = """
-            SELECT * FROM immo_contact
-            WHERE demandeur_user_id = :userId
-            ORDER BY created_at DESC
+            SELECT c.*, p.propriete_uuid AS propriete_uuid, p.reference AS propriete_reference, p.titre AS propriete_titre
+            FROM immo_contact c
+            INNER JOIN immo_propriete p ON p.propriete_id = c.propriete_id
+            WHERE c.demandeur_user_id = :userId
+            ORDER BY c.created_at DESC
             LIMIT :limit OFFSET :offset
             """;
 

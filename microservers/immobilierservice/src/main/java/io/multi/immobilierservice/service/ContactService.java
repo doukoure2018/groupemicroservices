@@ -27,7 +27,7 @@ public interface ContactService {
     long countMesContactsRecus(Long vendeurUserId);
 
     /** Contacts envoyés par l'utilisateur connecté (côté acheteur). Snapshot only. */
-    List<Contact> findMesContactsEnvoyes(Long userId, int limit, int offset);
+    List<LeadAdminView> findMesContactsEnvoyes(Long userId, int limit, int offset);
 
     long countMesContactsEnvoyes(Long userId);
 

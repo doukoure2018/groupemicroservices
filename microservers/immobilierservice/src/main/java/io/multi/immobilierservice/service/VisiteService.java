@@ -15,7 +15,7 @@ public interface VisiteService {
      */
     Visite demander(String proprieteUuid, VisiteCreateRequest req, Long visiteurUserId);
 
-    List<Visite> findMesVisitesVisiteur(Long userId, int limit, int offset);
+    List<LeadVisiteAdminView> findMesVisitesVisiteur(Long userId, int limit, int offset);
     long countMesVisitesVisiteur(Long userId);
 
     List<Visite> findVisitesSurMesAnnonces(Long vendeurUserId, int limit, int offset);

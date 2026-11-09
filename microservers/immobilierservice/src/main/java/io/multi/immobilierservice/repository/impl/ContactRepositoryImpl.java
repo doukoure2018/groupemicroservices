@@ -60,12 +60,17 @@ public class ContactRepositoryImpl implements ContactRepository {
     }
 
     @Override
-    public List<Contact> findEnvoyesByUser(Long userId, int limit, int offset) {
+    public List<LeadAdminView> findEnvoyesByUser(Long userId, int limit, int offset) {
         return jdbcClient.sql(ContactQuery.FIND_ENVOYES_BY_USER)
                 .param("userId", userId)
                 .param("limit", limit)
                 .param("offset", offset)
-                .query(rowMapper)
+                .query((rs, n) -> LeadAdminView.builder()
+                        .contact(rowMapper.mapRow(rs, n))
+                        .proprieteUuid(rs.getString("propriete_uuid"))
+                        .proprieteReference(rs.getString("propriete_reference"))
+                        .proprieteTitre(rs.getString("propriete_titre"))
+                        .build())
                 .list();
     }
 

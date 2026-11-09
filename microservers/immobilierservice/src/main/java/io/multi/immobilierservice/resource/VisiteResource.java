@@ -1,5 +1,6 @@
 package io.multi.immobilierservice.resource;
 
+import io.multi.immobilierservice.dto.LeadVisiteAdminView;
 import io.multi.immobilierservice.domain.Response;
 import io.multi.immobilierservice.domain.Visite;
 import io.multi.immobilierservice.dto.AnnulerVisiteRequest;
@@ -47,7 +48,7 @@ public class VisiteResource {
                                                  @AuthenticationPrincipal Jwt jwt,
                                                  HttpServletRequest http) {
         Long userId = jwtUtils.extractUserId(jwt);
-        List<Visite> list = visiteService.findMesVisitesVisiteur(userId, limit, offset);
+        List<LeadVisiteAdminView> list = visiteService.findMesVisitesVisiteur(userId, limit, offset);
         long total = visiteService.countMesVisitesVisiteur(userId);
         return ResponseEntity.ok(RequestUtils.getResponse(http,
                 Map.of("visites", list, "total", total, "limit", limit, "offset", offset),

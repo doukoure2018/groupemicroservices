@@ -18,7 +18,7 @@ public interface ContactRepository {
     long countRecusByVendeur(Long vendeurUserId);
 
     /** Contacts envoyés par un user (côté acheteur). */
-    List<Contact> findEnvoyesByUser(Long userId, int limit, int offset);
+    List<LeadAdminView> findEnvoyesByUser(Long userId, int limit, int offset);
 
     long countEnvoyesByUser(Long userId);
 

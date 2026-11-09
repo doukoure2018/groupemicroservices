@@ -39,10 +39,16 @@ public class VisiteRepositoryImpl implements VisiteRepository {
     }
 
     @Override
-    public List<Visite> findByVisiteur(Long userId, int limit, int offset) {
+    public List<LeadVisiteAdminView> findByVisiteur(Long userId, int limit, int offset) {
         return jdbcClient.sql(VisiteQuery.FIND_BY_VISITEUR)
                 .param("userId", userId).param("limit", limit).param("offset", offset)
-                .query(rowMapper).list();
+                .query((rs, n) -> LeadVisiteAdminView.builder()
+                        .visite(rowMapper.mapRow(rs, n))
+                        .proprieteUuid(rs.getString("propriete_uuid"))
+                        .proprieteReference(rs.getString("propriete_reference"))
+                        .proprieteTitre(rs.getString("propriete_titre"))
+                        .build())
+                .list();
     }
 
     @Override

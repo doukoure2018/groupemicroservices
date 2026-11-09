@@ -1,5 +1,6 @@
 package io.multi.immobilierservice.resource;
 
+import io.multi.immobilierservice.dto.LeadAdminView;
 import io.multi.immobilierservice.domain.Contact;
 import io.multi.immobilierservice.domain.Response;
 import io.multi.immobilierservice.dto.ContactCreateRequest;
@@ -77,7 +78,7 @@ public class ContactResource {
                                                         @AuthenticationPrincipal Jwt jwt,
                                                         HttpServletRequest http) {
         Long userId = jwtUtils.extractUserId(jwt);
-        List<Contact> list = contactService.findMesContactsEnvoyes(userId, limit, offset);
+        List<LeadAdminView> list = contactService.findMesContactsEnvoyes(userId, limit, offset);
         long total = contactService.countMesContactsEnvoyes(userId);
         return ResponseEntity.ok(RequestUtils.getResponse(http,
                 Map.of("contacts", list, "total", total, "limit", limit, "offset", offset),

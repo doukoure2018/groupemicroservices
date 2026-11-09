@@ -72,7 +72,7 @@ public class VisiteServiceImpl implements VisiteService {
     }
 
     @Override
-    public List<Visite> findMesVisitesVisiteur(Long userId, int limit, int offset) {
+    public List<LeadVisiteAdminView> findMesVisitesVisiteur(Long userId, int limit, int offset) {
         return visiteRepository.findByVisiteur(userId, limit, offset);
     }
 
