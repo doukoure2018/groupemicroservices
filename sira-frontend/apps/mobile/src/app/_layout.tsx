@@ -62,6 +62,8 @@ export default function Racine() {
                         <Stack.Screen name="publier/profil" options={{ title: 'Qui publie' }} />
                         <Stack.Screen name="publier/[brouillon]" options={{ title: 'Publier un bien' }} />
                         <Stack.Screen name="publier/photos/[uuid]" options={{ title: 'Photos et publication', headerBackVisible: false }} />
+                        <Stack.Screen name="agence/index" options={{ title: 'Mon agence' }} />
+                        <Stack.Screen name="agence/demandes" options={{ title: 'Demandes clients' }} />
                     </Stack>
                 </AuthProvider>
             </QueryClientProvider>

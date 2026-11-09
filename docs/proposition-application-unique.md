@@ -154,7 +154,7 @@ Côté paquets partagés, rien à créer : `@sira/core/immo.ts` et `@sira/api-cl
 | **I2 — Entrer en relation** ✅ livré le 8 nov. | depuis la fiche : contacter, demander une visite, signaler ; onglet *Demandes* (visites, contacts, besoins, annulations) ; *Déclarer un besoin*, diffusé aux agences de la zone | **oui**, léger : les listes « mes contacts » et « mes visites » nomment désormais le bien (même vue que les leads du back-office) | fait en ½ j |
 | **I3 — Publier** ✅ livré le 9 nov. | profil de publieur, assistant en quatre étapes avec brouillon enregistré sur le serveur à chaque pas, photos depuis la galerie ou l'appareil (`expo-image-picker`, douze au plus, couverture), *Mes annonces* avec les gestes propres à chaque état. Voir les réserves ci-dessous | non | fait en ½ j |
 | **I4 — Notifications** ✅ livré le 9 nov. | le service billetterie consomme les événements du logement et en fait des notifications in-app et poussées pour l'utilisateur visé (visite confirmée, demande de visite et contact pour le back-office, annonce validée, refusée ou bientôt expirée) ; chaque notification porte l'emblème de son univers et ouvre l'écran utile ; page publique `/biens/{uuid}` sur le site, cible des courriels, des SMS et des liens d'application Android. Préférences *Logement* livrées au lot I0 | **oui**, léger : `destinataireUserId` dans les événements, un consommateur Kafka côté billetterie | fait en ½ j |
-| **I5 — Agences** *(optionnel)* | demandes clients et inscription d'agence sur mobile — ou renvoi au site, qui les a déjà | non | 2–3 j |
+| **I5 — Agences** ✅ livré le 9 nov. | pour les comptes d'agence (mêmes droits que les pages « agence » du site) : *Mon agence*, le dossier de conformité avec le RCCM photographié depuis le téléphone et la soumission ; *Demandes clients*, les besoins de la zone ou tous, avec appel et WhatsApp. Entrée *Agence* dans Compte | non | fait en ¼ j |
 
 Chaque lot se livre sur test, avec `tsc`, l'empaquetage Metro, l'essai sur le Samsung, et des tests e2e du site pour ce qui le touche.
 
@@ -166,6 +166,13 @@ Chaque lot se livre sur test, avec `tsc`, l'empaquetage Metro, l'essai sur le Sa
 - **Contacter et demander une visite** sont le lot I2 ; la fiche se contente de dire qui publie.
 
 **Données de démonstration.** Quatre biens ont été publiés sur l'environnement de test pour vérifier ces écrans : appartement à Kipé, villa à Nongo, terrain à Kagbelen, bureau à Kaloum. Ils appartiennent au compte de gestion ; le serveur refusant qu'on mette sa propre annonce en favori, le cœur répond par un message sur ces quatre-là. `DELETE /immo/proprietes/{uuid}` les retire.
+
+**Réserves du lot I5.** La création du compte d'agence reste sur le site :
+le mobile ouvre l'espace à ceux qui l'ont déjà. Les invitations d'agents
+(rejoindre une agence depuis une invitation) ne sont pas sur mobile : la liste
+que renvoie le serveur ne nomme pas l'agence, il faudrait d'abord l'enrichir
+comme pour les contacts. Le document RCCM s'envoie en photo ; un PDF passe par
+le site.
 
 **Réserves du lot I4.** Les notifications poussées du logement ne sont pas
 filtrables par l'utilisateur : les réglages *Logement* portent sur les SMS du

@@ -6,6 +6,7 @@ import { useAuth } from '../../auth/contexte';
 import { config } from '../../config';
 import { Bouton, Carte, LigneMenu, styles as base } from '../../ui/base';
 import { couleurs, espaces, texte, zoomMax } from '../../ui/theme';
+import { estCompteAgence } from '../../auth/exiger-agence';
 import { UNIVERS, useUnivers } from '../../univers';
 
 /**
@@ -66,6 +67,16 @@ export default function Compte() {
                 <LigneMenu libelle="Mes favoris" onPress={() => router.navigate('/(tabs)/favoris')} />
                 <LigneMenu libelle="Mes demandes" onPress={() => router.navigate('/(tabs)/demandes')} dernier />
             </Carte>
+
+            {estCompteAgence(user) && (
+                <>
+                    <Text style={base.sectionTitre}>Agence</Text>
+                    <Carte style={styles.menu}>
+                        <LigneMenu libelle="Mon agence" onPress={() => router.push('/agence')} />
+                        <LigneMenu libelle="Demandes clients" onPress={() => router.push('/agence/demandes')} dernier />
+                    </Carte>
+                </>
+            )}
 
             <Text style={base.sectionTitre}>Mentions légales</Text>
             <Carte style={styles.menu}>
