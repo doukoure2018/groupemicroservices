@@ -29,11 +29,17 @@ public class ImmoKafkaConfig {
     @Bean
     public ConsumerFactory<String, ImmoNotification> immoConsumerFactory(KafkaProperties proprietes) {
         Map<String, Object> config = new HashMap<>(proprietes.buildConsumerProperties(null));
+        // Le désérialiseur se règle ici, par ses méthodes ; les propriétés
+        // `spring.json.*` de la configuration (prévues pour le producteur) le
+        // régleraient une seconde fois, ce que Spring Kafka refuse au démarrage.
+        config.keySet().removeIf(cle -> cle.startsWith("spring.json."));
         config.put(ConsumerConfig.GROUP_ID_CONFIG, GROUPE);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         JsonDeserializer<ImmoNotification> valeur = new JsonDeserializer<>(ImmoNotification.class, false);
         valeur.addTrustedPackages("*");
-        return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), valeur);
+        var fabrique = new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), valeur);
+        fabrique.setConfigureDeserializers(false);
+        return fabrique;
     }
 
     @Bean
