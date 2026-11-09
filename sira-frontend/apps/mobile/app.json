@@ -8,7 +8,8 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.synergiaguinee.app"
+      "bundleIdentifier": "com.synergiaguinee.app",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "adaptiveIcon": {

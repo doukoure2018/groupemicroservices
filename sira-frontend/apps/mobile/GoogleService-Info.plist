@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>421665850163-5d2o28vntocqduie781r1ae9bie5v7g4.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBYLOx2o7JEyrgXqNZIOAXGuWPelIiQGO0</string>
+	<key>GCM_SENDER_ID</key>
+	<string>421665850163</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.synergiaguinee.app</string>
+	<key>PROJECT_ID</key>
+	<string>supple-alpha-405513</string>
+	<key>STORAGE_BUCKET</key>
+	<string>supple-alpha-405513.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:421665850163:ios:bf6a1fb7ae286b735eb446</string>
+</dict>
+</plist>
