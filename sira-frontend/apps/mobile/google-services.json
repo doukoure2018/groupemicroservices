@@ -58,6 +58,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "421665850163-m54sj31lsoa1flsbrj2bl9vvqrer6jq8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.synergiaguinee.app",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
           "client_id": "421665850163-70gvngsk2g8frt4g6vlhrs2tl40aemoe.apps.googleusercontent.com",
           "client_type": 3
         }
