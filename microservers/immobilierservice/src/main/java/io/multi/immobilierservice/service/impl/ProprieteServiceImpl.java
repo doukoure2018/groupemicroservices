@@ -435,6 +435,7 @@ public class ProprieteServiceImpl implements ProprieteService {
             if (vendeur == null || vendeur.getEmail() == null) return;
             Map<String, Object> data = new HashMap<>();
             data.put("vendeurEmail", vendeur.getEmail());
+            data.put("destinataireUserId", vendeur.getUserId());
             data.put("vendeurNom", UserDisplayUtils.nomComplet(vendeur));
             data.put("proprieteUuid", p.getProprieteUuid());
             data.put("proprieteReference", p.getReference());
@@ -454,6 +455,7 @@ public class ProprieteServiceImpl implements ProprieteService {
             if (vendeur == null || vendeur.getEmail() == null) return;
             Map<String, Object> data = new HashMap<>();
             data.put("vendeurEmail", vendeur.getEmail());
+            data.put("destinataireUserId", vendeur.getUserId());
             data.put("vendeurNom", UserDisplayUtils.nomComplet(vendeur));
             data.put("proprieteUuid", p.getProprieteUuid());
             data.put("proprieteReference", p.getReference());

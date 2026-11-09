@@ -184,6 +184,7 @@ public class VisiteServiceImpl implements VisiteService {
 
                 Map<String, Object> data = new HashMap<>();
                 data.put("backofficeEmail", bo.getEmail());
+                data.put("destinataireUserId", bo.getUserId());
                 data.put("backofficeNom", UserDisplayUtils.nomComplet(bo));
                 data.put("backofficeTelephone", bo.getPhone() != null ? bo.getPhone() : "");
                 data.put("smsEnabled", true);   // back-office : toujours SMS (pas d'opt-out MVP)
@@ -233,6 +234,7 @@ public class VisiteServiceImpl implements VisiteService {
 
             Map<String, Object> data = new HashMap<>();
             data.put("visiteurEmail", visiteur.getEmail());
+            data.put("destinataireUserId", visite.getVisiteurUserId());
             data.put("visiteurNom", UserDisplayUtils.nomComplet(visiteur));
             data.put("visiteurTelephone", visiteur.getPhone() != null ? visiteur.getPhone() : "");
             data.put("smsEnabled", smsEnabled);

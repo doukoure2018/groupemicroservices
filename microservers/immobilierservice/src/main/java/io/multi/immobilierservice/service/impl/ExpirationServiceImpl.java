@@ -104,6 +104,7 @@ public class ExpirationServiceImpl implements ExpirationService {
                     : joursAvant;
             Map<String, Object> data = new HashMap<>();
             data.put("vendeurEmail", vendeur.getEmail());
+            data.put("destinataireUserId", vendeur.getUserId());
             data.put("vendeurNom", UserDisplayUtils.nomComplet(vendeur));
             data.put("proprieteUuid", p.getProprieteUuid());
             data.put("proprieteReference", p.getReference());
