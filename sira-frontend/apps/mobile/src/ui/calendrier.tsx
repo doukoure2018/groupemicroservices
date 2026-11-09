@@ -9,7 +9,20 @@ const JOURS = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'];
  * Un mois à la fois, du jour même à la borne haute. Aucun composant natif :
  * le même rendu sur les deux plateformes, et rien à configurer.
  */
-export function Calendrier({ valeur, min, max, onChoisir }: { valeur: string; min: string; max: string; onChoisir: (iso: string) => void }) {
+export function Calendrier({
+    valeur,
+    min,
+    max,
+    onChoisir,
+    aide
+}: {
+    valeur: string;
+    min: string;
+    max: string;
+    onChoisir: (iso: string) => void;
+    /** Phrase sous le calendrier ; par défaut, celle de la recherche de voyages. */
+    aide?: string;
+}) {
     const [mois, setMois] = useState(() => {
         const d = dateDepuisIso(valeur);
         return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -62,7 +75,9 @@ export function Calendrier({ valeur, min, max, onChoisir }: { valeur: string; mi
                     );
                 })}
             </View>
-            <Text style={styles.aide}>Jusqu'au {dateDepuisIso(max).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}. Vous pourrez changer de jour sur l'écran des résultats.</Text>
+            <Text style={styles.aide}>
+                {aide ?? `Jusqu'au ${dateDepuisIso(max).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}. Vous pourrez changer de jour sur l'écran des résultats.`}
+            </Text>
         </View>
     );
 }

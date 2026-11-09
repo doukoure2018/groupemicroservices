@@ -57,6 +57,7 @@ export default function Racine() {
                         <Stack.Screen name="villes-desservies" options={{ title: 'Villes desservies' }} />
                         <Stack.Screen name="biens/resultats" options={{ title: 'Biens disponibles' }} />
                         <Stack.Screen name="bien/[uuid]" options={{ title: 'Le bien' }} />
+                        <Stack.Screen name="declarer-besoin" options={{ title: 'Déclarer un besoin' }} />
                     </Stack>
                 </AuthProvider>
             </QueryClientProvider>

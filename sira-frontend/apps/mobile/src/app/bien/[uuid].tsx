@@ -1,21 +1,37 @@
 import { useQuery } from '@tanstack/react-query';
 import { formatMontant, libellePeriode, resumeBien, type Photo, type Propriete } from '@sira/core';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Dimensions, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { api } from '../../api';
+import { useAuth } from '../../auth/contexte';
 import { useFavori } from '../../immo/favoris';
+import { FeuilleContact, FeuilleSignalement, FeuilleVisite } from '../../immo/feuilles-relation';
 import { Bandeau, Bouton, Carte, Chargement, EtatVide, styles as base } from '../../ui/base';
 import { couleurs, espaces, rayons, texte, zoomMax } from '../../ui/theme';
 
+type Feuille = 'contact' | 'visite' | 'signalement';
+
 /**
- * La fiche d'un bien : ce qu'on voit avant de se décider. Elle se consulte
- * sans compte ; seul le cœur demande à s'identifier. Contacter le publieur et
- * demander une visite arrivent au lot suivant.
+ * La fiche d'un bien : ce qu'on voit avant de se décider, puis ce qu'on fait.
+ * Elle se consulte sans compte ; le cœur, le contact, la visite et le
+ * signalement demandent à s'identifier, et la connexion ramène ici.
  */
 export default function FicheBien() {
     const { uuid } = useLocalSearchParams<{ uuid: string }>();
+    const { user } = useAuth();
     const favori = useFavori(`/bien/${uuid}`);
+    const [feuille, setFeuille] = useState<Feuille | null>(null);
+    const [confirmation, setConfirmation] = useState<string | null>(null);
+
+    function ouvrir(f: Feuille) {
+        if (!user) {
+            router.push({ pathname: '/connexion', params: { suite: `/bien/${uuid}` } });
+            return;
+        }
+        setConfirmation(null);
+        setFeuille(f);
+    }
 
     const bien = useQuery({
         queryKey: ['bien', uuid],
@@ -35,11 +51,13 @@ export default function FicheBien() {
     const retire = p.statut && p.statut !== 'PUBLIE';
 
     return (
+        <>
         <ScrollView style={base.ecran} contentContainerStyle={{ paddingBottom: espaces.xxl }}>
             <Galerie photos={p.photos ?? []} />
 
             <View style={styles.contenu}>
                 {retire ? <Bandeau type="alerte">Cette annonce n'est plus publiée.</Bandeau> : null}
+                {confirmation ? <Bandeau type="succes">{confirmation}</Bandeau> : null}
 
                 <View style={base.ligne}>
                     <Text style={[styles.badge, location ? styles.badgeLocation : styles.badgeVente]}>{location ? 'Location' : 'Vente'}</Text>
@@ -125,8 +143,21 @@ export default function FicheBien() {
                     </Text>
                     {!!p.reference && <Text style={base.attenue}>Référence {p.reference}</Text>}
                 </Carte>
+
+                {!retire && (
+                    <View style={{ gap: espaces.sm }}>
+                        <Bouton libelle="Demander une visite" onPress={() => ouvrir('visite')} />
+                        <Bouton libelle="Contacter" variante="secondaire" onPress={() => ouvrir('contact')} />
+                    </View>
+                )}
+                <Bouton libelle="Signaler cette annonce" variante="discret" onPress={() => ouvrir('signalement')} />
             </View>
         </ScrollView>
+
+        <FeuilleContact visible={feuille === 'contact'} proprieteUuid={p.proprieteUuid} onFermer={() => setFeuille(null)} onEnvoye={(m) => { setFeuille(null); setConfirmation(m); }} />
+        <FeuilleVisite visible={feuille === 'visite'} proprieteUuid={p.proprieteUuid} onFermer={() => setFeuille(null)} onEnvoye={(m) => { setFeuille(null); setConfirmation(m); }} />
+        <FeuilleSignalement visible={feuille === 'signalement'} proprieteUuid={p.proprieteUuid} onFermer={() => setFeuille(null)} onEnvoye={(m) => { setFeuille(null); setConfirmation(m); }} />
+        </>
     );
 }
 

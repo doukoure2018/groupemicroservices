@@ -5,7 +5,11 @@ import type {
     AgenceOnboarding,
     AgenceOnboardingRequest,
     Commodite,
+    ContactCreateRequest,
     DemandeBesoin,
+    DemandeCreateRequest,
+    LeadContact,
+    LeadVisite,
     LeadContactView,
     LeadVisiteView,
     PageMeta,
@@ -15,7 +19,9 @@ import type {
     Proprietaire,
     RechercheProprietesParams,
     RejeterRequest,
+    SignalementCreateRequest,
     TraiterLeadRequest,
+    VisiteCreateRequest,
     TypeBien
 } from '@sira/core';
 import type { QueryParams, SiraClient } from './http.js';
@@ -69,14 +75,27 @@ export function immoClientApi(client: SiraClient) {
         addFavori: (proprieteUuid: string) => client.post<{ ajouteCetteFois: boolean }>(`${BASE}/favoris/${proprieteUuid}`),
         removeFavori: (proprieteUuid: string) => client.delete<{ retire: boolean }>(`${BASE}/favoris/${proprieteUuid}`),
 
-        contacter: (proprieteUuid: string, body: { message: string; typeDemande?: string }) =>
-            client.post<Record<string, never>>(`${BASE}/proprietes/${proprieteUuid}/contact`, { body }),
-        demanderVisite: (proprieteUuid: string, body: { dateVisite: string; heureVisite?: string; notesVisiteur?: string }) =>
-            client.post<Record<string, never>>(`${BASE}/proprietes/${proprieteUuid}/visites`, { body }),
+        // ---- Entrer en relation avec le publieur d'un bien (session requise) ----
+        contacter: (proprieteUuid: string, body: ContactCreateRequest) => client.post<{ contact: LeadContact }>(`${BASE}/proprietes/${proprieteUuid}/contact`, { body }),
+        demanderVisite: (proprieteUuid: string, body: VisiteCreateRequest) => client.post<{ visite: LeadVisite }>(`${BASE}/proprietes/${proprieteUuid}/visites`, { body }),
+        signaler: (proprieteUuid: string, body: SignalementCreateRequest) => client.post<{ signalement: unknown }>(`${BASE}/proprietes/${proprieteUuid}/signaler`, { body }),
 
+        // ---- Ce que j'ai demandé : chaque ligne porte le bien visé (uuid, référence, titre) ----
+        mesContactsEnvoyes: (params?: { limit?: number; offset?: number }) =>
+            client.get<{ contacts: LeadContactView[]; total: number; limit: number; offset: number }>(`${BASE}/contacts/mes-contacts-envoyes`, { params }),
+        mesVisites: (params?: { limit?: number; offset?: number }) =>
+            client.get<{ visites: LeadVisiteView[]; total: number; limit: number; offset: number }>(`${BASE}/visites/mes-demandes`, { params }),
+        annulerVisite: (visiteUuid: string, motifAnnulation?: string) =>
+            client.patch<{ visite: LeadVisite }>(`${BASE}/visites/${visiteUuid}/annuler`, { body: { motifAnnulation } }),
+
+        // ---- Besoins déclarés ----
+        /** Les besoins que j'ai déclarés moi-même. */
+        mesBesoins: () => client.get<{ demandes: DemandeBesoin[]; total: number }>(`${BASE}/demandes/mes-demandes`),
+        declarerBesoin: (body: DemandeCreateRequest) => client.post<{ demande: DemandeBesoin }>(`${BASE}/demandes`, { body }),
+        annulerBesoin: (demandeUuid: string) => client.patch<{ demande: DemandeBesoin }>(`${BASE}/demandes/${demandeUuid}/annuler`),
+        /** Côté agence : les besoins de la zone (ou tous), tels que le site les liste. Ce n'est pas « mes » demandes au sens du client. */
         mesDemandes: (params?: { scope?: string; limit?: number; offset?: number }) =>
             client.get<{ demandes: DemandeBesoin[]; scope?: string } & PageMeta>(`${BASE}/demandes`, { params }),
-        declarerBesoin: (body: Record<string, unknown>) => client.post<{ demande: unknown }>(`${BASE}/demandes`, { body }),
 
         brouillons: () => client.get<{ brouillons: unknown[] }>(`${BASE}/brouillons`),
         saveBrouillon: (body: Record<string, unknown>) => client.post<{ brouillon: unknown }>(`${BASE}/brouillons`, { body }),

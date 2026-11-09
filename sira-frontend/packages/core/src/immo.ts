@@ -163,6 +163,77 @@ export const TRIS_PROPRIETES: { valeur: TriProprietes; libelle: string }[] = [
     { valeur: 'PRIX_DESC', libelle: 'Prix décroissant' }
 ];
 
+// ---- Entrer en relation : contacter, visiter, signaler, déclarer un besoin ----
+
+/** Ce que le demandeur veut en écrivant : un renseignement, une visite, une offre. */
+export type TypeDemandeContact = 'INFO' | 'VISITE' | 'OFFRE';
+export const TYPES_DEMANDE_CONTACT: { valeur: TypeDemandeContact; libelle: string }[] = [
+    { valeur: 'INFO', libelle: 'Un renseignement' },
+    { valeur: 'VISITE', libelle: 'Une visite' },
+    { valeur: 'OFFRE', libelle: 'Une offre' }
+];
+
+/** `POST /immo/proprietes/{uuid}/contact`. Le serveur prend nom, téléphone et email dans le jeton : rien à envoyer. */
+export interface ContactCreateRequest {
+    message: string;
+    typeDemande?: TypeDemandeContact;
+}
+
+/** `POST /immo/proprietes/{uuid}/visites`. La date est un jour civil AAAA-MM-JJ, aujourd'hui ou plus tard ; l'heure « HH:mm ». */
+export interface VisiteCreateRequest {
+    dateVisite: string;
+    heureVisite?: string;
+    notesVisiteur?: string;
+}
+
+export type MotifSignalement = 'FAUX' | 'INAPPROPRIE' | 'DEJA_VENDU' | 'ARNAQUE' | 'AUTRE';
+export const MOTIFS_SIGNALEMENT: { valeur: MotifSignalement; libelle: string }[] = [
+    { valeur: 'DEJA_VENDU', libelle: 'Déjà vendu ou loué' },
+    { valeur: 'FAUX', libelle: 'Annonce fausse' },
+    { valeur: 'ARNAQUE', libelle: 'Tentative d’arnaque' },
+    { valeur: 'INAPPROPRIE', libelle: 'Contenu inapproprié' },
+    { valeur: 'AUTRE', libelle: 'Autre chose' }
+];
+
+/** `POST /immo/proprietes/{uuid}/signaler`. */
+export interface SignalementCreateRequest {
+    motif: MotifSignalement;
+    description?: string;
+}
+
+/**
+ * `POST /immo/demandes` : un besoin déclaré, diffusé aux agences de la zone.
+ * Attention, ici « acheter » se dit `ACHAT`, pas `VENTE` comme sur une annonce.
+ */
+export interface DemandeCreateRequest {
+    typeAnnonce: 'LOCATION' | 'ACHAT';
+    typeBienId?: number;
+    communeId?: number;
+    /** Saisie libre quand la commune n'est pas au référentiel. */
+    communeTexte?: string;
+    quartierId?: number;
+    quartierTexte?: string;
+    budgetMin?: number;
+    budgetMax?: number;
+    devise?: string;
+    nbChambresMin?: number;
+    commoditeIds?: number[];
+    description?: string;
+    contactTelephone?: string;
+    contactWhatsapp?: string;
+}
+
+/** Statuts tels que le serveur les écrit, et comment on les dit au client. */
+export function libelleStatutVisite(statut: string | null | undefined): string {
+    return { DEMANDEE: 'En attente', CONFIRMEE: 'Confirmée', EFFECTUEE: 'Effectuée', ANNULEE: 'Annulée' }[statut ?? ''] ?? statut ?? '';
+}
+export function libelleStatutContact(statut: string | null | undefined): string {
+    return { NOUVEAU: 'Envoyé', TRAITE: 'Répondu', CLOS: 'Clos' }[statut ?? ''] ?? statut ?? '';
+}
+export function libelleStatutBesoin(statut: string | null | undefined): string {
+    return { ACTIVE: 'En cours', POURVUE: 'Pourvue', ANNULEE: 'Annulée', EXPIREE: 'Expirée' }[statut ?? ''] ?? statut ?? '';
+}
+
 // ---- Leads back-office (intermédiation) ----
 
 export interface LeadContact {
