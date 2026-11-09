@@ -64,6 +64,9 @@ public class PreferencesNotificationService {
     public boolean pushAutorisee(Long userId, String categorie) {
         PreferencesNotification p = lire(userId);
         String c = categorie == null ? "" : categorie.toUpperCase();
+        // Les événements du logement ne relèvent pas des réglages de voyage : leurs
+        // préférences vivent dans le service immobilier (SMS). La push suit l'in-app.
+        if (c.startsWith("IMMO_")) return true;
         boolean commerciale = c.startsWith("PROMO") || c.startsWith("REMISE") || c.startsWith("NOUVEAUTE");
         return commerciale ? p.isPromotions() : p.isMisesAJourTrajet();
     }
