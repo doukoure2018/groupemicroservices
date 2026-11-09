@@ -17,10 +17,14 @@ rafraîchissement silencieux), avec les jetons dans le trousseau du téléphone
 `sira://` (hérité ; le site l'emploie pour le retour de paiement et
 l'activation par courriel) et `synergia://`. L'icône et l'écran de lancement
 portent l'emblème de marque ; le bus identifie l'univers Voyager à l'intérieur.
-Paquet Android `com.billetterie.gn` et identifiant iOS `com.sira.guinee.app`
-sont hérités d'avant la bascule de marque : les changer ferait une application
-neuve aux yeux des magasins et casserait la vérification des liens
-(`assetlinks.json`), cela ne se décide qu'avant la première publication.
+Paquet Android et identifiant iOS : `com.synergiaguinee.app`, le même des deux
+côtés, décidé le 9 novembre 2026 avant toute publication. Les anciens noms
+(`com.billetterie.gn`, `com.sira.guinee.app`) venaient de l'époque SIRA. Ce
+renommage attend encore deux choses : une application Android
+`com.synergiaguinee.app` dans le projet Firebase, dont le `google-services.json`
+remplacera celui du dépôt (toujours au nom de l'ancien paquet : une
+construction native Android échoue tant qu'il n'est pas remplacé), et les
+clients OAuth Google recréés pour ce paquet. Expo Go n'en dépend pas.
 
 ## Lancer
 
@@ -62,10 +66,12 @@ npx eas-cli@latest build --profile test --platform android     # APK de test, di
 npx eas-cli@latest build --profile production --platform all   # magasins
 ```
 
-Les identifiants sont ceux de l'application Flutter, pour que la publication
-soit une mise à jour et non une seconde application : `com.billetterie.gn`
-(Android) et `com.sira.guinee.app` (iOS). Le schéma de lien profond `sira`
-est celui des courriels de vérification.
+Le projet EAS est `@doukoure2711/synergia` (identifiant dans `app.json`,
+`extra.eas.projectId`) ; les profils `development`, `test` et `production` sont
+dans `eas.json`. La première construction EAS demandera de confier à EAS la
+clé de signature Android et, pour iOS, un compte du programme développeur
+Apple. Les magasins attendent la validation complète du parcours. Le schéma de
+lien profond `sira` reste celui des courriels de vérification.
 
 ## Vérifier
 

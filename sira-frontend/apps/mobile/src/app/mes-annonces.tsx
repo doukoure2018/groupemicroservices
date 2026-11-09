@@ -29,7 +29,18 @@ function MesAnnoncesEcran() {
                     }
                 }
             },
-            { queryKey: ['mes-annonces'], queryFn: async () => (await api.immo.proprietes.mesProprietes()).data.proprietes ?? [] },
+            {
+                queryKey: ['mes-annonces'],
+                queryFn: async () => {
+                    try {
+                        return (await api.immo.proprietes.mesProprietes()).data.proprietes ?? [];
+                    } catch (e) {
+                        // Pas encore de profil immobilier : le serveur répond 404, et il n'y a simplement rien.
+                        if (e instanceof ApiError && e.status === 404) return [];
+                        throw e;
+                    }
+                }
+            },
             { queryKey: ['mes-brouillons'], queryFn: async () => (await api.immo.clientSide.brouillons()).data.brouillons ?? [] }
         ]
     });
@@ -101,7 +112,14 @@ function MesAnnoncesEcran() {
 
             <Text style={base.sectionTitre}>Mes annonces</Text>
             {listeAnnonces.length === 0 && listeBrouillons.length === 0 && (
-                <EtatVide titre="Aucune annonce" texte="Publiez votre premier bien : quatre étapes, vos photos, et la relecture de SYNERGIA." />
+                <EtatVide
+                    titre="Aucune annonce"
+                    texte={
+                        profil.data === null
+                            ? 'Publiez votre premier bien : on vous demandera d’abord à quel titre vous publiez, puis quatre étapes et vos photos.'
+                            : 'Publiez votre premier bien : quatre étapes, vos photos, et la relecture de SYNERGIA.'
+                    }
+                />
             )}
             {listeAnnonces.map((a) => (
                 <LigneAnnonce key={a.proprieteUuid} annonce={a} enCours={action.isPending} agir={(quoi) => action.mutate({ uuid: a.proprieteUuid, quoi })} confirmer={confirmer} />

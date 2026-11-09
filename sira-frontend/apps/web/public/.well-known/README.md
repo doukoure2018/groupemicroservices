@@ -1,6 +1,6 @@
 # Liens d'application Android (App Links)
 
-`assetlinks.json` autorise l'application `com.billetterie.gn` à ouvrir
+`assetlinks.json` autorise l'application `com.synergiaguinee.app` à ouvrir
 elle-même les adresses `https://<domaine>/paiement/retour…`. Sans ce fichier,
 Android ouvre le navigateur et le voyageur doit revenir à la main.
 
@@ -20,5 +20,5 @@ pas dans l'application installée.
 Vérification, une fois déployé :
 
     curl https://test.synergia-guinee.com/.well-known/assetlinks.json
-    adb shell pm verify-app-links --re-verify com.billetterie.gn
-    adb shell pm get-app-links com.billetterie.gn      # doit afficher « verified »
+    adb shell pm verify-app-links --re-verify com.synergiaguinee.app
+    adb shell pm get-app-links com.synergiaguinee.app      # doit afficher « verified »

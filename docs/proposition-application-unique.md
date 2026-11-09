@@ -141,7 +141,7 @@ Côté paquets partagés, rien à créer : `@sira/core/immo.ts` et `@sira/api-cl
 | En-tête de connexion | le logotype SYNERGIA générique (blanc sur vert), sans mention d'univers |
 | Squelettes de chargement | l'emblème de l'univers : le bus pour une recherche de voyage, les bâtiments pour une recherche de bien |
 | Court nom Expo, schéma de liens | `synergia`, `synergia://` — un seul projet, plus de collision à craindre |
-| Paquet Android, identifiant iOS | inchangés (`com.billetterie.gn`, `com.sira.guinee.app`) ; à décider avant la première publication, voir le README de l'application |
+| Paquet Android, identifiant iOS | `com.synergiaguinee.app` des deux côtés, décidé le 9 novembre 2026 ; Firebase et les clients Google restent à reprendre pour ce paquet, voir le README de l'application |
 
 ---
 
