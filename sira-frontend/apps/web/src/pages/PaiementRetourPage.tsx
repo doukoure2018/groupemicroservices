@@ -127,12 +127,19 @@ export function PaiementRetourPage() {
     }
 
     if (!reference) {
+        // Cet écran s'affiche nu, sans barre ni pied de page : le texte promet
+        // « Mes voyages », il faut donc le lien, sinon le voyageur est sans issue.
         return (
             <Message
                 icone="pi-question-circle"
                 classeIcone="alerte-icone"
                 titre="Paiement introuvable"
                 texte="Nous n'avons pas retrouvé la référence de ce paiement. Ouvrez « Mes voyages » : votre réservation y figure avec son statut."
+                action={
+                    <Link className="bouton-lien" to="/mes-voyages">
+                        <i className="pi pi-ticket" aria-hidden="true" /> Mes voyages
+                    </Link>
+                }
             />
         );
     }
