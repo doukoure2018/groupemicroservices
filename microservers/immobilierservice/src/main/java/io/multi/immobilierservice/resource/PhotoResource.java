@@ -2,7 +2,6 @@ package io.multi.immobilierservice.resource;
 
 import io.multi.immobilierservice.domain.Photo;
 import io.multi.immobilierservice.domain.Response;
-import io.multi.immobilierservice.dto.UploadResult;
 import io.multi.immobilierservice.repository.PhotoRepository;
 import io.multi.immobilierservice.service.PhotoService;
 import io.multi.immobilierservice.service.PhotoStorageService;
@@ -20,12 +19,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
@@ -139,23 +136,4 @@ public class PhotoResource {
                 Map.of(), "Photo supprimée", HttpStatus.OK));
     }
 
-    // ---- endpoints test MinIO (debug uniquement) ----
-
-    @PostMapping(value = "/test-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Response> testUpload(@RequestParam("file") MultipartFile file,
-                                               HttpServletRequest request) throws IOException {
-        // Streaming via fichier temp — pas de file.getBytes() (fix pre-prod).
-        UploadResult result = photoStorageService.uploadPhoto(file);
-        return ResponseEntity.ok(RequestUtils.getResponse(request,
-                Map.of("upload", result), "Photo uploadée", HttpStatus.OK));
-    }
-
-    @DeleteMapping("/test-delete")
-    public ResponseEntity<Response> testDelete(@RequestParam("key") String objectKey,
-                                               @RequestParam(value = "thumbKey", required = false) String thumbKey,
-                                               HttpServletRequest request) {
-        photoStorageService.deletePhoto(objectKey, thumbKey);
-        return ResponseEntity.ok(RequestUtils.getResponse(request,
-                Map.of(), "Photo supprimée", HttpStatus.OK));
-    }
 }

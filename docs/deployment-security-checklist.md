@@ -221,11 +221,14 @@ curl https://api.guidipress-io.com/user/getUser/1 \
 ### 4.3 Photos immo via gateway
 
 ```bash
-# Upload + GET via reverse-proxy :
-PHOTO=$(curl -X POST .../immo/photos/test-upload -H "Authorization: Bearer ..." \
-  -F "file=@photo.jpg")
-UUID=$(echo $PHOTO | jq -r '.data.upload.objectKey')  # à adapter
-curl -I https://api.guidipress-io.com/immo/photos/<photoUuid>
+# Les points /immo/photos/test-upload et /immo/photos/test-delete ont été retirés
+# le 19 novembre 2026 : tout utilisateur connecté pouvait envoyer un fichier
+# quelconque et supprimer n'importe quel objet par sa clé. On passe désormais par
+# l'envoi normal d'une photo d'annonce, qui vérifie le propriétaire :
+PHOTO=$(curl -X POST ".../immo/proprietes/<proprieteUuid>/photos" \
+  -H "Authorization: Bearer ..." -F "file=@photo.jpg")
+UUID=$(echo $PHOTO | jq -r '.data.photo.photoUuid')
+curl -I "https://api.synergia-guinee.com/immo/photos/$UUID"
 # Attendu : 200 + Content-Type image/jpeg + ETag + Cache-Control max-age=86400
 ```
 
