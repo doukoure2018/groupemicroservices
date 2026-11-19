@@ -36,7 +36,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://manager:manager2711@localhost:5003/eureka/
+      defaultZone: http://${EUREKA_USER:manager}:${EUREKA_PASSWORD}@localhost:5003/eureka/
     restclient:
       enabled: true
   instance:

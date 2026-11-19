@@ -14,10 +14,12 @@
 
     <properties>
         <flyway.version>11.3.0</flyway.version>
-        <!-- Default database configuration -->
+        <!-- Identifiants : jamais écrits ici, ils ouvrent aussi la base de
+             production. Chaque profil les lit dans l'environnement ; exporter
+             les variables du .env avant de migrer :  set -a; source .env; set +a -->
         <db.url>jdbc:postgresql://localhost:5433/innodb</db.url>
-        <db.username>postgres</db.username>
-        <db.password>password</db.password>
+        <db.username>${env.DB_USERNAME}</db.username>
+        <db.password>${env.DB_PASSWORD}</db.password>
         <flyway.cleanDisabled>true</flyway.cleanDisabled>
     </properties>
 
@@ -54,8 +56,8 @@
             <properties>
                 <!-- Postgres Docker local : port hôte 5435 (POSTGRES_HOST_PORT du .env), aligné sur les application.yml dev -->
                 <db.url>jdbc:postgresql://localhost:5435/innodb</db.url>
-                <db.username>inno2711</db.username>
-                <db.password>manager2711</db.password>
+                <db.username>${env.DB_USERNAME}</db.username>
+                <db.password>${env.DB_PASSWORD}</db.password>
                 <flyway.cleanDisabled>false</flyway.cleanDisabled>
             </properties>
         </profile>
@@ -65,8 +67,8 @@
             <id>docker</id>
             <properties>
                 <db.url>jdbc:postgresql://localhost:5433/innodb</db.url>
-                <db.username>inno2711</db.username>
-                <db.password>manager2711</db.password>
+                <db.username>${env.DB_USERNAME}</db.username>
+                <db.password>${env.DB_PASSWORD}</db.password>
                 <flyway.cleanDisabled>false</flyway.cleanDisabled>
             </properties>
         </profile>
@@ -75,9 +77,13 @@
         <profile>
             <id>prod</id>
             <properties>
-                <db.url>jdbc:postgresql://51.91.254.218:5433/innodb</db.url>
-                <db.username>inno2711</db.username>
-                <db.password>manager2711</db.password>
+                <!-- Adresse et identifiants du serveur de production : hors du dépôt.
+                     Exporter PROD_DB_URL, DB_USERNAME et DB_PASSWORD avant d'invoquer
+                     ce profil. Une variable absente fait échouer Flyway, ce qui vaut
+                     mieux qu'une migration lancée sur la mauvaise base. -->
+                <db.url>${env.PROD_DB_URL}</db.url>
+                <db.username>${env.DB_USERNAME}</db.username>
+                <db.password>${env.DB_PASSWORD}</db.password>
                 <flyway.cleanDisabled>true</flyway.cleanDisabled>
             </properties>
         </profile>

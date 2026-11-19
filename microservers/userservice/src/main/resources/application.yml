@@ -16,8 +16,11 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5435/innodb
-    username: inno2711
-    password: manager2711
+    # Identifiants jamais écrits ici : ils ouvrent aussi la base de production.
+    # En local, exporter les variables du .env avant de lancer :
+    #   set -a; source .env; set +a
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     hikari:
       connection-test-query: SELECT 1
 
@@ -67,7 +70,7 @@ eureka:
     prefer-ip-address: false
   client:
     service-url:
-      defaultZone: http://manager:manager2711@localhost:5003/eureka/
+      defaultZone: http://${EUREKA_USER:manager}:${EUREKA_PASSWORD}@localhost:5003/eureka/
 
 ui:
   app:
@@ -89,7 +92,10 @@ orange:
       balance:
         url: https://api.orange.com/sms/admin/v1/contracts
     client:
-      credentials: Basic VExqQ1BlQ1ZDdUxTRURLUjc2Z0RZcXo5QWw4a3h5M3A6bVV6Y0tsTHhRdkp1Z1lpTWN2UFdjT2lMN3ppc3RSdDFCRjVvajIxNEwxRGs=
+      # Jeton de l'API Orange : hors du dépôt. Vide en local, l'envoi de SMS
+      # est alors simplement indisponible ; renseigner ORANGE_API_CREDENTIALS
+      # pour l'activer.
+      credentials: ${ORANGE_API_CREDENTIALS:}
     sender:
       address: tel:+224622459305
 

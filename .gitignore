@@ -63,7 +63,9 @@ nul
 *.key
 *.p12
 *.jks
-!**/src/main/resources/*.key
+# Aucune clé privée dans le dépôt : l'auth server lit les siennes dans le
+# volume ./keys monté par docker compose. La réautorisation qui se trouvait
+# ici rendait possible un commit de clé RSA par mégarde.
 
 # Template files (v0.dev design references)
 template/

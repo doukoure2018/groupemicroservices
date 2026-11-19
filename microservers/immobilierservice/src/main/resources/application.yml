@@ -21,8 +21,11 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5435/innodb
-    username: inno2711
-    password: manager2711
+    # Identifiants jamais écrits ici : ils ouvrent aussi la base de production.
+    # En local, exporter les variables du .env avant de lancer :
+    #   set -a; source .env; set +a
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     hikari:
       connection-test-query: SELECT 1
 
@@ -72,7 +75,7 @@ eureka:
     prefer-ip-address: false
   client:
     service-url:
-      defaultZone: http://manager:manager2711@localhost:5003/eureka/
+      defaultZone: http://${EUREKA_USER:manager}:${EUREKA_PASSWORD}@localhost:5003/eureka/
 
 ui:
   app:
@@ -109,8 +112,8 @@ immo:
 # API S3 exposée sur 9100 (host) → 9000 (container). Le port 9000 host est utilisé par le gateway.
 minio:
   endpoint: http://localhost:9100
-  access-key: minioadmin
-  secret-key: minioadmin
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
   # Réglages MinIO ; les valeurs OVH sont dans application-prod.yml et
   # docs/bascule-object-storage-ovh.md.
   region: us-east-1

@@ -43,7 +43,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://${EUREKA_USER:manager}:${EUREKA_PASSWORD:manager2711}@discoveryserver:8761/eureka/
+      defaultZone: http://${EUREKA_USER:manager}:${EUREKA_PASSWORD}@discoveryserver:8761/eureka/
     restclient:
       enabled: true
     registry-fetch-interval-seconds: 5

@@ -27,8 +27,11 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5435/innodb
-    username: inno2711
-    password: manager2711
+    # Identifiants jamais écrits ici : ils ouvrent aussi la base de production.
+    # En local, exporter les variables du .env avant de lancer :
+    #   set -a; source .env; set +a
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     hikari:
       connection-test-query: SELECT 1
 
@@ -94,7 +97,7 @@ eureka:
     prefer-ip-address: false
   client:
     service-url:
-      defaultZone: http://manager:manager2711@localhost:5003/eureka/
+      defaultZone: http://${EUREKA_USER:manager}:${EUREKA_PASSWORD}@localhost:5003/eureka/
 
 key:
   private: "private.key"
