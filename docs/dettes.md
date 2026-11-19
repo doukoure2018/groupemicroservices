@@ -90,6 +90,23 @@ donne plus que le nom, la longueur et le chemin.
 
 ## 🟠 Technique
 
+### S6. L'erreur SQL brute remonte jusqu'au client (relevée le 2026-11-19)
+Une violation de contrainte dans `immobilierservice` renvoie au client le texte
+intégral de l'instruction SQL **et** le contenu de la ligne refusée. Relevé en
+rejouant le circuit de publication : un `POST /immo/brouillons/{uuid}/materialiser`
+avec une valeur d'énumération invalide a répondu 400 avec l'`INSERT INTO
+immo_propriete` complet, les noms de colonnes et toutes les valeurs de la ligne,
+dont le téléphone de contact.
+
+Deux problèmes : le schéma de la base est donné à qui sonde l'API, et des données
+de l'utilisateur transitent dans un message d'erreur qui finira dans des journaux
+de navigateur ou de passerelle.
+
+**Cible** : un gestionnaire d'exception qui journalise le détail côté serveur et
+ne renvoie qu'un message utile au client, comme le font déjà les erreurs
+métier du service. Vérifier au passage les autres services : le même écho de
+`DataAccessException` s'y trouve probablement.
+
 ### T14. Origine de développement encore celle de l'Angular (ajoutée le 2026-10-31)
 Le proxy Vite du web React usurpe l'en-tête `Origin` en `http://localhost:4202`
 parce que c'est la seule origine de dev que connaissent les six listes CORS
