@@ -1,6 +1,6 @@
 # Registre des dettes techniques — SIRA Guinée / SYNERGIA
 
-> Dernière mise à jour : 2026-07-11.
+> Dernière mise à jour : 2026-11-19.
 > Priorités : 🔴 sécurité (à traiter en premier) · 🟠 technique · 📄 documentation.
 > Quand une dette est réglée, la déplacer dans la section « Réglées » en bas avec la date.
 
@@ -17,14 +17,28 @@ Authorization Code web est nulle.
 **Cible** : générer challenge/verifier dynamiquement (Web Crypto) à chaque login.
 
 ### S2. Secrets en dur versionnés (externaliser PUIS roter)
-Toutes ces valeurs sont dans l'historique git : les roter après externalisation.
-- Credentials Orange SMS API en clair dans `application.yml` de `userservice`,
-  `billetterieservice`, `notificationserver` (valeurs différentes selon le service).
-- Mot de passe PostgreSQL `manager2711` dans tous les `application.yml` dev **et**
-  dans `microservers/database-migrations/pom.xml` (profil prod, avec IP publique
-  `51.91.254.218`).
-- Basic Auth Eureka `manager:manager2711` dans les `defaultZone` de tous les services.
-- MinIO `minioadmin:minioadmin` dans `immobilierservice/src/main/resources/application.yml`.
+**EXTERNALISÉS le 2026-11-19 — la rotation reste à faire.** Plus aucune valeur
+littérale dans les `application*.yml`, le `pom.xml` des migrations, ni le
+`.env.example` : tout passe par `${VARIABLE}`. Mais ces valeurs restent dans
+l'historique git, donc toujours compromises tant qu'elles n'ont pas été changées.
+**Reste à faire, côté exploitation** : changer le mot de passe PostgreSQL, le mot
+de passe Eureka et le jeton de l'API Orange, puis mettre à jour les `.env` des
+deux serveurs. Tant que ce n'est pas fait, la dette n'est qu'à moitié réglée.
+
+Détail de ce qui a été sorti du dépôt :
+- ~~Credentials Orange SMS API en clair dans `application.yml` de `userservice`,
+  `billetterieservice`, `notificationserver`~~ → `${ORANGE_API_CREDENTIALS:}`, vide
+  en local (les SMS y sont alors indisponibles, ce qui est le bon défaut).
+- ~~Mot de passe PostgreSQL dans tous les `application.yml` dev **et** dans
+  `microservers/database-migrations/pom.xml` (profil prod, avec l'IP publique)~~ →
+  `${DB_USERNAME}` / `${DB_PASSWORD}` sans valeur de repli, et `${env.PROD_DB_URL}`
+  pour l'adresse. `migrate-local.sh` lit le `.env`, `migrate-prod.sh` exige les
+  trois variables et demande confirmation avant de migrer la production.
+- ~~Basic Auth Eureka dans les `defaultZone` de tous les services~~ →
+  `${EUREKA_PASSWORD}` sans repli : une variable absente fait échouer le démarrage
+  au lieu de retomber silencieusement sur le mot de passe de production.
+- ~~MinIO `minioadmin:minioadmin`~~ → `${MINIO_ACCESS_KEY:minioadmin}` ; le défaut
+  est la valeur publique du conteneur local, pas un secret.
 - ~~Clé API Google en clair dans le bundle Angular~~ (retiré avec l'Angular le 2026-10-31 ; à révoquer côté Google si elle ne l'a pas été).
 
 Contre-exemples déjà propres (à imiter) : Google OAuth, FCM (`FCM_SERVICE_ACCOUNT_B64`),
@@ -60,11 +74,17 @@ Révélé le 2026-07-09 par un redéploiement CD TEST.
   dans `KeyUtils.buildRSAKey` (« Fixed UUID ») — acceptable mais à externaliser.
 
 ### S5. Logs fuitant des préfixes de tokens
-- `src/app/interceptors/token.interceptor.ts` : ~15 `console.log` par requête, dont le
-  token tronqué.
-- `mobile_app/lib/services/api_service.dart` : `debugPrint` d'un préfixe de token ;
-  `print()` bruts dans `auth_service.dart` / `auth_provider.dart`.
-**Cible** : supprimer les logs de debug en production.
+**Côté Java : RÉGLÉE le 2026-11-19.** Huit lignes imprimaient une valeur de jeton en
+clair au niveau INFO — le jeton d'aiguillage mobile dans `AuthorizationServerConfig`,
+`MobileOAuthSessionFilter` et `OAuth2AuthenticationSuccessHandler`, et surtout le
+jeton de vérification de compte dans `userservice/UserRepositoryImpl`, qui permettait
+d'activer le compte d'un tiers à partir d'une ligne de journal. Elles disent
+désormais la présence et la provenance, jamais la valeur. Le relevé des cookies ne
+donne plus que le nom, la longueur et le chemin.
+- ~~`src/app/interceptors/token.interceptor.ts`~~ : disparu avec l'Angular le 2026-10-31.
+- Reste `mobile_app/lib/services/api_service.dart` : `debugPrint` d'un préfixe de
+  jeton, `print()` bruts dans `auth_service.dart` / `auth_provider.dart`. Application
+  Flutter héritée, conservée jusqu'à parité avec l'Expo.
 
 ---
 
@@ -216,6 +236,32 @@ de colonnes). La Phase 0 (corrections sans risque) est faite — voir « Réglé
 ---
 
 ## ✅ Réglées
+
+- **2026-11-19** — Semaine de sécurité de l'audit de septembre, lot 1 :
+  - **Journaux de jetons** : huit `log.info` imprimaient une valeur de jeton, dont
+    celui qui active un compte. Voir S5.
+  - **Jokers `permitAll` immobiliers** : `GET /immo/agences/*`, `/immo/profils/*` et
+    `/immo/proprietes/*` rendaient publics `admin`, `mes-agences`, `mes-proprietes`,
+    `moderation` et `me` — et auraient rendu public tout chemin nommé ajouté ensuite.
+    Remplacés par une expression régulière d'UUID dans la gateway **et** dans
+    immobilierservice, comme c'était déjà fait pour la fiche d'un voyage.
+  - **Profils immobiliers** : `GET /immo/profils/user/{id}` répondait 200 sans aucun
+    jeton, sur un identifiant entier énumérable, et renvoyait le téléphone du vendeur
+    et le lien de ses pièces KYC. Les deux lectures de profil tiers sont désormais
+    réservées à l'administration ; le titulaire passe par `/immo/profils/me`.
+  - **Identifiants versionnés** : voir S2. Externalisés ; la rotation reste à faire.
+  - **Points de test exposés** : `POST /immo/photos/test-upload` et
+    `DELETE /immo/photos/test-delete` retirés. Tout compte connecté pouvait envoyer un
+    fichier quelconque dans le stockage objet et y supprimer n'importe quel objet par
+    sa clé, sans vérification de propriétaire.
+  - **Pagination bornée** : `Pagination.limite/decalage` appliqués au moment de lier
+    les paramètres SQL, dans les sept dépôts de l'immobilier et dans les notifications
+    de la billetterie, où `page * size` pouvait en plus déborder l'entier. La limite
+    de la recherche publique, elle, était déjà bornée à 100 depuis l'origine : le point
+    de l'audit était périmé, vérifié sur test. La limite transmise à Nominatim est
+    bornée à 20, ce service tiers bannissant l'adresse appelante en cas d'abus.
+  - **`.gitignore`** : la ligne `!**/src/main/resources/*.key` réautorisait le commit
+    d'une clé privée. Retirée ; l'auth server lit ses clés dans le volume monté.
 
 - **2026-07-11** — Alertes passagers aux paliers de remplissage **20/50/80/100 %**
   (in-app + **push FCM** + email/SMS), scheduler à 5 min. Anti-rafale : un passager
