@@ -1,6 +1,7 @@
 package io.multi.billetterieservice.resource;
 
 import io.multi.billetterieservice.domain.Response;
+import io.multi.billetterieservice.utils.Pagination;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,8 @@ public class OpenStreetMapResource {
     public ResponseEntity<Response> search(
             @RequestParam("query") String query,
             @RequestParam(value = "country", defaultValue = "gn") String countryCode,
+            // Borné : la limite part telle quelle chez Nominatim, service tiers
+            // gratuit qui bannit l'adresse appelante en cas d'abus.
             @RequestParam(value = "limit", defaultValue = "10") int limit,
             HttpServletRequest httpRequest) {
 
@@ -60,7 +63,7 @@ public class OpenStreetMapResource {
                     NOMINATIM_SEARCH_URL,
                     query,
                     countryCode,
-                    limit
+                    Pagination.limiteCarte(limit)
             );
 
             log.debug("Appel Nominatim: {}", url);
@@ -251,7 +254,7 @@ public class OpenStreetMapResource {
                     "%s?q=%s&countrycodes=gn&format=json&addressdetails=1&limit=%d",
                     NOMINATIM_SEARCH_URL,
                     enhancedQuery,
-                    limit
+                    Pagination.limiteCarte(limit)
             );
 
             HttpHeaders headers = new HttpHeaders();

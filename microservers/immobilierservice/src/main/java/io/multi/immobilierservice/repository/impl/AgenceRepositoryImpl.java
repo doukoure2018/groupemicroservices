@@ -4,6 +4,7 @@ import io.multi.immobilierservice.domain.Agence;
 import io.multi.immobilierservice.mapper.AgenceRowMapper;
 import io.multi.immobilierservice.query.AgenceQuery;
 import io.multi.immobilierservice.repository.AgenceRepository;
+import io.multi.immobilierservice.utils.Pagination;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -91,8 +92,8 @@ public class AgenceRepositoryImpl implements AgenceRepository {
     @Override
     public List<Agence> findAll(int limit, int offset) {
         return jdbcClient.sql(AgenceQuery.FIND_ALL)
-                .param("limit", limit)
-                .param("offset", offset)
+                .param("limit", Pagination.limite(limit))
+                .param("offset", Pagination.decalage(offset))
                 .query(rowMapper)
                 .list();
     }
@@ -160,8 +161,8 @@ public class AgenceRepositoryImpl implements AgenceRepository {
     @Override
     public List<Agence> findEnValidation(int limit, int offset) {
         return jdbcClient.sql(AgenceQuery.FIND_EN_VALIDATION)
-                .param("limit", limit)
-                .param("offset", offset)
+                .param("limit", Pagination.limite(limit))
+                .param("offset", Pagination.decalage(offset))
                 .query(rowMapper)
                 .list();
     }
@@ -199,8 +200,8 @@ public class AgenceRepositoryImpl implements AgenceRepository {
     @Override
     public List<io.multi.immobilierservice.dto.AgenceActiviteView> findAllWithActivite(int limit, int offset) {
         return jdbcClient.sql(AgenceQuery.FIND_ALL_WITH_ACTIVITE)
-                .param("limit", limit)
-                .param("offset", offset)
+                .param("limit", Pagination.limite(limit))
+                .param("offset", Pagination.decalage(offset))
                 .query(activiteRowMapper)
                 .list();
     }

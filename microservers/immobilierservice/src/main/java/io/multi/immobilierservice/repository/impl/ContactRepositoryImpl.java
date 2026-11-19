@@ -5,6 +5,7 @@ import io.multi.immobilierservice.dto.LeadAdminView;
 import io.multi.immobilierservice.mapper.ContactRowMapper;
 import io.multi.immobilierservice.query.ContactQuery;
 import io.multi.immobilierservice.repository.ContactRepository;
+import io.multi.immobilierservice.utils.Pagination;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -45,8 +46,8 @@ public class ContactRepositoryImpl implements ContactRepository {
     public List<Contact> findRecusByVendeur(Long vendeurUserId, int limit, int offset) {
         return jdbcClient.sql(ContactQuery.FIND_RECUS_BY_VENDEUR)
                 .param("vendeurUserId", vendeurUserId)
-                .param("limit", limit)
-                .param("offset", offset)
+                .param("limit", Pagination.limite(limit))
+                .param("offset", Pagination.decalage(offset))
                 .query(rowMapper)
                 .list();
     }
@@ -63,8 +64,8 @@ public class ContactRepositoryImpl implements ContactRepository {
     public List<LeadAdminView> findEnvoyesByUser(Long userId, int limit, int offset) {
         return jdbcClient.sql(ContactQuery.FIND_ENVOYES_BY_USER)
                 .param("userId", userId)
-                .param("limit", limit)
-                .param("offset", offset)
+                .param("limit", Pagination.limite(limit))
+                .param("offset", Pagination.decalage(offset))
                 .query((rs, n) -> LeadAdminView.builder()
                         .contact(rowMapper.mapRow(rs, n))
                         .proprieteUuid(rs.getString("propriete_uuid"))
@@ -102,8 +103,8 @@ public class ContactRepositoryImpl implements ContactRepository {
     public List<LeadAdminView> findLeadsForAdmin(String statut, int limit, int offset) {
         return jdbcClient.sql(ContactQuery.FIND_LEADS_FOR_ADMIN)
                 .param("statut", statut)
-                .param("limit", limit)
-                .param("offset", offset)
+                .param("limit", Pagination.limite(limit))
+                .param("offset", Pagination.decalage(offset))
                 // Réutilise ContactRowMapper pour c.* (incl. champs lead_*), puis lit les 2 colonnes jointes.
                 .query((rs, n) -> LeadAdminView.builder()
                         .contact(rowMapper.mapRow(rs, n))

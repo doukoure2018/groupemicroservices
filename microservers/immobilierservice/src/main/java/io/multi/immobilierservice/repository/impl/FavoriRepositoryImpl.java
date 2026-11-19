@@ -6,6 +6,7 @@ import io.multi.immobilierservice.mapper.FavoriRowMapper;
 import io.multi.immobilierservice.mapper.ProprieteRowMapper;
 import io.multi.immobilierservice.query.FavoriQuery;
 import io.multi.immobilierservice.repository.FavoriRepository;
+import io.multi.immobilierservice.utils.Pagination;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -52,8 +53,8 @@ public class FavoriRepositoryImpl implements FavoriRepository {
     public List<Propriete> findFavoriteProprietes(Long userId, int limit, int offset) {
         return jdbcClient.sql(FavoriQuery.FIND_FAVORIS_OF_USER)
                 .param("userId", userId)
-                .param("limit", limit)
-                .param("offset", offset)
+                .param("limit", Pagination.limite(limit))
+                .param("offset", Pagination.decalage(offset))
                 .query(proprieteRowMapper)
                 .list();
     }

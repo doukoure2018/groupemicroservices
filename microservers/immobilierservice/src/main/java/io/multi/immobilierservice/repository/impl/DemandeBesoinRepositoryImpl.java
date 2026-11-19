@@ -5,6 +5,7 @@ import io.multi.immobilierservice.exception.ApiException;
 import io.multi.immobilierservice.mapper.DemandeBesoinRowMapper;
 import io.multi.immobilierservice.query.DemandeBesoinQuery;
 import io.multi.immobilierservice.repository.DemandeBesoinRepository;
+import io.multi.immobilierservice.utils.Pagination;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -67,8 +68,8 @@ public class DemandeBesoinRepositoryImpl implements DemandeBesoinRepository {
         return jdbcClient.sql(DemandeBesoinQuery.FIND_ACTIVES_ZONE)
                 .param("communeId", communeId)
                 .param("regionId", regionId)
-                .param("limit", limit)
-                .param("offset", offset)
+                .param("limit", Pagination.limite(limit))
+                .param("offset", Pagination.decalage(offset))
                 .query(rowMapper)
                 .list();
     }
@@ -85,8 +86,8 @@ public class DemandeBesoinRepositoryImpl implements DemandeBesoinRepository {
     @Override
     public List<DemandeBesoin> findActivesAll(int limit, int offset) {
         return jdbcClient.sql(DemandeBesoinQuery.FIND_ACTIVES_ALL)
-                .param("limit", limit)
-                .param("offset", offset)
+                .param("limit", Pagination.limite(limit))
+                .param("offset", Pagination.decalage(offset))
                 .query(rowMapper)
                 .list();
     }

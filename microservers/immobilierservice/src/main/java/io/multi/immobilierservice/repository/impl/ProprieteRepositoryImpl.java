@@ -8,6 +8,7 @@ import io.multi.immobilierservice.mapper.CommoditeRowMapper;
 import io.multi.immobilierservice.mapper.ProprieteRowMapper;
 import io.multi.immobilierservice.query.ProprieteQuery;
 import io.multi.immobilierservice.repository.ProprieteRepository;
+import io.multi.immobilierservice.utils.Pagination;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -125,8 +126,8 @@ public class ProprieteRepositoryImpl implements ProprieteRepository {
     public List<Propriete> findByProfil(Long profilId, int limit, int offset) {
         return jdbcClient.sql(ProprieteQuery.FIND_BY_PROFIL)
                 .param("profilId", profilId)
-                .param("limit", limit)
-                .param("offset", offset)
+                .param("limit", Pagination.limite(limit))
+                .param("offset", Pagination.decalage(offset))
                 .query(proprieteRowMapper)
                 .list();
     }
@@ -135,8 +136,8 @@ public class ProprieteRepositoryImpl implements ProprieteRepository {
     public List<Propriete> findByAgence(Long agenceId, int limit, int offset) {
         return jdbcClient.sql(ProprieteQuery.FIND_BY_AGENCE)
                 .param("agenceId", agenceId)
-                .param("limit", limit)
-                .param("offset", offset)
+                .param("limit", Pagination.limite(limit))
+                .param("offset", Pagination.decalage(offset))
                 .query(proprieteRowMapper)
                 .list();
     }
@@ -159,8 +160,8 @@ public class ProprieteRepositoryImpl implements ProprieteRepository {
     @Override
     public List<Propriete> findEnAttenteValidation(int limit, int offset) {
         return jdbcClient.sql(ProprieteQuery.FIND_EN_ATTENTE_VALIDATION)
-                .param("limit", limit)
-                .param("offset", offset)
+                .param("limit", Pagination.limite(limit))
+                .param("offset", Pagination.decalage(offset))
                 .query(proprieteRowMapper)
                 .list();
     }

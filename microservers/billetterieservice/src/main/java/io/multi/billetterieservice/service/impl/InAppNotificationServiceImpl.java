@@ -3,6 +3,7 @@ package io.multi.billetterieservice.service.impl;
 import io.multi.billetterieservice.domain.InAppNotification;
 import io.multi.billetterieservice.query.NotificationQuery;
 import io.multi.billetterieservice.service.InAppNotificationService;
+import io.multi.billetterieservice.utils.Pagination;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -25,8 +26,8 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
     public List<InAppNotification> getByUserId(Long userId, int page, int size) {
         return jdbcClient.sql(NotificationQuery.FIND_BY_USER_ID)
                 .param("userId", userId)
-                .param("limit", size)
-                .param("offset", page * size)
+                .param("limit", Pagination.limite(size))
+                .param("offset", Pagination.decalage(page, size))
                 .query((rs, rowNum) -> InAppNotification.builder()
                         .notificationId(rs.getLong("notification_id"))
                         .notificationUuid(rs.getString("notification_uuid"))

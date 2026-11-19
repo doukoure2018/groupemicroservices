@@ -5,6 +5,7 @@ import io.multi.immobilierservice.dto.LeadVisiteAdminView;
 import io.multi.immobilierservice.mapper.VisiteRowMapper;
 import io.multi.immobilierservice.query.VisiteQuery;
 import io.multi.immobilierservice.repository.VisiteRepository;
+import io.multi.immobilierservice.utils.Pagination;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -41,7 +42,7 @@ public class VisiteRepositoryImpl implements VisiteRepository {
     @Override
     public List<LeadVisiteAdminView> findByVisiteur(Long userId, int limit, int offset) {
         return jdbcClient.sql(VisiteQuery.FIND_BY_VISITEUR)
-                .param("userId", userId).param("limit", limit).param("offset", offset)
+                .param("userId", userId).param("limit", Pagination.limite(limit)).param("offset", Pagination.decalage(offset))
                 .query((rs, n) -> LeadVisiteAdminView.builder()
                         .visite(rowMapper.mapRow(rs, n))
                         .proprieteUuid(rs.getString("propriete_uuid"))
@@ -60,7 +61,7 @@ public class VisiteRepositoryImpl implements VisiteRepository {
     @Override
     public List<Visite> findByVendeur(Long vendeurUserId, int limit, int offset) {
         return jdbcClient.sql(VisiteQuery.FIND_BY_VENDEUR)
-                .param("vendeurUserId", vendeurUserId).param("limit", limit).param("offset", offset)
+                .param("vendeurUserId", vendeurUserId).param("limit", Pagination.limite(limit)).param("offset", Pagination.decalage(offset))
                 .query(rowMapper).list();
     }
 
@@ -100,8 +101,8 @@ public class VisiteRepositoryImpl implements VisiteRepository {
     public List<LeadVisiteAdminView> findLeadsForAdmin(String statut, int limit, int offset) {
         return jdbcClient.sql(VisiteQuery.FIND_LEADS_FOR_ADMIN)
                 .param("statut", statut)
-                .param("limit", limit)
-                .param("offset", offset)
+                .param("limit", Pagination.limite(limit))
+                .param("offset", Pagination.decalage(offset))
                 // Réutilise VisiteRowMapper pour v.* (incl. champs lead_*), puis lit les 2 colonnes jointes.
                 .query((rs, n) -> LeadVisiteAdminView.builder()
                         .visite(rowMapper.mapRow(rs, n))

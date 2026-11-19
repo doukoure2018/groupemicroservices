@@ -4,6 +4,7 @@ import io.multi.immobilierservice.domain.Signalement;
 import io.multi.immobilierservice.mapper.SignalementRowMapper;
 import io.multi.immobilierservice.query.SignalementQuery;
 import io.multi.immobilierservice.repository.SignalementRepository;
+import io.multi.immobilierservice.utils.Pagination;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -37,7 +38,7 @@ public class SignalementRepositoryImpl implements SignalementRepository {
     @Override
     public List<Signalement> findForAdmin(String statut, int limit, int offset) {
         return jdbcClient.sql(SignalementQuery.FIND_FOR_ADMIN_BY_PROPRIETE)
-                .param("statut", statut).param("limit", limit).param("offset", offset)
+                .param("statut", statut).param("limit", Pagination.limite(limit)).param("offset", Pagination.decalage(offset))
                 .query(rowMapper).list();
     }
 
