@@ -168,14 +168,34 @@ distribution interne) et `production` (magasins, numéro de version
 automatique). Les dossiers `android/` et `ios/` sont **régénérés** par
 `npx expo prebuild` et ignorés par git : rien ne se modifie à la main dedans.
 
-**Avant la première publication**, deux choses restent : ajouter l'empreinte de
-la clé de signature d'EAS au client OAuth Android et au fichier des liens
-d'application, et ouvrir un compte développeur Apple pour l'iPhone, les
-notifications poussées iOS et les liens universels.
+**Clé de signature EAS** — créée le 19 novembre 2026 à la première construction
+Android (profil `test`). EAS la conserve et signera aussi les constructions de
+production, sauf si la signature déléguée de Google Play est activée plus tard,
+auquel cas Google resigne et son empreinte s'ajoute.
 
-**Ordres de grandeur** : paquet JavaScript 3,9 Mo ; APK de débogage 269 Mo, non
-représentatif, une construction de production étant minifiée et découpée par
-architecture.
+| | |
+|---|---|
+| SHA-1 | `96:B3:20:FC:06:D6:0E:9D:18:86:AF:B2:EB:EF:7F:71:A0:E4:99:46` |
+| SHA-256 | `3C:9B:2E:A3:A9:A8:E1:D8:70:27:98:82:FC:AA:15:46:F7:2F:9F:C6:99:2D:D6:A8:02:70:95:EB:F2:4C:48:0C` |
+
+Le SHA-256 est dans `apps/web/public/.well-known/assetlinks.json`, à côté de
+celui du poste de développement. Le SHA-1 reste à ajouter au client OAuth
+Android du projet Google, sans quoi la connexion Google échouera dans l'APK
+construit par EAS alors qu'elle fonctionne en construction locale.
+
+**Avant la première publication**, il reste donc : ce SHA-1 côté Google, et un
+compte développeur Apple pour l'iPhone, les notifications poussées iOS et les
+liens universels.
+
+**Ordres de grandeur** : paquet JavaScript 4,1 Mo ; APK de débogage 269 Mo, non
+représentatif ; APK du profil `test` construit par EAS 118 Mo, toutes
+architectures réunies.
+
+**Piège du monorepo** : les trois paquets `@sira/*` déclarent leur point d'entrée
+dans `dist/`, qui n'est pas versionné. Le serveur EAS ne les compilait pas et la
+première construction a échoué sur « Unable to resolve @sira/core ». Un crochet
+`eas-build-post-install` dans `apps/mobile/package.json` les compile après
+l'installation des dépendances.
 
 ---
 
