@@ -258,6 +258,9 @@ jobs:
             NOTIF_HOST_PORT=18093
             IMMO_HOST_PORT=18098
             WEB_HOST_PORT=14203
+            # La pile de test sert l'image de test. Sans cette ligne, le compose
+            # retombe sur prod-latest et le site de test fige son contenu.
+            WEB_IMAGE_TAG=test-latest
 
             PGADMIN_EMAIL=admin-test@synergia-guinee.com
             PGADMIN_PASSWORD=${PGADMIN_PASSWORD}

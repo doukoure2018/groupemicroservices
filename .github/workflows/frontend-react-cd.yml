@@ -113,7 +113,13 @@ jobs:
             cd ~/sira-guinee/test
 
             sudo docker pull doukoure93/sira-web:test-latest
-            sudo docker compose -p sira-test --env-file .env up -d --force-recreate --no-deps web
+            # L'étiquette est forcée ici : le compose la résout par
+            # ${WEB_IMAGE_TAG:-prod-latest}, et le .env de la pile de test est
+            # régénéré à chaque déploiement backend sans cette variable. Sans ce
+            # forçage, on tire bien test-latest puis on recrée le conteneur
+            # depuis une image prod-latest restée en cache, et le site de test ne
+            # change pas alors que la chaîne annonce un succès.
+            sudo WEB_IMAGE_TAG=test-latest docker compose -p sira-test --env-file .env up -d --force-recreate --no-deps web
 
             sleep 8
 
