@@ -48,6 +48,13 @@ public class ProfilImmoResource {
                 Map.of("profil", profil), "Mon profil immobilier", HttpStatus.OK));
     }
 
+    /**
+     * Lecture d'un profil tiers : réservée à l'administration. Le profil porte le
+     * téléphone du vendeur et le lien de ses pièces KYC ; un visiteur n'en a pas
+     * besoin, il contacte le vendeur par le formulaire de l'annonce. Le titulaire
+     * passe par /immo/profils/me.
+     */
+    @PreAuthorize("hasAnyAuthority('ADMIN','ADMIN_IMMO','SUPER_ADMIN')")
     @GetMapping("/{profilUuid}")
     public ResponseEntity<Response> getByUuid(@PathVariable String profilUuid,
                                               HttpServletRequest httpRequest) {
@@ -56,6 +63,11 @@ public class ProfilImmoResource {
                 Map.of("profil", profil), "Profil récupéré", HttpStatus.OK));
     }
 
+    /**
+     * Même réserve que ci-dessus, et plus encore : l'identifiant est un entier
+     * croissant, donc énumérable. Était public jusqu'au 19 novembre 2026.
+     */
+    @PreAuthorize("hasAnyAuthority('ADMIN','ADMIN_IMMO','SUPER_ADMIN')")
     @GetMapping("/user/{userId}")
     public ResponseEntity<Response> getByUserId(@PathVariable Long userId,
                                                 HttpServletRequest httpRequest) {

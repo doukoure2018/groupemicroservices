@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -31,6 +32,13 @@ import static org.springframework.http.HttpMethod.*;
 @RequiredArgsConstructor
 public class ResourceServerConfig {
 
+    /**
+     * Forme d'un UUID. Sert à n'ouvrir au public que les fiches désignées par un
+     * identifiant, jamais un chemin nommé comme mes-proprietes ou moderation.
+     */
+    private static final String MOTIF_UUID =
+            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+
     @Value("${jwks.uri}")
     private String jwtSetUri;
 
@@ -44,19 +52,26 @@ public class ResourceServerConfig {
                                 "/immo/health"
                         ).permitAll()
                         // GET publics : consultation libre (sans JWT)
+                        // Listes et référentiels : aucun identifiant, rien de nominatif.
                         .requestMatchers(HttpMethod.GET,
                                 "/immo/agences",
-                                "/immo/agences/*",
-                                "/immo/agences/*/agents",
-                                "/immo/profils/*",
-                                "/immo/profils/user/*",
                                 "/immo/proprietes/recherche",
-                                "/immo/proprietes/*",
-                                "/immo/proprietes/*/photos",
                                 "/immo/types-bien",
-                                "/immo/commodites",
-                                "/immo/photos/*"                    // Phase 13b serve photo reverse-proxy
+                                "/immo/commodites"
                         ).permitAll()
+                        // Fiches qui se lisent sans compte. Expression régulière et non
+                        // joker : seul un UUID passe. Les jokers "/immo/agences/*",
+                        // "/immo/proprietes/*" et "/immo/profils/*" rendaient publics
+                        // mes-agences, mes-proprietes, moderation, admin et me — et
+                        // rendront public tout chemin nommé ajouté demain.
+                        // Les profils ne sont plus publics : ils portent le téléphone du
+                        // vendeur et le lien de ses pièces KYC, et "/immo/profils/user/{id}"
+                        // se parcourait par identifiant croissant, sans aucun jeton.
+                        // DOIT rester aligné entre la gateway et immobilierservice.
+                        .requestMatchers(RegexRequestMatcher.regexMatcher(HttpMethod.GET,
+                                "^/immo/(agences/" + MOTIF_UUID + "(/agents)?"
+                                        + "|proprietes/" + MOTIF_UUID + "(/photos)?"
+                                        + "|photos/" + MOTIF_UUID + ")$")).permitAll()
                         // Toutes les routes /immo/agences/invitations/** sont privées (JWT requis)
                         .requestMatchers("/immo/agences/invitations/**").authenticated()
                         .anyRequest().authenticated())

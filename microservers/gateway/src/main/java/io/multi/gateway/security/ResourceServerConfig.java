@@ -33,6 +33,13 @@ import static org.springframework.http.HttpMethod.OPTIONS;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class ResourceServerConfig {
+    /**
+     * Forme d'un UUID. Sert à n'ouvrir au public que les fiches désignées par un
+     * identifiant, jamais un chemin nommé comme mes-proprietes ou moderation.
+     */
+    private static final String MOTIF_UUID =
+            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+
     @Value("${jwks.uri}")
     private String jwtSetUri;
 
@@ -78,19 +85,26 @@ public class ResourceServerConfig {
                         // Retrouver sa réservation avec son numéro et son contact, sans compte.
                         // L'accès est bridé par appelant (LimiteurTentatives).
                         .requestMatchers(HttpMethod.GET, "/billetterie/commandes/consultation").permitAll()
+                        // Listes et référentiels : aucun identifiant, rien de nominatif.
                         .requestMatchers(HttpMethod.GET,
                                 "/immo/agences",
-                                "/immo/agences/*",
-                                "/immo/agences/*/agents",
-                                "/immo/profils/*",
-                                "/immo/profils/user/*",
                                 "/immo/proprietes/recherche",
-                                "/immo/proprietes/*",
-                                "/immo/proprietes/*/photos",
                                 "/immo/types-bien",
-                                "/immo/commodites",
-                                "/immo/photos/*"                    // Phase 13b serve photo reverse-proxy
+                                "/immo/commodites"
                         ).permitAll()
+                        // Fiches qui se lisent sans compte. Expression régulière et non
+                        // joker : seul un UUID passe. Les jokers "/immo/agences/*",
+                        // "/immo/proprietes/*" et "/immo/profils/*" rendaient publics
+                        // mes-agences, mes-proprietes, moderation, admin et me — et
+                        // rendront public tout chemin nommé ajouté demain.
+                        // Les profils ne sont plus publics : ils portent le téléphone du
+                        // vendeur et le lien de ses pièces KYC, et "/immo/profils/user/{id}"
+                        // se parcourait par identifiant croissant, sans aucun jeton.
+                        // DOIT rester aligné entre la gateway et immobilierservice.
+                        .requestMatchers(RegexRequestMatcher.regexMatcher(HttpMethod.GET,
+                                "^/immo/(agences/" + MOTIF_UUID + "(/agents)?"
+                                        + "|proprietes/" + MOTIF_UUID + "(/photos)?"
+                                        + "|photos/" + MOTIF_UUID + ")$")).permitAll()
                         // --- Recherche billetterie publique (home web, avant login) ---
                         // DOIT rester strictement aligné avec billetterieservice ResourceServerConfig.
                         // Volontairement SANS joker /billetterie/offres/* : il rendrait publics
@@ -107,7 +121,7 @@ public class ResourceServerConfig {
                         // compte (mobile sans session). Expression régulière et non joker,
                         // pour que seul un UUID passe — mes-offres, stats… restent protégés.
                         .requestMatchers(RegexRequestMatcher.regexMatcher(HttpMethod.GET,
-                                "^/billetterie/offres/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(/sieges)?$")).permitAll()
+                                "^/billetterie/offres/" + MOTIF_UUID + "(/sieges)?$")).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .accessDeniedHandler(new GatewayAccessDeniedHandler())
