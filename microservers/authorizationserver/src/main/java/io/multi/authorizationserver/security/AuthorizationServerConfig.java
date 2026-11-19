@@ -176,7 +176,7 @@ public class AuthorizationServerConfig {
                     if (mobileAuthToken != null && mobileAuthToken.isEmpty()) {
                         mobileAuthToken = null;
                     }
-                    log.info("📋 Token from request param: {}", mobileAuthToken);
+                    log.info("📋 Jeton d'aiguillage mobile dans les paramètres : {}", mobileAuthToken != null);
 
                     // MÉTHODE 2: Si pas de token dans les params, chercher dans le cookie
                     if (mobileAuthToken == null) {
@@ -185,7 +185,7 @@ public class AuthorizationServerConfig {
                             for (Cookie cookie : cookies) {
                                 if (MobileOAuthSessionFilter.MOBILE_AUTH_TOKEN_PARAM.equals(cookie.getName())) {
                                     mobileAuthToken = cookie.getValue();
-                                    log.info("📋 Token from cookie: {}", mobileAuthToken);
+                                    log.info("📋 Jeton d'aiguillage mobile trouvé dans un cookie");
                                     break;
                                 }
                             }
@@ -197,7 +197,7 @@ public class AuthorizationServerConfig {
                         Object tokenObj = session.getAttribute(MobileOAuthSessionFilter.MOBILE_AUTH_TOKEN_PARAM);
                         if (tokenObj != null) {
                             mobileAuthToken = tokenObj.toString();
-                            log.info("📋 Token from session: {}", mobileAuthToken);
+                            log.info("📋 Jeton d'aiguillage mobile trouvé dans la session");
                         }
                     }
 

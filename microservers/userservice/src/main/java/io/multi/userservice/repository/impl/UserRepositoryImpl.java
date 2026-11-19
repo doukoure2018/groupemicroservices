@@ -109,7 +109,8 @@ public class UserRepositoryImpl implements UserRepository {
                     .paramSource(getParamSourceAccount(firstName, lastName, email, username, password, token, roleName))
                     .update();
 
-            log.info("Standard user account created successfully with token: {}", token);
+            // Jamais le jeton : il active le compte, l'imprimer le rendrait réutilisable par un tiers.
+            log.info("Standard user account created successfully");
             return token;
 
         } catch (DuplicateKeyException exception) {

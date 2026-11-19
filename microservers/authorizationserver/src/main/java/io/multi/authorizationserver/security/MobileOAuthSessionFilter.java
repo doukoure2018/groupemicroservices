@@ -138,7 +138,7 @@ public class MobileOAuthSessionFilter implements Filter {
                 // SOLUTION 1: Générer un token unique et stocker dans le cache serveur
                 String authToken = UUID.randomUUID().toString();
                 oauthUrlCache.put(authToken, new CachedOAuthUrl(fullOAuthUrl));
-                log.info("✅ OAuth URL saved to server cache with token: {}", authToken);
+                log.info("✅ OAuth URL saved to server cache (jeton non journalisé)");
 
                 // SOLUTION 2: Sauvegarder dans la SESSION (backup)
                 HttpSession session = httpRequest.getSession(true);
@@ -208,8 +208,10 @@ public class MobileOAuthSessionFilter implements Filter {
         if (cookies != null) {
             log.info("📋 Current cookies ({}):", cookies.length);
             for (Cookie cookie : cookies) {
-                log.info("  - {}: {} (path: {})", cookie.getName(),
-                    cookie.getName().contains("SESSION") ? "[hidden]" : cookie.getValue(),
+                // Jamais la valeur : ces cookies portent le jeton d'aiguillage mobile
+                // et l'identifiant de session. Le nom et la présence suffisent au diagnostic.
+                log.info("  - {}: [valeur masquée, {} caractères] (path: {})", cookie.getName(),
+                    cookie.getValue() == null ? 0 : cookie.getValue().length(),
                     cookie.getPath());
             }
         } else {

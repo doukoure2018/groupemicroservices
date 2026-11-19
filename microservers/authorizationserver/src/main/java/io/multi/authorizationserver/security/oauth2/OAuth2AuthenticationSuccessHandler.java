@@ -82,14 +82,14 @@ public class OAuth2AuthenticationSuccessHandler extends SavedRequestAwareAuthent
 
             // Method 1: Get token from request parameter
             mobileAuthToken = request.getParameter(MobileOAuthSessionFilter.MOBILE_AUTH_TOKEN_PARAM);
-            log.info("Token from request param: {}", mobileAuthToken);
+            log.info("Jeton d'aiguillage mobile dans les paramètres : {}", mobileAuthToken != null);
 
             // Method 2: Get token from cookie
             if (mobileAuthToken == null && cookies != null) {
                 for (Cookie cookie : cookies) {
                     if (MobileOAuthSessionFilter.MOBILE_AUTH_TOKEN_PARAM.equals(cookie.getName())) {
                         mobileAuthToken = cookie.getValue();
-                        log.info("Token from cookie: {}", mobileAuthToken);
+                        log.info("Jeton d'aiguillage mobile trouvé dans un cookie");
                         break;
                     }
                 }
@@ -100,7 +100,7 @@ public class OAuth2AuthenticationSuccessHandler extends SavedRequestAwareAuthent
                 Object tokenObj = session.getAttribute(MobileOAuthSessionFilter.MOBILE_AUTH_TOKEN_PARAM);
                 if (tokenObj != null) {
                     mobileAuthToken = tokenObj.toString();
-                    log.info("Token from session: {}", mobileAuthToken);
+                    log.info("Jeton d'aiguillage mobile trouvé dans la session");
                 }
             }
 
