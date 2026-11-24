@@ -1,0 +1,89 @@
+/* Politique de confidentialité : une page de texte, lue une fois, souvent par un
+   relecteur de magasin d'applications. Colonne étroite, titres nets, tableaux
+   lisibles sur téléphone. */
+.conf-page {
+    max-width: 52rem;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+    color: var(--encre);
+}
+
+.conf-page h1 {
+    font-size: 1.9rem;
+    line-height: 1.2;
+    margin: 0 0 0.35rem;
+}
+
+.conf-maj {
+    color: var(--gris);
+    font-size: 0.95rem;
+    margin: 0 0 1.75rem;
+}
+
+.conf-brouillon {
+    border: 1px solid var(--or);
+    border-left: 4px solid var(--or);
+    background: #fdf8e8;
+    padding: 0.85rem 1rem;
+    border-radius: 6px;
+    margin: 0 0 2rem;
+    font-size: 0.95rem;
+}
+
+.conf-page h2 {
+    font-size: 1.2rem;
+    margin: 2.25rem 0 0.6rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--ligne);
+}
+
+.conf-page p,
+.conf-page li {
+    line-height: 1.65;
+}
+
+.conf-page ul {
+    padding-left: 1.2rem;
+}
+
+.conf-tableau {
+    width: 100%;
+    overflow-x: auto;
+    margin: 0.75rem 0 0;
+}
+
+.conf-tableau table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.conf-tableau th,
+.conf-tableau td {
+    text-align: left;
+    vertical-align: top;
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid var(--ligne);
+}
+
+.conf-tableau th {
+    background: var(--fond);
+    font-weight: 600;
+}
+
+.conf-contact {
+    margin-top: 2.5rem;
+    padding: 1rem 1.15rem;
+    background: var(--fond);
+    border-radius: 8px;
+}
+
+.conf-contact p {
+    margin: 0.25rem 0;
+}
+
+@media (max-width: 480px) {
+    .conf-page h1 {
+        font-size: 1.55rem;
+    }
+}

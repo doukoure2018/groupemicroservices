@@ -6,6 +6,7 @@ const SUFFIXE = 'SYNERGIA';
 /** Titre d'onglet par route. L'ordre compte : la première correspondance gagne. */
 const TITRES: Array<[string, string]> = [
     ['/', 'Rechercher un voyage'],
+    ['/confidentialite', 'Politique de confidentialité'],
     ['/login', 'Connexion'],
     ['/auth/register', 'Créer un compte'],
     ['/auth/forgotpassword', 'Mot de passe oublié'],

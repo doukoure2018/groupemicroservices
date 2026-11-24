@@ -6,6 +6,7 @@ import { TitreDocument } from './components/TitreDocument';
 import './components/pied-de-page.css';
 import { hasRole } from '@sira/core';
 import { AdminLayout, RequireRole, ROLES_ADMIN } from './pages/admin/AdminLayout';
+import { ConfidentialitePage } from './pages/ConfidentialitePage';
 import { AgencesAdminPage } from './pages/admin/AgencesAdminPage';
 import { ArriveesAdminPage } from './pages/admin/ArriveesAdminPage';
 import { DashboardAdminPage } from './pages/admin/DashboardAdminPage';
@@ -103,6 +104,10 @@ export function App() {
                     {/* Tout le reste : chrome public (barre verte + pied de page). */}
                     <Route element={<ChromePublic />}>
                         <Route path="/" element={<HomePage />} />
+                        {/* Politique de confidentialité : adresse publique exigée par
+                            Google Play et App Store Connect avant d'accepter une fiche.
+                            Doit rester lisible sans compte. */}
+                        <Route path="/confidentialite" element={<ConfidentialitePage />} />
                         <Route path="/login" element={<LoginPage />} />
                         {/* Retrouver ses billets sans compte, comme dans l'application. */}
                         <Route path="/reservation" element={<ReservationConsultationPage />} />
@@ -231,7 +236,8 @@ const COLONNES_PIED: ColonnePied[] = [
             { libelle: 'Guide du voyageur', vers: '/#guide' },
             { libelle: 'Conseils pratiques', vers: '/#conseils' },
             { libelle: 'Contact', vers: 'mailto:contact@synergia-guinee.com' },
-            { libelle: 'Réclamations', vers: 'mailto:contact@synergia-guinee.com?subject=R%C3%A9clamation' }
+            { libelle: 'Réclamations', vers: 'mailto:contact@synergia-guinee.com?subject=R%C3%A9clamation' },
+            { libelle: 'Confidentialité', vers: '/confidentialite' }
         ]
     },
     {
