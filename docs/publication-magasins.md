@@ -16,7 +16,7 @@ Identité de l'application : `com.synergiaguinee.app` des deux côtés, nom affi
 |---|---|
 | Construction Android signée par EAS | ✅ faite, APK du profil `test`, 118 Mo |
 | Empreinte de la clé de signature | ✅ relevée, SHA-256 dans `assetlinks.json` |
-| SHA-1 au client OAuth Android de Google | ❌ à ajouter, sinon la connexion Google échoue dans l'APK d'EAS |
+| SHA-1 de la clé EAS côté Google | ✅ second client OAuth Android « SYNERGIA Android — EAS », 25 nov. 2026 |
 | Construction iOS | ✅ compile pour le simulateur, Xcode 26.6, sans compte Apple |
 | Compte développeur Apple | ❌ à ouvrir, démarche personnelle et payante |
 | Compte Google Play Console | ❌ à ouvrir, frais uniques |
@@ -40,8 +40,9 @@ Identité de l'application : `com.synergiaguinee.app` des deux côtés, nom affi
 3. **Compléter trois mentions de la politique de confidentialité** : raison
    sociale, numéro RCCM, adresse du siège. Elles sont marquées « à compléter »
    sur la page. Confirmer aussi les durées de conservation proposées.
-4. **Ajouter le SHA-1 de la clé EAS** au client OAuth Android dans la console
-   Google Cloud. L'empreinte est dans `docs/specifications-mobile.md`, § 8.
+4. ~~Ajouter le SHA-1 de la clé EAS côté Google~~ : fait le 25 novembre 2026,
+   par un second client OAuth Android. Un client ne porte qu'une empreinte ;
+   celui du 9 novembre reste dédié aux constructions locales.
 
 ---
 

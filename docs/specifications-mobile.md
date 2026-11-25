@@ -179,13 +179,15 @@ auquel cas Google resigne et son empreinte s'ajoute.
 | SHA-256 | `3C:9B:2E:A3:A9:A8:E1:D8:70:27:98:82:FC:AA:15:46:F7:2F:9F:C6:99:2D:D6:A8:02:70:95:EB:F2:4C:48:0C` |
 
 Le SHA-256 est dans `apps/web/public/.well-known/assetlinks.json`, à côté de
-celui du poste de développement. Le SHA-1 reste à ajouter au client OAuth
-Android du projet Google, sans quoi la connexion Google échouera dans l'APK
-construit par EAS alors qu'elle fonctionne en construction locale.
+celui du poste de développement. Le SHA-1 est porté par un **second client OAuth
+Android** du projet Google, « SYNERGIA Android — EAS », créé le 25 novembre 2026
+(`421665850163-cr81…`). Un client Android ne porte qu'une seule empreinte : le
+client du 9 novembre garde celle de la clé de débogage de ce Mac, pour
+`expo run:android`, et le nouveau celle d'EAS. Même paquet, deux clients,
+aucune reconstruction nécessaire.
 
-**Avant la première publication**, il reste donc : ce SHA-1 côté Google, et un
-compte développeur Apple pour l'iPhone, les notifications poussées iOS et les
-liens universels.
+**Avant la première publication**, il reste un compte développeur Apple pour
+l'iPhone, les notifications poussées iOS et les liens universels.
 
 **Ordres de grandeur** : paquet JavaScript 4,1 Mo ; APK de débogage 269 Mo, non
 représentatif ; APK du profil `test` construit par EAS 118 Mo, toutes
